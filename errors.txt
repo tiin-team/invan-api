@@ -1,0 +1,8 @@
+
+ 495 => fire base token error
+
+ 497 => Employee do not have an access
+ 498 => Invalid token
+ 499 => Token required
+
+

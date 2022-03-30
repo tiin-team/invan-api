@@ -1,0 +1,45 @@
+@startuml
+
+'skinparam linetype ortho
+'hide circle
+
+entity Task {
+    * _id: ObjectID
+    * title: string
+    * type: string
+    * unit_name: string
+    * limits: TaskLimit[]
+}
+
+entity TaskLimit {
+    * from: number
+    * to: number
+    * bonus: number
+    * type: P | A
+    * each: boolean
+}
+
+TaskLimit }|--|| Task : <<embedded>>
+
+entity TaskDone {
+    * _id: ObjectID
+    * date: Date
+    * executor_id: ObjectID
+    * executor_type: ExecutorType
+    * task_id: ObjectID
+    * volume: number
+    * over_limit: number
+    * bonus: number
+    * applied_limit: TaskLimit
+}
+
+TaskDone }|--|| TaskLimit : <<embedded>>
+
+TaskDone }o--|| Task : <<task_id>>
+
+enum ExecutorType {
+    WORKGROUP
+    USER
+}
+
+@enduml

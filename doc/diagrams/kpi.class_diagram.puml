@@ -1,0 +1,74 @@
+@startuml
+
+class Task {
+    + _id: ObjectID
+    + title: string
+    + type: string
+    + unit_name: string
+    + limits: TaskLimit[]
+    __
+    + calculateBonus(volume): number
+    + getLimit(volume): TaskLimit
+    + getOverLimit(volume): number
+    ..
+    + {static} getParams(taskId, volume): Promise<{bonus, limit, over_limit}>
+    + {static} isExists(id): Promise<boolean>
+}
+
+class TaskLimit {
+    + from: number
+    + to: number
+    + bonus: number
+    + type: P | A
+    + each: boolean
+}
+
+TaskLimit "1..*" -* Task : <<use>>
+
+class TaskDone {
+    + _id: ObjectID
+    + date: Date
+    + executor_id: ObjectID
+    + executor_type: ExecutorType
+    + task_id: ObjectID
+    + volume: number
+    + over_limit: number
+    + bonus: number
+    + applied_limit: TaskLimit
+    __
+    + applyVolume(taskId, totalVolume): Promise
+    ..
+    + {static} addVolume(params: VolumeParams): Promise
+    + {static} removeVolume(params: VolumeParams): Promise
+    + {static} getForDate(execId, execType, taskId, date?): Promise
+}
+
+TaskDone --> Task : <<use>>
+
+enum ExecutorType {
+    WORKGROUP
+    USER
+    __
+    + {static} isValidType(executorType): boolean
+    + {static} isValidExecutor(id, type): Promise<boolean>
+}
+
+TaskDone -- ExecutorType : <<use>>
+
+class KPIEventEmitter extends EventEmitter {
+    + on('change', cb(doneTask))
+}
+
+TaskDone --> KPIEventEmitter: <<emits>>
+
+
+interface VolumeParams {
+  executor_id: ObjectID
+  executor_type: ExecutorType
+  task_id: ObjectID
+  volume: number
+}
+
+TaskDone - VolumeParams : <<params type>>
+
+@enduml
