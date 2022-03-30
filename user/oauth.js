@@ -9,24 +9,19 @@ module.exports = fp((instance, _, next) => {
       try {
          const acceptUser = request.headers['accept-user']
 
-         if (acceptUser === 'QRCode') {
-            return next(null)
-         }
+         if (acceptUser === 'QRCode') return next(null)
 
          const token = request.body && request.body.token || request.headers['authorization']
 
-         if (!token) {
-            return instance.unauthorized(reply)
-         }
+         if (!token) return instance.unauthorized(reply)
 
-         const query = {
-            [`${acceptUser}_token`]: token
-         }
+         const query = { [`${acceptUser}_token`]: token }
          instance.User.findOne(query, (_, user) => {
             if (user) {
                if (acceptUser === 'employee') {
                   user.service = request.headers['accept-service']
                }
+               user.services = user.services.filter(serv => serv.aviable)
                request.user = user
                return next(user)
             }
@@ -73,6 +68,7 @@ module.exports = fp((instance, _, next) => {
          if (!user) {
             return instance.unauthorized(reply)
          }
+         user.services = user.services.filter(serv => serv.aviable)
          request.user = user
          next()
       });
@@ -116,16 +112,7 @@ module.exports = fp((instance, _, next) => {
          return instance.unauthorized(reply)
       }
 
-      const query = {
-         $or: [
-            {
-               boss_token: token
-            },
-            {
-               admin_token: token
-            }
-         ]
-      }
+      const query = { $or: [{ boss_token: token }, { admin_token: token }] }
 
       instance.User.findOne(query, (err, user) => {
          if (err || user == null) {
@@ -143,17 +130,15 @@ module.exports = fp((instance, _, next) => {
    instance.decorate('authorize_employee', async (request, reply, then) => {
       // console.log(request.raw.originalUrl)
       const token = request.headers['authorization']
-      if (!token) {
-         return instance.unauthorized(reply);
-      }
-      const query = {
-         employee_token: token
-      }
+      if (!token) return instance.unauthorized(reply);
+
+      const query = { employee_token: token }
       try {
          const user = await instance.User.findOne(query);
          if (!user) {
             return instance.unauthorized(reply);
          }
+         user.services = user.services.filter(serv => serv.aviable)
          request.user = user
          // console.log('on next')
          // then();
