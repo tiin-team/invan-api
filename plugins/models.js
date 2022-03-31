@@ -1346,7 +1346,7 @@ module.exports = fp((instance, _, next) => {
     employee_name: String,
     currency: { type: String, default: 'uzs' },
     status: { type: String, enum: ['active', 'pending'] },
-    balance_type: { ftype: String, enum: ['cash', 'card'], default: 'cash' },
+    balance_type: { type: String, enum: ['cash', 'card'], default: 'cash' },
     balance: Number,
     date: Number,
     purchase_id: String
