@@ -18,7 +18,7 @@ module.exports = (instance, options, next) => {
         // }
         const query = { supplier_id: supp._id, status: { $ne: 'pending' } };
         if (request.query.service) query.service = request.query.service;
-
+        else query.service = { $in : request.user.services };
         const transactions = await instance.supplierTransaction.find(query).lean();
 
         //for (const [indexTran, tranItem] of transactions.entries()) {

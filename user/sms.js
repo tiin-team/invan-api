@@ -23,11 +23,7 @@ async function sendViaPlayMobile(instance, phone_number, otp) {
   const password = process.env.PLAY_MOBILE_PASSWORD;
   const token = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
 
-  const headers = {
-    headers: {
-      Authorization: 'Basic ' + token
-    }
-  }
+  const headers = { headers: { Authorization: 'Basic ' + token } }
   return await sms_axios.post(process.env.PLAY_MOBILE_URL, data, headers);
 }
 
@@ -35,8 +31,8 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('sending_sms_code', async (phone_number, sms_code, user = 'user', organization = {}) => {
     console.log(sms_code);
-    var time = parseInt((new Date().getTime()) / 1000)
-    var data = {
+    const time = parseInt((new Date().getTime()) / 1000)
+    const data = {
       utime: time,
       username: "aktivcargo",
       service: {
@@ -49,7 +45,7 @@ module.exports = fp((instance, _, next) => {
       }
     }
 
-    var our_numbers = []
+    const our_numbers = []
 
     // sms
 
