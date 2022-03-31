@@ -103,14 +103,10 @@ module.exports = fp((instance, _, next) => {
 
    instance.decorate('authorize_boss_admin', (request, reply, next) => {
 
-      if (request.headers['accept-user'] === 'QRCode') {
-         return next(null)
-      }
+      if (request.headers['accept-user'] === 'QRCode') return next(null)
 
       const token = request.headers['authorization']
-      if (!token) {
-         return instance.unauthorized(reply)
-      }
+      if (!token) return instance.unauthorized(reply)
 
       const query = { $or: [{ boss_token: token }, { admin_token: token }] }
 
@@ -119,6 +115,7 @@ module.exports = fp((instance, _, next) => {
             // if not a boss or admin, redirect to the ordinary authorization
             return instance.on(request, reply, next)
          }
+         if (user.role != 'boss') user.services = user.services.filter(serv => serv.aviable)
 
          return next(user)
       })

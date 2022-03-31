@@ -4983,9 +4983,9 @@ module.exports = (instance, _, next) => {
   function upload_excel_file_mxik(request, reply, user) {
     try {
       const files = request.raw.files
-      console.log(files);
+
       const excel = files['excel']
-      console.log(excel);
+
       if (excel) {
         const url = './static/' + excel.md5 + excel.name
         const wstream = fs.createWriteStream(url);
@@ -5009,7 +5009,7 @@ module.exports = (instance, _, next) => {
   }
 
   instance.post('/upload_excel_file_mxik', { version: '1.0.0' }, (request, reply) => {
-    console.log('here');
+
     instance.authorization(request, reply, (admin) => {
       upload_excel_file_mxik(request, reply, admin)
     })
