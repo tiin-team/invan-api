@@ -1032,25 +1032,13 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('cancelledItemData', cancelledItemDatas)
   instance.generate('/cancelled_item_data', cancelledItemDatas)
 
-  var goodsCategory = instance.model('goodsCategory', {
+  const goodsCategory = instance.model('goodsCategory', {
     organization: String,
     service: String,
-    type: {
-      type: String,
-      default: 'top'
-    },
-    item_tree: {
-      type: Boolean,
-      default: false
-    },
-    position: {
-      type: String,
-      default: '0'
-    },
-    draggable_position: {
-      type: Number,
-      default: 0,
-    },
+    type: { type: String, default: 'top' },
+    item_tree: { type: Boolean, default: false },
+    position: { type: String, default: '0' },
+    draggable_position: { type: Number, default: 0 },
     parent_categories: {
       type: Array,
       default: []
@@ -1061,16 +1049,10 @@ module.exports = fp((instance, _, next) => {
     },
     created_time: Number,
     name: String,
-    color: {
-      type: String,
-      default: '#2196F3'
-    },
+    color: { type: String, default: '#2196F3' },
     section: String,
     section_id: String,
-    is_other: {
-      type: Boolean,
-      default: false
-    },
+    is_other: { type: Boolean, default: false },
     count: { type: Number, default: 0 },
     services: [
       {
@@ -1079,143 +1061,84 @@ module.exports = fp((instance, _, next) => {
         service_name: String
       }
     ],
-    show_on_bot: {
-      type: Boolean,
-      default: false
-    },
-    show_on_bot_services: {
-      type: Array,
-      default: [],
-      _id: false
-    },
-    present_type: {
-      type: String,
-      default: 'color' // color, image
-    },
-    image: {
-      type: String,
-      default: null
-    }
+    show_on_bot: { type: Boolean, default: false },
+    show_on_bot_services: { type: Array, default: [], _id: false },
+    present_type: { type: String, default: 'color' }, // color, image,
+    image: { type: String, default: null }
   })
   instance.decorate('goodsCategory', goodsCategory)
 
-  var Modifiers = instance.model('Modifiers', {
+  const Modifiers = instance.model('Modifiers', {
     organization: String,
     services: [{
       service: mongoose.Schema.Types.ObjectId,
       service_name: String,
-      available: {
-        type: Boolean,
-        default: false
-      }
+      available: { type: Boolean, default: false }
     }],
     name: String,
-    options: [{
-      option_name: String,
-      price: Number
-    }]
+    options: [{ option_name: String, price: Number }]
   })
   instance.decorate('Modifiers', Modifiers)
   instance.generate('/modifiers', Modifiers)
 
-  var goodsSection = instance.model('goodsSection', {
+  const goodsSection = instance.model('goodsSection', {
     organization: String,
     service: String,
     created_time: Number,
     name: String,
-    color: {
-      type: String,
-      default: '#2196F3'
-    },
-    is_other: {
-      type: Boolean,
-      default: false
-    },
-    count: {
-      type: Number,
-      default: 0
-    }
+    color: { type: String, default: '#2196F3' },
+    is_other: { type: Boolean, default: false },
+    count: { type: Number, default: 0 }
   })
   instance.decorate('goodsSection', goodsSection)
 
-  var posDevices = instance.model('posDevices', {
+  const posDevices = instance.model('posDevices', {
     organization: String,
     service: String,
     service_id: mongoose.Schema.Types.ObjectId,
     name: String,
-    is_active: {
-      type: Boolean,
-      default: false
-    },
-    check_id: {
-      type: String,
-      default: 'A'
-    },
-    status: {
-      type: Boolean,
-      default: false
-    },
+    is_active: { type: Boolean, default: false },
+    check_id: { type: String, default: 'A' },
+    status: { type: Boolean, default: false },
     imei: String,
-    receipt_no: {
-      type: Number,
-      default: 0
-    },
-    back_office: {
-      type: Boolean,
-      default: false
-    }
+    receipt_no: { type: Number, default: 0 },
+    back_office: { type: Boolean, default: false }
   })
   instance.decorate('posDevices', posDevices)
   instance.generate('/posdevices', posDevices)
 
-  var goodsDiscount = instance.model('goodsDiscount', {
+  const goodsDiscount = instance.model('goodsDiscount', {
     organization: String,
     service: String,
     services: [{
       service: mongoose.Schema.Types.ObjectId,
       service_name: String,
-      available: {
-        type: Boolean,
-        default: false
-      }
+      available: { type: Boolean, default: false }
     }],
     created_time: Number,
     name: String,
     value: Number,
-    type: {
-      type: String,
-      enum: ['percentage', 'sum']
-    }
+    type: { type: String, enum: ['percentage', 'sum'] }
   })
   instance.decorate('goodsDiscount', goodsDiscount)
 
-  var settingsTaxes = instance.model('settingsTaxes', {
+  const settingsTaxes = instance.model('settingsTaxes', {
     organization: String,
     services: [{
       service: mongoose.Schema.Types.ObjectId,
       service_name: String,
-      available: {
-        type: Boolean,
-        default: false
-      }
+      available: { type: Boolean, default: false }
     }],
     created_time: Number,
     name: String,
     tax: Number,
-    variant: {
-      type: String,
-      enum: ['new', 'exist', 'all', ''],
-      default: 'new'
-    },
-    type: {
-      type: String,
-      enum: ['include', 'exclude']
-    },
+    variant: { type: String, enum: ['new', 'exist', 'all', ''], default: 'new' },
+    type: { type: String, enum: ['include', 'exclude'] },
     option: Number
   })
   instance.decorate('settingsTaxes', settingsTaxes)
 
-  var fcmNotification = instance.model('fcmnotification', {
+  const fcmNotification = instance.model('fcmnotification', {
     sender_id: String,
     message: String,
     receiver_id: String,
@@ -1225,78 +1148,36 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('fcmNotification', fcmNotification)
 
-  var clients = instance.model('clientsDatabase', {
-    user_id: {
-      type: String,
-      default: '10000'
-    },
+  const clients = instance.model('clientsDatabase', {
+    user_id: { type: String, default: '10000' },
     organization: String,
-    first_name: {
-      type: String,
-      default: ""
-    },
-    last_name: {
-      type: String,
-      default: ""
-    },
+    first_name: { type: String, default: "" },
+    last_name: { type: String, default: "" },
     email: String,
     phone_number: String,
     note: String,
-    visit_counter: {
-      type: Number,
-      default: 0
-    },
-    total_sale: {
-      type: Number,
-      default: 0
-    },
-    sales: {
-      type: Number,
-      default: 0
-    },
-    refunds: {
-      type: Number,
-      default: 0
-    },
-    first_visit: {
-      type: Number,
-      default: new Date().getTime()
-    },
-    last_visit: {
-      type: Number,
-      default: new Date().getTime()
-    },
-    point_balance: {
-      type: Number,
-      default: 0
-    },
-    gender: {
-      type: String,
-      enum: ['male', 'female']
-    },
+    visit_counter: { type: Number, default: 0 },
+    total_sale: { type: Number, default: 0 },
+    sales: { type: Number, default: 0 },
+    refunds: { type: Number, default: 0 },
+    first_visit: { type: Number, default: new Date().getTime() },
+    last_visit: { type: Number, default: new Date().getTime() },
+    point_balance: { type: Number, default: 0 },
+    gender: { type: String, enum: ['male', 'female'] },
     birthday: String,
     debt: Number,
-    debt_pay_history: {
-      type: Array,
-      default: []
-    }
+    debt_pay_history: { type: Array, default: [] }
   })
   instance.decorate('clientsDatabase', clients)
 
-  var feedback = instance.model('feedback', {
+  const feedback = instance.model('feedback', {
     organization: String,
     service: String,
     created_time: Number,
     table_id: String,
     comment: String,
-    username: {
-      type: String,
-      default: ""
-    },
-    type: {
-      type: String,
-      enum: ['good', 'normal', 'bad']
-    }
+    username: { type: String, default: "" },
+    type: { type: String, enum: ['good', 'normal', 'bad'] }
   })
   instance.decorate('feedback', feedback)
   instance.generate('/feedback', feedback, { public_search: true })
@@ -1319,15 +1200,9 @@ module.exports = fp((instance, _, next) => {
     organization: String,
     service: String,
     table_id: String,
-    table_name: {
-      type: String,
-      default: 'Table'
-    },
+    table_name: { type: String, default: 'Table' },
     user_id: Number,
-    language: {
-      type: String,
-      default: 'ru'
-    },
+    language: { type: String, default: 'ru' },
     phone_number: String,
     id: Number,
     date: Number,
@@ -1339,7 +1214,7 @@ module.exports = fp((instance, _, next) => {
 
   // timecards
 
-  var timecard = instance.model('timecard', {
+  const timecard = instance.model('timecard', {
     organization: String,
     created_time: Number,
     clock_in: Object,
@@ -1352,7 +1227,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('timecard', timecard)
 
-  var timecardHistory = instance.model('timecardHistory', {
+  const timecardHistory = instance.model('timecardHistory', {
     timecard_id: String,
     date: Number,
     clock_in: Number,
@@ -1369,65 +1244,32 @@ module.exports = fp((instance, _, next) => {
 
   // purchase orders
 
-  var inventoryPurchase = instance.model('inventoryPurchase', {
+  const inventoryPurchase = instance.model('inventoryPurchase', {
     organization: String,
     service: mongoose.Schema.Types.ObjectId,
-    is_service_changable: {
-      type: Boolean,
-      default: true
-    },
+    is_service_changable: { type: Boolean, default: true },
     p_order: String,
     purchase_order_date: Number,
     supplier_id: mongoose.Schema.Types.ObjectId,
     supplier_name: String,
     service_name: String,
-    type: {
-      type: String,
-      enum: ['coming', 'refund'],
-      default: 'coming'
-    },
-    status: {
-      type: String,
-      enum: ['partially', 'pending', 'closed'],
-      default: 'pending'
-    },
-    received: {
-      type: Number,
-      default: 0
-    },
+    type: { type: String, enum: ['coming', 'refund'], default: 'coming' },
+    status: { type: String, enum: ['partially', 'pending', 'closed'], default: 'pending' },
+    received: { type: Number, default: 0 },
     expected_on: Number,
     total: Number,
-    total_currency: {
-      type: String,
-      enum: ['uzs', 'usd'],
-      default: 'uzs'
-    },
+    total_currency: { type: String, enum: ['uzs', 'usd'], default: 'uzs' },
     notes: String,
-    total_count: {
-      type: Number,
-      default: 0
-    },
-    pricing_status: {
-      type: Boolean,
-      default: false
-    },
+    total_count: { type: Number, default: 0 },
+    pricing_status: { type: Boolean, default: false },
     last_pricing_date: Number,
     additional_cost: [
       {
         name: String,
         amount: Number,
-        amount_currency: {
-          type: String,
-          default: 'uzs'
-        },
-        is_received: {
-          type: Boolean,
-          default: false
-        },
-        is_cancelled: {
-          type: Boolean,
-          default: false
-        }
+        amount_currency: { type: String, default: 'uzs' },
+        is_received: { type: Boolean, default: false },
+        is_cancelled: { type: Boolean, default: false }
       }
     ],
     ordered_by_id: mongoose.Schema.Types.ObjectId,
@@ -1439,7 +1281,7 @@ module.exports = fp((instance, _, next) => {
 
   // purchase items
 
-  var purchaseItem = instance.model('purchaseItem', {
+  const purchaseItem = instance.model('purchaseItem', {
     organization: String,
     service: mongoose.Schema.Types.ObjectId,
     purchase_id: mongoose.Schema.Types.ObjectId,
@@ -1448,54 +1290,24 @@ module.exports = fp((instance, _, next) => {
     sku: Number,
     price: Number,
     cost: Number,
-    barcode: {
-      type: Array,
-      default: []
-    },
+    barcode: { type: Array, default: [] },
     ordered: Number,
-    received: {
-      type: Number,
-      default: 0
-    },
-    cancelled: {
-      type: Number,
-      default: 0
-    },
-    is_cancelled: {
-      type: Boolean,
-      default: false
-    },
-    incoming: {
-      type: Number,
-      default: 0
-    },
-    to_receive: {
-      type: Number,
-      default: 0
-    },
-    quality: {
-      type: Number,
-      default: 0
-    },
-    purchase_cost: {
-      type: Number,
-      default: 0
-    },
-    purchase_cost_currency: {
-      type: String,
-      default: 'uzs'
-    },
+    received: { type: Number, default: 0 },
+    cancelled: { type: Number, default: 0 },
+    is_cancelled: { type: Boolean, default: false },
+    incoming: { type: Number, default: 0 },
+    to_receive: { type: Number, default: 0 },
+    quality: { type: Number, default: 0 },
+    purchase_cost: { type: Number, default: 0 },
+    purchase_cost_currency: { type: String, default: 'uzs' },
     amount: Number
   })
   instance.decorate('purchaseItem', purchaseItem)
 
   // inventory suppliers
   // @index({ organization:1, phone_number:true },{ background:true, unique: true })
-  var adjustmentSupplier = instance.model('adjustmentSupplier', {
-    is_deleted: {
-      type: Boolean,
-      default: false
-    },
+  const adjustmentSupplier = instance.model('adjustmentSupplier', {
+    is_deleted: { type: Boolean, default: false },
     organization: String,
     supplier_name: String,
     contact: String,
@@ -1509,51 +1321,32 @@ module.exports = fp((instance, _, next) => {
     country: Object,
     region_state_province: String,
     note: String,
-    balance: {
-      type: Number,
-      default: 0
-    },
-    balance_currency: {
-      type: String,
-      default: 'uzs'
-    },
-    balance_usd: {
-      type: Number,
-      default: 0
-    },
-    telegram_acces: { type: Boolean, default: false }
+    services: [{
+      service: mongoose.Schema.Types.ObjectId,
+      service_name: String,
+      balance: { type: Number, default: 0 },
+      balance_currency: { type: String, default: 'uzs' },
+      balance_usd: { type: Number, default: 0 },
+      available: { type: Boolean, default: true },
+      telegram_acces: { type: Boolean, default: false },
+    }],
+    balance: { type: Number, default: 0 },
+    balance_currency: { type: String, default: 'uzs' },
+    balance_usd: { type: Number, default: 0 },
+    telegram_acces: { type: Boolean, default: false },
   })
   instance.decorate('adjustmentSupplier', adjustmentSupplier)
   instance.generate('/supplier', adjustmentSupplier)
 
   instance.decorate('supplierTransaction', instance.model('supplierTransaction', {
-    supplier_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'adjustmentsuppliers'
-    },
-    sevice: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'inoneservices'
-    },
+    supplier_id: { type: mongoose.Schema.Types.ObjectId, ref: 'adjustmentsuppliers' },
+    sevice: { type: mongoose.Schema.Types.ObjectId, ref: 'inoneservices' },
     document_id: String,
-    employee: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'users'
-    },
+    employee: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     employee_name: String,
-    currency: {
-      type: String,
-      default: 'uzs'
-    },
-    status: {
-      type: String,
-      enum: ['active', 'pending']
-    },
-    balance_type: {
-      type: String,
-      enum: ['cash', 'card'],
-      default: 'cash'
-    },
+    currency: { type: String, default: 'uzs' },
+    status: { type: String, enum: ['active', 'pending'] },
+    balance_type: { ftype: String, enum: ['cash', 'card'], default: 'cash' },
     balance: Number,
     date: Number,
     purchase_id: String
@@ -1832,130 +1625,54 @@ module.exports = fp((instance, _, next) => {
 
   // User Model
 
-  var User = instance.model('User', {
+  const User = instance.model('User', {
     organization: String,
-    organization_name: {
-      type: String
-    },
+    organization_name: { type: String },
     timezone: String,
-    ui_language: {
-      type: Object,
-      default: {
-        text: "English",
-        value: 'en'
-      }
-    },
+    ui_language: { type: Object, default: { text: "English", value: 'en' } },
     services: [{
       service: mongoose.Schema.Types.ObjectId,
       service_name: String,
-      available: {
-        type: Boolean,
-        default: false
-      }
+      available: { type: Boolean, default: false }
     }],
-    is_boss: {
-      type: Boolean,
-      default: false
-    },
-    service: {
-      type: String,
-      default: ""
-    },
-    is_active: {
-      type: Boolean,
-      default: true
-    },
-    percentage: {
-      type: Number,
-      default: 0
-    },
-    is_password: {
-      type: Boolean,
-      default: false
-    },
-    password: {
-      type: String,
-      default: '1111'
-    },
-    super_password: {
-      type: String
-    },
-    role: {
-      type: String,
-      default: 'cashier'
-    },
-    full_name: {
-      type: String,
-      default: ""
-    },
-    name: {
-      type: String,
-      default: ''
-    },
-    email: {
-      type: String,
-      default: ""
-    },
-    last_name: {
-      type: String,
-      default: ""
-    },
-    is_phone_number: {
-      type: Boolean,
-      default: true
-    },
+    is_boss: { type: Boolean, default: false },
+    service: { type: String, default: "" },
+    is_active: { type: Boolean, default: true },
+    percentage: { type: Number, default: 0 },
+    is_password: { type: Boolean, default: false },
+    password: { type: String, default: '1111' },
+    super_password: { type: String },
+    role: { type: String, default: 'cashier' },
+    full_name: { type: String, default: "" },
+    name: { type: String, default: '' },
+    email: { type: String, default: "" },
+    last_name: { type: String, default: "" },
+    is_phone_number: { type: Boolean, default: true },
     phone_number: String,
-    token: {
-      type: String,
-      default: ""
-    },
-    boss_token: {
-      type: String,
-      default: "Unchanged"
-    },
+    token: { type: String, default: "" },
+    boss_token: { type: String, default: "Unchanged" },
     admin_token: String,
-    employee_token: {
-      type: String,
-      default: 'Unchanged'
-    },
-    fire_token: {
-      type: String,
-      default: ""
-    },
-    boss_fire_token: {
-      type: String,
-      default: ""
-    },
-    employee_fire_token: {
-      type: String,
-      default: ""
-    },
-    image_url: {
-      type: String,
-      default: ''
-    },
+    employee_token: { type: String, default: 'Unchanged' },
+    fire_token: { type: String, default: "" },
+    boss_fire_token: { type: String, default: "" },
+    employee_fire_token: { type: String, default: "" },
+    image_url: { type: String, default: '' },
     workgroup_id: mongoose.Schema.Types.ObjectId,
     workgroup_name: String,
     workgroup_token: String,
   })
   instance.decorate('User', User)
 
-  var boolean = {
-    type: Boolean,
-    default: false
-  }
+  const boolean = { type: Boolean, default: false }
 
-  var AccessRights = instance.model('AccessRights', {
+  const AccessRights = instance.model('AccessRights', {
     organization: String,
     name: String,
     is_bos: boolean,
     pos: boolean,
     close_ticket: boolean,
     wharehouse_manager: boolean,
-    can_sell: {
-      type: Boolean,
-      default: true
-    },
+    can_sell: { type: Boolean, default: true },
     print_pre_check: boolean,
     receipt_save_as_draft: boolean,
     can_change_price: boolean,
@@ -2007,90 +1724,33 @@ module.exports = fp((instance, _, next) => {
 
   // general setting features
 
-  var settingFeatures = instance.model('settingFeatures', {
+  const settingFeatures = instance.model('settingFeatures', {
     organization: String,
-    opened_receipts: {
-      type: Boolean,
-      default: false
-    },
-    debts: {
-      type: Boolean,
-      default: false
-    },
-    shifts: {
-      type: Boolean,
-      default: true
-    },
-    prices: {
-      type: Boolean,
-      default: false
-    },
-    nds: {
-      type: Boolean,
-      default: false
-    },
-    add_from_warehause: {
-      type: Boolean,
-      default: false
-    },
-    show_stock: {
-      type: Boolean,
-      default: false
-    },
-    orders: {
-      type: Boolean,
-      default: false
-    },
-    chat: {
-      type: Boolean,
-      default: false
-    },
-    open_tickets: {
-      type: Boolean,
-      default: false
-    },
-    time_clock: {
-      type: Boolean,
-      default: false
-    },
-    karaoke: {
-      type: Boolean,
-      default: false
-    },
-    scale: {
-      type: Boolean,
-      default: false
-    },
-    section: {
-      type: Boolean,
-      default: false
-    },
-    inventory: {
-      type: Boolean,
-      default: false
-    },
-    is_local_server: {
-      type: Boolean,
-      default: false
-    },
-    use_purchase_cost_on_pricing: {
-      type: Boolean,
-      default: false
-    },
-    client_debt_by_category: {
-      type: Boolean,
-      default: false
-    },
-    delivery: {
-      type: Boolean,
-      default: false
-    }
+    opened_receipts: { type: Boolean, default: false },
+    debts: { type: Boolean, default: false },
+    shifts: { type: Boolean, default: true },
+    prices: { type: Boolean, default: false },
+    nds: { type: Boolean, default: false },
+    add_from_warehause: { type: Boolean, default: false },
+    show_stock: { type: Boolean, default: false },
+    orders: { type: Boolean, default: false },
+    chat: { type: Boolean, default: false },
+    open_tickets: { type: Boolean, default: false },
+    time_clock: { type: Boolean, default: false },
+    karaoke: { type: Boolean, default: false },
+    scale: { type: Boolean, default: false },
+    section: { type: Boolean, default: false },
+    inventory: { type: Boolean, default: false },
+    is_local_server: { type: Boolean, default: false },
+    use_purchase_cost_on_pricing: { type: Boolean, default: false },
+    client_debt_by_category: { type: Boolean, default: false },
+    delivery: { type: Boolean, default: false }
   })
   instance.decorate('settingFeatures', settingFeatures)
 
   /// for push notification
 
-  var pushObj = instance.model('pushObj', {
+  const pushObj = instance.model('pushObj', {
     unique: String,
     service: String,
     code: Number,
@@ -2102,145 +1762,62 @@ module.exports = fp((instance, _, next) => {
 
   // for summary table
 
-  var summaryTable = instance.model('summary_table', {
+  const summaryTable = instance.model('summary_table', {
     organization: String,
-    date: {
-      type: Boolean,
-      default: true
-    },
-    gross_sales: {
-      type: Boolean,
-      default: true
-    },
-    refunds: {
-      type: Boolean,
-      default: true
-    },
-    discounts: {
-      type: Boolean,
-      default: true
-    },
-    net_sales: {
-      type: Boolean,
-      default: true
-    },
-    taxes: {
-      type: Boolean,
-      default: true
-    },
-    cost_of_goods: {
-      type: Boolean,
-      default: true
-    },
-    gross_profit: {
-      type: Boolean,
-      default: true
-    }
+    date: { type: Boolean, default: true },
+    gross_sales: { type: Boolean, default: true },
+    refunds: { type: Boolean, default: true },
+    discounts: { type: Boolean, default: true },
+    net_sales: { type: Boolean, default: true },
+    taxes: { type: Boolean, default: true },
+    cost_of_goods: { type: Boolean, default: true },
+    gross_profit: { type: Boolean, default: true }
   })
   instance.decorate('summaryTable', summaryTable)
 
   // for by item
 
-  var by_itemTable = instance.model('by_item_table', {
+  const by_itemTable = instance.model('by_item_table', {
     organization: String,
-    name: {
-      type: Boolean,
-      default: true
-    },
-    category: {
-      type: Boolean,
-      default: true
-    },
-    gross_sales: {
-      type: Boolean,
-      default: true
-    },
-    gross_profit: {
-      type: Boolean,
-      default: true
-    },
-    refund: {
-      type: Boolean,
-      default: true
-    },
-    sales: {
-      type: Boolean,
-      default: true
-    },
-    net_sales: {
-      type: Boolean,
-      default: true
-    },
-    refunds: {
-      type: Boolean,
-      default: true
-    }
+    name: { type: Boolean, default: true },
+    category: { type: Boolean, default: true },
+    gross_sales: { type: Boolean, default: true },
+    gross_profit: { type: Boolean, default: true },
+    refund: { type: Boolean, default: true },
+    sales: { type: Boolean, default: true },
+    net_sales: { type: Boolean, default: true },
+    refunds: { type: Boolean, default: true }
   })
   instance.decorate('by_itemTable', by_itemTable)
 
   // for by catergory
 
-  var by_categoryTable = instance.model('by_category_table', {
+  const by_categoryTable = instance.model('by_category_table', {
     organization: String,
-    name: {
-      type: Boolean,
-      default: true
-    },
-    sales: {
-      type: Boolean,
-      default: true
-    },
-    gross_sales: {
-      type: Boolean,
-      default: true
-    },
-    refund: {
-      type: Boolean,
-      default: true
-    },
-    refunds: {
-      type: Boolean,
-      default: true
-    },
-    discounts: {
-      type: Boolean,
-      default: true
-    },
-    net_sales: {
-      type: Boolean,
-      default: true
-    },
-    cost_of_goods: {
-      type: Boolean,
-      default: true
-    },
-    gross_profit: {
-      type: Boolean,
-      default: true
-    }
+    name: { type: Boolean, default: true },
+    sales: { type: Boolean, default: true },
+    gross_sales: { type: Boolean, default: true },
+    refund: { type: Boolean, default: true },
+    refunds: { type: Boolean, default: true },
+    discounts: { type: Boolean, default: true },
+    net_sales: { type: Boolean, default: true },
+    cost_of_goods: { type: Boolean, default: true },
+    gross_profit: { type: Boolean, default: true }
   })
   instance.decorate('by_categoryTable', by_categoryTable)
 
   // sms code url
 
-  var urlSms = instance.model('url_sms', {
-    url: String
-  })
+  const urlSms = instance.model('url_sms', { url: String })
   instance.decorate('url_sms', urlSms)
 
   // subscribe employee and inventory
 
-  var subscribtion = instance.model('subscribtion', {
+  const subscribtion = instance.model('subscribtion', {
     organization: String,
-    employee_subscribed: {
-      type: Boolean,
-      default: false
-    },
+    employee_subscribed: { type: Boolean, default: false },
     employee_end_date: Number,
-    inventory_subscribed: {
-      type: Boolean,
-      default: false
-    },
+    inventory_subscribed: { type: Boolean, default: false },
     inventory_end_date: Number
   })
   instance.decorate('subscribtion', subscribtion)
@@ -2251,10 +1828,7 @@ module.exports = fp((instance, _, next) => {
       file_path: String,
       comment: String,
       device_info: String,
-      send_to_channel: {
-        type: Boolean,
-        default: false
-      },
+      send_to_channel: { type: Boolean, default: false },
       createdAt: Number,
       updatedAt: Number
     })
@@ -2262,54 +1836,23 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('Currency',
     instance.model('Currency', {
-      organization: {
-        type: String,
-        unique: true
-      },
+      organization: { type: String, unique: true },
       value: Number,
-      currency: {
-        type: String,
-        enum: ['usd', 'uzs'],
-        default: 'uzs'
-      },
-      number_of_zero: {
-        type: Number,
-        default: 2
-      }
+      currency: { type: String, enum: ['usd', 'uzs'], default: 'uzs' },
+      number_of_zero: { type: Number, default: 2 }
     })
   )
 
   instance.decorate('settingReceipt',
     instance.model('settingReceipt', {
       organization: String,
-      service: {
-        type: String,
-        unique: true
-      },
-      emailed_receipt: {
-        type: String,
-        default: ''
-      },
-      printed_receipt: {
-        type: String,
-        default: ''
-      },
-      header: {
-        type: String,
-        default: ''
-      },
-      footer: {
-        type: String,
-        default: ''
-      },
-      show_customer_info: {
-        type: Boolean,
-        default: false
-      },
-      show_comments: {
-        type: Boolean,
-        default: false
-      }
+      service: { type: String, unique: true },
+      emailed_receipt: { type: String, default: '' },
+      printed_receipt: { type: String, default: '' },
+      header: { type: String, default: '' },
+      footer: { type: String, default: '' },
+      show_customer_info: { type: Boolean, default: false },
+      show_comments: { type: Boolean, default: false }
     })
   )
 
@@ -2328,52 +1871,25 @@ module.exports = fp((instance, _, next) => {
 
   const WorkgroupOrderInformation = instance.model('WorkgroupOrderInformation', {
     organization: String,
-    workgroup_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'workgroups'
-    },
-    workgroup_order_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'workgrouporders'
-    },
-    info_list: {
-      type: Array,
-      default: []
-    }
+    workgroup_id: { type: mongoose.Schema.Types.ObjectId, ref: 'workgroups' },
+    workgroup_order_id: { type: mongoose.Schema.Types.ObjectId, ref: 'workgrouporders' },
+    info_list: { type: Array, default: [] }
   })
   instance.decorate('WorkgroupOrderInformation', WorkgroupOrderInformation)
 
   const WorkgroupDeviceInformation = instance.model('WorkgroupDeviceInformation', {
     organization: String,
-    workgroup_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'workgroups'
-    },
-    workgroup_order_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'workgrouporders'
-    },
-    info_list: {
-      type: Array,
-      default: []
-    }
+    workgroup_id: { type: mongoose.Schema.Types.ObjectId, ref: 'workgroups' },
+    workgroup_order_id: { type: mongoose.Schema.Types.ObjectId, ref: 'workgrouporders' },
+    info_list: { type: Array, default: [] }
   })
   instance.decorate('WorkgroupDeviceInformation', WorkgroupDeviceInformation)
 
   const WorkgroupAdditionalInformation = instance.model('WorkgroupAdditionalInformation', {
     organization: String,
-    workgroup_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'workgroups'
-    },
-    workgroup_order_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'workgrouporders'
-    },
-    info_list: {
-      type: Array,
-      default: []
-    }
+    workgroup_id: { type: mongoose.Schema.Types.ObjectId, ref: 'workgroups' },
+    workgroup_order_id: { type: mongoose.Schema.Types.ObjectId, ref: 'workgrouporders' },
+    info_list: { type: Array, default: [] }
   })
   instance.decorate('WorkgroupAdditionalInformation', WorkgroupAdditionalInformation)
 

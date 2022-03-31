@@ -14,8 +14,8 @@ async function supplierTransactionsGet(request, reply, instance) {
                 is_deleted: { $ne: true },
             },
         };
-        if (service) $match.$match.service = service;
-        else $match.$match.service = { $in: user.services };
+        // if (service) $match.$match.service = service;
+        // else $match.$match.service = { $in: user.services };
         const $sort = { $sort: { _id: 1 } };
         const $skip = { $skip: (page - 1) * limit };
         const $limit = { $limit: limit };

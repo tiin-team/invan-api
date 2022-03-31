@@ -8,17 +8,18 @@ module.exports = (instance, options, next) => {
       try {
         let supp = await instance.adjustmentSupplier.findOne({
           _id: request.params.id
-        })
-        if (!supp) {
-          return reply.fourorfour('Supplier')
-        }
-        try {
-          supp = supp.toObject()
-        }
-        catch (error) {
-          instance.send_Error('to Object', error.message)
-        }
-        const transactions = await instance.supplierTransaction.find({ supplier_id: supp._id, status: { $ne: 'pending' } })
+        }).lean()
+        if (!supp) return reply.fourorfour('Supplier')
+        // try {
+        //   supp = supp.toObject()
+        // }
+        // catch (error) {
+        //   instance.send_Error('to Object', error.message)
+        // }
+        const query = { supplier_id: supp._id, status: { $ne: 'pending' } };
+        if (request.query.service) query.service = request.query.service;
+
+        const transactions = await instance.supplierTransaction.find(query).lean();
 
         //for (const [indexTran, tranItem] of transactions.entries()) {
         //          if (tranItem.document_id[0] == 'P' && (tranItem.document_id[1] == 0 || tranItem.document_id[1] == 1))
@@ -48,7 +49,11 @@ module.exports = (instance, options, next) => {
         }
         //kerak emas
         // let data = transactions.filter(element => element.status != 'pending')
-        const purChase = await instance.inventoryPurchase.find({ supplier_id: supp._id, organization: supp.organization })
+        delete query.status
+        query.organization = supp.organization
+        const purChase = await instance.inventoryPurchase.find(query).lean();
+        // .find({ supplier_id: supp._id, organization: supp.organization })
+
         for (const [index, item] of purChase.entries()) {
           // if (!data.find(x => x.document_id == item.p_order)) {
           if (!data.find(x => x.document_id == item.p_order) && item.status != 'pending') {
@@ -91,19 +96,9 @@ module.exports = (instance, options, next) => {
         supp.transactions = data;
         //       supp.transactions = transactions;
         // Calculate supplier balance
-        const $match = {
-          $match: {
-            supplier_id: supp._id
-          }
-        }
-        const $group = {
-          $group: {
-            _id: null,
-            balance: {
-              $sum: '$balance'
-            }
-          }
-        }
+        const $match = { $match: { supplier_id: supp._id } }
+        const $group = { $group: { _id: null, balance: { $sum: '$balance' } } }
+
         const result = await instance.supplierTransaction.aggregate([$match, $group]);
         const balance = result.length ? result[0].balance : 0;
         reply.ok({
@@ -120,9 +115,9 @@ module.exports = (instance, options, next) => {
 
   // get suppliers
 
-  var get_suppliers = (request, reply, admin) => {
-    var page = parseInt(request.params.page)
-    var limit = parseInt(request.params.limit)
+  const get_suppliers = (request, reply, admin) => {
+    const page = parseInt(request.params.page)
+    const limit = parseInt(request.params.limit)
     if (request.body == undefined) {
       request.body = {}
     }
@@ -132,23 +127,11 @@ module.exports = (instance, options, next) => {
     }
 
     instance.adjustmentSupplier.find({
-      is_deleted: {
-        $ne: true
-      },
+      is_deleted: { $ne: true },
       organization: admin.organization,
       $or: [
-        {
-          supplier_name: {
-            $regex: supplier_name,
-            $options: 'i'
-          }
-        },
-        {
-          supplier_name: {
-            $regex: instance.converter(supplier_name),
-            $options: 'i'
-          }
-        }
+        { supplier_name: { $regex: supplier_name, $options: 'i' } },
+        { supplier_name: { $regex: instance.converter(supplier_name), $options: 'i' } }
       ]
     }, (err, suppliers) => {
       if (err || suppliers == null) {
@@ -540,9 +523,7 @@ module.exports = (instance, options, next) => {
       params: {
         type: 'object',
         required: ['id'],
-        properties: {
-          id: { type: 'string' }
-        }
+        properties: { id: { type: 'string' } }
       },
       body: {
         type: 'object',
