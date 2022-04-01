@@ -18,7 +18,8 @@ module.exports = (instance, options, next) => {
         // }
         const query = { supplier_id: supp._id, status: { $ne: 'pending' } };
         if (request.query.service) query.service = request.query.service;
-        else query.service = { $in : request.user.services };
+        else query.service = { $in: request.user.services.map(elem => elem.service) };
+
         const transactions = await instance.supplierTransaction.find(query).lean();
 
         //for (const [indexTran, tranItem] of transactions.entries()) {
@@ -118,27 +119,27 @@ module.exports = (instance, options, next) => {
   const get_suppliers = (request, reply, admin) => {
     const page = parseInt(request.params.page)
     const limit = parseInt(request.params.limit)
-    if (request.body == undefined) {
-      request.body = {}
-    }
-    var supplier_name = request.body.supplier_name
+
+    if (request.body == undefined) { request.body = {} }
+
+    let supplier_name = request.body.supplier_name
     if (typeof supplier_name != typeof 'invan') {
       supplier_name = ''
     }
-
-    instance.adjustmentSupplier.find({
+    const query = {
       is_deleted: { $ne: true },
       organization: admin.organization,
       $or: [
         { supplier_name: { $regex: supplier_name, $options: 'i' } },
         { supplier_name: { $regex: instance.converter(supplier_name), $options: 'i' } }
       ]
-    }, (err, suppliers) => {
-      if (err || suppliers == null) {
-        suppliers = []
-      }
+    }
+
+    instance.adjustmentSupplier.find(query, (err, suppliers) => {
+      if (err || suppliers == null) suppliers = []
+
       if (page) {
-        var total = suppliers.length
+        const total = suppliers.length
         suppliers = suppliers.splice(limit * (page - 1), limit)
         reply.ok({
           total: total,

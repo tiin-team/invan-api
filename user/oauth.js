@@ -21,7 +21,7 @@ module.exports = fp((instance, _, next) => {
                if (acceptUser === 'employee') {
                   user.service = request.headers['accept-service']
                }
-               user.services = user.services.filter(serv => serv.aviable)
+               user.services = user.services.filter(serv => serv.available)
                request.user = user
                return next(user)
             }
@@ -68,7 +68,7 @@ module.exports = fp((instance, _, next) => {
          if (!user) {
             return instance.unauthorized(reply)
          }
-         user.services = user.services.filter(serv => serv.aviable)
+         user.services = user.services.filter(serv => serv.available)
          request.user = user
          next()
       });
@@ -115,7 +115,7 @@ module.exports = fp((instance, _, next) => {
             // if not a boss or admin, redirect to the ordinary authorization
             return instance.on(request, reply, next)
          }
-         if (user.role != 'boss') user.services = user.services.filter(serv => serv.aviable)
+         if (user.role != 'boss') user.services = user.services.filter(serv => serv.available)
 
          return next(user)
       })
@@ -135,7 +135,7 @@ module.exports = fp((instance, _, next) => {
          if (!user) {
             return instance.unauthorized(reply);
          }
-         user.services = user.services.filter(serv => serv.aviable)
+         user.services = user.services.filter(serv => serv.available)
          request.user = user
          // console.log('on next')
          // then();

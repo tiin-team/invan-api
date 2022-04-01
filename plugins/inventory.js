@@ -6,9 +6,8 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('create_inventory_history', async (user, reason, unique, service_id, product_id, cost, adjustment, stock_after, date) => {
     try {
-      if (adjustment == 0) {
-        return;
-      }
+      if (adjustment == 0) return;
+
       const service = await instance.services.findById(service_id);
       if (!service) {
         instance.log.error('Service not found');
@@ -19,12 +18,12 @@ module.exports = fp((instance, _, next) => {
         instance.log.error('Item not found')
         return;
       }
-      
+
       let category = {}
       try {
-        category = await instance.goodsCategory.findById(item.category)
-      } catch (error) {}
-      if(!category) {
+        category = await instance.goodsCategory.findById(item.category).lean();
+      } catch (error) { }
+      if (!category) {
         category = {}
       }
 
@@ -32,15 +31,12 @@ module.exports = fp((instance, _, next) => {
         try {
           const parent = await instance.goodsSales.findOne({
             variant_items: {
-              $elemMatch: {
-                $eq: item._id
-              }
+              $elemMatch: { $eq: item._id }
             }
           })
+            .lean();
 
-          if (parent) {
-            item.name = `${parent.name} ( ${item.name} )`
-          }
+          if (parent) item.name = `${parent.name} ( ${item.name} )`
         }
         catch (err) { }
       }

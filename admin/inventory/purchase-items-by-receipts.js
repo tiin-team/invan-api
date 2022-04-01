@@ -21,15 +21,9 @@ module.exports = ((instance, _, next) => {
             minLength: 24,
             maxLength: 24
           },
-          purchase_order_date: {
-            type: 'number'
-          },
-          expected_on: {
-            type: 'number'
-          },
-          notes: {
-            type: 'string'
-          },
+          purchase_order_date: { type: 'number' },
+          expected_on: { type: 'number' },
+          notes: { type: 'string' },
           status: {
             type: 'string',
             enum: ['pending', 'closed'],
@@ -108,12 +102,12 @@ module.exports = ((instance, _, next) => {
             }
           }
         }
-        
+
         const items = await instance.goodsSales.find({
           organization: user.organization,
           barcode: { $elemMatch: { $in: barcodes } }
         });
-        
+
         const existBarcode = {};
         const itemsIdMap = {};
         for (const it of items) {
@@ -143,8 +137,8 @@ module.exports = ((instance, _, next) => {
         for (const b of barcodes) {
           if (!existBarcode[b]) {
             let last_sku = 10000;
-            const lastItem = await instance.goodsSales.findOne({ organization: user.organization }).sort({sku: -1});
-            if(lastItem && lastItem.sku) {
+            const lastItem = await instance.goodsSales.findOne({ organization: user.organization }).sort({ sku: -1 });
+            if (lastItem && lastItem.sku) {
               last_sku = lastItem.sku + 1
             }
             const savedItem = await new instance.goodsSales({
@@ -181,7 +175,7 @@ module.exports = ((instance, _, next) => {
             }
           }
         }
-        if(pItems.length == 0) {
+        if (pItems.length == 0) {
           return reply.error('Barcode does not exist')
         }
         request.body.items = pItems

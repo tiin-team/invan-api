@@ -7,6 +7,29 @@ async function supplierTransactionsGet(request, reply, instance) {
         const { limit, page, supplier_name, service } = request.body;
         const { name } = request.params;
         const user = request.user;
+
+        // const service_ids = user.services.map(serv => serv.service);
+
+        // if (request.query.service) {
+        //     const find_service = request.query.service
+        //         ? user.services.find(serv => serv.service == request.query.service)
+        //         : null;
+
+        //     if (!find_service) return reply.error('Forbidden')
+        //     else service_ids = [find_service];
+        // }
+        //3ta if 1ta find 1 map
+        //4ta if 1ta find 1 map
+        const find_service = request.query.service
+            ? user.services.find(serv => serv.service == request.query.service)
+            : null;
+        const service_ids = request.query.service
+            ? find_service
+                ? find_service.service
+                : []
+            : user.services.map(serv => serv.service);
+        if (!service_ids.length) return reply.error('Forbidden')
+
         const $match = {
             $match: {
                 organization: user.organization,
@@ -156,14 +179,11 @@ async function supplierTransactionsGet(request, reply, instance) {
                 */
             }
         };
-        const pipeline = [
-            $match,
-            $sort
-        ];
-        if (!name) {
-            pipeline.push($skip);
-            pipeline.push($limit);
-        }
+
+        const pipeline = [$match, $sort];
+
+        if (!name) pipeline.push($skip, $limit);
+
         pipeline.push($lookup);
         pipeline.push($unwind);
         pipeline.push($group);

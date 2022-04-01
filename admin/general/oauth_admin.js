@@ -3,9 +3,9 @@ const fp = require('fastify-plugin')
 module.exports = fp((instance, _, next) => {
 
   instance.decorate('oauth_admin', (request, reply, next) => {
-    var token = request.headers['authorization']
+    const token = request.headers['authorization']
     instance.authorization(request, reply, (user) => {
-      if(request.headers['authorization'] == undefined) {
+      if(token == undefined) {
         request.headers = {
           'authorization': request.params.token,
           'accept-user': 'admin'

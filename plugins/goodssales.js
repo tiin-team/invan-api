@@ -177,138 +177,138 @@ module.exports = fp((instance, _, next) => {
     }
   })
 
-  instance.decorate('update_in_stock_of_sold_items', async (id, service_id, in_stock, user, receipt, REASON = 'other', request = null, by_box = 0) => {
-    if (typeof by_box != typeof 5) {
-      by_box = 0
-    }
-
-    if (typeof in_stock != typeof 5) {
-      if (+in_stock) {
-        in_stock = +in_stock
+  instance.decorate(
+    'update_in_stock_of_sold_items',
+    async (id, service_id, in_stock, user, receipt, REASON = 'other', request = null, by_box = 0) => {
+      if (typeof by_box != typeof 5) {
+        by_box = 0
       }
-      else {
-        in_stock = 0
-      }
-    }
 
-    try { service_id = instance.ObjectId(service_id) }
-    catch (err) { }
-
-    try {
-      const item = await instance.goodsSales.findOne({ _id: id })
-      if (item != null) {
-        if (item.item_type == 'variant') {
-          try {
-            const parent = await instance.goodsSales.findOne({
-              variant_items: {
-                $elemMatch: {
-                  $eq: item._id
-                }
-              }
-            })
-            if (parent) {
-              item.name = `${parent.name} ( ${item.name} )`;
-              if (typeof item.is_track_stock != typeof true) {
-                item.is_track_stock = parent.is_track_stock
-              }
-              item.is_composite_item = parent.is_composite_item
-            }
-          }
-          catch (err) { }
-        }
-
-        // if (item.is_track_stock || item.is_composite_item) {
-        if (item.is_composite_item && item.use_production == false) {
-          for (var i of item.composite_items) {
-            await instance.update_in_stock_of_sold_items(i.product_id, service_id, i.quality * in_stock, user, receipt)
-          }
+      if (typeof in_stock != typeof 5) {
+        if (+in_stock) {
+          in_stock = +in_stock
         }
         else {
-          if (!in_stock) {
-            in_stock = 0
+          in_stock = 0
+        }
+      }
+
+      try { service_id = instance.ObjectId(service_id) }
+      catch (err) { }
+
+      try {
+        const item = await instance.goodsSales.findOne({ _id: id })
+        if (item != null) {
+          if (item.item_type == 'variant') {
+            try {
+              const parent = await instance.goodsSales.findOne({
+                variant_items: {
+                  $elemMatch: { $eq: item._id }
+                }
+              })
+              if (parent) {
+                item.name = `${parent.name} ( ${item.name} )`;
+                if (typeof item.is_track_stock != typeof true) {
+                  item.is_track_stock = parent.is_track_stock
+                }
+                item.is_composite_item = parent.is_composite_item
+              }
+            }
+            catch (err) { }
           }
-          let val1 = `{
+
+          // if (item.is_track_stock || item.is_composite_item) {
+          if (item.is_composite_item && item.use_production == false) {
+            for (var i of item.composite_items) {
+              await instance.update_in_stock_of_sold_items(i.product_id, service_id, i.quality * in_stock, user, receipt)
+            }
+          }
+          else {
+            if (!in_stock) {
+              in_stock = 0
+            }
+            let val1 = `{
             "$inc": {
               "services.$[elem].in_stock": ${in_stock}
             },
             "$set": {
               "last_updated": ${new Date().getTime()}`
 
-          if (REASON != 'other') {
-            val1 += `,
+            if (REASON != 'other') {
+              val1 += `,
               "last_stock_updated": ${new Date().getTime()}
             `
-          }
+            }
 
-          val1 += `
+            val1 += `
             }
           }
           `
 
-          let old_reminder;
-          let new_reminder;
+            let old_reminder;
+            let new_reminder;
 
-          if (by_box) {
-            if (by_box > 0) {
-              if (item.count_by_type) {
-                in_stock -= Math.floor(by_box / item.count_by_type)
-                by_box = (by_box % item.count_by_type)
-              }
+            if (by_box) {
+              if (by_box > 0) {
+                if (item.count_by_type) {
+                  in_stock -= Math.floor(by_box / item.count_by_type)
+                  by_box = (by_box % item.count_by_type)
+                }
 
-              if (item.services instanceof Array) {
-                let less = false
-                let reminder = 0;
-                for (const s of item.services) {
-                  if (service_id + '' == s.service + '') {
-                    if (s.reminder < by_box || s.reminder < 0) {
-                      less = true
-                      reminder = s.reminder
+                if (item.services instanceof Array) {
+                  let less = false
+                  let reminder = 0;
+                  for (const s of item.services) {
+                    if (service_id + '' == s.service + '') {
+                      if (s.reminder < by_box || s.reminder < 0) {
+                        less = true
+                        reminder = s.reminder
+                      }
+                      old_reminder = s.reminder
                     }
-                    old_reminder = s.reminder
+                  }
+                  if (less) {
+                    in_stock -= 1
+                    by_box = item.count_by_type - by_box
+                  }
+                  else {
+                    by_box *= -1
+                  }
+                  if (typeof old_reminder == typeof 5) {
+                    new_reminder = old_reminder + by_box
                   }
                 }
-                if (less) {
-                  in_stock -= 1
-                  by_box = item.count_by_type - by_box
-                }
-                else {
-                  by_box *= -1
-                }
-                if (typeof old_reminder == typeof 5) {
-                  new_reminder = old_reminder + by_box
-                }
               }
-            }
-            else {
-              if (item.count_by_type) {
-                in_stock -= Math.ceil(by_box / item.count_by_type)
-                by_box = (-1) * (by_box % item.count_by_type)
-              }
+              else {
+                if (item.count_by_type) {
+                  in_stock -= Math.ceil(by_box / item.count_by_type)
+                  by_box = (-1) * (by_box % item.count_by_type)
+                }
 
-              if (item.services instanceof Array) {
-                let less = false
-                let reminder = 0;
-                for (const s of item.services) {
-                  if (service_id + '' == s.service + '') {
-                    if (s.reminder + by_box >= item.count_by_type || s.reminder < 0) {
-                      less = true
-                      reminder = s.reminder
+                if (item.services instanceof Array) {
+                  let less = false
+                  let reminder = 0;
+                  for (const s of item.services) {
+                    if (service_id + '' == s.service + '') {
+                      if (s.reminder + by_box >= item.count_by_type || s.reminder < 0) {
+                        less = true
+                        reminder = s.reminder
+                      }
+                      old_reminder = s.reminder
                     }
-                    old_reminder = s.reminder
+                  }
+                  if (less) {
+                    in_stock += 1
+                    by_box = by_box - item.count_by_type;
+                  }
+                  if (typeof old_reminder == typeof 5) {
+                    new_reminder = old_reminder + by_box
                   }
                 }
-                if (less) {
-                  in_stock += 1
-                  by_box = by_box - item.count_by_type;
-                }
-                if (typeof old_reminder == typeof 5) {
-                  new_reminder = old_reminder + by_box
-                }
+
               }
 
-            }
-
-            val1 = `{
+              val1 = `{
               "$inc": {
                 "services.$[elem].in_stock": ${in_stock},
                 "services.$[elem].reminder": ${by_box}
@@ -316,18 +316,18 @@ module.exports = fp((instance, _, next) => {
               "$set": {
                 "last_updated": ${new Date().getTime()}`
 
-            if (REASON != 'other') {
-              val1 += `,
+              if (REASON != 'other') {
+                val1 += `,
                 "last_stock_updated": ${new Date().getTime()}
               `
-            }
+              }
 
-            val1 += `
+              val1 += `
               }
             }
             `
-          }
-          const val2 = `{
+            }
+            const val2 = `{
             "arrayFilters": [
                 {
                   "elem.service": {
@@ -337,77 +337,77 @@ module.exports = fp((instance, _, next) => {
               ]
           }`
 
-          var updateQuery1 = JSON.parse(val1)
-          var updateQuery2 = JSON.parse(val2)
+            var updateQuery1 = JSON.parse(val1)
+            var updateQuery2 = JSON.parse(val2)
 
-          try {
-            await instance.goodsSales.updateOne({ _id: id }, updateQuery1, updateQuery2)
-            const g = await instance.goodsSales.findOne({ _id: id })
-            if (g) {
-              var insstock = 987654321;
-              for (const s of g.services) {
-                if (s.service + '' == service_id + '') {
-                  insstock = s.in_stock
+            try {
+              await instance.goodsSales.updateOne({ _id: id }, updateQuery1, updateQuery2)
+              const g = await instance.goodsSales.findOne({ _id: id })
+              if (g) {
+                var insstock = 987654321;
+                for (const s of g.services) {
+                  if (s.service + '' == service_id + '') {
+                    insstock = s.in_stock
+                  }
+                }
+                if (REASON == 'other') {
+                  var reason = receipt.is_refund == true ? 'returned' : 'sold'
+                  if (insstock != 987654321) {
+                    await instance.create_inventory_history(user, reason, receipt.receipt_no, service_id, id, g.cost, in_stock, insstock, receipt.date)
+                  }
+                }
+                else {
+                  await instance.create_inventory_history(user, REASON, receipt.receipt_no, service_id, id, g.cost, in_stock, insstock, receipt.date)
+                }
+
+                if ((typeof old_reminder == typeof 5 || typeof new_reminder == typeof 5) && old_reminder != new_reminder) {
+                  const reason = REASON == 'other' ? (receipt.is_refund ? 'returned' : 'sold') : REASON;
+                  await instance.create_reminder_history(user, reason, receipt.receipt_no, service_id, id, g.cost, old_reminder, new_reminder, receipt.date)
                 }
               }
-              if (REASON == 'other') {
-                var reason = receipt.is_refund == true ? 'returned' : 'sold'
-                if (insstock != 987654321) {
-                  await instance.create_inventory_history(user, reason, receipt.receipt_no, service_id, id, g.cost, in_stock, insstock, receipt.date)
-                }
-              }
-              else {
-                await instance.create_inventory_history(user, REASON, receipt.receipt_no, service_id, id, g.cost, in_stock, insstock, receipt.date)
-              }
-
-              if ((typeof old_reminder == typeof 5 || typeof new_reminder == typeof 5) && old_reminder != new_reminder) {
-                const reason = REASON == 'other' ? (receipt.is_refund ? 'returned' : 'sold') : REASON;
-                await instance.create_reminder_history(user, reason, receipt.receipt_no, service_id, id, g.cost, old_reminder, new_reminder, receipt.date)
-              }
+              instance.push_changes(request, 101, service_id)
+            } catch (error) {
+              instance.send_Error('Error on updating Item', JSON.stringify(error.message))
             }
-            instance.push_changes(request, 101, service_id)
-          } catch (error) {
-            instance.send_Error('Error on updating Item', JSON.stringify(error.message))
+
           }
-
+          // }
+          // else {
+          //   instance.goodsSales.updateOne({
+          //     _id: item._id
+          //   }, {
+          //     $set: {
+          //       "services.$[elem].in_stock": 0,
+          //       last_updated: new Date().getTime()
+          //     }
+          //   }, {
+          //     arrayFilters: [
+          //       {
+          //         "elem.service": {
+          //           $nin: []
+          //         }
+          //       }
+          //     ]
+          //   }, (err) => {
+          //     instance.push_changes(request, 101, service_id)
+          //     if (err) {
+          //       instance.send_Error('Error on updating to 0', JSON.stringify(err))
+          //     }
+          //   })
+          // }
         }
-        // }
-        // else {
-        //   instance.goodsSales.updateOne({
-        //     _id: item._id
-        //   }, {
-        //     $set: {
-        //       "services.$[elem].in_stock": 0,
-        //       last_updated: new Date().getTime()
-        //     }
-        //   }, {
-        //     arrayFilters: [
-        //       {
-        //         "elem.service": {
-        //           $nin: []
-        //         }
-        //       }
-        //     ]
-        //   }, (err) => {
-        //     instance.push_changes(request, 101, service_id)
-        //     if (err) {
-        //       instance.send_Error('Error on updating to 0', JSON.stringify(err))
-        //     }
-        //   })
-        // }
+        // instance.goodsSales.findOne({ _id: id }, async (err, item) => {
+        //   if (err) {
+        //     instance.send_Error('updating in_stock of item', JSON.stringify(err))
+        //   }
+        //   else if (item) {
+
+        //   }
+        // })
+      } catch (error) {
+
       }
-      // instance.goodsSales.findOne({ _id: id }, async (err, item) => {
-      //   if (err) {
-      //     instance.send_Error('updating in_stock of item', JSON.stringify(err))
-      //   }
-      //   else if (item) {
-
-      //   }
-      // })
-    } catch (error) {
-
-    }
-  })
+    })
 
   instance.decorate('update_composite_items_for_pro', (id, service_id, in_stock, user, receipt, REASON = 'other') => {
     instance.goodsSales.findOne({ _id: id }, (err, item) => {
@@ -931,10 +931,9 @@ module.exports = fp((instance, _, next) => {
   })
 
   instance.decorate('converter', (string) => {
-    if (typeof string != typeof 'invan') {
-      string = ''
-    }
-    var convert = {
+    if (typeof string != typeof 'invan') string = ''
+
+    const convert = {
       "G'": "Ғ",
       "g'": "ғ",
       "o'": "ў",
@@ -1090,7 +1089,7 @@ module.exports = fp((instance, _, next) => {
       'КС': 'X',
       'З': 'Z'
     }
-    var answer = ''
+    let answer = ''
     for (let i = 0; i < string.length; i++) {
       if (convert[string[i]] != undefined)
         answer = answer + convert[string[i]]
@@ -1104,179 +1103,80 @@ module.exports = fp((instance, _, next) => {
       const time = parseInt(request.params.time) || 0;
       const service_id = request.headers['accept-service'];
       const service = await instance.services.findById(service_id);
-      if (!service) {
-        return reply.fourorfour('Service')
-      }
+
+      if (!service) return reply.fourorfour('Service')
+
       const query = {
         organization: user.organization,
         services: { $elemMatch: { service: { $eq: service._id }, available: { $eq: true } } },
       }
 
-      if (time) {
-        query.last_updated = {
-          $gte: time
-        }
-      }
+      if (time) query.last_updated = { $gte: time }
 
       if (request.params.type == 'without_stock') {
         delete query.last_updated
-        query.last_stock_updated = {
-          $gte: time
-        }
+        query.last_stock_updated = { $gte: time }
       }
 
-      const $match = {
-        $match: query
-      }
-      const $unwind = {
-        $unwind: {
-          path: '$services'
-        }
-      }
+      const $match = { $match: query };
+      const $unwind = { $unwind: { path: '$services' } };
+
       const $matchService = {
         $match: {
           $or: [
             { 'services.service': service._id },
-            { 'services.service': service._id + '' }
-          ]
-        }
+            { 'services.service': service._id + '' },
+          ],
+        },
       }
       const $group = {
         $group: {
           _id: '$_id',
-          name: {
-            $first: '$name'
-          },
-          price: {
-            $first: '$services.price'
-          },
-          price_currency: {
-            $first: '$services.price_currency'
-          },
-          default_purchase_cost: {
-            $first: '$default_purchase_cost'
-          },
-          purchase_cost_currency: {
-            $first: '$purchase_cost_currency'
-          },
-          cost: {
-            $first: '$cost'
-          },
-          cost_currency: {
-            $first: '$cost_currency'
-          },
-          max_cost: {
-            $first: '$max_cost'
-          },
-          sale_is_avialable: {
-            $first: '$sale_is_avialable'
-          },
-          composite_item: {
-            $first: '$composite_item'
-          },
-          is_composite_item: {
-            $first: '$is_composite_item'
-          },
-          use_production: {
-            $first: '$use_production'
-          },
-          is_track_stock: {
-            $first: '$is_track_stock'
-          },
-          in_stock: {
-            $first: '$services.in_stock'
-          },
-          low_stock: {
-            $first: '$services.low_stock'
-          },
-          optimal_stock: {
-            $first: '$services.optimal_stock'
-          },
-          sku: {
-            $first: '$sku'
-          },
-          created_time: {
-            $first: '$created_time'
-          },
-          last_updated: {
-            $first: '$last_updated'
-          },
-          representation_type: {
-            $first: '$representation_type'
-          },
-          shape: {
-            $first: '$shape'
-          },
-          representation: {
-            $first: '$representation'
-          },
-          category: {
-            $first: '$category'
-          },
-          category_id: {
-            $first: '$category_id'
-          },
-          category_name: {
-            $first: '$category_name'
-          },
-          sold_by: {
-            $first: '$sold_by'
-          },
-          primary_supplier_id: {
-            $first: '$primary_supplier_id'
-          },
-          primary_supplier_name: {
-            $first: '$primary_supplier_name'
-          },
-          organization: {
-            $first: '$organization'
-          },
-          fabricator: {
-            $first: '$fabricator'
-          },
-          modifiers: {
-            $first: '$modifiers'
-          },
-          prices: {
-            $first: '$services.prices'
-          },
-          reminder: {
-            $first: '$services.reminder'
-          },
-          stopped_item: {
-            $first: '$stopped_item'
-          },
-          count_by_type: {
-            $first: '$count_by_type'
-          },
-          barcode_by_type: {
-            $first: '$barcode_by_type'
-          },
-          hot_key: {
-            $first: '$hot_key'
-          },
-          barcode: {
-            $first: '$barcode'
-          },
-          item_type: {
-            $first: '$item_type'
-          },
-          has_variants: {
-            $first: '$has_variants'
-          },
-          variant_items: {
-            $first: '$variant_items'
-          },
-          taxes: {
-            $first: '$taxes'
-          }
-        }
-      }
-      const $sort = {
-        $sort: {
-          _id: 1
-        }
-      }
+          name: { $first: '$name' },
+          price: { $first: '$services.price' },
+          price_currency: { $first: '$services.price_currency' },
+          default_purchase_cost: { $first: '$default_purchase_cost' },
+          purchase_cost_currency: { $first: '$purchase_cost_currency' },
+          cost: { $first: '$cost' },
+          cost_currency: { $first: '$cost_currency' },
+          max_cost: { $first: '$max_cost' },
+          sale_is_avialable: { $first: '$sale_is_avialable' },
+          composite_item: { $first: '$composite_item' },
+          is_composite_item: { $first: '$is_composite_item' },
+          use_production: { $first: '$use_production' },
+          is_track_stock: { $first: '$is_track_stock' },
+          in_stock: { $first: '$services.in_stock' },
+          low_stock: { $first: '$services.low_stock' },
+          optimal_stock: { $first: '$services.optimal_stock' },
+          sku: { $first: '$sku' },
+          created_time: { $first: '$created_time' },
+          last_updated: { $first: '$last_updated' },
+          representation_type: { $first: '$representation_type' },
+          shape: { $first: '$shape' },
+          representation: { $first: '$representation' },
+          category: { $first: '$category' },
+          category_id: { $first: '$category_id' },
+          category_name: { $first: '$category_name' },
+          sold_by: { $first: '$sold_by' },
+          primary_supplier_id: { $first: '$primary_supplier_id' },
+          primary_supplier_name: { $first: '$primary_supplier_name' },
+          organization: { $first: '$organization' },
+          fabricator: { $first: '$fabricator' },
+          modifiers: { $first: '$modifiers' },
+          prices: { $first: '$services.prices' },
+          reminder: { $first: '$services.reminder' },
+          stopped_item: { $first: '$stopped_item' },
+          count_by_type: { $first: '$count_by_type' },
+          barcode_by_type: { $first: '$barcode_by_type' },
+          hot_key: { $first: '$hot_key' },
+          barcode: { $first: '$barcode' },
+          item_type: { $first: '$item_type' },
+          has_variants: { $first: '$has_variants' },
+          variant_items: { $first: '$variant_items' },
+          taxes: { $first: '$taxes' },
+        },
+      };
+      const $sort = { $sort: { _id: 1 } };
 
       const $project = {
         $project: {
@@ -1285,9 +1185,7 @@ module.exports = fp((instance, _, next) => {
           price: 1,
           price_currency: {
             $cond: {
-              if: {
-                $eq: [{ $type: '$price_currency' }, 'string'],
-              },
+              if: { $eq: [{ $type: '$price_currency' }, 'string'] },
               then: '$price_currency',
               else: 'uz'
             }
@@ -1332,9 +1230,7 @@ module.exports = fp((instance, _, next) => {
                 $concatArrays: [
                   "$$value", {
                     $cond: [
-                      {
-                        $eq: ["$$this.available", true]
-                      },
+                      { $eq: ["$$this.available", true] },
                       ["$$this.tax_id"],
                       []
                     ]
@@ -1343,8 +1239,9 @@ module.exports = fp((instance, _, next) => {
               }
             }
           },
-        }
-      }
+        },
+      };
+
       const goods = await instance.goodsSales.aggregate([
         $match,
         $unwind,
