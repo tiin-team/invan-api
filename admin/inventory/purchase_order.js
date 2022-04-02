@@ -420,9 +420,8 @@ module.exports = fp((instance, options, next) => {
         reqObj[items[i]._id] = items[i]
         reqObj[items[i]._id].to_receive = parseFloat(reqObj[items[i]._id].to_receive)
       }
-      items = await instance.purchaseItem.find({
-        _id: { $in: item_ids }
-      });
+      items = await instance.purchaseItem.find({ _id: { $in: item_ids } });
+
       let goodsObj = {}
       let pro_ids = []
       let itemObj = {}

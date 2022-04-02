@@ -41,12 +41,10 @@ module.exports = fp((instance, _, next) => {
       instance.pushObj.findOne({
         service: service_id,
         code: code,
-        last_time: {
-          $gte: now - 5000
-        }
+        last_time: { $gte: now - 5000 },
       }, (err, push) => {
         if(err || push == null) {
-          var pushObj = instance.pushObj({
+          const pushObj = instance.pushObj({
             unique: service_id + code,
             service: service_id,
             code: code,
@@ -64,8 +62,7 @@ module.exports = fp((instance, _, next) => {
                 // instance.send_Error('save push', JSON.stringify(err))
               }
               else {
-                
-                var message = {
+                const message = {
                   to: '/topics/' + service_id,
                   data: Object.assign({
                     type: code,

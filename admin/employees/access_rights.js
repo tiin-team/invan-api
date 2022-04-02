@@ -2,81 +2,48 @@ module.exports = (instance, options, next) => {
 
   // get access rights
 
-  var get_access = (request, reply, admin) => {
-    instance.settingFeatures.findOne({
+  const get_access = async (request, reply, admin) => {
+    const feature = await instance.settingFeatures.findOne({
       organization: admin.organization
-    }, (err, feature) => {
-      if (feature) {
-        instance.AccessRights.findOne({
-          organization: admin.organization,
-          name: admin.role
-        }, (err, access) => {
-          if (access) {
-            var USER = {}
-            try {
-              access = access.toObject()
-            }
-            catch (error) {
-              instance.send_Error('to Object', error.message)
-            }
-            delete access.pos
-            delete access.close_ticket
-            delete access.can_sell
-            delete access.refund
-            delete access.show_all_receipts
-            delete access.pay_debt
-            delete access.show_shift_history
-            delete access.apply_discount
-            delete access.change_settings
-            delete access.show_stock
-            delete access.edit_items
-            delete access.organization
-            delete access._id
-            delete access.back_office
-            access.inventory = true
-            USER.access = access
-            USER.feature = feature
-            reply.ok(USER)
-          }
-          else {
-            // reply.error('Access does not exist')
-            reply.ok({
-              "access": {
-                "is_bos": false,
-                "reports": true,
-                "items": true,
-                "inventory": true,
-                "employees": true,
-                "customers": true,
-                "settings": true,
-                "edit_profile": true,
-                "set_the_taxes": true,
-                "manage_pos_devices": true,
-                "can_delete_item": true
-              },
-              "feature": {
-                "opened_receipts": true,
-                "debts": true,
-                "shifts": true,
-                "orders": true,
-                "chat": true,
-                "print_pre_check": true,
-                "receipt_save_as_draft": true,
-                "can_change_price": true,
-                "open_tickets": true,
-                "time_clock": true,
-                show_stock: false,
-                "karaoke": true,
-                "scale": true,
-                "section": true,
-                "__v": 0
-              }
-            })
-          }
-        })
+    })
+      .lean();
+    // , async (err, feature) => {
+    if (feature) {
+      const access = await instance.AccessRights.findOne({
+        organization: admin.organization,
+        name: admin.role
+      })
+        .lean();
+      //  (err, access) => {
+      if (access) {
+        const USER = {}
+        // try {
+        //   access = access.toObject()
+        // }
+        // catch (error) {
+        //   instance.send_Error('to Object', error.message)
+        // }
+        delete access.pos
+        delete access.close_ticket
+        delete access.can_sell
+        delete access.refund
+        delete access.show_all_receipts
+        delete access.pay_debt
+        delete access.show_shift_history
+        delete access.apply_discount
+        delete access.change_settings
+        delete access.show_stock
+        delete access.edit_items
+        delete access.organization
+        delete access._id
+        delete access.back_office
+        access.inventory = true
+        USER.access = access
+        USER.feature = feature
+        reply.ok(USER)
       }
       else {
-        // reply.error('Feature not exist')
+        // reply.error('Access does not exist')
         reply.ok({
           "access": {
             "is_bos": false,
@@ -110,7 +77,44 @@ module.exports = (instance, options, next) => {
           }
         })
       }
-    })
+      // })
+    }
+    else {
+      // reply.error('Feature not exist')
+      reply.ok({
+        "access": {
+          "is_bos": false,
+          "reports": true,
+          "items": true,
+          "inventory": true,
+          "employees": true,
+          "customers": true,
+          "settings": true,
+          "edit_profile": true,
+          "set_the_taxes": true,
+          "manage_pos_devices": true,
+          "can_delete_item": true
+        },
+        "feature": {
+          "opened_receipts": true,
+          "debts": true,
+          "shifts": true,
+          "orders": true,
+          "chat": true,
+          "print_pre_check": true,
+          "receipt_save_as_draft": true,
+          "can_change_price": true,
+          "open_tickets": true,
+          "time_clock": true,
+          show_stock: false,
+          "karaoke": true,
+          "scale": true,
+          "section": true,
+          "__v": 0
+        }
+      })
+    }
+    // })
   }
 
   instance.get('/user/get_access', options.version, (request, reply) => {
@@ -121,13 +125,9 @@ module.exports = (instance, options, next) => {
 
   // get for table
 
-  var get_for_table = (request, reply, admin) => {
+  const get_for_table = (request, reply, admin) => {
     instance.AccessRights.aggregate([
-      {
-        $match: {
-          organization: admin.organization
-        }
-      },
+      { $match: { organization: admin.organization } },
       {
         $lookup: {
           from: 'users',
@@ -160,9 +160,9 @@ module.exports = (instance, options, next) => {
       if (array == null) {
         array = []
       }
-      var total = array.length
-      var page = parseInt(request.params.page)
-      var limit = parseInt(request.params.limit)
+      const total = array.length
+      const page = parseInt(request.params.page)
+      const limit = parseInt(request.params.limit)
       array = array.slice((page - 1) * limit, limit * page)
       for (let i = 0; i < array.length; i++) {
         array[i].employees = array[i].employees.length
@@ -196,25 +196,15 @@ module.exports = (instance, options, next) => {
 
   // get by id
 
-  var get_by_id = (request, reply, admin) => {
-    instance.AccessRights.findOne({
-      _id: request.params.id
-    }, (err, answer) => {
-      if (answer) {
-        // var reply_ = []
-        // for(var i in answer) {
-        //   reply_.push({
-        //     text: i,
-        //     value: answer[i]
-        //   })
-        // }
+  const get_by_id = async (request, reply, admin) => {
+    const access = await instance.AccessRights.findById(request.params.id).lean();
 
-        reply.ok(answer)
-      }
-      else {
-        reply.error('Not Found')
-      }
-    })
+    if (access) {
+      reply.ok(access)
+    }
+    else {
+      reply.error('Not Found')
+    }
   }
 
   instance.get('/access/get/:id', options.version, (request, reply) => {
@@ -225,28 +215,30 @@ module.exports = (instance, options, next) => {
 
   // create access rigths
 
-  var create_access = (request, reply, admin) => {
-    instance.AccessRights.findOne({
+  const create_access = async (request, reply, admin) => {
+    const access = await instance.AccessRights.findOne({
       organization: admin.organization,
       name: request.body.name
-    }, (err, access) => {
-      if (access) {
-        instance.allready_exist(reply)
-      }
-      else {
-        request.body.organization = admin.organization
-        var accessRights = new instance.AccessRights(request.body)
-        accessRights.save((err) => {
-          if (err) {
-            reply.error('Error on saving')
-            instance.send_Error('access rights ', JSON.stringify(err))
-          }
-          else {
-            reply.ok()
-          }
-        })
-      }
     })
+      .lean();
+    // , (err, access) => {
+    if (access) {
+      instance.allready_exist(reply)
+    }
+    else {
+      request.body.organization = admin.organization
+      const accessRights = new instance.AccessRights(request.body)
+      accessRights.save((err) => {
+        if (err) {
+          reply.error('Error on saving')
+          instance.send_Error('access rights ', JSON.stringify(err))
+        }
+        else {
+          reply.ok()
+        }
+      })
+    }
+    // })
   }
 
   instance.post('/access/create', options.version, (request, reply) => {
@@ -257,96 +249,112 @@ module.exports = (instance, options, next) => {
 
   // update access
 
-  var update_access = (request, reply, admin) => {
-    instance.AccessRights.findOne({
+  const update_access = async (request, reply, admin) => {
+    const access = await instance.AccessRights.findOne({
       _id: request.params.id
-    }, (err, access) => {
-      if (access) {
-        if (access.name == 'boss') {
-          request.body = {
-            name: 'boss',
-            is_bos: true,
-            pos: true,
-            close_ticket: true,
-            can_sell: true,
-            print_pre_check: true,
-            receipt_save_as_draft: true,
-            can_change_price: true,
-            refund: true,
-            show_all_receipts: true,
-            pay_debt: true,
-            show_shift_history: true,
-            apply_discount: true,
-            change_settings: true,
-            edit_items: true,
-            edit_ticket: true,
-            split_ticket: true,
-            change_waiter: true,
-            delete_ticket: true,
-            show_all_tickets: true,
-            can_access_to_shift: true,
-            back_office: true,
-            reports: true,
-            items: true,
-            employees: true,
-            customers: true,
-            settings: true,
-            edit_profile: true,
-            set_the_taxes: true,
-            manage_pos_devices: true,
-            can_delete_item: true,
-            inventory: true,
-            inv_purchase_orders: true,
-            inv_purchase_mark: true,
-            inv_purchase_orders_cost: true,
-            inv_transfer_orders: true,
-            inv_stock_adjusment: true,
-            inv_stock_adjusment_cost: true,
-            inv_inventory_counts: true,
-            inv_productions: true,
-            inv_productions_cost: true,
-            inv_suppliers: true,
-            inv_supplier_transaction: true,
-            inv_supplier_transaction_corrector: true,
-            inv_fees: true,
-            inv_inventory_history: true,
-            inv_inventory_valuation: true,
-            workgroup_edit_cost: true,
-            workgroup: true
-          }
+    })
+      .lean();
+    // , (err, access) => {
+    if (access) {
+      if (access.name == 'boss') {
+        request.body = {
+          name: 'boss',
+          is_bos: true,
+          pos: true,
+          close_ticket: true,
+          can_sell: true,
+          print_pre_check: true,
+          receipt_save_as_draft: true,
+          can_change_price: true,
+          refund: true,
+          show_all_receipts: true,
+          pay_debt: true,
+          show_shift_history: true,
+          apply_discount: true,
+          change_settings: true,
+          edit_items: true,
+          edit_ticket: true,
+          split_ticket: true,
+          change_waiter: true,
+          delete_ticket: true,
+          show_all_tickets: true,
+          can_access_to_shift: true,
+          back_office: true,
+          //reports
+          reports: true,
+          report_sale: true,
+          report_accaunt: true,
+          report_abs: true,
+          report_sale_by_item: true,
+          report_sale_by_category: true,
+          report_sale_by_supplier: true,
+          report_employee: true,
+          report_sale_by_payment: true,
+          report_receipt: true,
+          report_debt: true,
+          report_discount: true,
+          report_taxes: true,
+          report_shift: true,
+          //items
+          items: true,
+          employees: true,
+          customers: true,
+          settings: true,
+          edit_profile: true,
+          set_the_taxes: true,
+          manage_pos_devices: true,
+          can_delete_item: true,
+          inventory: true,
+          inv_purchase_orders: true,
+          inv_purchase_mark: true,
+          inv_purchase_orders_cost: true,
+          inv_transfer_orders: true,
+          inv_stock_adjusment: true,
+          inv_stock_adjusment_cost: true,
+          inv_inventory_counts: true,
+          inv_productions: true,
+          inv_productions_cost: true,
+          inv_suppliers: true,
+          inv_supplier_transaction: true,
+          inv_supplier_transaction_corrector: true,
+          inv_fees: true,
+          inv_inventory_history: true,
+          inv_inventory_valuation: true,
+          workgroup_edit_cost: true,
+          workgroup: true
         }
-        instance.AccessRights.findOne({
-          organization: admin.organization,
-          name: request.body.name,
-          _id: {
-            $ne: request.params.id
-          }
-        }, (err, unique) => {
-          if (unique) {
-            instance.allready_exist(reply)
-          }
-          else {
-            instance.AccessRights.updateOne({
-              _id: request.params.id
-            }, {
-              $set: request.body
-            }, (err) => {
-              if (err) {
-                reply.error('Error on updating')
-                instance.send_Error('updating access', JSON.stringify(err))
-              }
-              else {
-                reply.ok()
-                instance.push_to_organization(111, admin.organization)
-              }
-            })
-          }
-        })
+      }
+      const unique = await instance.AccessRights.findOne({
+        organization: admin.organization,
+        name: request.body.name,
+        _id: { $ne: request.params.id },
+      })
+        .lean();
+      // , (err, unique) => {
+      if (unique) {
+        instance.allready_exist(reply)
       }
       else {
-        reply.error('Not found')
+        instance.AccessRights.updateOne(
+          { _id: request.params.id },
+          { $set: request.body },
+          (err) => {
+            if (err) {
+              reply.error('Error on updating')
+              instance.send_Error('updating access', JSON.stringify(err))
+            }
+            else {
+              reply.ok()
+              instance.push_to_organization(111, admin.organization)
+            }
+          })
       }
-    })
+      // })
+    }
+    else {
+      reply.error('Not found')
+    }
+    // })
   }
 
   instance.post('/access/update/:id', options.version, (request, reply) => {
@@ -357,7 +365,7 @@ module.exports = (instance, options, next) => {
 
   // delete access
 
-  var delete_access = (request, reply, admin) => {
+  const delete_access = (request, reply, admin) => {
     instance.AccessRights.find({
       organization: admin.organization,
       _id: {
@@ -367,15 +375,13 @@ module.exports = (instance, options, next) => {
       if (accesses == null) {
         accesses = []
       }
-      var names = []
+      const names = []
       for (var a of accesses) {
         names.push(a.name)
       }
       instance.User.find({
         organization: admin.organization,
-        role: {
-          $in: names
-        }
+        role: { $in: names },
       }, (err, users) => {
         if (users == null) {
           users = []
@@ -410,11 +416,11 @@ module.exports = (instance, options, next) => {
 
   // get roles
 
-  var get_roles = (request, reply, admin) => {
+  const get_roles = (request, reply, admin) => {
     instance.AccessRights.find({
       organization: admin.organization
     }, (err, roles) => {
-      var names = []
+      const names = []
       for (var r of roles) {
         if (r.name != 'boss') {
           names.push({
