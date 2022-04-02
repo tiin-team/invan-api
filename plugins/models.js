@@ -1705,7 +1705,18 @@ module.exports = fp((instance, _, next) => {
     report_discount: boolean,
     report_taxes: boolean,
     report_shift: boolean,
+    //items
     items: boolean,
+    item_list: boolean,
+    item_mxik_search: boolean,
+    item_composite_item: boolean,
+    item_add_from_warehause: boolean,
+    item_print_label: boolean,
+    item_price_change_history: boolean,
+    item_categories: boolean,
+    item_modifiers: boolean,
+    item_discount: boolean,
+    //employees
     employees: boolean,
     customers: boolean,
     settings: boolean,

@@ -9,7 +9,7 @@
   "scripts": {
     "test": "tap test/**/*.test.js",
     "testmocha": "mocha test/**/*.spec.js",
-    "start": "fastify start -l info -P --address=0.0.0.0 app.js",
+    "start": "fastify start -l info -P --address=0.0.0.0 --port=4000 app.js",
     "dev": "fastify start -l info -P -w --address=0.0.0.0 --ignore-watch='node_modules .git static/ translator/locales' app.js",
     "devUpload": "fastify start -l info -P -w --address=0.0.0.0 --port=3001 --ignore-watch='node_modules .git static/ translator/locales' upload.js",
     "devDownload": "fastify start -l info -P -w --address=0.0.0.0 --port=3002 --ignore-watch='node_modules .git static/ translator/locales' download.js",

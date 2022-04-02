@@ -297,6 +297,16 @@ module.exports = (instance, options, next) => {
           report_shift: true,
           //items
           items: true,
+          item_list: true,
+          item_mxik_search: true,
+          item_composite_item: true,
+          item_add_from_warehause: true,
+          item_print_label: true,
+          item_price_change_history: true,
+          item_categories: true,
+          item_modifiers: true,
+          item_discount: true,
+          //employees
           employees: true,
           customers: true,
           settings: true,
@@ -304,6 +314,7 @@ module.exports = (instance, options, next) => {
           set_the_taxes: true,
           manage_pos_devices: true,
           can_delete_item: true,
+          //inventory
           inventory: true,
           inv_purchase_orders: true,
           inv_purchase_mark: true,
