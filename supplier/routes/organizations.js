@@ -11,9 +11,7 @@ async function getOrganizations(request, reply, instance) {
             {
                 $group: {
                     _id: null,
-                    ids: {
-                        $push: '$organization'
-                    }
+                    ids: { $push: '$organization' }
                 }
             }
         ]);
@@ -27,7 +25,6 @@ async function getOrganizations(request, reply, instance) {
 }
 
 module.exports = fp((instance, _, next) => {
-    
     instance.get(
         '/organizations',
         { preValidation: [instance.auth_supplier] },

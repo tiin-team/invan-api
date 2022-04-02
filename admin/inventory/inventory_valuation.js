@@ -2,22 +2,14 @@ const fp = require('fastify-plugin');
 
 async function inventoryValuationResult({ limit, page, supplier_id, organization, service }, instance,) {
 
-  const query = {
-    $match: {
-      organization,
-    },
-  };
+  const query = { $match: { organization } };
 
   if (supplier_id) {
     try {
       query["$match"].primary_supplier_id = instance.ObjectId(supplier_id);
     } catch (error) { }
   }
-  const unwindServices = {
-    $unwind: {
-      path: "$services",
-    },
-  };
+  const unwindServices = { $unwind: { path: "$services" } };
 
   const projectPrimaryFields = {
     $project: {
@@ -165,20 +157,12 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
   const items = await instance.goodsSales
     .aggregate([
       query,
-      {
-        $skip: limit * (page - 1),
-      },
-      {
-        $limit: limit,
-      },
+      { $skip: limit * (page - 1) },
+      { $limit: limit },
       unwindServices,
       projectPrimaryFields,
       joinItems,
-      {
-        $sort: {
-          _id: 1,
-        },
-      },
+      { $sort: { _id: 1 } },
     ])
     .allowDiskUse(true)
     .exec();

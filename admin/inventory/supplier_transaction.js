@@ -261,25 +261,17 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                     $regex: supplier_name,
                     $options: 'i'
                 },
-                is_deleted: {
-                    $ne: true
-                }
-            }
-        }
+                is_deleted: { $ne: true },
+            },
+        };
         if (service) {
             $match.$match.service = service
         }
-        const $sort = {
-            $sort: {
-                _id: 1
-            }
-        }
-        const $skip = {
-            $skip: (page - 1) * limit
-        }
-        const $limit = {
-            $limit: limit
-        }
+        const $sort = { $sort: { _id: 1 } };
+
+        const $skip = { $skip: (page - 1) * limit };
+        const $limit = { $limit: limit };;
+
         const $lookup = {
             $lookup: {
                 from: 'suppliertransactions',
@@ -297,12 +289,8 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
         const $group = {
             $group: {
                 _id: '$_id',
-                supplier_name: {
-                    $first: '$supplier_name'
-                },
-                balance: {
-                    $first: '$balance'
-                }
+                supplier_name: { $first: '$supplier_name' },
+                balance: { $first: '$balance' },
             }
         }
         const $project = {

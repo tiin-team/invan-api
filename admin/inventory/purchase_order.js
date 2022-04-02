@@ -563,9 +563,7 @@ module.exports = fp((instance, options, next) => {
       }
 
       // update items cost
-      const goods = await instance.goodsSales.find({
-        _id: { $in: pro_ids }
-      });
+      const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } });
 
       for (var g of goods) {
         var in_stock = null

@@ -165,47 +165,62 @@ module.exports = (instance, options, next) => {
     })
   })
 
-  function make_unique_suppliers(request, reply, admin, next) {
-    instance.adjustmentSupplier.find({
+  async function make_unique_suppliers(request, reply, admin, next) {
+    const suppliers = await instance.adjustmentSupplier.find({
       organization: admin.organization,
       supplier_name: request.body.supplier_name
-    }, (_, suppliers) => {
-      if (suppliers == null) {
-        suppliers = []
-      }
-      if (suppliers.length > 0) {
-        if (request.params) {
-          if (request.params.id) {
-            if (request.params.id == suppliers[0]._id) {
-              next(request, reply, admin)
-            }
-            else {
-              instance.allready_exist(reply)
-            }
-          }
-          else {
-            instance.allready_exist(reply)
-          }
-        }
-        else {
-          instance.allready_exist(reply)
-        }
-      }
-      else {
+    })
+      .lean();
+    if (suppliers && suppliers.length > 0) {
+      if (request.params && request.params.id && request.params.id == suppliers[0]._id) {
         next(request, reply, admin)
       }
-    })
+      else {
+        instance.allready_exist(reply)
+      }
+    } else {
+      next(request, reply, admin)
+    }
+    // instance.adjustmentSupplier.find({
+    //   organization: admin.organization,
+    //   supplier_name: request.body.supplier_name
+    // }, (_, suppliers) => {
+    //   if (suppliers == null) {
+    //     suppliers = []
+    //   }
+    //   if (suppliers.length > 0) {
+    //     if (request.params) {
+    //       if (request.params.id) {
+    //         if (request.params.id == suppliers[0]._id) {
+    //           next(request, reply, admin)
+    //         }
+    //         else {
+    //           instance.allready_exist(reply)
+    //         }
+    //       }
+    //       else {
+    //         instance.allready_exist(reply)
+    //       }
+    //     }
+    //     else {
+    //       instance.allready_exist(reply)
+    //     }
+    //   }
+    //   else {
+    //     next(request, reply, admin)
+    //   }
+    // })
   }
 
   // create supplier 
 
-  var create_supplier = (request, reply, admin) => {
-    if (request.body.supplier_name === undefined || request.body.supplier_name === '' || request.body.phone_number === undefined || request.body.phone_number === undefined) {
+  const create_supplier = (request, reply, admin) => {
+    if (!request.body.supplier_name || !request.body.phone_number) {
       reply.error('Error on creating supplier phone_number and name required')
     }
     else {
       delete request.body._id
-      var supplier_model = instance.adjustmentSupplier(Object.assign({
+      const supplier_model = instance.adjustmentSupplier(Object.assign({
         organization: admin.organization,
       }, request.body))
       supplier_model.save((err, supp) => {
@@ -233,7 +248,7 @@ module.exports = (instance, options, next) => {
 
   // update supplier
 
-  var update_supplier = (request, reply, admin) => {
+  const update_supplier = (request, reply, admin) => {
     instance.adjustmentSupplier.updateOne({ _id: request.params.id }, { $set: request.body }, (err, result) => {
       if (result.ok) {
         reply.ok()
@@ -259,7 +274,7 @@ module.exports = (instance, options, next) => {
 
   // delete supplier
 
-  var delete_supplier = (request, reply, admin) => {
+  const delete_supplier = (request, reply, admin) => {
     instance.adjustmentSupplier.deleteOne({ _id: request.params.id }, (err, _) => {
       if (err) {
         instance.send_Error('delete supp', JSON.stringify(err))
@@ -280,11 +295,9 @@ module.exports = (instance, options, next) => {
 
   // delete group
 
-  var delete_suppliers = (request, reply, admin) => {
+  const delete_suppliers = (request, reply, admin) => {
     instance.adjustmentSupplier.deleteMany({
-      _id: {
-        $in: request.body.indexes
-      }
+      _id: { $in: request.body.indexes }
     }, (err, _) => {
       if (err) {
         reply.error('Error on deleting')
