@@ -407,9 +407,9 @@ module.exports = fp((instance, options, next) => {
       if (!(request.body.additional_cost instanceof Array)) {
         request.body.additional_cost = []
       }
-      const purch = await instance.inventoryPurchase.findOne({
-        _id: request.params.id
-      });
+      const purch = await instance.inventoryPurchase
+        .findOne({ _id: request.params.id })
+        .lean();
       if (!purch) return reply.fourorfour('purchase_order')
 
       let items = request.body.items;
@@ -503,24 +503,23 @@ module.exports = fp((instance, options, next) => {
           $set: {
             status: status,
             additional_cost: purch.additional_cost,
-            is_service_changable: purch.is_service_changable
+            is_service_changable: purch.is_service_changable,
           }
         });
       if (item_ids && item_ids.length == 0) {
         return reply.ok(purch)
       }
-      for (var id of item_ids) {
-        await instance.purchaseItem.updateOne({
-          _id: id
-        }, {
-          $set: itemObj[id]
-        })
+      for (const id of item_ids) {
+        await instance.purchaseItem.updateOne(
+          { _id: id },
+          { $set: itemObj[id] },
+        )
       };
 
       // supplier transaction
-      const current_supplier = await instance.adjustmentSupplier.findOne({
-        _id: purch.supplier_id
-      })
+      const current_supplier = await instance.adjustmentSupplier
+        .findOne({ _id: purch.supplier_id })
+        .lean();
       if (current_supplier) {
         if (!current_supplier.balance) {
           current_supplier.balance = 0
@@ -541,15 +540,16 @@ module.exports = fp((instance, options, next) => {
           current_supplier.balance -= used_transaction;
           supplier_used_transaction = -1 * used_transaction;
         }
-        await instance.adjustmentSupplier.updateOne({
-          _id: purch.supplier_id
-        }, {
-          $set: {
-            balance: current_supplier.balance,
-            balance_usd: current_supplier.balance_usd
-          }
-        })
+        await instance.adjustmentSupplier.updateOne(
+          { _id: purch.supplier_id },
+          {
+            $set: {
+              balance: current_supplier.balance,
+              balance_usd: current_supplier.balance_usd
+            }
+          })
         await new instance.supplierTransaction({
+          service: purch.service,
           supplier_id: current_supplier._id,
           document_id: purch.p_order,
           employee: admin._id,
@@ -641,7 +641,7 @@ module.exports = fp((instance, options, next) => {
           date: purch.purchase_order_date,
           receipt_no: purch.p_order
         },
-        'returned_order'
+        'returned_order',
       )
     }
   }
@@ -702,7 +702,9 @@ module.exports = fp((instance, options, next) => {
                   if (purchaseModel.status == 'closed') purchaseModel.status = 'pending'
 
                   purchaseModel.supplier_name = supp.supplier_name
-                  purchaseModel.service_name = (await instance.services.findById(request.body.service).lean()).name
+                  purchaseModel.service_name = (
+                    await instance.services.findById(request.body.service, { name: 1 }).lean()
+                  ).name
                   const purchase_items = []
                   var total_count = 0
                   var total = 0
@@ -825,13 +827,13 @@ module.exports = fp((instance, options, next) => {
     const body = request.body
     const admin = request.user
     try {
-      const service = await instance.services.findOne({ _id: service_id })
-      if (!service) {
-        return reply.fourorfour('Service')
-      }
+      const service = await instance.services.findOne({ _id: service_id }).lean();
+
+      if (!service) return reply.fourorfour('Service')
+
       body.service_name = service.name
 
-      const supplier = await instance.adjustmentSupplier.findOne({ _id: supplier_id })
+      const supplier = await instance.adjustmentSupplier.findOne({ _id: supplier_id }).lean();
       if (!supplier) {
         return reply.fourorfour('Supplier')
       }
@@ -863,6 +865,7 @@ module.exports = fp((instance, options, next) => {
           organization: admin.organization,
           _id: body.items[index].product_id
         })
+          .lean();
         if (current_item) {
           items.push({
             organization: admin.organization,
@@ -876,7 +879,7 @@ module.exports = fp((instance, options, next) => {
             received: body.items[index].quality,
             sku: current_item.sku,
             barcode: current_item.barcode,
-            amount: body.items[index].quality * body.items[index].purchase_cost
+            amount: body.items[index].quality * body.items[index].purchase_cost,
           })
           total_count += body.items[index].quality
           let purchase_cost = body.items[index].purchase_cost
@@ -897,12 +900,16 @@ module.exports = fp((instance, options, next) => {
       if (!supplier.balance_usd) {
         supplier.balance_usd = 0;
       }
+      let balance_uzs = 0;
+      let balance_usd = 0;
       if (body.total_currency == 'usd') {
         body.total = body.total / currency.value;
         supplier.balance_usd += body.total
+        balance_usd = body.total;
         // supplier.balance_usd -= body.total
       }
       else {
+        balance_uzs = body.total;
         supplier.balance += body.total
         // supplier.balance -= body.total
       }
@@ -911,14 +918,17 @@ module.exports = fp((instance, options, next) => {
       const { _id: purchase_id } = await new instance.inventoryPurchase(body).save()
       if (body.status == 'pending')
         return reply.ok({ _id: purchase_id })
-      await instance.adjustmentSupplier.updateOne({
-        _id: supplier._id
-      }, {
-        $set: {
-          balance: supplier.balance,
-          balance_usd: supplier.balance_usd
-        }
-      })
+      await instance.adjustmentSupplier.updateOne(
+        { _id: supplier._id, 'services.serivce': service_id },
+        {
+          $set: {
+            balance: supplier.balance,
+            balance_usd: supplier.balance_usd,
+            'services.$.serivce': service_id,
+            'services.$.balance': { $inc: balance_uzs },
+            'services.$.balance_usd': { $inc: balance_usd },
+          },
+        })
       try {
         await new instance.supplierTransaction({
           supplier_id: supplier._id,
@@ -937,7 +947,7 @@ module.exports = fp((instance, options, next) => {
         items[index].purchase_id = purchase_id
         await new instance.purchaseItem(items[index]).save()
         // update cost and in_stock
-        const item = await instance.goodsSales.findOne({ _id: items[index].product_id })
+        const item = await instance.goodsSales.findOne({ _id: items[index].product_id }).lean();
         if (item) {
           let in_stock = 0
           if (typeof item.services == typeof []) {
@@ -956,13 +966,10 @@ module.exports = fp((instance, options, next) => {
             if (item.cost_currency == 'usd') {
               new_cost = new_cost / currency.value
             }
-            await instance.goodsSales.updateOne({
-              _id: item._id
-            }, {
-              $set: {
-                cost: new_cost
-              }
-            })
+            await instance.goodsSales.updateOne(
+              { _id: item._id },
+              { $set: { cost: new_cost } },
+            )
           }
           instance.update_in_stock_of_sold_items(item._id, service_id, (-1) * items[index].quality, admin, { date: body.purchase_order_date, receipt_no: body.p_order }, 'returned_order')
         }
@@ -1704,27 +1711,26 @@ module.exports = fp((instance, options, next) => {
           purch.total = total
           purch.total_currency = request.body.total_currency ? request.body.total_currency : 'uzs'
           purch.total_count = total_count
-          instance.inventoryPurchase.updateOne({
-            _id: purch._id
-          }, {
-            $set: purch
-          }, (err, _) => {
-            if (err) {
-              reply.error('Error on updating')
-              instance.send_Error('updating purchase', JSON.stringify(err))
-            }
-            else {
-              instance.purchaseItem.insertMany(items, (err) => {
-                if (err) {
-                  reply.error('Error on saving')
-                  instance.send_Error('creating items', JSON.stringify(err))
-                }
-                else {
-                  reply.ok()
-                }
-              })
-            }
-          })
+          instance.inventoryPurchase.updateOne(
+            { _id: purch._id },
+            { $set: purch },
+            (err, _) => {
+              if (err) {
+                reply.error('Error on updating')
+                instance.send_Error('updating purchase', JSON.stringify(err))
+              }
+              else {
+                instance.purchaseItem.insertMany(items, (err) => {
+                  if (err) {
+                    reply.error('Error on saving')
+                    instance.send_Error('creating items', JSON.stringify(err))
+                  }
+                  else {
+                    reply.ok()
+                  }
+                })
+              }
+            })
         })
       }
     })

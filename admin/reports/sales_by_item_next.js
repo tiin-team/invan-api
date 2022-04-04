@@ -350,20 +350,16 @@ module.exports = (instance, _, next) => {
 
       const filterReceipts = {
         organization: admin.organization,
-        receipt_state: {
-          $ne: 'draft'
-        },
+        receipt_state: { $ne: 'draft' },
         debt_id: null,
         date: {
           $gte: min - (process.env.TIME_DIFF | 0),
           $lte: max - (process.env.TIME_DIFF | 0)
-        }
-      }
+        },
+      };
 
       if (services && services.length > 0) {
-        filterReceipts.service = {
-          $in: services
-        }
+        filterReceipts.service = { $in: services };
       }
 
       if (custom) {
@@ -384,48 +380,24 @@ module.exports = (instance, _, next) => {
         const employeesFilter = [
           {
             $and: [
-              {
-                waiter_id: ""
-              },
-              {
-                cashier_id: {
-                  $in: employees
-                }
-              }
+              { waiter_id: "" },
+              { cashier_id: { $in: employees } }
             ]
           },
           {
             $and: [
-              {
-                cashier_id: ""
-              },
-              {
-                waiter_id: {
-                  $in: employees
-                }
-              }
-            ]
+              { cashier_id: "" },
+              { waiter_id: { $in: employees } },
+            ],
           },
           {
             $and: [
-              {
-                waiter_id: {
-                  $ne: ""
-                }
-              },
-              {
-                cashier_id: {
-                  $ne: ""
-                }
-              },
-              {
-                waiter_id: {
-                  $in: employees
-                }
-              }
-            ]
-          }
-        ]
+              { waiter_id: { $ne: "" } },
+              { cashier_id: { $ne: "" } },
+              { waiter_id: { $in: employees } },
+            ],
+          },
+        ];
         if (filterReceipts['$or']) {
           filterReceipts['$and'] = [
             { $or: employeesFilter },
@@ -438,41 +410,27 @@ module.exports = (instance, _, next) => {
         }
       }
 
-      const unwindSoldItemList = {
-        $unwind: "$sold_item_list"
-      }
+      const unwindSoldItemList = { $unwind: "$sold_item_list" };
 
       const calculateItemsReport = {
         $group: {
           _id: "$sold_item_list.product_id",
-          product_name: {
-            $last: "$sold_item_list.product_name"
-          },
+          product_name: { $last: "$sold_item_list.product_name" },
           cost_of_goods: {
             $sum: {
               $multiply: [
                 { $max: ["$sold_item_list.cost", 0] },
                 { $max: ["$sold_item_list.value", 0] },
-                {
-                  $cond: [
-                    "$is_refund",
-                    -1, 1
-                  ]
-                }
-              ]
-            }
+                { $cond: ["$is_refund", -1, 1] }
+              ],
+            },
           },
           gross_sales: {
             $sum: {
               $multiply: [
                 { $max: ["$sold_item_list.price", 0] },
                 { $max: ["$sold_item_list.value", 0] },
-                {
-                  $cond: [
-                    "$is_refund",
-                    0, 1
-                  ]
-                }
+                { $cond: ["$is_refund", 0, 1] },
               ]
             }
           },
@@ -481,32 +439,17 @@ module.exports = (instance, _, next) => {
               $multiply: [
                 { $max: ["$sold_item_list.price", 0] },
                 { $max: ["$sold_item_list.value", 0] },
-                {
-                  $cond: [
-                    "$is_refund",
-                    1, 0
-                  ]
-                }
-              ]
-            }
+                { $cond: ["$is_refund", 1, 0] },
+              ],
+            },
           },
           discounts: {
             $sum: {
               $multiply: [
-                {
-                  $max: [
-                    "$sold_item_list.total_discount",
-                    0
-                  ]
-                },
-                {
-                  $cond: [
-                    "$is_refund",
-                    -1, 1
-                  ]
-                }
-              ]
-            }
+                { $max: ["$sold_item_list.total_discount", 0] },
+                { $cond: ["$is_refund", -1, 1] },
+              ],
+            },
           },
           items_sold: {
             $sum: {
@@ -522,11 +465,11 @@ module.exports = (instance, _, next) => {
                         { $max: ["$sold_item_list.count_by_type", 1] }
                       ]
                     },
-                    { $max: ["$sold_item_list.value", 0] }
-                  ]
-                }
-              ]
-            }
+                    { $max: ["$sold_item_list.value", 0] },
+                  ],
+                },
+              ],
+            },
           },
           items_refunded: {
             $sum: {
@@ -539,18 +482,18 @@ module.exports = (instance, _, next) => {
                       $divide: [
                         { $max: ["$sold_item_list.value", 0] },
                         { $max: ["$sold_item_list.count_by_type", 1] }
-                      ]
+                      ],
                     },
-                    { $max: ["$sold_item_list.value", 0] }
-                  ]
+                    { $max: ["$sold_item_list.value", 0] },
+                  ],
                 },
-                0
-              ]
-            }
+                0,
+              ],
+            },
           },
-          taxes: { $sum: 0 }
-        }
-      }
+          taxes: { $sum: 0 },
+        },
+      };
       if (supplier) {
         filterReceipts["sold_item_list.supplier_id"] = supplier
         calculateItemsReport.$group.supplier = { $last: "$sold_item_list.supplier_name" }
@@ -559,28 +502,22 @@ module.exports = (instance, _, next) => {
         filterReceipts["sold_item_list.category_id"] = category
         calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
       }
-      const searchByItemName = {
-        $match: {
-          product_name: {
-            $regex: (search ? search : ''),
-            $options: 'i'
-          }
-        }
-      }
+      if (search)
+        filterReceipts.product_name = { $regex: search, $options: 'i' };
+      // const searchByItemName = {
+      //   $match: {
+      //     product_name: {
+      //       $regex: (search ? search : ''),
+      //       $options: 'i'
+      //     }
+      //   }
+      // }
 
-      const sortResult = {
-        $sort: {
-          gross_sales: -1
-        }
-      }
+      const sortResult = { $sort: { gross_sales: -1 } };
 
-      const skipResult = {
-        $skip: limit * (page - 1)
-      }
+      const skipResult = { $skip: limit * (page - 1) };
 
-      const limitResult = {
-        $limit: limit
-      }
+      const limitResult = { $limit: limit };
 
       const projectResult = {
         $project: {
@@ -596,34 +533,28 @@ module.exports = (instance, _, next) => {
           net_sales: {
             $subtract: [
               "$gross_sales",
-              {
-                $add: ["$refunds", "$discounts"]
-              }
-            ]
+              { $add: ["$refunds", "$discounts"] },
+            ],
           },
           gross_profit: {
             $subtract: [
               {
                 $subtract: [
                   "$gross_sales",
-                  {
-                    $add: ["$refunds", "$discounts"]
-                  }
-                ]
+                  { $add: ["$refunds", "$discounts"] },
+                ],
               },
-              "$cost_of_goods"
-            ]
-          }
-        }
-      }
+              "$cost_of_goods",
+            ],
+          },
+        },
+      };
 
       const result = await instance.Receipts.aggregate([
-        {
-          $match: filterReceipts
-        },
+        { $match: filterReceipts },
         unwindSoldItemList,
         calculateItemsReport,
-        searchByItemName,
+        // searchByItemName,
         sortResult,
         skipResult,
         limitResult,

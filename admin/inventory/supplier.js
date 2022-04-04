@@ -6,16 +6,11 @@ module.exports = (instance, options, next) => {
   instance.get('/inventory/get_supplier/:id', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, async (admin) => {
       try {
-        let supp = await instance.adjustmentSupplier.findOne({
-          _id: request.params.id
-        }).lean()
+        const supp = await instance.adjustmentSupplier
+          .findOne({ _id: request.params.id })
+          .lean();
         if (!supp) return reply.fourorfour('Supplier')
-        // try {
-        //   supp = supp.toObject()
-        // }
-        // catch (error) {
-        //   instance.send_Error('to Object', error.message)
-        // }
+
         const query = { supplier_id: supp._id, status: { $ne: 'pending' } };
         if (request.query.service) query.service = request.query.service;
         else query.service = { $in: request.user.services.map(elem => elem.service) };
@@ -320,15 +315,15 @@ module.exports = (instance, options, next) => {
   // create supplier transaction
 
   const createTransactionHandler = async (request, reply) => {
-
     try {
       const supplier_id = request.body.supplier_id
       const body = request.body
       const user = request.user
-      const supplier = await instance.adjustmentSupplier.findOne({ _id: supplier_id })
-      if (!supplier) {
-        return reply.fourorfour('Supplier')
-      }
+      const supplier = await instance.adjustmentSupplier
+        .findOne({ _id: supplier_id })
+        .lean();
+
+      if (!supplier) return reply.fourorfour('Supplier')
 
       if (request.body.return_money) {
         body.balance *= (-1)
@@ -341,15 +336,12 @@ module.exports = (instance, options, next) => {
         date: new Date().getTime()
       }
       const { _id: id } = await new instance.supplierTransaction(supplierTransaction).save()
-      if (!id) {
-        return reply.error('Could not save')
-      }
-      if (!supplier.balance) {
-        supplier.balance = 0;
-      }
-      if (!supplier.balance_usd) {
-        supplier.balance_usd = 0;
-      }
+
+      if (!id) return reply.error('Could not save')
+
+      if (!supplier.balance) supplier.balance = 0;
+
+      if (!supplier.balance_usd) supplier.balance_usd = 0;
 
       if (body.currency == 'usd') {
         supplier.balance_usd += body.balance;
@@ -365,14 +357,14 @@ module.exports = (instance, options, next) => {
       else {
         supplier.balance += body.balance;
       }
-      await instance.adjustmentSupplier.updateOne({
-        _id: supplier._id
-      }, {
-        $set: {
-          balance: supplier.balance,
-          balance_usd: supplier.balance_usd
-        }
-      })
+      await instance.adjustmentSupplier.updateOne(
+        { _id: supplier._id },
+        {
+          $set: {
+            balance: supplier.balance,
+            balance_usd: supplier.balance_usd
+          }
+        })
 
       if (body.status == 'active') {
         const { _id: consumption_id } = await new instance.consumptionModel({
@@ -474,23 +466,27 @@ module.exports = (instance, options, next) => {
       if (!transaction) {
         return reply.fourorfour('Transaction')
       }
-      await instance.supplierTransaction.updateOne({
-        _id: transaction._id
-      }, {
-        $set: body
-      })
+      await instance.supplierTransaction.updateOne(
+        { _id: transaction._id },
+        { $set: body },
+        { lean: true },
+      )
       reply.ok({ _id: id })
       if (transaction.status == 'pending' && body.status == 'active') {
         if (transaction.currency == 'usd') {
           try {
-            let currency = await instance.Currency.findOne({ organization: user.organization })
-            if (!currency) {
-              currency = { value: 1 }
-            }
+            const currency = await instance.Currency
+              .findOne({ organization: user.organization })
+              .lean();
+
+            if (!currency) currency = { value: 1 }
+
             body.balance = transaction.balance * currency.value
           } catch (error) { }
         }
-        const supplier = await instance.adjustmentSupplier.findOne({ _id: transaction.supplier_id })
+        const supplier = await instance.adjustmentSupplier
+          .findOne({ _id: transaction.supplier_id })
+          .lean();
         const supplier_name = supplier ? supplier.supplier_name : ''
         const { _id: consumption_id } = await new instance.consumptionModel({
           organization: user.organization,
@@ -568,7 +564,9 @@ module.exports = (instance, options, next) => {
     }
   )
   const get_supplier_bot = async (request, reply) => {
-    const supplier_phone = request.query.phone && typeof request.query.phone == typeof 'invan' ? `+${request.query.phone}` : ''
+    const supplier_phone = request.query.phone && typeof request.query.phone == typeof 'invan'
+      ? `+${request.query.phone}`
+      : '';
 
     instance.adjustmentSupplier.aggregate([
       {
@@ -576,15 +574,15 @@ module.exports = (instance, options, next) => {
           phone_number: supplier_phone,
           is_deleted: { $ne: true },
           //   // telegram_acces: true
-        }
+        },
       },
       {
         $lookup: {
           from: instance.organizations.collection.collectionName,
           localField: 'organization',
           foreignField: '_id',
-          as: 'organs'
-        }
+          as: 'organs',
+        },
       },
       // {
       //   $project: {
@@ -619,7 +617,9 @@ module.exports = (instance, options, next) => {
       }
 
       for (const [index, item] of suppliers.entries()) {
-        organization = item.organization ? await instance.organizations.findById(item.organization) : {}
+        organization = item.organization
+          ? await instance.organizations.findById(item.organization).lean()
+          : {}
         suppliers[index].organization = {
           _id: organization._id,
           address: organization.address,
