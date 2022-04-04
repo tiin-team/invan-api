@@ -501,6 +501,7 @@ module.exports = (instance, _, next) => {
       if (category) {
         filterReceipts["sold_item_list.category_id"] = category
         calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
+        calculateItemsReport.$group.category_id = { $last: "$sold_item_list.category_id" }
       }
       if (search)
         filterReceipts.product_name = { $regex: search, $options: 'i' };

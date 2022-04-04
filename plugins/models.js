@@ -1325,14 +1325,14 @@ module.exports = fp((instance, _, next) => {
       service: mongoose.Schema.Types.ObjectId,
       service_name: String,
       balance: { type: Number, default: 0 },
-      balance_currency: { type: String, default: 'uzs' },
       balance_usd: { type: Number, default: 0 },
+      balance_currency: { type: String, default: 'uzs' },
       available: { type: Boolean, default: true },
       telegram_acces: { type: Boolean, default: false },
     }],
     balance: { type: Number, default: 0 },
-    balance_currency: { type: String, default: 'uzs' },
     balance_usd: { type: Number, default: 0 },
+    balance_currency: { type: String, default: 'uzs' },
     telegram_acces: { type: Boolean, default: false },
   })
   instance.decorate('adjustmentSupplier', adjustmentSupplier)
