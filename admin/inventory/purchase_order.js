@@ -510,10 +510,7 @@ module.exports = fp((instance, options, next) => {
         return reply.ok(purch)
       }
       for (const id of item_ids) {
-        await instance.purchaseItem.updateOne(
-          { _id: id },
-          { $set: itemObj[id] },
-        )
+        await instance.purchaseItem.updateOne({ _id: id }, { $set: itemObj[id] })
       };
 
       // supplier transaction
@@ -541,15 +538,18 @@ module.exports = fp((instance, options, next) => {
           supplier_used_transaction = -1 * used_transaction;
         }
         await instance.adjustmentSupplier.updateOne(
-          { _id: purch.supplier_id },
+          { _id: purch.supplier_id, 'services.serivce': purch.service },
           {
             $set: {
               balance: current_supplier.balance,
-              balance_usd: current_supplier.balance_usd
-            }
-          })
-        console.log(551);
-        console.log(purch.service);
+              balance_usd: current_supplier.balance_usd,
+              'services.$.serivce': purch.service,
+              'services.$.balance': { $inc: urrent_supplier.balance },
+              'services.$.balance_usd': { $inc: current_supplier.balance_usd },
+            },
+          }
+        )
+
         await new instance.supplierTransaction({
           service: purch.service,
           supplier_id: current_supplier._id,
@@ -932,8 +932,7 @@ module.exports = fp((instance, options, next) => {
             'services.$.balance_usd': { $inc: balance_usd },
           },
         })
-      console.log(932);
-      console.log(service._id);
+
       try {
         await new instance.supplierTransaction({
           supplier_id: supplier._id,
