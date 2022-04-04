@@ -1340,7 +1340,7 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('supplierTransaction', instance.model('supplierTransaction', {
     supplier_id: { type: mongoose.Schema.Types.ObjectId, ref: 'adjustmentsuppliers' },
-    sevice: { type: mongoose.Schema.Types.ObjectId, ref: 'inoneservices' },
+    service: { type: mongoose.Schema.Types.ObjectId, ref: 'inoneservices' },
     document_id: String,
     employee: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     employee_name: String,

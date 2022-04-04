@@ -566,28 +566,22 @@ module.exports = (instance, _, next) => {
       const groupSoldItems = {
         $group: {
           _id: "$sold_item_list.product_id",
-          product_name: {
-            $last: "$sold_item_list.product_name"
-          }
-        }
+          product_name: { $last: "$sold_item_list.product_name" },
+        },
       }
 
       const countAllItems = {
         $group: {
           _id: null,
-          count: {
-            $sum: 1
-          }
-        }
-      }
+          count: { $sum: 1 },
+        },
+      };
 
       const totalCount = await instance.Receipts.aggregate([
-        {
-          $match: filterReceipts
-        },
+        { $match: filterReceipts },
         unwindSoldItemList,
         groupSoldItems,
-        searchByItemName,
+        // searchByItemName,
         countAllItems
       ])
         .allowDiskUse(true)

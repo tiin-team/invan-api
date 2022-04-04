@@ -548,8 +548,10 @@ module.exports = fp((instance, options, next) => {
               balance_usd: current_supplier.balance_usd
             }
           })
+        console.log(551);
+        console.log(purch.service);
         await new instance.supplierTransaction({
-          service: purch.supplier_id,
+          service: purch.service,
           supplier_id: current_supplier._id,
           document_id: purch.p_order,
           employee: admin._id,
@@ -559,7 +561,8 @@ module.exports = fp((instance, options, next) => {
           currency: purch.total_currency,
           date: new Date().getTime(),
           purchase_id: purch._id
-        }).save();
+        })
+          .save();
       }
 
       // update items cost
@@ -625,7 +628,7 @@ module.exports = fp((instance, options, next) => {
     }
 
     return reply;
-  }
+  };
 
   instance.decorate('receivePurchase', receive_purchase)
 
@@ -929,6 +932,8 @@ module.exports = fp((instance, options, next) => {
             'services.$.balance_usd': { $inc: balance_usd },
           },
         })
+      console.log(932);
+      console.log(service._id);
       try {
         await new instance.supplierTransaction({
           supplier_id: supplier._id,
