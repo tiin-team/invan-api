@@ -544,7 +544,7 @@ module.exports = fp((instance, options, next) => {
               balance: current_supplier.balance,
               balance_usd: current_supplier.balance_usd,
               'services.$.serivce': purch.service,
-              'services.$.balance': { $inc: urrent_supplier.balance },
+              'services.$.balance': { $inc: current_supplier.balance },
               'services.$.balance_usd': { $inc: current_supplier.balance_usd },
             },
           }
