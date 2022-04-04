@@ -549,7 +549,7 @@ module.exports = fp((instance, options, next) => {
             }
           })
         await new instance.supplierTransaction({
-          service: purch.service,
+          service: purch.supplier_id,
           supplier_id: current_supplier._id,
           document_id: purch.p_order,
           employee: admin._id,
@@ -932,7 +932,7 @@ module.exports = fp((instance, options, next) => {
       try {
         await new instance.supplierTransaction({
           supplier_id: supplier._id,
-          service: service_id,
+          service: service._id,
           document_id: body.p_order,
           employee: admin._id,
           employee_name: admin.name,
