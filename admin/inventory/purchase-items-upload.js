@@ -141,9 +141,7 @@ module.exports = ((instance, _, next) => {
             if (!data || data.length < 2) {
               return reply.error('Could not read data');
             }
-            const correct_names = [
-              'barcode', 'name', 'quality', 'p_cost'
-            ]
+            const correct_names = ['barcode', 'name', 'quality', 'p_cost']
 
             const json_data = convertPItemsToJSON(data, correct_names)
 

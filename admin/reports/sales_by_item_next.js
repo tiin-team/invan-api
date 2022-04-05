@@ -498,21 +498,19 @@ module.exports = (instance, _, next) => {
         filterReceipts["sold_item_list.supplier_id"] = supplier
         calculateItemsReport.$group.supplier = { $last: "$sold_item_list.supplier_name" }
       }
-      if (category) {
-        filterReceipts["sold_item_list.category_id"] = category
-        calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
-        calculateItemsReport.$group.category_id = { $last: "$sold_item_list.category_id" }
-      }
-      if (search)
-        filterReceipts.product_name = { $regex: search, $options: 'i' };
-      // const searchByItemName = {
-      //   $match: {
-      //     product_name: {
-      //       $regex: (search ? search : ''),
-      //       $options: 'i'
-      //     }
-      //   }
+      // if (category) {
+      //   filterReceipts["sold_item_list.category_id"] = category
+      //   calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
       // }
+
+      const searchByItemName = {
+        $match: {
+          product_name: {
+            $regex: (search ? search : ''),
+            $options: 'i'
+          }
+        }
+      }
 
       const sortResult = { $sort: { gross_sales: -1 } };
 
@@ -555,7 +553,7 @@ module.exports = (instance, _, next) => {
         { $match: filterReceipts },
         unwindSoldItemList,
         calculateItemsReport,
-        // searchByItemName,
+        searchByItemName,
         sortResult,
         skipResult,
         limitResult,
@@ -582,7 +580,7 @@ module.exports = (instance, _, next) => {
         { $match: filterReceipts },
         unwindSoldItemList,
         groupSoldItems,
-        // searchByItemName,
+        searchByItemName,
         countAllItems
       ])
         .allowDiskUse(true)
@@ -592,28 +590,43 @@ module.exports = (instance, _, next) => {
 
       const categoryMap = {}
 
-      for (const index in result) {
-        try {
-          const item = await instance.goodsSales.findById(result[index].id);
-          if (item && item.category) {
-            if (!categoryMap[item.category]) {
-              result[index].category = categoryMap[item.category]
-              try {
-                const category = await instance.goodsCategory.findById(item.category)
-                if (category) {
-                  categoryMap[item.category] = category.name
-                }
-              } catch (error) { }
+      const resData = [];
+      if (category) {
+        const categoryCurr = await instance.goodsCategory.findById(category).lean();
+        for (const index in result) {
+          try {
+            const item = await instance.goodsSales.findById(result[index].id);
+            if (item && item.category && item.category.toString() == category) {
+              result[index].category = categoryCurr && categoryCurr.name ? categoryCurr.name : ''
+              resData.push(result[index])
             }
-            result[index].category = categoryMap[item.category] ? categoryMap[item.category] : ''
-          }
-        } catch (error) { }
-      }
+          } catch (error) { }
+        }
+      } else
+        for (const index in result) {
+          try {
+            const item = await instance.goodsSales.findById(result[index].id).lean();
+            if (item && item.category) {
+              if (!categoryMap[item.category]) {
+                result[index].category = categoryMap[item.category]
+                try {
+                  const category = await instance.goodsCategory.findById(item.category)
+                  if (category) {
+                    categoryMap[item.category] = category.name
+                  }
+                } catch (error) { }
+              }
+              result[index].category = categoryMap[item.category] ? categoryMap[item.category] : ''
+            }
+          } catch (error) { }
+          resData.push(result[index])
+        }
 
       reply.ok({
         total: total_result,
         page: Math.ceil(total_result / limit),
-        data: result
+        data: resData,
+        // data: result,
       })
     }
     catch (error) {
@@ -627,9 +640,7 @@ module.exports = (instance, _, next) => {
       const { custom, start, end, services, employees, search } = request.body;
       const filterReceipts = {
         organization: admin.organization,
-        receipt_state: {
-          $ne: 'draft'
-        },
+        receipt_state: { $ne: 'draft' },
         debt_id: null,
         date: {
           $gte: min - (process.env.TIME_DIFF | 0),
@@ -637,11 +648,8 @@ module.exports = (instance, _, next) => {
         }
       }
 
-      if (services && services.length > 0) {
-        filterReceipts.service = {
-          $in: services
-        }
-      }
+      if (services && services.length > 0)
+        filterReceipts.service = { $in: services }
 
       if (custom) {
         const additional_query = []
@@ -661,45 +669,21 @@ module.exports = (instance, _, next) => {
         const employeesFilter = [
           {
             $and: [
-              {
-                waiter_id: ""
-              },
-              {
-                cashier_id: {
-                  $in: employees
-                }
-              }
+              { waiter_id: "" },
+              { cashier_id: { $in: employees } },
             ]
           },
           {
             $and: [
-              {
-                cashier_id: ""
-              },
-              {
-                waiter_id: {
-                  $in: employees
-                }
-              }
+              { cashier_id: "" },
+              { waiter_id: { $in: employees } },
             ]
           },
           {
             $and: [
-              {
-                waiter_id: {
-                  $ne: ""
-                }
-              },
-              {
-                cashier_id: {
-                  $ne: ""
-                }
-              },
-              {
-                waiter_id: {
-                  $in: employees
-                }
-              }
+              { waiter_id: { $ne: "" } },
+              { cashier_id: { $ne: "" } },
+              { waiter_id: { $in: employees } },
             ]
           }
         ]
@@ -715,9 +699,7 @@ module.exports = (instance, _, next) => {
         }
       }
 
-      const unwindSoldItemList = {
-        $unwind: "$sold_item_list"
-      }
+      const unwindSoldItemList = { $unwind: "$sold_item_list" };
 
       const calculateItemsReport = {
         $group: {
@@ -728,27 +710,17 @@ module.exports = (instance, _, next) => {
               $multiply: [
                 { $max: ["$sold_item_list.cost", 0] },
                 { $max: ["$sold_item_list.value", 0] },
-                {
-                  $cond: [
-                    "$is_refund",
-                    -1, 1
-                  ]
-                }
-              ]
-            }
+                { $cond: ["$is_refund", -1, 1] },
+              ],
+            },
           },
           gross_sales: {
             $sum: {
               $multiply: [
                 { $max: ["$sold_item_list.price", 0] },
                 { $max: ["$sold_item_list.value", 0] },
-                {
-                  $cond: [
-                    "$is_refund",
-                    0, 1
-                  ]
-                }
-              ]
+                { $cond: ["$is_refund", 0, 1] },
+              ],
             }
           },
           refunds: {
@@ -756,12 +728,7 @@ module.exports = (instance, _, next) => {
               $multiply: [
                 { $max: ["$sold_item_list.price", 0] },
                 { $max: ["$sold_item_list.value", 0] },
-                {
-                  $cond: [
-                    "$is_refund",
-                    1, 0
-                  ]
-                }
+                { $cond: ["$is_refund", 1, 0] },
               ]
             }
           },
@@ -844,19 +811,11 @@ module.exports = (instance, _, next) => {
         }
       }
 
-      const sortResult = {
-        $sort: {
-          gross_sales: -1
-        }
-      }
+      const sortResult = { $sort: { gross_sales: -1 } };
 
-      const skipResult = {
-        $skip: limit * (page - 1)
-      }
+      const skipResult = { $skip: limit * (page - 1) };
 
-      const limitResult = {
-        $limit: limit
-      }
+      const limitResult = { $limit: limit };
 
       const projectResult = {
         $project: {
@@ -874,9 +833,7 @@ module.exports = (instance, _, next) => {
           net_sales: {
             $subtract: [
               "$gross_sales",
-              {
-                $add: ["$refunds", "$discounts"]
-              }
+              { $add: ["$refunds", "$discounts"] }
             ]
           },
           gross_profit: {
@@ -884,9 +841,7 @@ module.exports = (instance, _, next) => {
               {
                 $subtract: [
                   "$gross_sales",
-                  {
-                    $add: ["$refunds", "$discounts"]
-                  }
+                  { $add: ["$refunds", "$discounts"] }
                 ]
               },
               "$cost_of_goods"
@@ -896,9 +851,7 @@ module.exports = (instance, _, next) => {
       }
 
       const result = await instance.Receipts.aggregate([
-        {
-          $match: filterReceipts
-        },
+        { $match: filterReceipts },
         unwindSoldItemList,
         calculateItemsReport,
         searchByItemName,
@@ -913,25 +866,19 @@ module.exports = (instance, _, next) => {
       const groupSoldItems = {
         $group: {
           _id: "$sold_item_list.product_id",
-          product_name: {
-            $last: "$sold_item_list.product_name"
-          }
-        }
+          product_name: { $last: "$sold_item_list.product_name" },
+        },
       }
 
       const countAllItems = {
         $group: {
           _id: null,
-          count: {
-            $sum: 1
-          }
-        }
+          count: { $sum: 1 }
+        },
       }
 
       const totalCount = await instance.Receipts.aggregate([
-        {
-          $match: filterReceipts
-        },
+        { $match: filterReceipts },
         unwindSoldItemList,
         groupSoldItems,
         searchByItemName,
@@ -940,7 +887,9 @@ module.exports = (instance, _, next) => {
         .allowDiskUse(true)
         .exec();
 
-      const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
+      const total_result = totalCount && totalCount.length > 0 && totalCount[0].count
+        ? totalCount[0].count
+        : 0;
 
       // const categoryMap = {}
 

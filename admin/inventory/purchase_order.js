@@ -398,15 +398,12 @@ module.exports = fp((instance, options, next) => {
 
   const receive_purchase = async (request, reply, admin) => {
     try {
-      if (request.body == undefined) {
-        request.body = {}
-      }
-      if (!(request.body.items instanceof Array)) {
-        request.body.items = []
-      }
-      if (!(request.body.additional_cost instanceof Array)) {
-        request.body.additional_cost = []
-      }
+      if (request.body == undefined) request.body = {}
+
+      if (!(request.body.items instanceof Array)) request.body.items = []
+
+      if (!(request.body.additional_cost instanceof Array)) request.body.additional_cost = []
+
       const purch = await instance.inventoryPurchase
         .findOne({ _id: request.params.id })
         .lean();
@@ -432,11 +429,14 @@ module.exports = fp((instance, options, next) => {
       let used_transaction = 0.0;
       let currency;
       try {
-        currency = await instance.Currency.findOne({ organization: admin.organization })
+        currency = await instance.Currency
+          .findOne({ organization: admin.organization })
+          .lean();
         if (!currency || !currency.value) {
           currency = { value: 1 }
         }
       } catch (error) { }
+
       for (let i = 0; i < items.length; i++) {
         if (reqObj[items[i]._id].to_receive + items[i].received <= items[i].quality && reqObj[items[i]._id].to_receive >= 0) {
           items[i].to_receive = +reqObj[items[i]._id].to_receive
@@ -532,13 +532,13 @@ module.exports = fp((instance, options, next) => {
           // supplier_used_transaction = -1 * used_transaction / currency.value;
           current_supplier.balance_usd -= used_transaction / currency.value;
           supplier_used_transaction = -1 * used_transaction / currency.value;
-          balance_usd -= supplier_used_transaction;
+          balance_usd += supplier_used_transaction;
         }
         else {
           // current_supplier.balance -= used_transaction;
           // supplier_used_transaction = -1 * used_transaction;
           current_supplier.balance -= used_transaction;
-          balance_uzs -= used_transaction;
+          balance_uzs == used_transaction;
           supplier_used_transaction = -1 * used_transaction;
         }
         const services = Array.isArray(current_supplier.services)
@@ -584,7 +584,7 @@ module.exports = fp((instance, options, next) => {
       }
 
       // update items cost
-      const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } });
+      const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } }).lean();
 
       for (var g of goods) {
         var in_stock = null
@@ -673,6 +673,11 @@ module.exports = fp((instance, options, next) => {
     }
     request.body.type = 'coming'
     const id = request.body.supplier_id
+    const service = await instance.services
+      .findById(request.body.service, { name: 1 })
+      .lean()
+    if (!service) return reply.error('Error on finding service')
+
     if (id != '' && id != undefined) {
       var valid = true
       if (request.body.purchase_order_date == "" || request.body.purchase_order_date == null) {
@@ -687,140 +692,136 @@ module.exports = fp((instance, options, next) => {
       if (valid) {
         let currency = { value: 1 };
         try {
-          currency = await instance.Currency.findOne({ organization: admin.organization })
-          if (!currency || !currency.value) {
-            currency = { value: 1 }
-          }
+          currency = await instance.Currency.findOne({ organization: admin.organization }).lean();
+
+          if (!currency || !currency.value) currency = { value: 1 }
+
         } catch (error) { }
-        instance.adjustmentSupplier.findOne(
-          { _id: id },
-          (err, supp) => {
-            if (supp) {
-              instance.inventoryPurchase.countDocuments(
-                { organization: admin.organization },
-                async (err, orders) => {
-                  if (err || !orders) orders = 0
+        const supp = await instance.adjustmentSupplier.findOne({ _id: id }).lean();
+        if (supp) {
+          instance.inventoryPurchase.countDocuments(
+            { organization: admin.organization },
+            async (err, orders) => {
+              if (err || !orders) orders = 0
 
-                  const p_order = 'P' + ('00000000000' + (orders + 1001)).slice(-5);
-                  request.body.p_order = p_order
+              const p_order = 'P' + ('00000000000' + (orders + 1001)).slice(-5);
+              request.body.p_order = p_order
 
-                  try {
-                    request.body.supplier_id = instance.ObjectId(request.body.supplier_id)
-                    request.body.service = instance.ObjectId(request.body.service)
-                    request.body.ordered_by_id = instance.ObjectId(admin._id)
-                  } catch (error) {
-                    return reply.error(error.message)
+              try {
+                request.body.supplier_id = instance.ObjectId(request.body.supplier_id)
+                request.body.service = instance.ObjectId(request.body.service)
+                request.body.ordered_by_id = instance.ObjectId(admin._id)
+              } catch (error) {
+                return reply.error(error.message)
+              }
+
+              request.body.ordered_by_name = admin.name
+              request.body.organization = admin.organization
+              delete request.body._id
+              if (request.body.status != 'returned_order' && request.body.status != 'closed') {
+                request.body.status = 'pending'
+              }
+              const purchaseModel = new instance.inventoryPurchase(request.body)
+
+              if (purchaseModel.status == 'closed') purchaseModel.status = 'pending'
+
+              purchaseModel.supplier_name = supp.supplier_name
+              purchaseModel.service_name = service.name
+              const purchase_items = []
+              var total_count = 0
+              var total = 0
+
+              if (request.body.items != undefined) {
+                if (request.body.items.length > 0) {
+                  for (let i = 0; i < request.body.items.length; i++) {
+                    delete request.body.items[i]._id
+                    request.body.items[i].purchase_id = instance.ObjectId(purchaseModel._id)
+                    request.body.items[i].ordered = request.body.items[i].quality
+                    request.body.items[i].service = instance.ObjectId(request.body.service)
+                    if (request.body.items[i].quality != undefined && parseFloat(request.body.items[i].quality)) {
+                      total_count += parseFloat(request.body.items[i].quality)
+                      if (request.body.items[i].purchase_cost != undefined && parseFloat(request.body.items[i].quality) && parseFloat(request.body.items[i].purchase_cost)) {
+                        let amount_quality = parseFloat(request.body.items[i].quality) * parseFloat(request.body.items[i].purchase_cost)
+                        if (request.body.items[i].purchase_cost_currency == 'usd') {
+                          amount_quality = amount_quality * currency.value
+                        }
+                        total += amount_quality
+                      }
+
+                    }
+                    if (parseFloat(request.body.items[i].purchase_cost) && parseFloat(request.body.items[i].quality)) {
+                      request.body.items[i].purchase_cost = parseFloat(request.body.items[i].purchase_cost)
+                      request.body.items[i].amount = request.body.items[i].purchase_cost * parseFloat(request.body.items[i].quality)
+                      await instance.goodsSales.updateOne({ _id: request.body.items[i].product_id }, { default_purchase_cost: request.body.items[i].purchase_cost })
+                    }
+                    purchase_items.push(request.body.items[i])
+
                   }
-
-                  request.body.ordered_by_name = admin.name
-                  request.body.organization = admin.organization
-                  delete request.body._id
-                  if (request.body.status != 'returned_order' && request.body.status != 'closed') {
-                    request.body.status = 'pending'
+                  if (request.body.additional_cost == undefined) {
+                    request.body.additional_cost = []
                   }
-                  const purchaseModel = new instance.inventoryPurchase(request.body)
-
-                  if (purchaseModel.status == 'closed') purchaseModel.status = 'pending'
-
-                  purchaseModel.supplier_name = supp.supplier_name
-                  purchaseModel.service_name = (
-                    await instance.services.findById(request.body.service, { name: 1 }).lean()
-                  ).name
-                  const purchase_items = []
-                  var total_count = 0
-                  var total = 0
-
-                  if (request.body.items != undefined) {
-                    if (request.body.items.length > 0) {
-                      for (let i = 0; i < request.body.items.length; i++) {
-                        delete request.body.items[i]._id
-                        request.body.items[i].purchase_id = instance.ObjectId(purchaseModel._id)
-                        request.body.items[i].ordered = request.body.items[i].quality
-                        request.body.items[i].service = instance.ObjectId(request.body.service)
-                        if (request.body.items[i].quality != undefined && parseFloat(request.body.items[i].quality)) {
-                          total_count += parseFloat(request.body.items[i].quality)
-                          if (request.body.items[i].purchase_cost != undefined && parseFloat(request.body.items[i].quality) && parseFloat(request.body.items[i].purchase_cost)) {
-                            let amount_quality = parseFloat(request.body.items[i].quality) * parseFloat(request.body.items[i].purchase_cost)
-                            if (request.body.items[i].purchase_cost_currency == 'usd') {
-                              amount_quality = amount_quality * currency.value
-                            }
-                            total += amount_quality
-                          }
-
-                        }
-                        if (parseFloat(request.body.items[i].purchase_cost) && parseFloat(request.body.items[i].quality)) {
-                          request.body.items[i].purchase_cost = parseFloat(request.body.items[i].purchase_cost)
-                          request.body.items[i].amount = request.body.items[i].purchase_cost * parseFloat(request.body.items[i].quality)
-                          await instance.goodsSales.updateOne({ _id: request.body.items[i].product_id }, { default_purchase_cost: request.body.items[i].purchase_cost })
-                        }
-                        purchase_items.push(request.body.items[i])
-
+                  for (const r in request.body.additional_cost) {
+                    delete request.body.additional_cost[r]._id
+                    if (parseFloat(request.body.additional_cost[r].amount)) {
+                      let additional_amount = parseFloat(request.body.additional_cost[r].amount)
+                      if (request.body.additional_cost[r].amount_currency == 'usd') {
+                        additional_amount = additional_amount * currency.value
                       }
-                      if (request.body.additional_cost == undefined) {
-                        request.body.additional_cost = []
-                      }
-                      for (const r in request.body.additional_cost) {
-                        delete request.body.additional_cost[r]._id
-                        if (parseFloat(request.body.additional_cost[r].amount)) {
-                          let additional_amount = parseFloat(request.body.additional_cost[r].amount)
-                          if (request.body.additional_cost[r].amount_currency == 'usd') {
-                            additional_amount = additional_amount * currency.value
-                          }
-                          total += additional_amount
-                        }
-                      }
+                      total += additional_amount
                     }
                   }
-                  purchaseModel.total_count = total_count
-                  if (request.body.total_currency == 'usd') {
-                    total = total / currency.value
+                }
+              }
+              purchaseModel.total_count = total_count
+              if (request.body.total_currency == 'usd') {
+                total = total / currency.value
+              }
+              purchaseModel.total = total
+              purchaseModel.items = purchase_items
+              if (purchaseModel.items.length > 0) {
+                purchaseModel.save((err, purch) => {
+                  if (err || purch == null) {
+                    reply.error('Error on saving purchase order')
+                    instance.send_Error('saving purchase', JSON.stringify(err))
                   }
-                  purchaseModel.total = total
-                  purchaseModel.items = purchase_items
-                  if (purchaseModel.items.length > 0) {
-                    purchaseModel.save((err, purch) => {
-                      if (err || purch == null) {
-                        reply.error('Error on saving purchase order')
-                        instance.send_Error('saving purchase', JSON.stringify(err))
+                  else {
+                    instance.purchaseItem.insertMany(purchase_items, (err, purchaseitems) => {
+                      if (err || purchaseitems == null) {
+                        reply.error('Error on saving purchase items')
+                        instance.send_Error('saving purchase item', JSON.stringify(err))
                       }
                       else {
-                        instance.purchaseItem.insertMany(purchase_items, (err, purchaseitems) => {
-                          if (err || purchaseitems == null) {
-                            reply.error('Error on saving purchase items')
-                            instance.send_Error('saving purchase item', JSON.stringify(err))
+                        if (request.body.status == 'returned_order') {
+                          reply.ok(purch)
+                          return_purchase_order(purch, purchase_items, admin)
+                        }
+                        else if (request.body.status == 'closed') {
+                          for (let i = 0; i < purchaseitems.length; i++) {
+                            purchaseitems[i].to_receive = purchaseitems[i].quality
                           }
-                          else {
-                            if (request.body.status == 'returned_order') {
-                              reply.ok(purch)
-                              return_purchase_order(purch, purchase_items, admin)
-                            }
-                            else if (request.body.status == 'closed') {
-                              for (let i = 0; i < purchaseitems.length; i++) {
-                                purchaseitems[i].to_receive = purchaseitems[i].quality
-                              }
-                              for (let i = 0; i < purch.additional_cost.length; i++) {
-                                purch.additional_cost[i].is_received = true
-                              }
-                              purch.items = purchaseitems
-                              receive_purchase({ body: purch, params: { id: purch._id } }, reply, admin)
-                            }
-                            else {
-                              reply.ok(purch)
-                            }
+                          for (let i = 0; i < purch.additional_cost.length; i++) {
+                            purch.additional_cost[i].is_received = true
                           }
-                        })
+                          purch.items = purchaseitems
+                          receive_purchase({ body: purch, params: { id: purch._id } }, reply, admin)
+                        }
+                        else {
+                          reply.ok(purch)
+                        }
                       }
                     })
                   }
-                  else {
-                    reply.error('items can\'t be empty')
-                  }
                 })
-            }
-            else {
-              reply.error('Supplier not found')
-            }
-          })
+              }
+              else {
+                reply.error('items can\'t be empty')
+              }
+            })
+        }
+        else {
+          reply.error('Supplier not found')
+        }
+
       }
       else {
         reply.error('Time error')

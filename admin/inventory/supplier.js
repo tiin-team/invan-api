@@ -325,9 +325,8 @@ module.exports = (instance, options, next) => {
 
       if (!supplier) return reply.fourorfour('Supplier')
 
-      if (request.body.return_money) {
-        body.balance *= (-1)
-      }
+      if (request.body.return_money) body.balance *= (-1)
+
       const supplierTransaction = {
         ...body,
         supplier_id: supplier._id,
