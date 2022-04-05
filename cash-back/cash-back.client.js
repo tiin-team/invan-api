@@ -60,7 +60,7 @@ module.exports = fp((instance, _, next) => {
                 phone_number: { $regex: phone_number, $options: 'i' },
                 organization: organization._id == '61ae2917a914c3ba42fc626f' ? '5f5641e8dce4e706c062837a' : organization._id
             }
-            const clientsDatabase = await instance.clientsDatabase.findOne(query, { _id: 1 },)
+            const clientsDatabase = await instance.clientsDatabase.findOne(query, { _id: 1 })
                 .lean()
             const default_cash_back = await calculateDefaultCash(receipt.sold_item_list, organization.loyalty_bonus)
 

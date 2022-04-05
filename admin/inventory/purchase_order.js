@@ -538,8 +538,8 @@ module.exports = fp((instance, options, next) => {
           // current_supplier.balance -= used_transaction;
           // supplier_used_transaction = -1 * used_transaction;
           current_supplier.balance -= used_transaction;
-          balance_uzs == used_transaction;
           supplier_used_transaction = -1 * used_transaction;
+          balance_uzs += supplier_used_transaction;
         }
         const services = Array.isArray(current_supplier.services)
           ? current_supplier.services
@@ -915,12 +915,10 @@ module.exports = fp((instance, options, next) => {
       }
       delete body.items
       body.total = total;
-      if (!supplier.balance) {
-        supplier.balance = 0;
-      }
-      if (!supplier.balance_usd) {
-        supplier.balance_usd = 0;
-      }
+      if (!supplier.balance) supplier.balance = 0;
+
+      if (!supplier.balance_usd) supplier.balance_usd = 0;
+
       let balance_uzs = 0;
       let balance_usd = 0;
       if (body.total_currency == 'usd') {

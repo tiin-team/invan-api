@@ -474,7 +474,7 @@ module.exports = (instance, options, next) => {
       if (transaction.status == 'pending' && body.status == 'active') {
         if (transaction.currency == 'usd') {
           try {
-            const currency = await instance.Currency
+            let currency = await instance.Currency
               .findOne({ organization: user.organization })
               .lean();
 
@@ -486,7 +486,7 @@ module.exports = (instance, options, next) => {
         const supplier = await instance.adjustmentSupplier
           .findOne({ _id: transaction.supplier_id })
           .lean();
-        const supplier_name = supplier ? supplier.supplier_name : ''
+        const supplier_name = supplier && supplier.supplier_name ? supplier.supplier_name : ''
         const { _id: consumption_id } = await new instance.consumptionModel({
           organization: user.organization,
           transaction_id: transaction._id,
