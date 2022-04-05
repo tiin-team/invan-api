@@ -498,10 +498,10 @@ module.exports = (instance, _, next) => {
         filterReceipts["sold_item_list.supplier_id"] = supplier
         calculateItemsReport.$group.supplier = { $last: "$sold_item_list.supplier_name" }
       }
-      // if (category) {
-      //   filterReceipts["sold_item_list.category_id"] = category
-      //   calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
-      // }
+      if (category) {
+        filterReceipts["sold_item_list.category_id"] = category
+        calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
+      }
 
       const searchByItemName = {
         $match: {

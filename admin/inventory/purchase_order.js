@@ -586,7 +586,7 @@ module.exports = fp((instance, options, next) => {
       // update items cost
       const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } }).lean();
 
-      for (var g of goods) {
+      for (const g of goods) {
         var in_stock = null
         var index = -1
         var In_STOCK = 0;
@@ -640,7 +640,6 @@ module.exports = fp((instance, options, next) => {
       }
 
       reply.ok(purch)
-
     } catch (error) {
       reply.error(error.message)
     }
@@ -940,15 +939,29 @@ module.exports = fp((instance, options, next) => {
       const { _id: purchase_id } = await new instance.inventoryPurchase(body).save()
       if (body.status == 'pending')
         return reply.ok({ _id: purchase_id })
+      const services = Array.isArray(supplier.services)
+        ? supplier.services
+        : [{
+          service: service._id,
+          service_name: service.name,
+          balance: 0,
+          balance_usd: 0,
+        }]
+
+      for (const [index, serv] of services.entries()) {
+        if (serv.service.toString() == service._id.toString()) {
+          services[index].balance += balance_uzs
+          services[index].balance_usd += balance_usd
+        }
+      }
+
       await instance.adjustmentSupplier.updateOne(
         { _id: supplier._id, 'services.service': service_id },
         {
           $set: {
             balance: supplier.balance,
             balance_usd: supplier.balance_usd,
-            'services.$.service': service_id,
-            'services.$.balance': { $inc: balance_uzs },
-            'services.$.balance_usd': { $inc: balance_usd },
+            services: services,
           },
         })
 
