@@ -606,19 +606,6 @@ module.exports = (instance, _, next) => {
 
       const categoryMap = {}
 
-      // const resData = [];
-      // if (category) {
-      //   const categoryCurr = await instance.goodsCategory.findById(category).lean();
-      //   for (const index in result) {
-      //     try {
-      //       const item = await instance.goodsSales.findById(result[index].id);
-      //       if (item && item.category && item.category.toString() == category) {
-      //         result[index].category = categoryCurr && categoryCurr.name ? categoryCurr.name : ''
-      //         resData.push(result[index])
-      //       }
-      //     } catch (error) { }
-      //   }
-      // } else
       for (const index in result) {
         try {
           const item = await instance.goodsSales.findById(result[index].id).lean();
@@ -635,14 +622,12 @@ module.exports = (instance, _, next) => {
             result[index].category = categoryMap[cat_id] ? categoryMap[cat_id] : ''
           }
         } catch (error) { }
-        // resData.push(result[index])
       }
 
       reply.ok({
         total: total_result,
-        page: page,
-        // page: Math.ceil(total_result / limit),
-        // data: resData,
+        // page: page, // buni Umar qo'shgan
+        page: Math.ceil(total_result / limit), // avvalgi holi
         data: result,
       })
     }
