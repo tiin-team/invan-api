@@ -752,72 +752,29 @@ module.exports = fp((instance, _, next) => {
       enum: ['color', 'image'],
       default: 'color'
     },
-    shape: {
-      type: String,
-      default: 'circle'
-    },
-    representation: {
-      type: String,
-      default: '#4CAF50'
-    },
-    taxes: {
-      type: Array,
-      default: []
-    },
-    stock_status: {
-      low_stock: Number,
-      out_of_stock: Number
-    },
+    shape: { type: String, default: 'circle' },
+    representation: { type: String, default: '#4CAF50' },
+    taxes: { type: Array, default: [] },
+    stock_status: { low_stock: Number, out_of_stock: Number },
     item_type: {
       type: String,
       enum: ['variant', 'item'],
       default: 'item'
     },
-    parent_item: {
-      type: String,
-    },
-    parent_name: {
-      type: String
-    },
-    has_variants: {
-      type: Boolean,
-      default: false
-    },
-    variant_options: {
-      type: Array,
-      default: []
-    },
+    parent_item: { type: String, },
+    parent_name: { type: String },
+    has_variants: { type: Boolean, default: false },
+    variant_options: { type: Array, default: [] },
     variant_of: String,
-    variant_items: {
-      type: Array,
-      default: []
-    },
-    modifiers: {
-      type: Array,
-      default: []
-    },
-    workgroups: {
-      type: Array,
-      default: []
-    },
-    show_on_bot: {
-      type: Boolean,
-      default: false
-    },
+    variant_items: { type: Array, default: [] },
+    modifiers: { type: Array, default: [] },
+    workgroups: { type: Array, default: [] },
+    show_on_bot: { type: Boolean, default: false },
     name_on_bot: String,
     dimentions: {
-      x: {
-        type: Number,
-        default: 0
-      },
-      y: {
-        type: Number,
-        default: 0
-      },
-      z: {
-        type: Number,
-        default: 0
-      }
+      x: { type: Number, default: 0 },
+      y: { type: Number, default: 0  },
+      z: { type: Number, default: 0  }
     },
     weight: Number,
     brand: String,

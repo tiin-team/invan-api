@@ -622,17 +622,17 @@ module.exports = (instance, _, next) => {
       for (const index in result) {
         try {
           const item = await instance.goodsSales.findById(result[index].id).lean();
-          if (item && item.category) {
-            if (!categoryMap[item.category]) {
-              result[index].category = categoryMap[item.category]
+          if (item && (item.category | item.category_id)) {
+            const cat_id = item.category ? item.category : item.category_id;
+            if (!categoryMap[cat_id]) {
               try {
-                const category = await instance.goodsCategory.findById(item.category)
+                const category = await instance.goodsCategory.findById(item.category).lean();
                 if (category) {
-                  categoryMap[item.category] = category.name
+                  categoryMap[cat_id] = category.name
                 }
               } catch (error) { }
             }
-            result[index].category = categoryMap[item.category] ? categoryMap[item.category] : ''
+            result[index].category = categoryMap[cat_id] ? categoryMap[cat_id] : ''
           }
         } catch (error) { }
         // resData.push(result[index])
