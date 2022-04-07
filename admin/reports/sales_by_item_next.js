@@ -593,6 +593,7 @@ module.exports = (instance, _, next) => {
 
       const totalCount = await instance.Receipts.aggregate([
         { $match: filterReceipts },
+        projectCategoryFilter,
         unwindSoldItemList,
         groupSoldItems,
         searchByItemName,
