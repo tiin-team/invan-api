@@ -551,7 +551,7 @@ module.exports = (instance, _, next) => {
       const projectCategoryFilter = {
         $project: {
           sold_item_list: 1,
-          is_refund: 1
+          is_refund: 1,
         }
       }
       if (category)
@@ -559,8 +559,8 @@ module.exports = (instance, _, next) => {
           $filter: {
             input: "$sold_item_list",
             as: "item",
-            cond: { $eq: ["$$item.category", category] }
-          }
+            cond: { $eq: ["$$item.category_id", category] }
+          },
         }
 
       const result = await instance.Receipts.aggregate([
