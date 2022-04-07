@@ -658,159 +658,69 @@ module.exports = fp((instance, _, next) => {
       {
         service: mongoose.Schema.Types.ObjectId,
         service_name: String,
-        price: {
-          type: Number,
-          default: 0
-        },
-        is_price_change: {
-          type: Boolean,
-          default: false
-        },
+        price: { type: Number, default: 0 },
+        is_price_change: { type: Boolean, default: false },
         price_currency: {
           type: String,
           enum: ['uzs', 'usd'],
           default: 'uzs'
         },
-        price_auto_fill: {
-          type: Boolean,
-          default: true
-        },
-        prices: {
-          type: Array,
-          default: [] // { from: Number, price: Number }
-        },
-        in_stock: {
-          type: Number,
-          default: 0
-        },
+        price_auto_fill: { type: Boolean, default: true },
+        prices: { type: Array, default: [] }, // { from: Number, price: Number },
+        in_stock: { type: Number, default: 0 },
         low_stock: Number,
         optimal_stock: Number,
-        reminder: {
-          type: Number,
-          default: 0
-        },
-        variant_name: {
-          type: String,
-          default: ''
-        },
-        available: {
-          type: Boolean,
-        },
-        stopped_item: {
-          type: Boolean,
-          default: false
-        },
+        reminder: { type: Number, default: 0 },
+        variant_name: { type: String, default: '' },
+        available: { type: Boolean },
+        stopped_item: { type: Boolean, default: false },
         sku: Number,
-        printed_time: {
-          type: Number,
-          default: 0
-        },
-        printed_price_change_time: {
-          type: Number,
-          default: 0
-        }
+        printed_time: { type: Number, default: 0 },
+        printed_price_change_time: { type: Number, default: 0 }
       }
     ],
-    stopped_item: {
-      type: Boolean,
-      default: false
-    },
+    stopped_item: { type: Boolean, default: false },
     created_time: Number,
-    last_updated: {
-      type: Number,
-      default: 0
-    },
-    last_stock_updated: {
-      type: Number,
-      default: 0
-    },
-    last_price_change: {
-      type: Number,
-      default: 0
-    },
-    name: {
-      type: String,
-      default: ''
-    },
+    last_updated: { type: Number, default: 0 },
+    last_stock_updated: { type: Number, default: 0 },
+    last_price_change: { type: Number, default: 0 },
+    name: { type: String, default: '' },
     fabricator: String,
     category: String,
-    category_id: {
-      type: mongoose.Schema.Types.ObjectId
-    },
+    category_id: { type: mongoose.Schema.Types.ObjectId },
     category_name: String, // remove soon
-    sale_is_avialable: {
-      type: Boolean,
-      default: true
-    },
+    sale_is_avialable: { type: Boolean, default: true },
     sold_by: {
       type: String,
-      enum: [
-        'each',
-        'weight',
-        // 'list',
-        // 'karaoke',
-        'pcs',
-        'box',
-        'litre',
-        'metre'
-      ],
+      enum: ['each', 'weight', 'pcs', 'box', 'litre', 'metre'], // 'list', 'karaoke',
       default: 'each'
     },
-    count_by_type: {
-      type: Number,
-      default: 0
-    },
-    barcode_by_type: {
-      type: String
-    },
+    count_by_type: { type: Number, default: 0 },
+    barcode_by_type: { type: String },
     expire_date: Number,
     reminder: Number,
     has_discount: Boolean,
     old_price: Number,
     price: Number,
-    prices: {
-      type: Array,
-      default: []
-    },
-    price_auto_fill: {
-      type: Boolean,
-      default: true
-    },
+    prices: { type: Array, default: [] },
+    price_auto_fill: { type: Boolean, default: true },
     price_currency: {
       type: String,
       // enum: ['uzs', 'usd'],
       default: 'uzs'
     },
-    cost: {
-      type: Number,
-      default: 0
-    },
+    cost: { type: Number, default: 0 },
     cost_currency: {
       type: String,
       // enum: ['uzs', 'usd'],
       default: 'uzs'
     },
-    max_cost: {
-      type: Number,
-      default: 0
-    },
-    sku: {
-      type: Number,
-      unique: true
-    },
+    max_cost: { type: Number, default: 0 },
+    sku: { type: Number, unique: true },
     hot_key: String,
-    barcode: {
-      type: Array,
-      default: []
-    },
-    composite_item: {
-      type: Boolean,
-      default: false
-    },
-    is_composite_item: {
-      type: Boolean,
-      default: false
-    },
+    barcode: { type: Array, default: [] },
+    composite_item: { type: Boolean, default: false },
+    is_composite_item: { type: Boolean, default: false },
     composite_items: {
       type: Array,
       default: []
@@ -823,30 +733,12 @@ module.exports = fp((instance, _, next) => {
         cost_currency: Number
        */
     },
-    use_production: {
-      type: Boolean,
-      default: false
-    },
-    use_sub_production: {
-      type: Boolean,
-      default: false
-    },
-    is_track_stock: {
-      type: Boolean,
-      default: true
-    },
-    in_stock: {
-      type: Number,
-      default: 0
-    },
-    low_stock: {
-      type: Number,
-      default: 0
-    },
-    optimal_stock: {
-      type: Number,
-      default: 0
-    },
+    use_production: { type: Boolean, default: false },
+    use_sub_production: { type: Boolean, default: false },
+    is_track_stock: { type: Boolean, default: true },
+    in_stock: { type: Number, default: 0 },
+    low_stock: { type: Number, default: 0 },
+    optimal_stock: { type: Number, default: 0 },
     primary_supplier_id: mongoose.Schema.Types.ObjectId,
     primary_supplier_name: String,
     default_purchase_cost: Number,

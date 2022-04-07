@@ -498,10 +498,10 @@ module.exports = (instance, _, next) => {
         filterReceipts["sold_item_list.supplier_id"] = supplier
         calculateItemsReport.$group.supplier = { $last: "$sold_item_list.supplier_name" }
       }
-      if (category) {
-        filterReceipts["sold_item_list.category_id"] = category
-        calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
-      }
+      // if (category) {
+      //   filterReceipts["sold_item_list.category_id"] = category
+      //   calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
+      // }
 
       const searchByItemName = {
         $match: {
@@ -548,9 +548,24 @@ module.exports = (instance, _, next) => {
           },
         },
       };
+      const projectCategoryFilter = {
+        $project: {
+          sold_item_list: 1,
+          is_refund: 1
+        }
+      }
+      if (category)
+        projectCategoryFilter.$project.sold_item_list = {
+          $filter: {
+            input: "$sold_item_list",
+            as: "item",
+            cond: { $eq: ["$$item.category", category] }
+          }
+        }
 
       const result = await instance.Receipts.aggregate([
         { $match: filterReceipts },
+        projectCategoryFilter,
         unwindSoldItemList,
         calculateItemsReport,
         searchByItemName,
@@ -590,43 +605,44 @@ module.exports = (instance, _, next) => {
 
       const categoryMap = {}
 
-      const resData = [];
-      if (category) {
-        const categoryCurr = await instance.goodsCategory.findById(category).lean();
-        for (const index in result) {
-          try {
-            const item = await instance.goodsSales.findById(result[index].id);
-            if (item && item.category && item.category.toString() == category) {
-              result[index].category = categoryCurr && categoryCurr.name ? categoryCurr.name : ''
-              resData.push(result[index])
+      // const resData = [];
+      // if (category) {
+      //   const categoryCurr = await instance.goodsCategory.findById(category).lean();
+      //   for (const index in result) {
+      //     try {
+      //       const item = await instance.goodsSales.findById(result[index].id);
+      //       if (item && item.category && item.category.toString() == category) {
+      //         result[index].category = categoryCurr && categoryCurr.name ? categoryCurr.name : ''
+      //         resData.push(result[index])
+      //       }
+      //     } catch (error) { }
+      //   }
+      // } else
+      for (const index in result) {
+        try {
+          const item = await instance.goodsSales.findById(result[index].id).lean();
+          if (item && item.category) {
+            if (!categoryMap[item.category]) {
+              result[index].category = categoryMap[item.category]
+              try {
+                const category = await instance.goodsCategory.findById(item.category)
+                if (category) {
+                  categoryMap[item.category] = category.name
+                }
+              } catch (error) { }
             }
-          } catch (error) { }
-        }
-      } else
-        for (const index in result) {
-          try {
-            const item = await instance.goodsSales.findById(result[index].id).lean();
-            if (item && item.category) {
-              if (!categoryMap[item.category]) {
-                result[index].category = categoryMap[item.category]
-                try {
-                  const category = await instance.goodsCategory.findById(item.category)
-                  if (category) {
-                    categoryMap[item.category] = category.name
-                  }
-                } catch (error) { }
-              }
-              result[index].category = categoryMap[item.category] ? categoryMap[item.category] : ''
-            }
-          } catch (error) { }
-          resData.push(result[index])
-        }
+            result[index].category = categoryMap[item.category] ? categoryMap[item.category] : ''
+          }
+        } catch (error) { }
+        // resData.push(result[index])
+      }
 
       reply.ok({
         total: total_result,
-        page: Math.ceil(total_result / limit),
-        data: resData,
-        // data: result,
+        page: page,
+        // page: Math.ceil(total_result / limit),
+        // data: resData,
+        data: result,
       })
     }
     catch (error) {

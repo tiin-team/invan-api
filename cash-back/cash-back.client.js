@@ -66,7 +66,13 @@ module.exports = fp((instance, _, next) => {
 
             // agar cashbackni ishlatsa minus qilish
             const gift = receipt.payment.find(pay => pay.name == 'gift')
-            minus_cash = gift && gift.value ? gift.value : 0
+            const cashback_pay = receipt.payment.find(pay => pay.name == 'cashback')
+
+            const minus_cash = cashback_pay && cashback_pay.value
+                ? cashback_pay.value
+                : gift && gift.value
+                    ? gift.value
+                    : 0
 
             //Yilmaz cashback
             if (organization._id == '6087b4bc3ca09c0c71d6b52f') {
@@ -95,7 +101,9 @@ module.exports = fp((instance, _, next) => {
                 }
                 let user_id = new Date().getTime();
                 try {
-                    user_id = CashBackClient.birthDate.replaceAll('.', '') + CashBackClient.phoneNumber.replace('+', '') + new Date().getTime();
+                    user_id = CashBackClient.birthDate.replaceAll('.', '')
+                        + CashBackClient.phoneNumber.replace('+', '')
+                        + new Date().getTime();
                 } catch (error) { }
                 await new instance.clientsDatabase(
                     {
@@ -167,13 +175,23 @@ module.exports = fp((instance, _, next) => {
                     phone_number: { $regex: phone, $options: 'i' },
                     organization: organizationId,
                 })
-                .exec();
+                .lean();
         } catch (error) {
             return null
         }
     }
-    instance.get("/cash-back/client", { version: "1.0.0" }, async (request, reply) => {
-        const organization = request.query.organization ? request.query.organization : '';
+    instance.get("/cash-back/client", { version: "1.1.0" }, async (request, reply) => {
+        instance.authorization(request, reply, async (admin) => {
+            if (admin) {
+                if (!request.query.phone) return reply.fourorfour('client')
+
+                const organization = admin.organization;
+                return await get_client(request.query.phone, organization)
+            } else return reply.unauthorized()
+        })
+    });
+    instance.get("/cash-back/client/", { version: "1.0.0" }, async (request, reply) => {
+        const organization = request.params.organization;
         // instance.authProvider(request, reply, (provider) => {
         // if (provider) {
         // }

@@ -4,7 +4,7 @@ module.exports = (instance, _, next) => {
 
   // reports sales by item above
 
-  var by_item_above = (request, reply, items) => {
+  const by_item_above = (request, reply, items) => {
     var ctn = 7;
     if (request.body.count != undefined) {
       ctn = Math.round(request.body.count)
@@ -227,7 +227,7 @@ module.exports = (instance, _, next) => {
 
   // reports sales by item below
 
-  var by_item_below = (request, reply, items) => {
+  const by_item_below = (request, reply, items) => {
     var gsoitem = {}
     var countsitem = {}
     var countritem = {}
@@ -467,13 +467,13 @@ module.exports = (instance, _, next) => {
     }
     request.params.services = request.params.services.split('[').join('').split(']').join('').split('\'').join('').split('"').join('').split('`')
     request.params.employees = request.params.employees.split('[').join('').split(']').join('').split('\'').join('').split('"').join('').split('`')
-    var services = []
+    const services = []
     for(var s of request.params.services) {
       if(s != '') {
         services.push(s)
       }
     }
-    var employees = []
+    const employees = []
     for(var s of request.params.employees) {
       if(s != '') {
         employees.push(s)
