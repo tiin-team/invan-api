@@ -622,8 +622,8 @@ module.exports = (instance, _, next) => {
       for (const index in result) {
         try {
           const item = await instance.goodsSales.findById(result[index].id).lean();
-          if (item && (item.category | item.category_id)) {
-            const cat_id = item.category ? item.category : item.category_id;
+          const cat_id = item.category ? item.category : item.category_id;
+          if (item && cat_id) {
             if (!categoryMap[cat_id]) {
               try {
                 const category = await instance.goodsCategory.findById(item.category).lean();
