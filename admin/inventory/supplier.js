@@ -322,10 +322,15 @@ module.exports = (instance, options, next) => {
       const supplier = await instance.adjustmentSupplier
         .findOne({ _id: supplier_id })
         .lean();
+      const service = await instance.services.findById(body.service).lean();
 
       if (!supplier) return reply.fourorfour('Supplier')
+      if (!service) return reply.fourorfour('Service')
 
       if (request.body.return_money) body.balance *= (-1)
+
+      body.service = service._id
+      body.service_name = service.name
 
       const supplierTransaction = {
         ...body,
@@ -411,10 +416,11 @@ module.exports = (instance, options, next) => {
         type: 'object',
         additionalProperties: false,
         required: [
-          'supplier_id', 'document_id',
+          'supplier_id', 'document_id', 'service',
           'currency', 'status', 'balance'
         ],
         properties: {
+          service: { type: 'string' },
           supplier_id: { type: 'string' },
           document_id: { type: 'string' },
           currency: {

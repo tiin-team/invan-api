@@ -30,60 +30,27 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('Admin', Admin)
 
-  var services = instance.model('inoneServices', {
+  const services = instance.model('inoneServices', {
     name: String,
     organization: String,
-    type_of_business: {
-      type: String,
-      default: ""
-    },
+    type_of_business: { type: String, default: "" },
     type: {
       type: String,
       default: "shop",
       enum: ['shop', 'restaurant', 'market']
     },
-    address: {
-      type: String,
-      default: ""
-    },
-    is_shop: {
-      type: Boolean,
-      default: false
-    },
-    phone_number: {
-      type: String,
-      default: ""
-    },
-    description: {
-      type: String,
-      default: ""
-    },
-    service_value: {
-      type: Number,
-      default: 0
-    },
+    address: { type: String, default: "" },
+    is_shop: { type: Boolean, default: false },
+    phone_number: { type: String, default: "" },
+    description: { type: String, default: "" },
+    service_value: { type: Number, default: 0 },
     location: {
-      latitude: {
-        type: Number,
-        default: 41.311081
-      },
-      longitude: {
-        type: Number,
-        default: 69.240562
-      }
+      latitude: { type: Number, default: 41.311081 },
+      longitude: { type: Number, default: 69.240562 },
     },
-    location_name: {
-      type: String,
-      default: ''
-    },
-    count: {
-      type: Number,
-      default: 0
-    },
-    image_url: {
-      type: String,
-      default: ''
-    }
+    location_name: { type: String, default: '' },
+    count: { type: Number, default: 0 },
+    image_url: { type: String, default: '' },
   })
   instance.decorate('services', services)
   instance.generate('/services', services, { public_search: true })
@@ -1190,6 +1157,7 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('supplierTransaction', instance.model('supplierTransaction', {
     supplier_id: { type: mongoose.Schema.Types.ObjectId, ref: 'adjustmentsuppliers' },
     service: { type: mongoose.Schema.Types.ObjectId, ref: 'inoneservices' },
+    service_name: { type: String },
     document_id: String,
     employee: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     employee_name: String,
