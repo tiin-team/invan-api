@@ -573,13 +573,22 @@ module.exports = (instance, _, next) => {
   })
 
   const getAllEmployees = (request, reply, user) => {
-    if (!user) {
-      return reply.unauthorized()
-    }
-    var query = { organization: user.organization }
+    if (!user) return reply.unauthorized()
+
+    const query = { organization: user.organization }
     if (request.headers['accept-service'] != undefined) {
-      delete query.service
-      query['$or'] = [{ services: { $elemMatch: { service: { $eq: request.headers['accept-service'] }, available: { $eq: true } } } }, { role: 'boss' }]
+      // delete query.service
+      query['$or'] = [
+        {
+          services: {
+            $elemMatch: {
+              service: { $eq: request.headers['accept-service'] },
+              available: { $eq: true },
+            }
+          }
+        },
+        { role: 'boss' },
+      ]
     }
     instance.User.find(query, { boss_token: 0, admin_token: 0, boss_fire_token: 0, services: 0 }, (err, employees) => {
       if (err) {
@@ -595,11 +604,11 @@ module.exports = (instance, _, next) => {
           if (accesses == null) {
             accesses = []
           }
-          var accessObj = {}
+          const accessObj = {}
           for (var a of accesses) {
             accessObj[a.name] = a
           }
-          var EMPLOYEES = []
+          const EMPLOYEES = []
           for (let i = 0; i < employees.length; i++) {
             try {
               employees[i] = employees[i].toObject()
@@ -611,14 +620,14 @@ module.exports = (instance, _, next) => {
               employees[i].employee_token = (new TokenGenerator()).generate()
               await instance.User.updateOne({ _id: employees[i]._id }, { $set: { employee_token: employees[i].employee_token } })
             }
-            
+
             try {
-              const workgroup = await instance.Workgroup.findById(employees[i].workgroup_id)
-              if(workgroup) {
+              const workgroup = await instance.Workgroup.findById(employees[i].workgroup_id).lean();
+              if (workgroup) {
                 employees[i].is_warehouse = workgroup.is_warehouse;
               }
-            } catch (error) {}
-            if(!employees[i].is_warehouse) {
+            } catch (error) { }
+            if (!employees[i].is_warehouse) {
               employees[i].is_warehouse = false;
             }
 
@@ -627,7 +636,7 @@ module.exports = (instance, _, next) => {
             employees[i].fire_token = employees[i].employee_fire_token
             employees[i].employee_fire_token = undefined
             try {
-              employees[i].password = +employees[i].password
+              employees[i].password = employees[i].password
             }
             catch (error) {
               console.log(error.message)
@@ -669,9 +678,118 @@ module.exports = (instance, _, next) => {
     })
   }
 
+  const getUpdatedAllEmployees = async (request, reply, user) => {
+    const from = request.params.min
+    const to = request.params.max
+    const service = request.query.service
+    if (typeof service != 'string' || service.length != 24) {
+      return reply.error('service must objectId')
+    }
+    const date = new Date();
+    const from_time = from ? new Date(parseInt(from)) : date;
+    date.setDate(date.getDate() + 1);
+    const to_time = to ? new Date(parseInt(to)) : date;
+
+    const query = {
+      organization: user.organization,
+      $and: [
+        {
+          $or: [
+            {
+              services: {
+                $elemMatch: {
+                  available: { $eq: true },
+                }
+              }
+            },
+            { role: 'boss' },
+          ],
+        },
+        {
+          $or: [
+            { updatedAt: { $gte: from_time, $lte: to_time } },
+            { createdAt: { $gte: from_time, $lte: to_time } },
+          ],
+        }
+      ],
+    }
+    if (service)
+      query.$and[0].$or[0].services.$elemMatch.service = {
+        $eq: instance.ObjectId(service)
+      }
+    const employees = await instance.User
+      .find(
+        query,
+        { boss_token: 0, admin_token: 0, boss_fire_token: 0, services: 0 }
+      )
+      .lean();
+
+    const accesses = await instance.AccessRights
+      .find({ organization: user.organization })
+      .lean()
+
+    const accessObj = {}
+    for (var a of accesses) {
+      accessObj[a.name] = a
+    }
+    const EMPLOYEES = []
+    for (let i = 0; i < employees.length; i++) {
+      if (employees[i].employee_token == 'Unchanged') {
+        employees[i].employee_token = (new TokenGenerator()).generate()
+        await instance.User.updateOne(
+          { _id: employees[i]._id },
+          { $set: { employee_token: employees[i].employee_token } }
+        )
+      }
+
+      employees[i].token = employees[i].employee_token
+      employees[i].employee_token = undefined
+      employees[i].fire_token = employees[i].employee_fire_token
+      employees[i].employee_fire_token = undefined
+      employees[i].password = employees[i].password
+
+      if (accessObj[employees[i].role] != undefined) {
+        if (accessObj[employees[i].role].pos) {
+          employees[i].access = {
+            close_ticket: accessObj[employees[i].role].close_ticket,
+            can_sell: accessObj[employees[i].role].can_sell,
+            print_pre_check: accessObj[employees[i].role].print_pre_check,
+            receipt_save_as_draft: accessObj[employees[i].role].receipt_save_as_draft,
+            wharehouse_manager: accessObj[employees[i].role].wharehouse_manager,
+            can_change_price: accessObj[employees[i].role].can_change_price,
+            refund: accessObj[employees[i].role].refund,
+            show_all_receipts: accessObj[employees[i].role].show_all_receipts,
+            pay_debt: accessObj[employees[i].role].pay_debt,
+            show_shift_history: accessObj[employees[i].role].show_shift_history,
+            apply_discount: accessObj[employees[i].role].apply_discount,
+            change_settings: accessObj[employees[i].role].change_settings,
+            show_stock: accessObj[employees[i].role].show_stock,
+            edit_items: accessObj[employees[i].role].edit_items,
+            edit_ticket: accessObj[employees[i].role].edit_ticket,
+            split_ticket: accessObj[employees[i].role].split_ticket,
+            change_waiter: accessObj[employees[i].role].change_waiter,
+            delete_ticket: accessObj[employees[i].role].delete_ticket,
+            show_all_tickets: accessObj[employees[i].role].show_all_tickets,
+            can_access_to_shift: accessObj[employees[i].role].can_access_to_shift,
+          }
+          if (employees[i].role != 'waiter') {
+            employees[i].role = 'cashier'
+          }
+          EMPLOYEES.push(employees[i])
+        }
+      }
+    }
+    reply.ok(EMPLOYEES)
+  }
   instance.get('/employees/find', { version: '1.0.0' }, (request, reply) => {
     instance.authorization(request, reply, (user) => {
       getAllEmployees(request, reply, user)
+    })
+  })
+  instance.get('/employees/find/:min/:max', { version: '1.0.0' }, (request, reply) => {
+    instance.authorization(request, reply, (user) => {
+      // getUpdatedAllEmployees(request, reply, { organization: '5f5641e8dce4e706c062837a' })
+      getUpdatedAllEmployees(request, reply, user)
     })
   })
 
