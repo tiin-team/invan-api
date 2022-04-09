@@ -64,9 +64,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
       );
       receiptObj[JSON.stringify({ date: re.date, number: re.receipt_no })] = re;
     }
-    let current_currency = await instance.Currency.findOne({
-      organization: user.organization,
-    });
+    let current_currency = await instance.Currency
+      .findOne({ organization: user.organization })
+      .lean();
     if (!current_currency) {
       current_currency = {};
     }
@@ -193,9 +193,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
                   $receiptModel.sold_item_list[i].category_name = category.name;
                 } else {
                   try {
-                    const other_category = await instance.goodsCategory.findOne(
-                      { organization: user.organization, is_other: true }
-                    );
+                    const other_category = await instance.goodsCategory
+                      .findOne({ organization: user.organization, is_other: true })
+                      .lean();
                     if (other_category) {
                       $receiptModel.sold_item_list[i].category_id =
                         other_category._id;
@@ -221,10 +221,12 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 item.count_by_type;
             } else {
               try {
-                const other_category = await instance.goodsCategory.findOne({
-                  organization: user.organization,
-                  is_other: true,
-                });
+                const other_category = await instance.goodsCategory
+                  .findOne({
+                    organization: user.organization,
+                    is_other: true,
+                  })
+                  .lean();
                 if (other_category) {
                   $receiptModel.sold_item_list[i].category_id =
                     other_category._id;
@@ -244,6 +246,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
     // let result = instance.Receipts.insertMany(need_to_save);
     let result = []
     for (const r of need_to_save) {
+      instance.goods_partiation_queue_stock_update(r.sold_item_list)
       const check = await new instance.Receipts(r).save();
       // save agent transaction
       console.log('save agent transaction')
@@ -299,9 +302,9 @@ const receiptsSaveAsDraft = async (request, reply, instance) => {
       return reply.unauth_user();
     }
 
-    let current_currency = await instance.Currency.findOne({
-      organization: user.organization,
-    });
+    let current_currency = await instance.Currency
+      .findOne({ organization: user.organization })
+      .lean();
     if (!current_currency) {
       current_currency = {};
     }

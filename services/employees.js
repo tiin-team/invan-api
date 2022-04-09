@@ -844,7 +844,7 @@ module.exports = (instance, _, next) => {
     }
   })
 
-  var findAllEmployee = (request, reply) => {
+  const findAllEmployee = (request, reply) => {
     instance.employees.find(request.body, { "_id": 1, "name": 1 }, (err, employees) => {
       if (err || employees == null) {
         reply.ok([])
@@ -975,7 +975,7 @@ module.exports = (instance, _, next) => {
   })
 
 
-  var employees_roles = instance.model('employeesPermits', {
+  const employees_roles = instance.model('employeesPermits', {
     organization: String,
     role: {
       type: String,

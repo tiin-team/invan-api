@@ -3,9 +3,8 @@ module.exports = (instance, options, next) => {
   // get access rights
 
   const get_access = async (request, reply, admin) => {
-    const feature = await instance.settingFeatures.findOne({
-      organization: admin.organization
-    })
+    const feature = await instance.settingFeatures
+      .findOne({ organization: admin.organization })
       .lean();
     // , async (err, feature) => {
     if (feature) {
@@ -336,6 +335,28 @@ module.exports = (instance, options, next) => {
           set_the_taxes: true,
           manage_pos_devices: true,
           can_delete_item: true,
+          //create
+          create: true,
+          create_purchase: true,
+          create_taxes: true,
+          create_store: true,
+          create_pos_device: true,
+          create_customer: true,
+          create_employee: true,
+          create_access: true,
+          create_time_card: true,
+          create_transfer: true,
+          create_stock_adjustmen: true,
+          create_inv_count: true,
+          create_production: true,
+          create_supplier: true,
+          create_supplier_create_doc: true,
+          create_fee: true,
+          create_good_sale: true,
+          create_good_category: true,
+          create_modifier: true,
+          create_discount: true,
+          create_reciept: true,
           //inventory
           inventory: true,
           inv_purchase_orders: true,

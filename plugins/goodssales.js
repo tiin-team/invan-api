@@ -1,7 +1,116 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, _, next) => {
+  /**
+   * partiali tovar
+   * postavchiklarni partiya bo'yicha alhida stockni hisoblash
+   */
+  async function updateGoodsSaleQueueQunatityLeft(id, quantity_left = 0) {
+    await instance.goodsSaleQueue
+      .findOneAndUpdate(
+        { _id: id },
+        { $set: { quantity_left: quantity_left } },
+        { lean: true },
+      )
+  }
+  async function getGoodSalesQueue(query) {
+    return await instance.goodsSaleQueue
+      .findOne(query)
+      .lean()
+  }
+  async function rekursiveUpdateGoodSaleQueue(queue, good, dec_count, queue_query) {
+    num_queue = queue.queue
 
+    if (queue.quantity_left < good.value - dec_count) {
+      const queue_next = await getGoodSalesQueue({
+        queue: num_queue + 1,
+        good_id: good.product_id,
+        supplier_id: good.supplier_id,
+        service_id: queue_query.service_id,
+      })
+      dec_count = dec_count + queue.quantity_left
+      await updateGoodsSaleQueueQunatityLeft(queue._id, 0)
+      return await rekursiveUpdateGoodSaleQueue(
+        queue_next,
+        good,
+        dec_count,
+        {
+          service_id: service_id,
+          supplier_id: good.supplier_id,
+          product_id: good.product_id,
+          queue: good.queue,
+        }
+      )
+    } else
+      if (queue.quantity_left == good.value) {
+        await updateGoodsSaleQueueQunatityLeft(queue._id, 0)
+        return ++num_queue
+      } else {
+        await updateGoodsSaleQueueQunatityLeft(queue._id, queue.quantity_left - (good.value - dec_count))
+
+        return num_queue
+      }
+
+  }
+  async function updateGoodsSalesQueue(id, queue) {
+    await instance.goodsSales
+      .findOneAndUpdate(
+        { _id: id },
+        {
+          $set: {
+            queue: queue,
+            // suppliers
+          }
+        },
+        { lean: true },
+      )
+  }
+  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id, supplier_id = '',) => {
+    console.log(goods);
+    if (!supplier_id) {
+      //stock --
+      for (const good of goods.entries()) {
+        const queue = await getGoodSalesQueue({
+          supplier_id: good.supplier_id,
+          service_id: service_id,
+          good_id: good.product_id,
+          queue: queue.queue,
+        })
+        let num_queue = queue.queue
+        if (queue) {
+          //inc queue
+          if (queue.quantity_left < good.value) {
+            num_queue = await rekursiveUpdateGoodSaleQueue(
+              queue,
+              good,
+              0,
+              {
+                service_id: service_id,
+                supplier_id: good.supplier_id,
+                product_id: good.product_id,
+                queue: queue.queue,
+              }
+            )
+          } else
+            if (queue.quantity_left == good.value) {
+              num_queue++
+            } else {
+              //suplier stockni ha mupdate qil!
+              await updateGoodsSaleQueueQunatityLeft(
+                queue._id,
+                parseInt(queue.quantity_left) - parseInt(good.value)
+              )
+            }
+          //queue ni o'zgartiramiz
+          await updateGoodsSalesQueue(good.product_id, num_queue)
+        }
+        // const curr_good = await instance.goodsSales.findById(good._id).lean()
+      }
+    }
+    else {
+      //tovar keldi! stock ++
+    }
+  })
   // create items for back office
 
   instance.decorate('check_sku_and_category', (request, organization, next) => {
@@ -429,8 +538,8 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('updateGoodsSales', async (id, data, user, service) => {
     try {
-      const item = await instance.goodsSales.findOne({ _id: id })
-      const services = await instance.services.find({ organization: user.organization })
+      const item = await instance.goodsSales.findOne({ _id: id }).lean();
+      const services = await instance.services.find({ organization: user.organization }).lean();
 
       const itemServicesMap = {}
       if (typeof item.services == typeof []) {
@@ -487,18 +596,18 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('get_product_by_id', async (id, reply, admin) => {
     try {
-      let item = await instance.goodsSales.findById(id);
+      const item = await instance.goodsSales.findById(id).lean();
       if (!item) {
         return reply.fourorfour('Item')
       }
-      try {
-        item = item.toObject()
-      } catch (error) { }
+
       // get Category
       try {
-        const category = await instance.goodsCategory.findById(item.category);
+        const category = await instance.goodsCategory.findById(item.category).lean();
         if (!category) {
-          const other_category = await instance.goodsCategory.findOne({ organization: admin.organization, is_other: true });
+          const other_category = await instance.goodsCategory
+            .findOne({ organization: admin.organization, is_other: true })
+            .lean();
           if (other_category) {
             item.category = other_category._id;
             item.category_name = other_category.name;
@@ -520,7 +629,9 @@ module.exports = fp((instance, _, next) => {
 
       // get Supplier
       try {
-        const supplier = await instance.adjustmentSupplier.findById(item.primary_supplier_id);
+        const supplier = await instance.adjustmentSupplier
+          .findById(item.primary_supplier_id)
+          .lean();
         if (supplier) {
           item.primary_supplier_id = supplier._id;
           item.primary_supplier_name = supplier.supplier_name;
@@ -536,10 +647,10 @@ module.exports = fp((instance, _, next) => {
       }
 
       // get taxes
-      try {
-        const taxes = await instance.settingsTaxes.find({ organization: admin.organization });
+      // try {
+      //   const taxes = await instance.settingsTaxes.find({ organization: admin.organization }).lean();
 
-      } catch (error) { }
+      // } catch (error) { }
 
       // composite items
       try {
@@ -548,18 +659,16 @@ module.exports = fp((instance, _, next) => {
           comp_ids.push(c.product_id)
           comItemMap[c.product_id + ''] = c.quality;
         }
-        const composite_items = await instance.goodsSales.find(
-          {
-            _id: {
-              $in: comp_ids
+        const composite_items = await instance.goodsSales
+          .find(
+            { _id: { $in: comp_ids } },
+            {
+              name: 1,
+              cost: 1,
+              cost_currency: 1
             }
-          },
-          {
-            name: 1,
-            cost: 1,
-            cost_currency: 1
-          }
-        );
+          )
+        lean();
         let cost = 0;
         const updated_composite_items = [];
         for (const it of composite_items) {
@@ -584,17 +693,17 @@ module.exports = fp((instance, _, next) => {
 
       // get Services
       try {
-        const services = await instance.services.find({ organization: admin.organization });
+        const services = await instance.services
+          .find({ organization: admin.organization })
+          .lean();
         const servicesMap = {}
         for (const s of services) {
           servicesMap[s._id + ''] = s.name;
         }
         if (item.has_variants) {
-          const variant_items = await instance.goodsSales.find({
-            _id: {
-              $in: item.variant_items
-            }
-          });
+          const variant_items = await instance.goodsSales
+            .find({ _id: { $in: item.variant_items } })
+            .lean();
           const item_services = []
           for (const v_item_ind in variant_items) {
             const v_item = variant_items[v_item_ind];
@@ -1102,7 +1211,7 @@ module.exports = fp((instance, _, next) => {
       const user = request.user;
       const time = parseInt(request.params.time) || 0;
       const service_id = request.headers['accept-service'];
-      const service = await instance.services.findById(service_id);
+      const service = await instance.services.findById(service_id).lean();
 
       if (!service) return reply.fourorfour('Service')
 
@@ -1250,7 +1359,7 @@ module.exports = fp((instance, _, next) => {
         $sort,
         $project
       ]).allowDiskUse(true).exec();
-      console.log('Replied Items', goods.length)
+
       reply.ok(goods)
     } catch (error) {
       reply.error(error.message)

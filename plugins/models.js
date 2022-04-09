@@ -618,9 +618,25 @@ module.exports = fp((instance, _, next) => {
     type: String
   })
 
+  const goodsSaleQueue = instance.model('goodsSaleQueue', {
+    supplier_id: mongoose.Types.ObjectId,
+    service_id: mongoose.Types.ObjectId,
+    good_id: mongoose.Types.ObjectId,
+    quantity: Number,
+    quantity_left: Number,
+    queue: Number,
+  })
+  instance.decorate('goodsSaleQueue', goodsSaleQueue)
+
   const goodsSales = instance.model('goodsSales', {
     organization: String,
     service: String,
+    queue: Number,
+    suppliers: [{
+      supplier_id: mongoose.Types.ObjectId,
+      service_id: mongoose.Types.ObjectId,
+      stock: Number,
+    }],
     services: [
       {
         service: mongoose.Schema.Types.ObjectId,
@@ -1508,6 +1524,7 @@ module.exports = fp((instance, _, next) => {
     can_access_to_shift: boolean,
     back_office: boolean,
     //create roles
+    create: boolean,
     create_purchase: boolean,
     create_taxes: boolean,
     create_store: boolean,
@@ -1528,7 +1545,6 @@ module.exports = fp((instance, _, next) => {
     create_modifier: boolean,
     create_discount: boolean,
     create_reciept: boolean,
-    create_: boolean,
     // reports
     reports: boolean,
     report_sale: boolean,
