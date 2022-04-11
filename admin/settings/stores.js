@@ -88,14 +88,16 @@ module.exports = (instance, options, next) => {
     const get_service = async (request, reply, admin) => {
         try {
             const service_id = request.params.id
-            let service = await instance.services.findOne({ _id: service_id, organization: admin.organization }).exec();
+            const service = await instance.services
+                .findOne({ _id: service_id, organization: admin.organization })
+                .lean();
             if (!service) {
                 return reply.fourorfour('Service');
             }
-            try {
-                service = service.toObject()
-            } catch (err) { }
-            const settingReceipt = await instance.settingReceipt.findOne({ service: service_id }).exec();
+
+            const settingReceipt = await instance.settingReceipt
+                .findOne({ service: service_id })
+                .lean();
             service.receipt = settingReceipt
             return reply.ok(service);
         } catch (error) {

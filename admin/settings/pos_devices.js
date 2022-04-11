@@ -2,8 +2,8 @@ module.exports = (instance, options, next) => {
 
   // get pos
 
-  var get_pos = (request, reply, admin) => {
-    var query = {
+  const get_pos = (request, reply, admin) => {
+    const query = {
       organization: admin.organization
     }
     if (request.body) {

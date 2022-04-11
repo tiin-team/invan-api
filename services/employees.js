@@ -974,7 +974,6 @@ module.exports = (instance, _, next) => {
     })
   })
 
-
   const employees_roles = instance.model('employeesPermits', {
     organization: String,
     role: {

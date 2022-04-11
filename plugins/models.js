@@ -769,6 +769,7 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('deletedGoodsSales', instance.model('deletedGoodsSales', {
     organization: String,
+    organization_id: mongoose.Types.ObjectId,
     item_id: String,
     date: Number
   }))

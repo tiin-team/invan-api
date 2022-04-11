@@ -2630,14 +2630,6 @@ module.exports = (instance, options, next) => {
         //   }
         instance.goodsSales.aggregate([
           $match,
-          // {
-          //   $lookup: {
-          //     from: 'goodscategory',
-          //     localField: 'category',
-          //     foreignField: '_id',
-          //     as: 'categObj'
-          //   }
-          // },
           {
             $project: {
               "_id": 1,
@@ -2652,11 +2644,7 @@ module.exports = (instance, options, next) => {
               "category": 1,
               "price": 1,
               "category_name": 1,
-              // "categObj": 1,
-              // "has_variants": 1,
-              // "variant_options": 1,
               "cost": { $round: ['$cost', 0] },
-              // "cost": 1,
               "services": 1,
               "mxik": 1,
             }
@@ -2853,6 +2841,47 @@ module.exports = (instance, options, next) => {
     get_file_mxik(request, reply, { organization: request.params.organization })
     // })
   })
+  const get_deleted_goods = async (request, reply, admin) => {
+
+    const organization = await instance.organizations
+      .findOne({ _id: admin.organization })
+      .lean()
+
+    if (!organization) return reply.fourorfour('Organization')
+
+    const { from, to } = request.query
+
+    const $match = {
+      $match: {
+        $or: {
+          organization: admin.organization,
+          organization_id: organization._id,
+        },
+      },
+    }
+    const date = {};
+    if (from) {
+      date.$gte = from
+      $match.$match.date = date
+    }
+    if (to) {
+      date.$lte = to
+      $match.$match.date = date
+    }
+
+    const $project = { $project: { _id: 1 } }
+
+    const goods = await instance.deletedGoodsSales.aggregate([$match, $project]).exec()
+
+    reply.send(goods)
+  }
+
+  instance.get('/goods/sales/deleted/:organization', { version: '2.0.0' }, (request, reply) => {
+    instance.authorization(request, reply, (admin) => {
+      get_deleted_goods(request, reply, { organization: request.params.organization })
+    })
+  })
+
   instance.get('/goods/sales/desktop/export/:organization/:service', (request, reply) => {
     // instance.authorization(request, reply, (admin) => {
     //_id, sku, name, sold_by, barcode, representation, prices, category, cost
@@ -3051,6 +3080,47 @@ module.exports = (instance, options, next) => {
 
       return reply.ok(goods)
     })
+
+  instance.delete('/goods/sales/delete_group', { version: '2.0.0' }, (request, reply) => {
+    const deleted_items = []
+    const items = request.body.indexes
+    try {
+      for (const item of items) {
+        deleted_items.push({
+          organization: user.organization,
+          organization_id: user.organization,
+          item_id: item._id,
+          date: new Date().getTime()
+        })
+        const variant_items = await instance.goodsSales
+          .find(
+            {
+              organization: user.organization,
+              _id: { $in: item.variant_items }
+            },
+            { _id: 1 }
+          )
+          .lean()
+        for (const v of variant_items) {
+          deleted_items.push({
+            organization: user.organization,
+            organization_id: user.organization,
+            item_id: v._id,
+            date: new Date().getTime()
+          })
+        }
+        await instance.goodsSales.deleteMany({
+          organization: user.organization,
+          _id: { $in: item.variant_items }
+        })
+      }
+      await instance.deletedGoodsSales.insertMany(deleted_items)
+
+      return reply.ok(true)
+    } catch (error) {
+      reply.error(error.message)
+    }
+  })
 
   next()
 }
