@@ -13,14 +13,15 @@ module.exports = fp((instance, options, next) => {
         }
         const date = {};
         if (from) {
-            date.$gte = from
+            date.$gte = parseInt(from)
             $match.$match.date = date
         }
         if (to) {
-            date.$lte = to
+            date.$lte = parseInt(to)
             $match.$match.date = date
         }
 
+        console.log($match);
         const $group = {
             $group: {
                 _id: '$product_id',
