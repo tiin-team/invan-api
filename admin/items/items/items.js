@@ -3081,7 +3081,7 @@ module.exports = (instance, options, next) => {
       return reply.ok(goods)
     })
 
-  instance.delete('/goods/sales/delete_group', { version: '2.0.0' }, (request, reply) => {
+  instance.delete('/goods/sales/delete_group', { version: '2.0.0' }, async (request, reply) => {
     const deleted_items = []
     const items = request.body.indexes
     try {

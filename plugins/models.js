@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 
 module.exports = fp((instance, _, next) => {
 
-  var BOS = instance.model('inoneBOS', {
+  const BOS = instance.model('inoneBOS', {
     organization: String,
     full_name: {
       type: String,
@@ -20,7 +20,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('BOS', BOS)
 
-  var Admin = instance.model('inoneAdmin', {
+  const Admin = instance.model('inoneAdmin', {
     organization: String,
     name: String,
     last_name: String,
@@ -63,7 +63,7 @@ module.exports = fp((instance, _, next) => {
     name: String
   }), { public: true })
 
-  var organizations = instance.model('inoneOrgaziations', {
+  const organizations = instance.model('inoneOrgaziations', {
     inn: {
       type: String,
       default: ""
@@ -152,7 +152,7 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('organizations', organizations)
   instance.generate('/organizations', organizations, { access_get: true })
 
-  var model = instance.model('sms_codees', {
+  const model = instance.model('sms_codees', {
     phone_number: String,
     user: {
       type: String,
@@ -164,7 +164,7 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('SMS', model)
   instance.generate('/sms', model)
 
-  var sms_model = instance.model('sms_code_for_bot', {
+  const sms_model = instance.model('sms_code_for_bot', {
     phone_number: String,
     inn: String,
     sms_code: Number
@@ -172,7 +172,7 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('SMS_Bot', sms_model)
   instance.generate('/sms_bot', sms_model)
 
-  var employees = instance.model('employeesList', {
+  const employees = instance.model('employeesList', {
     organization: String,
     service: String,
     services: {
@@ -211,13 +211,13 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('employees', employees)
 
-  var Passwords = instance.model('Passwords', {
+  const Passwords = instance.model('Passwords', {
     employee_id: String,
     password: Number
   })
   instance.decorate('Passwords', Passwords)
 
-  var Receipts = instance.model('Receipts', {
+  const Receipts = instance.model('Receipts', {
     organization: String,
     service: String,
     workgroup_order_id: String,
@@ -439,7 +439,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('Receipts', Receipts)
 
-  var Tables = instance.model('Tables', {
+  const Tables = instance.model('Tables', {
     organization: String,
     service: String,
     is_self: {
@@ -472,7 +472,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('Tables', Tables)
 
-  var Shifts = instance.model('Shifts', {
+  const Shifts = instance.model('Shifts', {
     organization: String,
     old_id: String,
     service: String,
@@ -595,7 +595,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('Shifts', Shifts)
 
-  var paysButtons = new instance.model('paysButtons', {
+  const paysButtons = new instance.model('paysButtons', {
     organization: String,
     service: String,
     name: String,
@@ -607,7 +607,7 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('paysButtons', paysButtons)
   instance.generate('/pays/buttons', paysButtons)
 
-  var taxSchema = new mongoose.Schema({
+  const taxSchema = new mongoose.Schema({
     tax_id: mongoose.Schema.Types.ObjectId,
     available: {
       type: Boolean,
@@ -774,7 +774,7 @@ module.exports = fp((instance, _, next) => {
     date: Number
   }))
 
-  var Tickets = instance.model('Tickets', {
+  const Tickets = instance.model('Tickets', {
     organization: String,
     service: String,
     created_time: Number,
@@ -799,7 +799,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('Tickets', Tickets)
 
-  var Item_Data = instance.model('Item_Data', {
+  const Item_Data = instance.model('Item_Data', {
     organization: String,
     service: String,
     is_karaoke: {
@@ -842,7 +842,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('Item_Data', Item_Data)
 
-  var cancelledItemDatas = instance.model('cancelledItemDatas', {
+  const cancelledItemDatas = instance.model('cancelledItemDatas', {
     organization: String,
     service: String,
     created_time: {
@@ -1186,7 +1186,7 @@ module.exports = fp((instance, _, next) => {
     purchase_id: String
   }))
 
-  var Production = instance.model('Production', {
+  const Production = instance.model('Production', {
     organization: String,
     service: mongoose.Schema.Types.ObjectId,
     service_name: String,
@@ -1227,7 +1227,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('Production', Production)
 
-  var Transfer = instance.model('Transfer', {
+  const Transfer = instance.model('Transfer', {
     organization: String,
     first_service: mongoose.Schema.Types.ObjectId,
     second_service: mongoose.Schema.Types.ObjectId,
@@ -1276,7 +1276,7 @@ module.exports = fp((instance, _, next) => {
 
   // inventory count
 
-  var inventoryCount = instance.model('inventoryCount', {
+  const inventoryCount = instance.model('inventoryCount', {
     organization: String,
     service: mongoose.Schema.Types.ObjectId,
     service_name: String,
@@ -1307,7 +1307,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('inventoryCount', inventoryCount)
 
-  var inventoryCountHistory = instance.model('inventoryCountHistory', {
+  const inventoryCountHistory = instance.model('inventoryCountHistory', {
     count_id: String,
     product_id: mongoose.Schema.Types.ObjectId,
     product_name: String,
@@ -1317,7 +1317,7 @@ module.exports = fp((instance, _, next) => {
 
   // inventory count items
 
-  var inventoryCountItem = instance.model('inventoryCountItem', {
+  const inventoryCountItem = instance.model('inventoryCountItem', {
     organization: String,
     service: mongoose.Schema.Types.ObjectId,
     count_id: mongoose.Schema.Types.ObjectId,
@@ -1339,7 +1339,7 @@ module.exports = fp((instance, _, next) => {
 
   // stock adjustment
 
-  var stockAdjustment = instance.model('stockAdjustment', {
+  const stockAdjustment = instance.model('stockAdjustment', {
     organization: String,
     p_order: String,
     service: mongoose.Schema.Types.ObjectId,
@@ -1356,7 +1356,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('stockAdjustment', stockAdjustment)
 
-  var stockAdjustmentItems = instance.model('stockAdjustmentItems', {
+  const stockAdjustmentItems = instance.model('stockAdjustmentItems', {
     stock_adjustment_id: mongoose.Schema.Types.ObjectId,
     category_id: String,
     category_name: String,
@@ -1382,7 +1382,7 @@ module.exports = fp((instance, _, next) => {
 
   // inventory history
 
-  var inventoryHistory = instance.model('inventoryHistory', {
+  const inventoryHistory = instance.model('inventoryHistory', {
     organization: String,
     date: Number,
     unique: String,
@@ -1439,7 +1439,7 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('itemPriceChangeHistory', itemPriceChangeHistory)
 
   // History of edited item
-  var itemEditHistory = instance.model('itemEditHistory', {
+  const itemEditHistory = instance.model('itemEditHistory', {
     organization: String,
     date: Number,
     product_id: mongoose.Schema.Types.ObjectId,

@@ -550,6 +550,7 @@ module.exports = fp((instance, options, next) => {
             balance_usd: 0,
           }]
 
+        //
         for (const [index, serv] of services.entries()) {
           if (serv.service.toString() == purch.service.toString()) {
             services[index].balance += balance_uzs
@@ -583,6 +584,32 @@ module.exports = fp((instance, options, next) => {
           .save();
       }
 
+      for (const purch_item of items) {
+
+        const queue = await instance.goodsSaleQueue
+          .findOne(
+            {
+              supplier_id: current_supplier._id,
+              service_id: purch.service,
+              good_id: purch_item.product_id,
+            },
+            { queue: 1 }
+          )
+          .sort('-queue')
+          .lean()
+        console.log(queue);
+        num_queue = queue && queue.queue ? parseInt(queue.queue) + 1 : 1
+        console.log(num_queue);
+
+        await new instance.goodsSaleQueue({
+          supplier_id: current_supplier._id,
+          service_id: purch.service,
+          good_id: purch_item.product_id,
+          quantity: purch_item.received,
+          quantity_left: purch_item.received,
+          queue: num_queue,
+        }).save()
+      }
       // update items cost
       const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } }).lean();
 

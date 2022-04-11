@@ -18,7 +18,7 @@ module.exports = fp((instance, _, next) => {
       .findOne(query)
       .lean()
   }
-  async function rekursiveUpdateGoodSaleQueue(queue, good, dec_count, queue_query) {
+  async function rekursiveUpdateGoodSaleQueueDec(queue, good, dec_count, queue_query) {
     num_queue = queue.queue
 
     if (queue.quantity_left < good.value - dec_count) {
@@ -30,7 +30,7 @@ module.exports = fp((instance, _, next) => {
       })
       dec_count = dec_count + queue.quantity_left
       await updateGoodsSaleQueueQunatityLeft(queue._id, 0)
-      return await rekursiveUpdateGoodSaleQueue(
+      return await rekursiveUpdateGoodSaleQueueDec(
         queue_next,
         good,
         dec_count,
@@ -70,17 +70,18 @@ module.exports = fp((instance, _, next) => {
     if (!supplier_id) {
       //stock --
       for (const good of goods.entries()) {
+        good.queue = good.queue ? good.queue : 1
         const queue = await getGoodSalesQueue({
           supplier_id: good.supplier_id,
           service_id: service_id,
           good_id: good.product_id,
-          queue: queue.queue,
+          queue: good.queue,
         })
         let num_queue = queue.queue
         if (queue) {
           //inc queue
           if (queue.quantity_left < good.value) {
-            num_queue = await rekursiveUpdateGoodSaleQueue(
+            num_queue = await rekursiveUpdateGoodSaleQueueDec(
               queue,
               good,
               0,
@@ -109,6 +110,15 @@ module.exports = fp((instance, _, next) => {
     }
     else {
       //tovar keldi! stock ++
+      // for (const good of goods.entries()) {
+      //   const queue = await getGoodSalesQueue({
+      //     supplier_id: good.supplier_id,
+      //     service_id: service_id,
+      //     good_id: good.product_id,
+      //     queue: queue.queue,
+      //   })
+      //   let num_queue = queue.queuez
+      // }
     }
   })
   // create items for back office
