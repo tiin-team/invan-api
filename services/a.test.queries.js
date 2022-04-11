@@ -9,9 +9,6 @@ module.exports = fp((instance, options, next) => {
             $match: {
                 organization: '5f5641e8dce4e706c062837a',
                 reason: 'sold',
-                date: {
-                    $gte: 1634603695193
-                }
             }
         }
         const date = {};
