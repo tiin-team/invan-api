@@ -49,24 +49,28 @@ module.exports = fp((instance, options, next) => {
         }
 
         const $project = {
-            stopped_item: request.query.stopped_item ? 1 : 0,
-            services: request.query.services ? 1 : 0,
-            created_time: request.query.created_time ? 1 : 0,
-            last_updated: request.query.last_updated ? 1 : 0,
-            last_stock_updated: request.query.last_stock_updated ? 1 : 0,
-            last_price_change: request.query.last_price_change ? 1 : 0,
-            name: request.query.name ? 1 : 0,
-            sale_is_avialable: request.query.sale_is_avialable ? 1 : 0,
-            expire_date: request.query.expire_date ? 1 : 0,
-            sku: request.query.sku ? 1 : 0,
-            in_stock: request.query.in_stock ? 1 : 0,
-            low_stock: request.query.low_stock ? 1 : 0,
-            optimal_stock: request.query.optimal_stock ? 1 : 0,
-            primary_supplier_id: request.query.primary_supplier_id ? 1 : 0,
-            primary_supplier_name: request.query.primary_supplier_name ? 1 : 0,
-            show_on_bot: request.query.show_on_bot ? 1 : 0,
+            $project: {
+                _id: 1,
+                stopped_item: 1,
+                created_time: 1,
+                last_updated: 1,
+                last_stock_updated: 1,
+                last_price_change: 1,
+                name: 1,
+                sku: 1,
+                in_stock: 1,
+                low_stock: 1,
+                primary_supplier_name: 1,
+                updatedAt: 1
+            }
         }
-
+        if (request.query.services) $project.$project.services = 1
+        if (request.query.sale_is_avialable) $project.$project.sale_is_avialable = 1
+        if (request.query.expire_date) $project.$project.expire_date = 1
+        if (request.query.optimal_stock) $project.$project.optimal_stock = 1
+        if (request.query.primary_supplier_id) $project.$project.primary_supplier_id = 1
+        if (request.query.show_on_bot) $project.$project.show_on_bot = 1
+        console.log($project);
         const aggregate = [$match, $project]
 
         const goods = await instance.goodsSales.aggregate(aggregate).exec()
