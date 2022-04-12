@@ -21,7 +21,6 @@ module.exports = fp((instance, options, next) => {
             $match.$match.date = date
         }
 
-        console.log($match);
         const $group = {
             $group: {
                 _id: '$product_id',
@@ -37,6 +36,21 @@ module.exports = fp((instance, options, next) => {
         const aggregate = [$match, $group]
 
         const goods = await instance.inventoryHistory.aggregate(aggregate).exec()
+
+        reply.ok(goods)
+    })
+    instance.get('/items/unchange', async (request, reply) => {
+
+        const $match = {
+            $match: {
+                organization: '5f5641e8dce4e706c062837a',
+                updatedAt: { $exists: true },
+            }
+        }
+
+        const aggregate = [$match]
+
+        const goods = await instance.goodsSales.aggregate(aggregate).exec()
 
         reply.ok(goods)
     })

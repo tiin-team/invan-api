@@ -24,23 +24,24 @@ module.exports = fp((instance, _, next) => {
     if (queue.quantity_left < good.value - dec_count) {
       const queue_next = await getGoodSalesQueue({
         queue: num_queue + 1,
-        good_id: good.product_id,
-        supplier_id: good.supplier_id,
+        good_id: queue_query.product_id,
         service_id: queue_query.service_id,
       })
       dec_count = dec_count + queue.quantity_left
       await updateGoodsSaleQueueQunatityLeft(queue._id, 0)
-      return await rekursiveUpdateGoodSaleQueueDec(
-        queue_next,
-        good,
-        dec_count,
-        {
-          service_id: service_id,
-          supplier_id: good.supplier_id,
-          product_id: good.product_id,
-          queue: good.queue,
-        }
-      )
+      return queue_next
+        ? await rekursiveUpdateGoodSaleQueueDec(
+          queue_next,
+          good,
+          dec_count,
+          {
+            service_id: queue_query.service_id,
+            // supplier_id: queue_query.supplier_id,
+            product_id: queue_query.product_id,
+            // queue: queue_next.queue,
+          }
+        )
+        : num_queue
     } else
       if (queue.quantity_left == good.value) {
         await updateGoodsSaleQueueQunatityLeft(queue._id, 0)
@@ -65,60 +66,46 @@ module.exports = fp((instance, _, next) => {
         { lean: true },
       )
   }
-  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id, supplier_id = '',) => {
-    console.log(goods);
-    if (!supplier_id) {
-      //stock --
-      for (const good of goods.entries()) {
-        good.queue = good.queue ? good.queue : 1
-        const queue = await getGoodSalesQueue({
-          supplier_id: good.supplier_id,
-          service_id: service_id,
-          good_id: good.product_id,
-          queue: good.queue,
-        })
-        let num_queue = queue.queue
-        if (queue) {
-          //inc queue
-          if (queue.quantity_left < good.value) {
-            num_queue = await rekursiveUpdateGoodSaleQueueDec(
-              queue,
-              good,
-              0,
-              {
-                service_id: service_id,
-                supplier_id: good.supplier_id,
-                product_id: good.product_id,
-                queue: queue.queue,
-              }
-            )
-          } else
-            if (queue.quantity_left == good.value) {
-              num_queue++
-            } else {
-              //suplier stockni ha mupdate qil!
-              await updateGoodsSaleQueueQunatityLeft(
-                queue._id,
-                parseInt(queue.quantity_left) - parseInt(good.value)
-              )
+  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id) => {
+    console.log(goods.length, 'goods');
+
+    for (const good of goods) {
+      good.queue = good.queue ? good.queue : 1
+      const queue = await getGoodSalesQueue({
+        // service_id: instance.ObjectId(service_id),
+        // good_id: instance.ObjectId(good.product_id),
+        service_id: service_id,
+        good_id: good.product_id,
+        queue: good.queue,
+      })
+
+      let num_queue = queue && queue.queue ? queue.queue : 1
+      // console.log(queue);
+      if (queue) {
+        //inc queue
+        if (queue.quantity_left <= good.value) {
+          num_queue = await rekursiveUpdateGoodSaleQueueDec(
+            queue,
+            good,
+            0,
+            {
+              service_id: service_id,
+              // supplier_id: good.supplier_id,
+              product_id: good.product_id,
+              // queue: queue.queue,
             }
+          )
           //queue ni o'zgartiramiz
           await updateGoodsSalesQueue(good.product_id, num_queue)
+        } else {
+          await updateGoodsSalesQueue(good.product_id, num_queue)
+          //suplier stockni ham update qil!
+          await updateGoodsSaleQueueQunatityLeft(
+            queue._id,
+            parseInt(queue.quantity_left) - parseInt(good.value)
+          )
         }
-        // const curr_good = await instance.goodsSales.findById(good._id).lean()
       }
-    }
-    else {
-      //tovar keldi! stock ++
-      // for (const good of goods.entries()) {
-      //   const queue = await getGoodSalesQueue({
-      //     supplier_id: good.supplier_id,
-      //     service_id: service_id,
-      //     good_id: good.product_id,
-      //     queue: queue.queue,
-      //   })
-      //   let num_queue = queue.queuez
-      // }
     }
   })
   // create items for back office

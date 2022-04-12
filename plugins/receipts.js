@@ -16,7 +16,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
       }
     }
     else {
-      pos = await instance.posDevices.findById(pos_id);
+      pos = await instance.posDevices.findById(pos_id).lean();
       if (!pos) {
         return reply.unauth_user();
       }
@@ -246,7 +246,8 @@ const receiptCreateGroup = async (request, reply, instance) => {
     // let result = instance.Receipts.insertMany(need_to_save);
     let result = []
     for (const r of need_to_save) {
-      instance.goods_partiation_queue_stock_update(r.sold_item_list)
+      //goods_partiation_queue_stock_update update stock queue
+      instance.goods_partiation_queue_stock_update(r.sold_item_list, service_id)
       const check = await new instance.Receipts(r).save();
       // save agent transaction
       console.log('save agent transaction')

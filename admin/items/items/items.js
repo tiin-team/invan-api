@@ -3082,45 +3082,46 @@ module.exports = (instance, options, next) => {
     })
 
   instance.delete('/goods/sales/delete_group', { version: '2.0.0' }, async (request, reply) => {
-    const deleted_items = []
-    const items = request.body.indexes
-    try {
-      for (const item of items) {
-        deleted_items.push({
-          organization: user.organization,
-          organization_id: user.organization,
-          item_id: item._id,
-          date: new Date().getTime()
-        })
-        const variant_items = await instance.goodsSales
-          .find(
-            {
-              organization: user.organization,
-              _id: { $in: item.variant_items }
-            },
-            { _id: 1 }
-          )
-          .lean()
-        for (const v of variant_items) {
+    instance.authorization(request, reply, async (user) => {
+      const deleted_items = []
+      const items = request.body.indexes
+      try {
+        for (const item of items) {
           deleted_items.push({
             organization: user.organization,
             organization_id: user.organization,
-            item_id: v._id,
+            item_id: item._id,
             date: new Date().getTime()
           })
+          const variant_items = await instance.goodsSales
+            .find(
+              {
+                organization: user.organization,
+                _id: { $in: item.variant_items }
+              },
+              { _id: 1 }
+            )
+            .lean()
+          for (const v of variant_items) {
+            deleted_items.push({
+              organization: user.organization,
+              organization_id: user.organization,
+              item_id: v._id,
+              date: new Date().getTime()
+            })
+          }
+          await instance.goodsSales.deleteMany({
+            organization: user.organization,
+            _id: { $in: item.variant_items }
+          })
         }
-        await instance.goodsSales.deleteMany({
-          organization: user.organization,
-          _id: { $in: item.variant_items }
-        })
+        await instance.deletedGoodsSales.insertMany(deleted_items)
+
+        return reply.ok(true)
+      } catch (error) {
+        reply.error(error.message)
       }
-      await instance.deletedGoodsSales.insertMany(deleted_items)
-
-      return reply.ok(true)
-    } catch (error) {
-      reply.error(error.message)
-    }
+    })
   })
-
   next()
 }

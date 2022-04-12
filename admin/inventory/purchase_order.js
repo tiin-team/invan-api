@@ -589,7 +589,7 @@ module.exports = fp((instance, options, next) => {
         const queue = await instance.goodsSaleQueue
           .findOne(
             {
-              supplier_id: current_supplier._id,
+              // supplier_id: current_supplier._id,
               service_id: purch.service,
               good_id: purch_item.product_id,
             },
