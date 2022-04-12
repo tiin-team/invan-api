@@ -48,7 +48,26 @@ module.exports = fp((instance, options, next) => {
             }
         }
 
-        const aggregate = [$match]
+        const $project = {
+            stopped_item: request.query.stopped_item ? 1 : 0,
+            services: request.query.services ? 1 : 0,
+            created_time: request.query.created_time ? 1 : 0,
+            last_updated: request.query.last_updated ? 1 : 0,
+            last_stock_updated: request.query.last_stock_updated ? 1 : 0,
+            last_price_change: request.query.last_price_change ? 1 : 0,
+            name: request.query.name ? 1 : 0,
+            sale_is_avialable: request.query.sale_is_avialable ? 1 : 0,
+            expire_date: request.query.expire_date ? 1 : 0,
+            sku: request.query.sku ? 1 : 0,
+            in_stock: request.query.in_stock ? 1 : 0,
+            low_stock: request.query.low_stock ? 1 : 0,
+            optimal_stock: request.query.optimal_stock ? 1 : 0,
+            primary_supplier_id: request.query.primary_supplier_id ? 1 : 0,
+            primary_supplier_name: request.query.primary_supplier_name ? 1 : 0,
+            show_on_bot: request.query.show_on_bot ? 1 : 0,
+        }
+
+        const aggregate = [$match, $project]
 
         const goods = await instance.goodsSales.aggregate(aggregate).exec()
 
