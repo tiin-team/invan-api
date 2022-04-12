@@ -44,7 +44,7 @@ module.exports = fp((instance, options, next) => {
         const $match = {
             $match: {
                 organization: '5f5641e8dce4e706c062837a',
-                updatedAt: { $exists: true },
+                updatedAt: { $exists: false },
             }
         }
 
