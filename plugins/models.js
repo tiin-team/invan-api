@@ -620,7 +620,11 @@ module.exports = fp((instance, _, next) => {
 
   const goodsSaleQueue = instance.model('goodsSaleQueue', {
     supplier_id: mongoose.Types.ObjectId,
+    supplier_name: String,
+    purchase_id: mongoose.Types.ObjectId,
+    p_order: String,
     service_id: mongoose.Types.ObjectId,
+    service_name: String,
     good_id: mongoose.Types.ObjectId,
     quantity: Number,
     quantity_left: Number,
@@ -634,7 +638,9 @@ module.exports = fp((instance, _, next) => {
     queue: Number,
     suppliers: [{
       supplier_id: mongoose.Types.ObjectId,
+      supplier_name: String,
       service_id: mongoose.Types.ObjectId,
+      service_name: String,
       stock: Number,
     }],
     services: [
@@ -756,8 +762,8 @@ module.exports = fp((instance, _, next) => {
     name_on_bot: String,
     dimentions: {
       x: { type: Number, default: 0 },
-      y: { type: Number, default: 0  },
-      z: { type: Number, default: 0  }
+      y: { type: Number, default: 0 },
+      z: { type: Number, default: 0 }
     },
     weight: Number,
     brand: String,

@@ -408,7 +408,7 @@ module.exports = fp((instance, options, next) => {
         .findOne({ _id: request.params.id })
         .lean();
       if (!purch) return reply.fourorfour('purchase_order')
-
+      const current_service = await instance.services.findById(purch.service).lean()
       let items = request.body.items;
       let item_ids = [];
       let reqObj = {};
@@ -417,7 +417,7 @@ module.exports = fp((instance, options, next) => {
         reqObj[items[i]._id] = items[i]
         reqObj[items[i]._id].to_receive = parseFloat(reqObj[items[i]._id].to_receive)
       }
-      items = await instance.purchaseItem.find({ _id: { $in: item_ids } });
+      items = await instance.purchaseItem.find({ _id: { $in: item_ids } }).lean();
 
       let goodsObj = {}
       let pro_ids = []
@@ -446,12 +446,13 @@ module.exports = fp((instance, options, next) => {
 
             if (goodsObj[pro_id] == undefined) {
               pro_ids.push(items[i].product_id)
-              try {
-                goodsObj[pro_id] = items[i].toObject()
-              }
-              catch (error) {
-                console.log(error.message)
-              }
+              // try {
+              goodsObj[pro_id] = items[i]
+              // .toObject()
+              // }
+              // catch (error) {
+              //   console.log(error.message)
+              // }
             }
             else {
               goodsObj[pro_id].purchase_cost =
@@ -544,15 +545,26 @@ module.exports = fp((instance, options, next) => {
         const services = Array.isArray(current_supplier.services)
           ? current_supplier.services
           : [{
-            service: purch.service,
-            service_name: purch.service_name,
+            service: current_service._id,
+            service_name: current_service.name,
             balance: 0,
             balance_usd: 0,
           }]
-
-        //
+        if (
+          current_supplier.services &&
+          !current_supplier.services
+            .find(elem => elem.service + '' == purch.service + '')
+        ) {
+          current_supplier.services.push({
+            service: current_service._id,
+            service_name: current_service.name,
+            balance: 0,
+            balance_usd: 0,
+          })
+        }
+        // update adjustmentSupplier service balance
         for (const [index, serv] of services.entries()) {
-          if (serv.service.toString() == purch.service.toString()) {
+          if (serv.service.toString() == current_service._id.toString()) {
             services[index].balance += balance_uzs
             services[index].balance_usd += balance_usd
           }
@@ -584,31 +596,79 @@ module.exports = fp((instance, options, next) => {
           .save();
       }
 
+      // update item partiation queue
       for (const purch_item of items) {
-
+        // console.log(purch_item, 'item');
+        //update queue
         const queue = await instance.goodsSaleQueue
           .findOne(
             {
-              // supplier_id: current_supplier._id,
-              service_id: purch.service,
+              service_id: current_service._id,
               good_id: purch_item.product_id,
             },
             { queue: 1 }
           )
           .sort('-queue')
           .lean()
-        console.log(queue);
+
         num_queue = queue && queue.queue ? parseInt(queue.queue) + 1 : 1
-        console.log(num_queue);
 
         await new instance.goodsSaleQueue({
+          purchase_id: purch._id,
+          p_order: purch.p_order,
           supplier_id: current_supplier._id,
-          service_id: purch.service,
+          supplier_name: current_supplier.supplier_name,
+          service_id: current_service._id,
+          service_name: current_service.name,
           good_id: purch_item.product_id,
           quantity: purch_item.received,
           quantity_left: purch_item.received,
           queue: num_queue,
         }).save()
+        //update item suppliers
+        const goood1 = await instance.goodsSales.findById(purch_item.product_id).lean();
+
+        const good_of_suppliers =
+          Array.isArray(goood1.suppliers)
+            ? goood1.suppliers
+            : [{
+              supplier_id: current_supplier._id,
+              supplier_name: current_supplier.supplier_name,
+              service_id: current_service._id,
+              service_name: current_service.name,
+              stock: 0,
+            }]
+
+        if (
+          goood1.suppliers &&
+          !goood1.suppliers
+            .find(elem =>
+              elem.supplier_id + '' == current_supplier._id + '' &&
+              elem.service_id + '' == purch.service + ''
+            )) {
+          goood1.suppliers.push({
+            supplier_id: current_supplier._id,
+            supplier_name: current_supplier.supplier_name,
+            service_id: current_service._id,
+            service_name: current_service.name,
+            stock: 0,
+          })
+        }
+        // update adjustmentSupplier service balance
+        for (const [index, supp] of good_of_suppliers.entries()) {
+          if (
+            supp.service_id + '' == current_service._id + '' &&
+            supp.supplier_id + '' == current_supplier._id + ''
+          ) {
+            good_of_suppliers[index].stock += purch_item.received
+          }
+        }
+
+        await instance.goodsSales.updateOne(
+          { _id: purch_item.product_id },
+          { $set: { suppliers: good_of_suppliers } },
+          { lean: true },
+        )
       }
       // update items cost
       const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } }).lean();
@@ -965,6 +1025,8 @@ module.exports = fp((instance, options, next) => {
       if (body.status == 'pending')
         return reply.ok({ _id: purchase_id })
       const services = Array.isArray(supplier.services)
+        && supplier.services
+          .find(elem => elem.service + '' == service._id + '')
         ? supplier.services
         : [{
           service: service._id,
@@ -972,7 +1034,18 @@ module.exports = fp((instance, options, next) => {
           balance: 0,
           balance_usd: 0,
         }]
-
+      if (
+        supplier.services &&
+        !supplier.services
+          .find(elem => elem.service + '' == purch.service + '')
+      ) {
+        supplier.services.push({
+          service: service._id,
+          service_name: service.name,
+          balance: 0,
+          balance_usd: 0,
+        })
+      }
       for (const [index, serv] of services.entries()) {
         if (serv.service.toString() == service._id.toString()) {
           services[index].balance += balance_uzs
