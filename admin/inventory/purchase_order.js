@@ -67,7 +67,9 @@ const getItemsForPurchase = async (request, reply, instance) => {
                 { $gt: ["$$itm.quality", "$$itm.received"] }
             }
           },
-          item_type: 1
+          item_type: 1,
+          nds_value: 1,
+          mxik: 1,
         }
       },
       { $skip: limit * (page - 1) },
@@ -934,6 +936,7 @@ module.exports = fp((instance, options, next) => {
     const supplier_id = request.body.supplier_id
     const body = request.body
     const admin = request.user
+    console.log(body);
     try {
       const service = await instance.services.findOne({ _id: service_id }).lean();
 
@@ -1037,7 +1040,7 @@ module.exports = fp((instance, options, next) => {
       if (
         supplier.services &&
         !supplier.services
-          .find(elem => elem.service + '' == purch.service + '')
+          .find(elem => elem.service + '' == service._id + '')
       ) {
         supplier.services.push({
           service: service._id,

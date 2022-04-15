@@ -2668,6 +2668,104 @@ module.exports = (instance, options, next) => {
       })
     })
   }
+
+  const get_goods_with_correct_image = async (request, reply, admin) => {
+    const service_id = request.params.service
+    const organization_id = request.params.organization
+    const limit = !isNaN(parseInt(request.query.limit))
+      ? parseInt(request.query.limit)
+      : 10
+    const page = !isNaN(parseInt(request.query.page))
+      ? parseInt(request.query.page)
+      : 1
+
+    const { from, to } = request.query
+    const date = new Date();
+    const from_time = from ? new Date(parseInt(from)) : date;
+    date.setDate(date.getDate() + 1);
+    const to_time = to ? new Date(parseInt(to)) : date;
+
+    const $match = {
+      $match: {
+        organization: organization_id,
+        item_type: { $ne: 'variant' },
+        $or: [
+          { updatedAt: { $gte: from_time, $lte: to_time } },
+          { createdAt: { $gte: from_time, $lte: to_time } },
+        ],
+      },
+    }
+    await Subscribe.aggregate([
+      {
+        $lookup: {
+          from: 'doctor_collectiom',
+          let: { doc_id: '$doctor_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: [{$toString: '$_id'}, '$$doc_id']
+                }
+              }
+            }
+          ],
+          as: 'doctors'
+        }
+      }])
+    const $project = {
+      $project: {
+        _id: 1,
+        sku: 1,
+        mxik: 1,
+        name: 1,
+        price: 1,
+        prices: 1,
+        barcode: 1,
+        sold_by: 1,
+        category: 1,
+        services: 1,
+        category_id: 1,
+        category_name: 1,
+        count_by_type: 1,
+        representation: 1,
+        cost: { $round: ['$cost', 0] },
+      },
+    }
+
+    const goods = await instance.goodsSales.aggregate([
+      $match,
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+      $project,
+    ])
+      .exec()
+
+    const total = await instance.goodsSales.countDocuments($match.$match)
+
+    for (const [index, good] of goods.entries()) {
+      const serv = good.services.find(serv => serv.service + '' == service_id)
+      goods[index].prices = serv && serv.prices ? serv.prices : good.prices
+      goods[index].price = serv && serv.price ? serv.price : good.price
+      goods[index].mxik = good.mxik ? good.mxik : randimMxik();
+      delete goods[index].services
+
+      goods[index].image = goods[index].representation
+        .replace('http://api.invan.uz/static/', '')
+        .replace('https://api.invan.uz/static/', '')
+        .replace('http://pos.in1.uz/api/static/', '')
+        .replace('https://pos.in1.uz/api/static/', '')
+        .replace('http://pos.inone.uz/api/static/', '')
+        .replace('https://pos.inone.uz/api/static/', '')
+      goods[index].representation = 'https://pos.in1.uz/api/static/' + goods[index].image
+    }
+
+    reply.send({
+      limit: limit,
+      page: page,
+      total: total,
+      data: goods
+    })
+  }
   const get_file_mxik = async (request, reply, admin) => {
     const organizationId = request.params.organization
     const serviceId = request.params.service
@@ -2887,6 +2985,17 @@ module.exports = (instance, options, next) => {
     //_id, sku, name, sold_by, barcode, representation, prices, category, cost
     get_file_desktop(request, reply, { organization: request.params.organization })
     // })
+  })
+  instance.get('/goods/sales/desktop/export/:organization/:service', { version: '2.0.0' }, (request, reply) => {
+    instance.authorization(request, reply, (admin) => {
+      if (admin.organization + '' !== request.params.organization + '') {
+        return reply.error('Forbidden organization')
+      }
+      if (!admin.services.find(serv => serv.available && serv.service + '' == request.params.service)) {
+        return reply.error('Forbidden service')
+      }
+      get_goods_with_correct_image(request, reply, admin)
+    })
   })
   const findItemByBarCode = async (request, reply) => {
     const { organization, barCode } = request.params
