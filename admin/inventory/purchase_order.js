@@ -936,7 +936,7 @@ module.exports = fp((instance, options, next) => {
     const supplier_id = request.body.supplier_id
     const body = request.body
     const admin = request.user
-    console.log(body);
+
     try {
       const service = await instance.services.findOne({ _id: service_id }).lean();
 
@@ -1066,6 +1066,9 @@ module.exports = fp((instance, options, next) => {
           },
         })
 
+      // update goodsSales supplier stock
+      console.log(items, body.items);
+      instance.goods_partiation_queue_stock_update_refund(items, service._id, supplier._id)
       try {
         await new instance.supplierTransaction({
           supplier_id: supplier._id,
