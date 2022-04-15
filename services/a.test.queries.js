@@ -1,7 +1,7 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
-    (async () => {
+    /*(async () => {
         const start_time = new Date().getTime()
         const accesses = await instance.AccessRights.find({}).lean();
         for (const access of accesses) {
@@ -36,7 +36,8 @@ module.exports = fp((instance, options, next) => {
         }
         console.log('time:', new Date().getTime() - start_time);
         console.log('ok');
-    })()
+    })
+    */
     instance.get('/items/inv_history', async (request, reply) => {
 
         const { from, to } = request.query
