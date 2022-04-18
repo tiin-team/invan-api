@@ -1068,6 +1068,15 @@ module.exports = fp((instance, options, next) => {
 
       // update goodsSales supplier stock
       console.log(items, body.items);
+      // partialini sotuv ga o'xshab minus qiladi
+      // instance.goods_partiation_queue_stock_update(
+      //   items.map(elem => {
+      //     elem.value = elem.quality
+      //     return elem
+      //   }),
+      //   service._id,
+      //   supplier._id
+      // )
       instance.goods_partiation_queue_stock_update_refund(items, service._id, supplier._id)
       try {
         await new instance.supplierTransaction({

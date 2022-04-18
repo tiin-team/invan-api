@@ -5,12 +5,12 @@ const mongodb = require('mongodb')
 const TokenGenerator = require('uuid-token-generator')
 const axios = require('axios')
 const qs = require('qs');
-var FCM = require('fcm-node')
+const FCM = require('fcm-node')
 // const categories = require('../admin/items/categories')
-var serverKey = 'AAAACPKexKE:APA91bHcaxbRaXNjWGaxWglbs0U4OpbI1MLxb1IvF3UY1OZnkllgQ_nizhvVyr9fXv2EBVyZxjb3C9rmrXFDuMap4Z96bgZ_kcVM7YA0kWgvMbpUAisdycuxCdUd_x3ib4gMN0y5Mlml'
-var fcm = new FCM(serverKey)
-var removeFromArray = (array, item) => {
-  var Answer = []
+const serverKey = 'AAAACPKexKE:APA91bHcaxbRaXNjWGaxWglbs0U4OpbI1MLxb1IvF3UY1OZnkllgQ_nizhvVyr9fXv2EBVyZxjb3C9rmrXFDuMap4Z96bgZ_kcVM7YA0kWgvMbpUAisdycuxCdUd_x3ib4gMN0y5Mlml'
+const fcm = new FCM(serverKey)
+const removeFromArray = (array, item) => {
+  const Answer = []
   if (array == null) {
     array = []
   }
@@ -21,13 +21,13 @@ var removeFromArray = (array, item) => {
   }
   return Answer
 }
-var wrong_token = {
+const wrong_token = {
   statusCode: 498,
   error: "Invalid token",
   message: "Invalid token"
 }
 
-var fire_token_error = {
+const fire_token_error = {
   statusCode: 495,
   message: "Firebase token error"
 }

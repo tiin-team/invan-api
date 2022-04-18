@@ -735,8 +735,10 @@ module.exports = (instance, _, next) => {
         },
         debt_id: null,
         date: {
-          $gte: min - (TIME_DIFF | 0),
-          $lte: max - (TIME_DIFF | 0)
+          // $gte: min - (TIME_DIFF | 0),
+          // $lte: max - (TIME_DIFF | 0)
+          $gte: min,
+          $lte: max
         }
       }
 
@@ -751,8 +753,8 @@ module.exports = (instance, _, next) => {
         for (let i = min; i < max; i += 86400000) {
           additional_query.push({
             date: {
-              $lte: i + end * 3600000 - (TIME_DIFF | 0),
-              $gte: i + start * 3600000 - (TIME_DIFF | 0)
+              $lte: i + end * 3600000,
+              $gte: i + start * 3600000
             }
           })
         }
@@ -1081,7 +1083,8 @@ module.exports = (instance, _, next) => {
           data.push([r.date, r[target]]);
         }
 
-        for (let i = lastMax; i < max - TIME_DIFF; i += dateDiffer) {
+        // for (let i = lastMax; i < max - TIME_DIFF; i += dateDiffer) {
+        for (let i = lastMax; i <= max; i += dateDiffer) {
           if (!existTime[i]) {
             data.push([i, 0])
             existTime[i] = true

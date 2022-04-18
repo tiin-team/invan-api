@@ -13,11 +13,13 @@ module.exports = fp((instance, _, next) => {
         { lean: true, new: true },
       )
   }
-  async function getGoodSalesQueue(query) {
+  async function getGoodSalesQueue(query, sort = -1) {
     return await instance.goodsSaleQueue
       .findOne(query)
+      .sort({ queue: sort })
       .lean()
   }
+
   async function recursiveUpdateGoodSaleQueueDec(queue, good, dec_count, { product_id, service_id }) {
     num_queue = queue.queue
     const suppliers = []
@@ -34,7 +36,8 @@ module.exports = fp((instance, _, next) => {
           service_id: queue.service_id,
           dec_count: queue.quantity_left,
         })
-      await updateGoodsSaleQueueQunatityLeft(queue._id, 0)
+      queue.queue = 0
+      await updateGoodsSaleQueueQunatityLeft(queue._id, queue.queue)
       if (queue_next) {
         const res = await recursiveUpdateGoodSaleQueueDec(
           queue_next,
@@ -110,116 +113,159 @@ module.exports = fp((instance, _, next) => {
 
     return product_suppliers
   }
-  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id) => {
-    // console.log(goods.length, 'goods.length');
-    const service = await instance.services
-      .findById(service_id)
-      .lean()
-    for (const good of goods) {
-      good.queue = good.queue ? good.queue : 1
-      const queue = await getGoodSalesQueue({
-        service_id: service._id,
-        good_id: good.product_id,
-        queue: good.queue,
-      })
+  //supplier_id ni adminkadan refun qilganda ishlatilgan edi
+  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id, supplier_id) => {
+    try {
+      // console.log(goods.length, 'goods.length');
+      const service = await instance.services
+        .findById(service_id)
+        .lean()
+      for (const good of goods) {
+        good.queue = good.queue ? good.queue : 1
+        const queue = await getGoodSalesQueue({
+          service_id: service._id,
+          good_id: good.product_id,
+          queue: good.queue,
+        })
 
-      let num_queue = queue && queue.queue ? queue.queue : 1
+        let num_queue = queue && queue.queue ? queue.queue : 1
 
-      if (queue) {
-        //inc queue
-        const current_good = await instance.goodsSales
-          .findById(good.product_id)
-          .lean()
-        if (queue.quantity_left <= good.value) {
-          const res = await recursiveUpdateGoodSaleQueueDec(
-            queue,
-            good,
-            0,
-            {
-              service_id: service._id,
-              product_id: current_good._id,
-              // queue: queue.queue,
-              // supplier_id: good.supplier_id,
-            }
-          )
-
-          res.suppliers = getGoodOfSuppliers(current_good.suppliers, res.suppliers)
-
-          return await updateGoodsSalesQueueAndSuppliers(good.product_id, res.num_queue, res.suppliers, queue)
-        } else {
-          // update suppliers
-          const current_supplier = await instance.adjustmentSupplier
-            .findById(queue.supplier_id)
+        if (queue) {
+          //inc queue
+          const current_good = await instance.goodsSales
+            .findById(good.product_id)
             .lean()
+          if (queue.quantity_left <= good.value) {
+            const res = await recursiveUpdateGoodSaleQueueDec(
+              queue,
+              good,
+              0,
+              {
+                service_id: service._id,
+                product_id: current_good._id,
+                // queue: queue.queue,
+                // supplier_id: good.supplier_id,
+              }
+            )
 
-          const suppliers = Array.isArray(current_good.suppliers)
-            ? current_good.suppliers
-            : [{
-              supplier_id: current_supplier._id,
-              supplier_name: current_supplier.supplier_name,
-              service_id: service._id,
-              service_name: service.name,
-              stock: 0,
-            }]
-          if (
-            !current_good.suppliers
-              .find(elem =>
-                elem.service_id + '' == service._id + '' &&
-                elem.supplier_id + '' == current_supplier._id + ''
-              )
-          ) {
-            current_supplier.services.push({
-              supplier_id: current_supplier._id,
-              supplier_name: current_supplier.supplier_name,
-              service_id: service._id,
-              service_name: service.name,
-              stock: 0,
-            })
-          }
-          for (const [index, supp] of suppliers.entries()) {
+            res.suppliers = getGoodOfSuppliers(current_good.suppliers, res.suppliers)
+
+            return await updateGoodsSalesQueueAndSuppliers(
+              good.product_id,
+              res.num_queue,
+              // supplier_id ? good.queue : res.num_queue,
+              res.suppliers,
+              queue,
+            )
+          } else {
+            // update suppliers
+            const current_supplier = await instance.adjustmentSupplier
+              .findById(queue.supplier_id)
+              .lean()
+
+            const suppliers = Array.isArray(current_good.suppliers)
+              ? current_good.suppliers
+              : [{
+                supplier_id: current_supplier._id,
+                supplier_name: current_supplier.supplier_name,
+                service_id: service._id,
+                service_name: service.name,
+                stock: 0,
+              }]
             if (
-              supp.service_id + '' == service._id + '' &&
-              supp.supplier_id + '' == current_supplier._id + ''
+              !current_good.suppliers
+                .find(elem =>
+                  elem.service_id + '' == service._id + '' &&
+                  elem.supplier_id + '' == current_supplier._id + ''
+                )
             ) {
-              suppliers[index].stock -= good.value
+              current_supplier.services.push({
+                supplier_id: current_supplier._id,
+                supplier_name: current_supplier.supplier_name,
+                service_id: service._id,
+                service_name: service.name,
+                stock: 0,
+              })
             }
-          }
-          await updateGoodsSalesQueueAndSuppliers(good.product_id, num_queue, suppliers, queue)
+            for (const [index, supp] of suppliers.entries()) {
+              if (
+                supp.service_id + '' == service._id + '' &&
+                supp.supplier_id + '' == current_supplier._id + ''
+              ) {
+                suppliers[index].stock -= good.value
+              }
+            }
+            await updateGoodsSalesQueueAndSuppliers(
+              good.product_id,
+              num_queue,
+              // supplier_id ? good.queue : num_queue,
+              suppliers, queue
+            )
 
-          await updateGoodsSaleQueueQunatityLeft(
-            queue._id,
-            parseInt(queue.quantity_left) - parseInt(good.value)
-          )
+            await updateGoodsSaleQueueQunatityLeft(
+              queue._id,
+              parseInt(queue.quantity_left) - parseInt(good.value)
+            )
+          }
         }
       }
+    } catch (err) {
+      instance.send_Error('goods_partiation_queue_stock_update', err)
     }
   })
+  const updateSupplierPartiationQueue = async (good_id, service_id, supplier_id, refund_count) => {
+    const all_queue = await instance.goodsSaleQueue
+      .find({
+        good_id: good_id,
+        service_id: service_id,
+        supplier_id: supplier_id,
+      })
+      .sort({ queue: -1 })
+      .lean()
+    let dec_sum = 0
+    for (const queue of all_queue) {
+      if (queue.quantity_left <= refund_count - dec_sum) {
+        dec_sum += queue.quantity_left
+        queue.quantity_left = 0
+        await updateGoodsSaleQueueQunatityLeft(queue._id, queue.quantity_left)
+      } else {
+        queue.quantity_left = refund_count - dec_sum
+        await updateGoodsSaleQueueQunatityLeft(queue._id, queue.quantity_left)
+        dec_sum += queue.quantity_left - queue.queue
+        return
+      }
+    }
+
+  }
   // goods_partiation_queue_stock_update_refund
   instance.decorate('goods_partiation_queue_stock_update_refund', async (goods = [], service_id, supplier_id) => {
-    // console.log(goods.length, 'goods.length');
-    const service = await instance.services
-      .findById(service_id)
-      .lean()
-    const supplier = await instance.adjustmentSupplier
-      .findOne({ _id: supplier_id })
-      .lean();
+    // console.log('goods_partiation_queue_stock_update_refund');
+    try {
+      const service = await instance.services
+        .findById(service_id)
+        .lean()
+      const supplier = await instance.adjustmentSupplier
+        .findOne({ _id: supplier_id })
+        .lean();
 
-    const query_queue = {
-      service_id: service._id,
-      supplier_id: supplier._id,
-    }
-    for (const good of goods) {
-      // good.queue = good.queue ? good.queue : 1
-      query_queue.product_id = good.product_id
-
-      const queue = await getGoodSalesQueue(query_queue)
-
-      if (queue) {
-        const num_queue = queue.queue
+      const query_queue = {
+        service_id: service._id,
+        supplier_id: supplier._id,
+      }
+      for (const good of goods) {
+        // good.queue = good.queue ? good.queue : 1
         const current_good = await instance.goodsSales
           .findById(good.product_id)
           .lean()
+        query_queue.good_id = current_good._id
+        const queue = await getGoodSalesQueue(query_queue)
 
+        if (queue.quantity_left <= good.quality) {
+          await updateSupplierPartiationQueue(current_good._id, service._id, supplier._id, good.quality)
+        } else {
+          queue.quantity_left = 0
+          await updateGoodsSaleQueueQunatityLeft(queue._id, queue.quantity_left)
+        }
         // update suppliers
         const suppliers = Array.isArray(current_good.suppliers)
           ? current_good.suppliers
@@ -230,36 +276,29 @@ module.exports = fp((instance, _, next) => {
             service_name: service.name,
             stock: 0,
           }]
-        if (
-          !current_good.suppliers
-            .find(elem =>
-              elem.service_id + '' == service._id + '' &&
-              elem.supplier_id + '' == supplier._id + ''
-            )
-        ) {
-          current_supplier.services.push({
+        let supp_index = current_good.suppliers.findIndex(elem =>
+          elem.service_id + '' == service._id + '' &&
+          elem.supplier_id + '' == supplier._id + ''
+        )
+        if (supp_index == -1)
+          current_good.suppliers.push({
             supplier_id: supplier._id,
             supplier_name: supplier.supplier_name,
             service_id: service._id,
             service_name: service.name,
-            stock: good.quality,
+            stock: 0,
           })
-        }
-        for (const [index, supp] of suppliers.entries()) {
-          if (
-            supp.service_id + '' == service._id + '' &&
-            supp.supplier_id + '' == supplier._id + ''
-          ) {
-            suppliers[index].stock += good.quality
-          }
-        }
-        await updateGoodsSalesQueueAndSuppliers(current_good._id, num_queue, suppliers)
-
-        await updateGoodsSaleQueueQunatityLeft(
-          queue._id,
-          parseInt(queue.quantity_left) + parseInt(good.quality)
+        supp_index = current_good.suppliers.findIndex(elem =>
+          elem.service_id + '' == service._id + '' &&
+          elem.supplier_id + '' == supplier._id + ''
         )
+
+        current_good.suppliers[supp_index].stock -= good.quality
+
+        await updateGoodsSalesQueueAndSuppliers(current_good._id, current_good.queue, suppliers)
       }
+    } catch (err) {
+      instance.send_Error('goods_partiation_queue_stock_update_refund', err)
     }
   })
   // create items for back office
