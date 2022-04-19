@@ -679,16 +679,18 @@ module.exports = (instance, _, next) => {
   }
 
   const getUpdatedAllEmployees = async (request, reply, user) => {
-    const from = request.params.min
-    const to = request.params.max
+    const from = request.query.from
+    const to = request.query.to
     const service = request.query.service
     if (typeof service != 'string' || service.length != 24) {
       return reply.error('service must objectId')
     }
-    const date = new Date();
-    const from_time = from ? new Date(parseInt(from)) : date;
-    date.setDate(date.getDate() + 1);
-    const to_time = to ? new Date(parseInt(to)) : date;
+    // const date = new Date();
+    const from_time = from ? new Date(parseInt(from)) : '';
+    // date.setDate(date.getDate() + 1);
+    const to_time = to ? new Date(parseInt(to)) : '';
+    if (from_time == 'Invalid Date' || to_time == 'Invalid Date')
+      return reply.error('time must timestamp')
 
     const query = {
       organization: user.organization,
@@ -705,14 +707,23 @@ module.exports = (instance, _, next) => {
             { role: 'boss' },
           ],
         },
+        // {
+        //   $or: [
+        //     { updatedAt: { $gte: from_time, $lte: to_time } },
+        //     { createdAt: { $gte: from_time, $lte: to_time } },
+        //   ],
+        // }
+      ],
+    }
+    if (from_time && to_time)
+      query.$and.push(
         {
           $or: [
             { updatedAt: { $gte: from_time, $lte: to_time } },
             { createdAt: { $gte: from_time, $lte: to_time } },
           ],
         }
-      ],
-    }
+      )
     if (service)
       query.$and[0].$or[0].services.$elemMatch.service = {
         $eq: instance.ObjectId(service)
@@ -786,9 +797,8 @@ module.exports = (instance, _, next) => {
       getAllEmployees(request, reply, user)
     })
   })
-  instance.get('/employees/find/:min/:max', { version: '1.0.0' }, (request, reply) => {
+  instance.get('/employees/find', { version: '2.0.0' }, (request, reply) => {
     instance.authorization(request, reply, (user) => {
-      // getUpdatedAllEmployees(request, reply, { organization: '5f5641e8dce4e706c062837a' })
       getUpdatedAllEmployees(request, reply, user)
     })
   })
