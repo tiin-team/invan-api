@@ -735,10 +735,10 @@ module.exports = (instance, _, next) => {
         },
         debt_id: null,
         date: {
-          // $gte: min - (TIME_DIFF | 0),
-          // $lte: max - (TIME_DIFF | 0)
-          $gte: min,
-          $lte: max
+          $gte: min - (TIME_DIFF | 0),
+          $lte: max - (TIME_DIFF | 0)
+          // $gte: min,
+          // $lte: max
         }
       }
 
@@ -754,8 +754,8 @@ module.exports = (instance, _, next) => {
           additional_query.push({
             date: {
               $lte: i + end * 3600000,
-              $gte: i + start * 3600000
-            }
+              $gte: i + start * 3600000,
+            },
           })
         }
         delete filterReceipts.date

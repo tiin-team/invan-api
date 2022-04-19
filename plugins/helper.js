@@ -325,7 +325,7 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('update_receipt_sold_item', async (id, sold_list) => {
     try {
-      const receipt = await instance.Receipts.findById(id);
+      const receipt = await instance.Receipts.findById(id).lean();
 
       if (!receipt) return;
       var soldObj = {}

@@ -9,62 +9,62 @@ module.exports = (instance, _, next) => {
     var taxable_sales = 0.0
     var taxes = []
     var taxObj = {}
-    for(var r of items) {
-      for(var s of r.sold_item_list) {
+    for (var r of items) {
+      for (var s of r.sold_item_list) {
         var not_refund = 1
-        if(r.is_refund) {
+        if (r.is_refund) {
           not_refund = -1
         }
         var discount = 0.0
-        if(s.discount == undefined) {
+        if (s.discount == undefined) {
           s.discount = []
         }
         var total = s.price * s.value
-        for(var dis of s.discount) {
-          if(dis.type == 'percentage') {
-            total += not_refund * (total*dis.value/100)
+        for (var dis of s.discount) {
+          if (dis.type == 'percentage') {
+            total += not_refund * (total * dis.value / 100)
           }
           else {
             total += not_refund * dis.value
           }
         }
-        if(s.taxes.length==0)
-        net_sales += total
+        if (s.taxes.length == 0)
+          net_sales += total
         else
-        for(var t of s.taxes) {
-          taxable_sales += total
-          if(taxObj[t._id] == undefined) {
-            taxObj[t._id] = {
-              name: t.name,
-              taxable_sales: 0,
-              tax_amount: 0
+          for (var t of s.taxes) {
+            taxable_sales += total
+            if (taxObj[t._id] == undefined) {
+              taxObj[t._id] = {
+                name: t.name,
+                taxable_sales: 0,
+                tax_amount: 0
+              }
+              taxes.push(t._id)
             }
-            taxes.push(t._id)
-          }
 
-          var tax = 0
-          if(t.type == 'include') {
-            tax += total / (1 + t.tax / 100.0) * t.tax / 100.0 * not_refund
+            var tax = 0
+            if (t.type == 'include') {
+              tax += total / (1 + t.tax / 100.0) * t.tax / 100.0 * not_refund
+            }
+            else {
+              tax += total * (t.tax / 100.0) * not_refund
+            }
+            taxObj[t._id].taxable_sales += total
+            taxObj[t._id].tax_amount += tax
           }
-          else {
-            tax += total * (t.tax / 100.0) * not_refund
-          }
-          taxObj[t._id].taxable_sales += total
-          taxObj[t._id].tax_amount += tax
-        }
       }
     }
     var answer = []
-    for(var id of taxes) {
+    for (var id of taxes) {
       answer.push(taxObj[id])
     }
-    if(request.params.name == undefined) {
+    if (request.params.name == undefined) {
       reply.ok({
         taxable_sales: taxable_sales,
         non_taxable_sales: net_sales,
-        total_net_sales: net_sales+taxable_sales,
+        total_net_sales: net_sales + taxable_sales,
         total: answer.length,
-        page: Math.ceil(answer.length/request.params.limit),
+        page: Math.ceil(answer.length / request.params.limit),
         taxes: answer.splice(request.params.limit * (request.params.page - 1), request.params.limit)
       })
     }
@@ -74,7 +74,7 @@ module.exports = (instance, _, next) => {
         'taxable_sales',
         'tax_amount'
       ]]
-      for(var a of answer) {
+      for (var a of answer) {
         Answer.push([
           a.name,
           a.taxable_sales,
@@ -85,7 +85,7 @@ module.exports = (instance, _, next) => {
       Answer.push([])
       Answer.push(['taxable_sales', taxable_sales])
       Answer.push(['non_taxable_sales', net_sales])
-      Answer.push(['total_net_sales', net_sales+taxable_sales])
+      Answer.push(['total_net_sales', net_sales + taxable_sales])
       instance.send_csv(Answer, 'by_tax', reply)
     }
     // var products = []
@@ -198,14 +198,14 @@ module.exports = (instance, _, next) => {
 
   instance.post('/reports/by_tax/:min/:max/:limit/:page', version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
-      if(admin){instance.get_receipt_by_range(request, reply, admin, by_tax)}
+      if (admin) { instance.get_receipt_by_range(request, reply, admin, by_tax) }
     })
   })
 
   instance.get('/reports/sales/by_tax/:token/:services/:employees/:custom/:start/:end/:min/:max/:name', (request, reply) => {
     instance.make_beauty_for_export(request, reply, () => {
       instance.oauth_admin(request, reply, (admin) => {
-        if(admin){
+        if (admin) {
           instance.get_receipt_by_range(request, reply, admin, by_tax)
         }
       })

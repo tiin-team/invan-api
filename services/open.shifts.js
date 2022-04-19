@@ -18,7 +18,7 @@ module.exports = ((instance, _, next) => {
         body.by_whom_name = user.name;
         body.by_whom_name_close = '';
         body.pays = [];
-        body.service = pos_device.service;
+
         body._id = new mongoose.Types.ObjectId();
 
         const shift = await new instance.Shifts(body).save();
@@ -37,7 +37,7 @@ module.exports = ((instance, _, next) => {
 
         const shift = await instance.Shifts.findByIdAndUpdate(
             shifId, body, {
-            new: true,
+            new: true, lean: true,
         });
 
         reply.ok(shift)

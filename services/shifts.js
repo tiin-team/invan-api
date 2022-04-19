@@ -72,7 +72,7 @@ module.exports = (instance, _, next) => {
   //   }
   // }
 
-  var on = function(request, reply, next) {
+  const on = function(request, reply, next) {
     instance.authorization(request, reply, (user) => {
       if(user) {
         next(user)

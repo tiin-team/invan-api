@@ -7,13 +7,13 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('get_receipt_by_range', (request, reply, user, callback, query = {}, for_receipt_report = false) => {
     
-    var min = parseInt(request.params.min)
-    var max = parseInt(request.params.max)
+    const min = parseInt(request.params.min)
+    const max = parseInt(request.params.max)
     if (request.body.service != null && request.body.service != '') {
       request.body.services = [request.body.service]
     }
-    var service_ids = request.body.services
-    var employee_ids = request.body.employees
+    const service_ids = request.body.services
+    const employee_ids = request.body.employees
     var Query = {
       organization: user.organization,
       debt_id: null,
@@ -28,8 +28,8 @@ module.exports = fp((instance, _, next) => {
 
     if (request.body) {
       if (request.body.custom) {
-        var start = parseInt(request.body.start)
-        var end = parseInt(request.body.end)
+        const start = parseInt(request.body.start)
+        const end = parseInt(request.body.end)
         additional_query = []
         for (let i = min; i < max; i += 86400000) {
           additional_query.push({
@@ -124,7 +124,9 @@ module.exports = fp((instance, _, next) => {
       }
 
       callback(request, reply, receipts, user = user)
-    }).limit(100);
+    })
+    .lean()
+    .limit(100);
 
   })
 

@@ -70,7 +70,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
     if (!current_currency) {
       current_currency = {};
     }
-    for (var rr of request.body) {
+    for (const rr of request.body) {
       console.log('Order id')
       console.log(rr.order_id)
       rr.old_id = rr._id;
@@ -99,7 +99,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
         }
         rr.receipt_type = receipt_type;
 
-        var $receiptModel = new instance.Receipts(rr);
+        const $receiptModel = new instance.Receipts(rr);
         let total_discount = 0;
         for (let i = 0; i < $receiptModel.sold_item_list.length; i++) {
           const reminder = Math.max(
@@ -174,9 +174,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
           $receiptModel.sold_item_list[i].receipt_id = $receiptModel._id;
           try {
-            const item = await instance.goodsSales.findById(
-              $receiptModel.sold_item_list[i].product_id
-            );
+            const item = await instance.goodsSales
+              .findById($receiptModel.sold_item_list[i].product_id)
+              .lean();
             if (item) {
               $receiptModel.sold_item_list[i].sku = item.sku;
               $receiptModel.sold_item_list[i].barcode =
@@ -185,9 +185,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
               // set category id and supplier id
 
               try {
-                const category = await instance.goodsCategory.findById(
-                  item.category
-                );
+                const category = await instance.goodsCategory
+                  .findById(item.category)
+                  .lean();
                 if (category) {
                   $receiptModel.sold_item_list[i].category_id = category._id;
                   $receiptModel.sold_item_list[i].category_name = category.name;
@@ -207,9 +207,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
               } catch (error) { }
 
               try {
-                const supplier = await instance.adjustmentSupplier.findById(
-                  item.primary_supplier_id
-                );
+                const supplier = await instance.adjustmentSupplier
+                  .findById(item.primary_supplier_id)
+                  .lean();
                 if (supplier) {
                   $receiptModel.sold_item_list[i].supplier_id = supplier._id;
                   $receiptModel.sold_item_list[i].supplier_name =
@@ -269,12 +269,12 @@ const receiptCreateGroup = async (request, reply, instance) => {
       }
       result.push(check)
     }
-    for (var r of result) {
+    for (const r of result) {
       if (!r.refund_not_stock && r.is_refund || !r.is_refund) {
         await instance.forReceiptToWorkCreate(request, user, r, r.is_refund);
       }
     }
-    for (var rr of result) {
+    for (const rr of result) {
       if (rr.is_refund) {
         await instance.update_receipt_sold_item(rr.refund, rr.sold_item_list);
       }

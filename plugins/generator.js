@@ -3039,6 +3039,7 @@ module.exports = fp((instance, _, next) => {
   // getway
 
   instance.decorateReply('get', function (request, model, user, options) {
+    console.log('get');
     if (options.public_search && request.headers['accept-user'] == 'QRCode') {
       model.findOne({ "_id": request.params.id }, { table_name: 0 }, (err, item) => {
         if (err) {
@@ -3937,9 +3938,9 @@ module.exports = fp((instance, _, next) => {
                 Shifts.push(t)
             }
             shifts = Shifts
-            var total = shifts.length
+            const total = shifts.length
             shifts = shifts.slice(request.params.page * (request.params.list - 1), request.params.page * request.params.list)
-            var Answer = []
+            const Answer = []
             for (var shift of shifts) {
               Answer.push({
                 _id: shift._id,
@@ -6089,12 +6090,12 @@ module.exports = fp((instance, _, next) => {
     //     }
     //   }
     // }
-    var on = function (request, reply, next) {
+    const on = function (request, reply, next) {
       instance.authorization(request, reply, (user) => {
         next(user)
       })
     }
-    var defaultOptions = {
+    const defaultOptions = {
       methods: ['find', 'finds', 'get', 'search', 'searching', 'update', 'delete', 'create', 'create_group', 'delete_group', 'update_group'],
       escape: null,
       version: '1.0.0',

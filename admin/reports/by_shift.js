@@ -1,15 +1,15 @@
 module.exports = (instance, _, next) => {
 
-  var version = { version: '1.0.0' }
+  const version = { version: '1.0.0' }
 
   // reports by shifts
 
-  var by_shift = (request, reply, user) => {
-    var min = parseInt(request.params.min)
-    var max = parseInt(request.params.max)
-    var limit = parseInt(request.params.limit)
-    var page = parseInt(request.params.page)
-    var Query = {
+  const by_shift = (request, reply, user) => {
+    const min = parseInt(request.params.min)
+    const max = parseInt(request.params.max)
+    const limit = parseInt(request.params.limit)
+    const page = parseInt(request.params.page)
+    const Query = {
       organization: user.organization,
       opening_time: {
         $lte: max,
@@ -19,15 +19,15 @@ module.exports = (instance, _, next) => {
         $ne: 0
       }
     }
-    if(request.body.services) {
-      if(request.body.services.length > 0){
-        Query.service =   {
+    if (request.body.services) {
+      if (request.body.services.length > 0) {
+        Query.service = {
           $in: request.body.services
         }
       }
     }
-    if(request.body.employees) {
-      if(request.body.employees.length > 0) {
+    if (request.body.employees) {
+      if (request.body.employees.length > 0) {
         Query.by_whom = {
           $in: request.body.employees
         }
@@ -41,17 +41,17 @@ module.exports = (instance, _, next) => {
       'cash_drawer.act_cash_amount': 1,
       'cash_drawer.difference': 1
     }, (err, shifts) => {
-      if(err || shifts == null) {
+      if (err || shifts == null) {
         shifts = []
       }
-      if(request.params.name == undefined) {
-        var total = shifts.length
-        shifts = shifts.splice((page-1)*limit, limit)
-        for(let i=0; i<shifts.length; i++) {
+      if (request.params.name == undefined) {
+        const total = shifts.length
+        shifts = shifts.splice((page - 1) * limit, limit)
+        for (let i = 0; i < shifts.length; i++) {
           try {
             shifts[i] = shifts[i].toObject()
           }
-          catch(error) {
+          catch (error) {
             instance.send_Error('to Object', error.message)
           }
           shifts[i].exp_cash_amount = shifts[i].cash_drawer.exp_cash_amount
@@ -61,12 +61,12 @@ module.exports = (instance, _, next) => {
         }
         reply.ok({
           total: total,
-          page: Math.ceil(total/limit),
+          page: Math.ceil(total / limit),
           data: shifts
         })
       }
       else {
-        var answer = [[
+        const answer = [[
           'pos',
           'opening_time',
           'closing_time',
@@ -74,7 +74,7 @@ module.exports = (instance, _, next) => {
           'act_cash_amount',
           'difference'
         ]]
-        for(var sh of shifts) {
+        for (const sh of shifts) {
           answer.push([
             sh.pos,
             sh.opening_time,
@@ -86,12 +86,12 @@ module.exports = (instance, _, next) => {
         }
         instance.send_csv(answer, 'by_shift', reply)
       }
-    }).sort({opening_time: -1})
+    }).sort({ opening_time: -1 })
   }
 
   instance.post('/reports/by_shift/:min/:max/:limit/:page', version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
-      if(admin){by_shift(request, reply, admin)}
+      if (admin) { by_shift(request, reply, admin) }
     })
   })
 
