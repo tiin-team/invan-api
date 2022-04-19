@@ -245,8 +245,8 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
   }
 }
 async function inventoryValuationResultPartiation({ limit, page, supplier_id, organization, service }, instance,) {
-  const query = { $match: { organization } };
-
+  const query = { $match: { organization: organization } };
+console.log(query, limit, page);
   const unwindSuppliers = { $unwind: { path: "$suppliers" } };
 
   const $project1 = {
