@@ -1571,6 +1571,7 @@ module.exports = fp((instance, _, next) => {
     report_shift: boolean,
     //items
     items: boolean,
+    item_edit: boolean,
     item_list: boolean,
     item_mxik_search: boolean,
     item_composite_item: boolean,
