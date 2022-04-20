@@ -574,7 +574,7 @@ module.exports = (instance, _, next) => {
 
   const getAllEmployees = (request, reply, user) => {
     if (!user) return reply.unauthorized()
-
+    const by_whom = request.query.by_whom
     const query = { organization: user.organization }
     if (request.headers['accept-service'] != undefined) {
       // delete query.service
@@ -636,7 +636,7 @@ module.exports = (instance, _, next) => {
             employees[i].fire_token = employees[i].employee_fire_token
             employees[i].employee_fire_token = undefined
             try {
-              employees[i].password = employees[i].password
+              employees[i].password = by_whom == 'csharp' ? employees[i].password : +employees[i].password
             }
             catch (error) {
               console.log(error.message)

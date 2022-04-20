@@ -707,6 +707,7 @@ module.exports = (instance, _, next) => {
         $group: {
           _id: "$sold_item_list.product_id",
           product_name: { $last: "$sold_item_list.product_name" },
+          sku: 1,
           cost_of_goods: {
             $sum: {
               $multiply: [
@@ -824,6 +825,7 @@ module.exports = (instance, _, next) => {
           id: "$_id",
           name: "$product_name",
           category: 1,
+          sku: 1,
           supplier: 1,
           cost_of_goods: 1,
           gross_sales: 1,

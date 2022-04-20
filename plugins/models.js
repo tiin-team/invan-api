@@ -290,6 +290,8 @@ module.exports = fp((instance, _, next) => {
       default: 0
     },
     sold_item_list: [{
+      queue_id: mongoose.Types.ObjectId,
+      queue: Number,
       receipt_id: String,
       variant_of: String,
       product_id: String,

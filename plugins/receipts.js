@@ -210,11 +210,27 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 const supplier = await instance.adjustmentSupplier
                   .findById(item.primary_supplier_id)
                   .lean();
+                const queue = await instance.goodsSaleQueue
+                  .findOne({
+                    product_id: item._id,
+                    service_id: service_id,
+                    queue: item.queue,
+                  })
+                  .lean()
+                $receiptModel.sold_item_list[i].queue_id = queue._id
+                $receiptModel.sold_item_list[i].queue = queue.queue
+                // bu keyinchalik olib tashlanadi
                 if (supplier) {
                   $receiptModel.sold_item_list[i].supplier_id = supplier._id;
                   $receiptModel.sold_item_list[i].supplier_name =
                     supplier.supplier_name;
                 }
+                // partiali tovar bo'yicha supplierni olish
+                if (queue) {
+                  $receiptModel.sold_item_list[i].supplier_id = queue.supplier_id;
+                  $receiptModel.sold_item_list[i].supplier_name = queue.supplier_name;
+                }
+
               } catch (error) { }
 
               $receiptModel.sold_item_list[i].count_by_type =
@@ -276,6 +292,8 @@ const receiptCreateGroup = async (request, reply, instance) => {
     }
     for (const rr of result) {
       if (rr.is_refund) {
+        // oxirgi queue ga stockni qoshib qoyish krk
+        await instance.update_queue_sold_item_refund(rr.refund, rr.sold_item_list, service_id)
         await instance.update_receipt_sold_item(rr.refund, rr.sold_item_list);
       }
     }

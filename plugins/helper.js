@@ -323,6 +323,95 @@ module.exports = fp((instance, _, next) => {
     })
   })
 
+  instance.decorate('update_queue_sold_item_refund', async (receipt_id, sold_list, service_id) => {
+    try {
+      const receipt = await instance.Receipts.findById(receipt_id).lean();
+      if (!receipt) return;
+      const soldObj = {}
+      const ids = []
+
+      for (const s of sold_list) {
+        if (s.sold_item_id != undefined && s.sold_item_id != '') {
+          if (s.reset_count === '' || s.reset_count === undefined) {
+            s.reset_count = 0
+          }
+          if (typeof s.returned_reminder != 'number') {
+            s.returned_reminder = 0;
+          }
+
+          if (!soldObj[s.sold_item_id]) {
+            ids.push(s.sold_item_id)
+            soldObj[s.sold_item_id] = {
+              reset_count: s.value,
+              returned_reminder: 0
+            }
+            if (['box_item', 'pcs_item'].includes(s.sold_item_type)) {
+              if (!soldObj[s.sold_item_id].returned_reminder) {
+                soldObj[s.sold_item_id].returned_reminder = 0;
+              }
+              soldObj[s.sold_item_id].returned_reminder = s.reminder
+              if (
+                soldObj[s.sold_item_id].returned_reminder > s.count_by_type
+              ) {
+                soldObj[s.sold_item_id].returned_reminder -= s.count_by_type;
+                soldObj[s.sold_item_id].reset_count += 1;
+              }
+            }
+          }
+          else {
+            soldObj[s.sold_item_id].reset_count += s.value;
+
+            if (['box_item', 'pcs_item'].includes(s.sold_item_type)) {
+              soldObj[s.sold_item_id].returned_reminder += s.reminder;
+              if (
+                soldObj[s.sold_item_id].returned_reminder > s.count_by_type
+              ) {
+                soldObj[s.sold_item_id].returned_reminder -= s.count_by_type;
+                soldObj[s.sold_item_id].reset_count += 1;
+              }
+            }
+          }
+        }
+      }
+
+      const sold_item_list = []
+      for (const sold_item of receipt.sold_item_list) {
+        if (sold_item != null) {
+          if (soldObj[sold_item._id] != null) {
+            if (!sold_item.reset_count) {
+              sold_item.reset_count = 0;
+            }
+
+            sold_item.reset_count += soldObj[sold_item._id].reset_count
+            if (['box_item', 'pcs_item'].includes(sold_item.sold_item_type)) {
+              if (!sold_item.returned_reminder) {
+                sold_item.returned_reminder = 0;
+              }
+              sold_item.returned_reminder += soldObj[sold_item._id].returned_reminder;
+              if (sold_item.returned_reminder > sold_item.count_by_type) {
+                sold_item.returned_reminder -= sold_item.count_by_type;
+              }
+            }
+          }
+        }
+        const queue = await instance.goodsSaleQueue
+          .findOne({
+            service_id: service_id,
+            good_id: sold_item._id,
+          })
+          .sort({ queue: sort })
+          .lean()
+        await instance.goodsSaleQueue.findByIdAndUpdate(
+          queue._id,
+          { quantity_left: queue.quantity_left - sold_item.count_by_type },
+          { new: true, lean: true },
+        )
+      }
+    } catch (error) {
+      console.log(error.message)
+    }
+  })
+
   instance.decorate('update_receipt_sold_item', async (id, sold_list) => {
     try {
       const receipt = await instance.Receipts.findById(id).lean();
@@ -331,7 +420,7 @@ module.exports = fp((instance, _, next) => {
       var soldObj = {}
       var ids = []
 
-      for (var s of sold_list) {
+      for (const s of sold_list) {
         if (s.sold_item_id != undefined && s.sold_item_id != '') {
           if (s.reset_count === '' || s.reset_count === undefined) {
             s.reset_count = 0
@@ -376,7 +465,7 @@ module.exports = fp((instance, _, next) => {
       }
 
       var sold_item_list = []
-      for (var sold_item of receipt.sold_item_list) {
+      for (const sold_item of receipt.sold_item_list) {
         if (sold_item != null) {
           if (soldObj[sold_item._id] != null) {
             if (!sold_item.reset_count) {
@@ -588,28 +677,28 @@ module.exports = fp((instance, _, next) => {
             );
 
             // if (debt > 0) {
-              result = await instance.clientsDatabase.findOneAndUpdate(
-                {
-                  _id: client._id
+            result = await instance.clientsDatabase.findOneAndUpdate(
+              {
+                _id: client._id
+              },
+              {
+                $inc: {
+                  debt: debt
                 },
-                {
-                  $inc: {
-                    debt: debt
-                  },
-                  $push: {
-                    debt_pay_history: {
-                      "paid": debt,
-                      "currency": receipt.currency,
-                      "currency_value": receipt.currency,
-                      "date": new Date().getTime(),
-                      "comment": "receipt sold",
-                    }
+                $push: {
+                  debt_pay_history: {
+                    "paid": debt,
+                    "currency": receipt.currency,
+                    "currency_value": receipt.currency,
+                    "date": new Date().getTime(),
+                    "comment": "receipt sold",
                   }
-                },
-                {
-                  new: true
                 }
-              );
+              },
+              {
+                new: true
+              }
+            );
 
             // }
 
