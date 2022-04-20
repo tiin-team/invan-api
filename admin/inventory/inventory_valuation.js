@@ -383,18 +383,18 @@ async function inventoryValuationResultBySupplier({ limit, page, supplier_id, or
   const $lookup = {
     $lookup: {
       from: '_id',
-      let: { id: '$primary_supplier_id' },
+      let: { id: { $toString: '$_id' } },
       pipeline: [
         {
           $match: {
             $expr: {
               $eq: [{ $toString: '$_id' }, '$$id']
-            }
-          }
-        }
+            },
+          },
+        },
       ],
-      as: 'supps'
-    }
+      as: 'supps',
+    },
   }
   const items = await instance.goodsSales
     .aggregate([
@@ -420,6 +420,7 @@ async function inventoryValuationResultBySupplier({ limit, page, supplier_id, or
           retail: 1,
           potential: 1,
           supplier_name: { $first: '$supps.supplier_name' },
+          supplier_id: { $first: '$supps._id' },
         },
       },
       { $sort: { _id: 1 } },
