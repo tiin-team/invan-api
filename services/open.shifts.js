@@ -27,20 +27,23 @@ module.exports = ((instance, _, next) => {
     }
     async function updateShift(request, reply, user) {
         const body = request.body;
-        const shifId = request.params.id;
+        const shiftId = request.params.id;
         const pos_device = await instance.posDevices.findById(body.pos_id);
         if (!pos_device)
-            reply.error('Pos device not found')
+            return reply.error('Pos device not found')
 
         body.by_whom_close = user._id;
         body.by_whom_name_close = user.name;
+        const shift = await instance.Shifts.findById(shiftId).lean()
+        if (!(shift))
+            return reply.error('Shift not found')
 
-        const shift = await instance.Shifts.findByIdAndUpdate(
-            shifId, body, {
-            new: true, lean: true,
-        });
+        const shiftNew = await instance.Shifts.findByIdAndUpdate(
+            shiftId, body,
+            { new: true, lean: true }
+        );
 
-        reply.ok(shift)
+        reply.ok(shiftNew)
     }
     const schemaShiftCreate = {
         schema: {

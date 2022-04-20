@@ -308,39 +308,17 @@ async function inventoryValuationResultBySupplier({ limit, page, supplier_id, or
   const joinItems = {
     $group: {
       _id: "$primary_supplier_id",
-      name: {
-        $first: "$name",
-      },
-      has_variants: {
-        $first: "$has_variants",
-      },
-      item_type: {
-        $first: "$item_type",
-      },
-      barcode: {
-        $first: "$barcode",
-      },
-      sku: {
-        $first: "$sku",
-      },
-      variant_items: {
-        $first: "$variant_items",
-      },
-      cost: {
-        $first: "$cost",
-      },
-      inventory: {
-        $sum: "$inventory",
-      },
-      in_stock: {
-        $sum: "$in_stock",
-      },
-      retail: {
-        $sum: "$retail",
-      },
-      potential: {
-        $sum: "$potential",
-      },
+      name: { $first: "$name" },
+      has_variants: { $first: "$has_variants" },
+      item_type: { $first: "$item_type" },
+      barcode: { $first: "$barcode" },
+      sku: { $first: "$sku" },
+      variant_items: { $first: "$variant_items" },
+      cost: { $first: "$cost" },
+      inventory: { $sum: "$inventory" },
+      in_stock: { $sum: "$in_stock" },
+      retail: { $sum: "$retail" },
+      potential: { $sum: "$potential" },
     },
   };
 
@@ -402,6 +380,22 @@ async function inventoryValuationResultBySupplier({ limit, page, supplier_id, or
       },
     };
   }
+  const $lookup = {
+    $lookup: {
+      from: 'adjustmentsuppliers',
+      let: { id: '$primary_supplier_id' },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: [{ $toString: '$_id' }, '$$id']
+            }
+          }
+        }
+      ],
+      as: 'supps'
+    }
+  }
   const items = await instance.goodsSales
     .aggregate([
       query,
@@ -410,6 +404,24 @@ async function inventoryValuationResultBySupplier({ limit, page, supplier_id, or
       unwindServices,
       projectPrimaryFields,
       joinItems,
+      $lookup,
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          cost: 1,
+          has_variants: 1,
+          item_type: 1,
+          barcode: 1,
+          sku: 1,
+          variant_items: 1,
+          in_stock: 1,
+          inventory: 1,
+          retail: 1,
+          potential: 1,
+          supplier_name: { $first: '$supps.supplier_name' },
+        },
+      },
       { $sort: { _id: 1 } },
     ])
     .allowDiskUse(true)
