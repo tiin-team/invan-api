@@ -415,6 +415,7 @@ module.exports = (instance, _, next) => {
       const calculateItemsReport = {
         $group: {
           _id: "$sold_item_list.product_id",
+          sku: "$sold_item_list.sku",
           product_name: { $last: "$sold_item_list.product_name" },
           cost_of_goods: {
             $sum: {
@@ -521,6 +522,7 @@ module.exports = (instance, _, next) => {
       const projectResult = {
         $project: {
           id: "$_id",
+          sku: 1,
           name: "$product_name",
           cost_of_goods: 1,
           gross_sales: 1,
