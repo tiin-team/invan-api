@@ -244,7 +244,7 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
     data: items,
   }
 }
-async function inventoryValuationResultPartiation({ limit, page, supplier_id, organization, service }, instance,) {
+async function inventoryValuationResultPartiation({ limit, page, supplier_id, organization, service }, instance, group_by,) {
   const query = {
     $match: {
       organization: organization,
@@ -262,7 +262,7 @@ async function inventoryValuationResultPartiation({ limit, page, supplier_id, or
       barcode: "$barcode",
       sku: "$sku",
       cost: "$cost",
-      variant_items: "$variant_items",
+      // variant_items: "$variant_items",
       service: "$suppliers.service",
       in_stock: { $max: [0, "$suppliers.in_stock"] },
       suppliers: "$suppliers",
@@ -276,7 +276,7 @@ async function inventoryValuationResultPartiation({ limit, page, supplier_id, or
       barcode: "$barcode",
       sku: "$sku",
       cost: "$cost",
-      variant_items: "$variant_items",
+      // variant_items: "$variant_items",
       service: "$suppliers.service",
       in_stock: { $max: [0, "$suppliers.stock"] },
       suppliers: "$suppliers",
@@ -344,39 +344,24 @@ async function inventoryValuationResultPartiation({ limit, page, supplier_id, or
 
   const $group = {
     $group: {
-      _id: '$suppliers.supplier_id',
+      _id: group_by == 'supplier' ? '$suppliers.supplier_id' : '_id',
       supplier_id: { $first: '$suppliers.supplier_id' },
       supplier_name: { $first: '$suppliers.supplier_name' },
       service_name: { $first: '$suppliers.service_name' },
       service_id: { $first: '$suppliers.service_id' },
       product_id: { $first: '$_id' },
       product_name: { $first: "$name" },
-      has_variants: { $first: "$has_variants" },
-      item_type: { $first: "$item_type" },
-      barcode: { $first: "$barcode" },
+      // has_variants: { $first: "$has_variants" },
+      // item_type: { $first: "$item_type" },
+      // barcode: { $first: "$barcode" },
       sku: { $first: "$sku" },
       cost: { $first: "$cost" },
-      variant_items: { $first: "$variant_items" },
+      // variant_items: { $first: "$variant_items" },
       in_stock: { $sum: { $max: ["$suppliers.stock", 0] } },
       inventory: { $first: "$inventory" },
     }
   }
-  const joinItems = {
-    $group: {
-      _id: "$_id",
-      name: { $first: "$name" },
-      has_variants: { $first: "$has_variants" },
-      item_type: { $first: "$item_type" },
-      barcode: { $first: "$barcode" },
-      sku: { $first: "$sku" },
-      variant_items: { $first: "$variant_items" },
-      cost: { $first: "$cost" },
-      inventory: { $sum: "$inventory" },
-      in_stock: { $sum: "$in_stock" },
-      retail: { $sum: "$retail" },
-      potential: { $sum: "$potential" },
-    },
-  };
+
   const items = await instance.goodsSales
     .aggregate([
       query,
@@ -755,7 +740,7 @@ module.exports = fp((instance, options, next) => {
             supplier_id,
             organization: user.organization,
             service
-          }, instance)
+          }, instance, 'supplier')
 
           reply.ok(result);
         } catch (error) {
@@ -768,5 +753,54 @@ module.exports = fp((instance, options, next) => {
     }
   );
 
+  instance.get(
+    "/inventory/valuation/:supplier_id",
+    {
+      version: '2.0.0',
+      schema: {
+        query: {
+          type: "object",
+          properties: {
+            limit: { type: "integer", minimum: 1 },
+            page: { type: "integer", minimum: 1 },
+            service: { type: "string" },
+            supplier_id: { type: "string" },
+          },
+          required: [],
+          additionalProperties: false,
+        },
+      },
+    },
+    async (request, reply) => {
+      instance.authorization(request, reply, async () => {
+        try {
+          const supplier_id = request.params.supplier_id
+          const { service } = request.query;
+          const limit = isNaN(parseInt(request.query.limit))
+            ? 10
+            : parseInt(request.query.limit)
+          const page = isNaN(parseInt(request.query.page))
+            ? 1
+            : parseInt(request.query.page)
+
+          const user = request.user;
+
+          const result = await inventoryValuationResultPartiation({
+            limit, page,
+            supplier_id,
+            organization: user.organization,
+            service
+          }, instance, 'product')
+
+          reply.ok(result);
+        } catch (error) {
+          reply.error(error.message)
+        }
+        return reply;
+      })
+
+      return reply;
+    }
+  );
   next();
 });
