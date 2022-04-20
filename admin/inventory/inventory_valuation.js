@@ -344,8 +344,13 @@ async function inventoryValuationResultPartiation({ limit, page, supplier_id, or
 
   const $group = {
     $group: {
-      _id: '$_id',
-      name: { $first: "$name" },
+      _id: '$suppliers.supplier_id',
+      supplier_id: { $first: '$suppliers.supplier_id' },
+      supplier_name: { $first: '$suppliers.supplier_name' },
+      service_name: { $first: '$suppliers.service_name' },
+      service_id: { $first: '$suppliers.service_id' },
+      product_id: { $first: '$_id' },
+      product_name: { $first: "$name" },
       has_variants: { $first: "$has_variants" },
       item_type: { $first: "$item_type" },
       barcode: { $first: "$barcode" },
