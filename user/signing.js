@@ -8,7 +8,10 @@ module.exports = (instance, options, next) => {
 
   instance.post('/user/register', options.version, (request, reply) => {
     if (request.body) {
-      var phone_number = request.body.phone_number
+      const phone_number = request.body.phone_number
+      if (/^\+9989[012345789][0-9]{7}$/.test(phone_number))
+        return reply.error('phone_number validation error')
+
       if (phone_number) {
         instance.User.findOne({ phone_number: phone_number }, (err, user) => {
           if (err) {
