@@ -246,7 +246,11 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
 }
 async function inventoryValuationResultBySupplier({ limit, page, supplier_id, organization, service }, instance,) {
 
-  const query = { $match: { organization } };
+  const query = {
+    $match: {
+      primary_supplier_id: { $exists: true }, organization
+    }
+  };
 
   if (supplier_id) {
     try {
@@ -961,14 +965,19 @@ module.exports = fp((instance, options, next) => {
   instance.get(
     "/inventory/valuation/by_supplier",
     {
-      version: '2.0.0',
-      schema: bodySchema
+      version: '2.0.0'
     },
     async (request, reply) => {
       instance.authorization(request, reply, async () => {
         try {
-          const { limit, page, supplier_id } = request.body;
-          let { service } = request.body;
+          const { supplier_id, service } = request.query;
+          const limit = !isNaN(parseInt(request.query.limit))
+            ? parseInt(request.query.limit)
+            : 10
+          const page = !isNaN(parseInt(request.query.page))
+            ? parseInt(request.query.page)
+            : 1
+
           const user = request.user;
 
           const result = await inventoryValuationResultBySupplier({
