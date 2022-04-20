@@ -382,7 +382,7 @@ async function inventoryValuationResultBySupplier({ limit, page, supplier_id, or
   }
   const $lookup = {
     $lookup: {
-      from: 'adjustmentsuppliers',
+      from: '_id',
       let: { id: '$primary_supplier_id' },
       pipeline: [
         {
