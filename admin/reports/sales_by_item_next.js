@@ -647,8 +647,10 @@ module.exports = (instance, _, next) => {
         receipt_state: { $ne: 'draft' },
         debt_id: null,
         date: {
-          $gte: min - (process.env.TIME_DIFF | 0),
-          $lte: max - (process.env.TIME_DIFF | 0)
+          // $gte: min - (process.env.TIME_DIFF | 0),
+          // $lte: max - (process.env.TIME_DIFF | 0)
+          $gte: min,
+          $lte: max
         }
       }
 
@@ -660,8 +662,11 @@ module.exports = (instance, _, next) => {
         for (let i = min; i < max; i += 86400000) {
           additional_query.push({
             date: {
-              $lte: i + end * 3600000 - (process.env.TIME_DIFF | 0),
-              $gte: i + start * 3600000 - (process.env.TIME_DIFF | 0)
+              // $lte: i + end * 3600000 - (process.env.TIME_DIFF | 0),
+              // $gte: i + start * 3600000 - (process.env.TIME_DIFF | 0)
+              $lte: i + end * 3600000,
+              $gte: i + start * 3600000,
+
             }
           })
         }

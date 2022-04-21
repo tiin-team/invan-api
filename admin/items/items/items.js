@@ -2647,6 +2647,7 @@ module.exports = (instance, options, next) => {
               "cost": { $round: ['$cost', 0] },
               "services": 1,
               "mxik": 1,
+              nds_value: 1,
             }
           }
         ], async (_, goods) => {
@@ -2660,6 +2661,8 @@ module.exports = (instance, options, next) => {
             goods[index].prices = serv && serv.prices ? serv.prices : good.prices
             goods[index].price = serv && serv.price ? serv.price : good.price
             goods[index].mxik = good.mxik ? good.mxik : randimMxik();
+            goods[index].nds_value = good.nds_value ? good.nds_value : 15;
+
             delete goods[index].services
           }
 
@@ -2695,23 +2698,23 @@ module.exports = (instance, options, next) => {
         ],
       },
     }
-    await Subscribe.aggregate([
-      {
-        $lookup: {
-          from: 'doctor_collectiom',
-          let: { doc_id: '$doctor_id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: [{$toString: '$_id'}, '$$doc_id']
-                }
-              }
-            }
-          ],
-          as: 'doctors'
-        }
-      }])
+    // await Subscribe.aggregate([
+    //   {
+    //     $lookup: {
+    //       from: 'doctor_collectiom',
+    //       let: { doc_id: '$doctor_id' },
+    //       pipeline: [
+    //         {
+    //           $match: {
+    //             $expr: {
+    //               $eq: [{ $toString: '$_id' }, '$$doc_id']
+    //             }
+    //           }
+    //         }
+    //       ],
+    //       as: 'doctors'
+    //     }
+    //   }])
     const $project = {
       $project: {
         _id: 1,
@@ -2724,6 +2727,7 @@ module.exports = (instance, options, next) => {
         sold_by: 1,
         category: 1,
         services: 1,
+        nds_value: 1,
         category_id: 1,
         category_name: 1,
         count_by_type: 1,
@@ -2747,6 +2751,7 @@ module.exports = (instance, options, next) => {
       goods[index].prices = serv && serv.prices ? serv.prices : good.prices
       goods[index].price = serv && serv.price ? serv.price : good.price
       goods[index].mxik = good.mxik ? good.mxik : randimMxik();
+      goods[index].nds_value = good.nds_value ? good.nds_value : 15;
       delete goods[index].services
 
       goods[index].image = goods[index].representation
