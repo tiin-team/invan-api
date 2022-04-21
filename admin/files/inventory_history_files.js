@@ -71,8 +71,10 @@ async function getExcelFile(request, reply, instance) {
             $match: {
                 organization: organization,
                 date: {
-                    $gte: min - (process.env.TIME_DIFF | 0),
-                    $lte: max - (process.env.TIME_DIFF | 0)
+                    // $gte: min - (process.env.TIME_DIFF | 0),
+                    // $lte: max - (process.env.TIME_DIFF | 0),
+                    $gte: min,
+                    $lte: max,
                 }
             }
         }
@@ -252,8 +254,10 @@ async function getExcelFileNew(request, reply, instance) {
             $match: {
                 organization: organization,
                 date: {
-                    $gte: min - (process.env.TIME_DIFF | 0),
-                    $lte: max - (process.env.TIME_DIFF | 0)
+                    // $gte: min - (process.env.TIME_DIFF | 0),
+                    // $lte: max - (process.env.TIME_DIFF | 0),
+                    $gte: min,
+                    $lte: max,
                 }
             }
         }

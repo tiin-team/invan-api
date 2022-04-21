@@ -4,8 +4,8 @@ const json2xls = require("json2xls");
 
 async function salesReportByItem(request, reply, instance) {
     try {
-        let {min, max, organization, token} = request.params;
-        const user = await instance.User.findOne({admin_token: token});
+        let { min, max, organization, token } = request.params;
+        const user = await instance.User.findOne({ admin_token: token });
         if (!user) {
             return reply.error('Access!')
         }
@@ -28,14 +28,16 @@ async function salesReportByItem(request, reply, instance) {
                 },
                 debt_id: null,
                 date: {
-                    $gte: min - (process.env.TIME_DIFF | 0),
-                    $lte: max - (process.env.TIME_DIFF | 0)
+                    // $gte: min - (process.env.TIME_DIFF | 0),
+                    // $lte: max - (process.env.TIME_DIFF | 0),
+                    $gte: min,
+                    $lte: max,
                 }
             }
         }
 
         const unwindSoldItemList = {
-            $unwind: {path: "$sold_item_list"}
+            $unwind: { path: "$sold_item_list" }
         }
 
         const calculateItemsReport = {
@@ -50,8 +52,8 @@ async function salesReportByItem(request, reply, instance) {
                 cost_of_goods: {
                     $sum: {
                         $multiply: [
-                            {$max: ["$sold_item_list.cost", 0]},
-                            {$max: ["$sold_item_list.value", 0]},
+                            { $max: ["$sold_item_list.cost", 0] },
+                            { $max: ["$sold_item_list.value", 0] },
                             {
                                 $cond: [
                                     "$is_refund",
@@ -64,8 +66,8 @@ async function salesReportByItem(request, reply, instance) {
                 gross_sales: {
                     $sum: {
                         $multiply: [
-                            {$max: ["$sold_item_list.price", 0]},
-                            {$max: ["$sold_item_list.value", 0]},
+                            { $max: ["$sold_item_list.price", 0] },
+                            { $max: ["$sold_item_list.value", 0] },
                             {
                                 $cond: [
                                     "$is_refund",
@@ -78,8 +80,8 @@ async function salesReportByItem(request, reply, instance) {
                 refunds: {
                     $sum: {
                         $multiply: [
-                            {$max: ["$sold_item_list.price", 0]},
-                            {$max: ["$sold_item_list.value", 0]},
+                            { $max: ["$sold_item_list.price", 0] },
+                            { $max: ["$sold_item_list.value", 0] },
                             {
                                 $cond: [
                                     "$is_refund",
@@ -114,14 +116,14 @@ async function salesReportByItem(request, reply, instance) {
                             0,
                             {
                                 $cond: [
-                                    {$eq: ['$sold_item_list.sold_item_type', 'box_item']},
+                                    { $eq: ['$sold_item_list.sold_item_type', 'box_item'] },
                                     {
                                         $divide: [
-                                            {$max: ["$sold_item_list.value", 0]},
-                                            {$max: ["$sold_item_list.count_by_type", 1]}
+                                            { $max: ["$sold_item_list.value", 0] },
+                                            { $max: ["$sold_item_list.count_by_type", 1] }
                                         ]
                                     },
-                                    {$max: ["$sold_item_list.value", 0]}
+                                    { $max: ["$sold_item_list.value", 0] }
                                 ]
                             }
                         ]
@@ -133,21 +135,21 @@ async function salesReportByItem(request, reply, instance) {
                             "$is_refund",
                             {
                                 $cond: [
-                                    {$eq: ['$sold_item_list.sold_item_type', 'box_item']},
+                                    { $eq: ['$sold_item_list.sold_item_type', 'box_item'] },
                                     {
                                         $divide: [
-                                            {$max: ["$sold_item_list.value", 0]},
-                                            {$max: ["$sold_item_list.count_by_type", 1]}
+                                            { $max: ["$sold_item_list.value", 0] },
+                                            { $max: ["$sold_item_list.count_by_type", 1] }
                                         ]
                                     },
-                                    {$max: ["$sold_item_list.value", 0]}
+                                    { $max: ["$sold_item_list.value", 0] }
                                 ]
                             },
                             0
                         ]
                     }
                 },
-                taxes: {$sum: 0}
+                taxes: { $sum: 0 }
             }
         }
 

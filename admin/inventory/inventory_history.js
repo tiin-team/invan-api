@@ -40,8 +40,10 @@ module.exports = (instance, options, next) => {
     const query = {
       organization: admin.organization,
       date: {
-        $gte: min - (process.env.TIME_DIFF | 0),
-        $lte: max - (process.env.TIME_DIFF | 0)
+        // $gte: min - (process.env.TIME_DIFF | 0),
+        // $lte: max - (process.env.TIME_DIFF | 0),
+        $gte: min,
+        $lte: max,
       }
     }
 

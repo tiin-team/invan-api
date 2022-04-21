@@ -736,10 +736,10 @@ module.exports = (instance, _, next) => {
         service: { $in: request.user.services.map(serv => serv._id) },
         debt_id: null,
         date: {
-          $gte: min - (TIME_DIFF | 0),
-          $lte: max - (TIME_DIFF | 0)
-          // $gte: min,
-          // $lte: max
+          // $gte: min - (TIME_DIFF | 0),
+          // $lte: max - (TIME_DIFF | 0),
+          $gte: min,
+          $lte: max,
         }
       }
 
