@@ -79,9 +79,12 @@ module.exports = (instance, _, next) => {
     })
   }
 
+  const user_available_services = request.user.services.map(serv => serv.service.toString())
+
   var find_debts = (request, reply, user, handler = calculate_receipt_debts) => {
     var query = {
       organization: user.organization,
+      service: { $in: user_available_services },
       $or: [{
         debtData: {
           $ne: null
@@ -98,9 +101,17 @@ module.exports = (instance, _, next) => {
     }
     if(request.body) {
       if(request.body.services) {
-        if(request.body.services.length > 0) {
+        const { services } = request.body
+
+        for (const service of services) {
+          if (!user_available_services.includes(service)) {
+            return reply.error('Acces denied')
+          }
+        }
+
+        if(services.length > 0) {
           query.service = {
-            $in: request.body.services
+            $in: services
           }
         }
       }
