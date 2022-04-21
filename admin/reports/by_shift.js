@@ -9,20 +9,33 @@ module.exports = (instance, _, next) => {
     const max = parseInt(request.params.max)
     const limit = parseInt(request.params.limit)
     const page = parseInt(request.params.page)
+
+    const { services } = request.body.services;
+
+    const user_available_services = request.user.services.map(serv => serv.service.toString())
+
     const Query = {
       organization: user.organization,
       opening_time: {
         $lte: max,
         $gte: min
       },
+      service: { $in: user_available_services },
       closing_time: {
         $ne: 0
       }
     }
-    if (request.body.services) {
-      if (request.body.services.length > 0) {
+    if (services) {
+      if (services.length > 0) {
+
+        for (const service of services) {
+          if (!user_available_services.includes(service)) {
+            return reply.error('Acces denied')
+          }
+        }
+
         Query.service = {
-          $in: request.body.services
+          $in: services
         }
       }
     }
