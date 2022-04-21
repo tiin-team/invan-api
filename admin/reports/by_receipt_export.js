@@ -31,9 +31,7 @@ module.exports = (instance, _, next) => {
 
       const filterReceipts = {
         organization: organization,
-        receipt_state: {
-          $ne: "draft",
-        },
+        receipt_state: { $ne: "draft" },
         debt_id: null,
         date: {
           // $gte: min - 5 * 60 * 60 * 1000,
@@ -44,9 +42,7 @@ module.exports = (instance, _, next) => {
       };
 
       const receipts = await instance.Receipts.aggregate([
-        {
-          $match: filterReceipts,
-        },
+        { $match: filterReceipts },
         {
           $project: {
             receipt_no: 1,
@@ -60,9 +56,7 @@ module.exports = (instance, _, next) => {
           },
         },
         {
-          $sort: {
-            date: -1,
-          },
+          $sort: { date: -1 },
         },
         {
           $limit: 1000,
@@ -82,9 +76,9 @@ module.exports = (instance, _, next) => {
         // service
         if (!serviceMap[receipts[index].service]) {
           try {
-            const service = await instance.services.findById(
-              receipts[index].service
-            );
+            const service = await instance.services
+              .findById(receipts[index].service)
+              .lean();
             if (service) {
               serviceMap[service._id] = service;
             }
@@ -99,9 +93,9 @@ module.exports = (instance, _, next) => {
         // employee
         if (!employeeMap[receipts[index].cashier_id]) {
           try {
-            const cashier = await instance.User.findById(
-              receipts[index].cashier_id
-            );
+            const cashier = await instance.User
+              .findById(receipts[index].cashier_id)
+              .lean();
             if (cashier) {
               employeeMap[cashier._id] = cashier;
             }
@@ -116,9 +110,9 @@ module.exports = (instance, _, next) => {
         // customer
         if (receipts[index].user_id && !customerMap[receipts[index].user_id]) {
           try {
-            const customer = await instance.clientsDatabase.findOne({
-              user_id: receipts[index].user_id,
-            });
+            const customer = await instance.clientsDatabase
+              .findOne({ user_id: receipts[index].user_id, })
+              .lean();
             if (customer) {
               customerMap[customer._id] = customer;
             }
