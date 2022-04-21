@@ -901,7 +901,7 @@ module.exports = (instance, _, next) => {
 
   instance.post('/employee/activate_pos_device', { version: '1.0.0' }, (request, reply) => {
     instance.authorization(request, reply, (user) => {
-      var imei = request.body.imei
+      const imei = request.body.imei
       instance.posDevices.findOne({ _id: request.body._id }, (err, device) => {
         if (err) {
           reply.error('Error on finding pos device')
@@ -981,6 +981,7 @@ module.exports = (instance, _, next) => {
           }
         }
       })
+        .lean()
     })
   })
 

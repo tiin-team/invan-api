@@ -733,6 +733,7 @@ module.exports = (instance, _, next) => {
         receipt_state: {
           $ne: 'draft'
         },
+        service: { $in: request.user.services.map(serv => serv._id) },
         debt_id: null,
         date: {
           $gte: min - (TIME_DIFF | 0),
@@ -743,6 +744,8 @@ module.exports = (instance, _, next) => {
       }
 
       if (services && services.length > 0) {
+        // services.filter()
+        // filter qilish krk return error Access
         filterReceipts.service = {
           $in: services
         }
