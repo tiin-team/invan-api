@@ -14,7 +14,7 @@ module.exports = fp((instance, options, next) => {
         }
         console.log('time:', new Date().getTime() - start_time);
         console.log('ok');
-    })
+    })()
     instance.get('/items/inv_history', async (request, reply) => {
 
         const { from, to } = request.query
