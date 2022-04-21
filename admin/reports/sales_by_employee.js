@@ -75,11 +75,14 @@ module.exports = (instance, _, next) => {
     const { min, max, limit, page } = request.params;
     const { custom, start, end, services, employees } = request.body;
 
+    const user_available_services = request.user.services.map(serv => serv.service.toString())
+
     const filterReceipts = {
       organization: admin.organization,
       receipt_state: {
         $ne: 'draft'
       },
+      service: { $in: user_available_services },
       debt_id: null,
       date: {
         // $gte: min - (process.env.TIME_DIFF | 0),
@@ -90,6 +93,12 @@ module.exports = (instance, _, next) => {
     }
 
     if (services && services.length > 0) {
+      for(const service of services){
+        if(!user_available_services.includes(service)){
+          return reply.error('Access denied!')
+        }
+      }
+      
       filterReceipts.service = {
         $in: services
       }
