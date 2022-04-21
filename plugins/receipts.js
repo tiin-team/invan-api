@@ -210,12 +210,19 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 const supplier = await instance.adjustmentSupplier
                   .findById(item.primary_supplier_id)
                   .lean();
+                const queue_query = {}
+                if (item.queue) queue_query._id = item.queue
+                else {
+                  queue_query = {}
+                }
+                //xatolik bor
                 const queue = await instance.goodsSaleQueue
                   .findOne({
                     product_id: item._id,
                     service_id: service_id,
                     queue: item.queue,
                   })
+                  .sort({ queue: 1 })
                   .lean()
                 $receiptModel.sold_item_list[i].queue_id = queue._id
                 $receiptModel.sold_item_list[i].queue = queue.queue
