@@ -557,7 +557,8 @@ module.exports = (instance, _, next) => {
         for (let i = 0; i < times_array.length; i++) {
           TT++
           answer.push([
-            new Date(times_array[i] + 5 * 60 * 60 * 1000),
+            // new Date(times_array[i] + 5 * 60 * 60 * 1000),
+            new Date(times_array[i]),
             gross_sale_values[i][1],
             refund_values[i][1],
             discount_values[i][1],

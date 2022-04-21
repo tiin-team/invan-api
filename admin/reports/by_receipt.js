@@ -83,12 +83,14 @@ module.exports = (instance, _, next) => {
       },
       debt_id: null,
       date: {
-        $gte: min-5*60*60*1000,
-        $lte: max-5*60*60*1000
+        // $gte: min-5*60*60*1000,
+        // $lte: max-5*60*60*1000,
+        $gte: min,
+        $lte: max,
       }
     }
 
-    if(search) {
+    if (search) {
       filterReceipts.receipt_no = {
         $regex: search,
         $options: 'i'
@@ -106,8 +108,10 @@ module.exports = (instance, _, next) => {
       for (let i = min; i < max; i += 86400000) {
         additional_query.push({
           date: {
-            $lte: i + end * 3600000 - 5*60*60*1000,
-            $gte: i + start * 3600000 - 5*60*60*1000
+            // $lte: i + end * 3600000 - 5 * 60 * 60 * 1000,
+            // $gte: i + start * 3600000 - 5 * 60 * 60 * 1000,
+            $lte: i + end * 3600000,
+            $gte: i + start * 3600000,
           }
         })
       }
@@ -177,7 +181,7 @@ module.exports = (instance, _, next) => {
     const sales_count = await instance.Receipts.countDocuments({ ...filterReceipts, is_refund: false });
     const refund_count = await instance.Receipts.countDocuments({ ...filterReceipts, is_refund: true });
     const drafts_count = await instance.Receipts.countDocuments({ ...filterReceipts, receipt_state: 'draft' })
-    
+
     console.log(drafts_count)
 
     let total_count;

@@ -67,8 +67,10 @@ module.exports = (instance, _, next) => {
       },
       debt_id: null,
       date: {
-        $gte: min - 5 * 60 * 60 * 1000,
-        $lte: max - 5 * 60 * 60 * 1000
+        // $gte: min - 5 * 60 * 60 * 1000,
+        // $lte: max - 5 * 60 * 60 * 1000,
+        $gte: min,
+        $lte: max,
       }
     }
 
@@ -83,8 +85,10 @@ module.exports = (instance, _, next) => {
       for (let i = min; i < max; i += 86400000) {
         additional_query.push({
           date: {
-            $lte: i + end * 3600000 - 5 * 60 * 60 * 1000,
-            $gte: i + start * 3600000 - 5 * 60 * 60 * 1000
+            // $lte: i + end * 3600000 - 5 * 60 * 60 * 1000,
+            // $gte: i + start * 3600000 - 5 * 60 * 60 * 1000,
+            $lte: i + end * 3600000,
+            $gte: i + start * 3600000,
           }
         })
       }

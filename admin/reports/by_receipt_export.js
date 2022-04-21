@@ -36,8 +36,10 @@ module.exports = (instance, _, next) => {
         },
         debt_id: null,
         date: {
-          $gte: min - 5 * 60 * 60 * 1000,
-          $lte: max - 5 * 60 * 60 * 1000,
+          // $gte: min - 5 * 60 * 60 * 1000,
+          // $lte: max - 5 * 60 * 60 * 1000,
+          $gte: min,
+          $lte: max,
         },
       };
 
@@ -75,7 +77,7 @@ module.exports = (instance, _, next) => {
       for (const index in receipts) {
         try {
           receipts[index] = receipts[index].toObject();
-        } catch (error) {}
+        } catch (error) { }
 
         // service
         if (!serviceMap[receipts[index].service]) {
@@ -86,7 +88,7 @@ module.exports = (instance, _, next) => {
             if (service) {
               serviceMap[service._id] = service;
             }
-          } catch (error) {}
+          } catch (error) { }
         }
 
         if (serviceMap[receipts[index].service]) {
@@ -103,7 +105,7 @@ module.exports = (instance, _, next) => {
             if (cashier) {
               employeeMap[cashier._id] = cashier;
             }
-          } catch (error) {}
+          } catch (error) { }
         }
 
         if (employeeMap[receipts[index].cashier_id]) {
@@ -120,7 +122,7 @@ module.exports = (instance, _, next) => {
             if (customer) {
               customerMap[customer._id] = customer;
             }
-          } catch (error) {}
+          } catch (error) { }
         }
 
         if (receipts[index].user_id && customerMap[receipts[index].user_id]) {
