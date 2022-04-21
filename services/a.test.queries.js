@@ -1,33 +1,11 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
-    /*(async () => {
+    (async () => {
         const start_time = new Date().getTime()
         const accesses = await instance.AccessRights.find({}).lean();
         for (const access of accesses) {
-
-            access.create = true
-            access.create_purchase = true
-            access.create_taxes = true
-            access.create_store = true
-            access.create_pos_device = true
-            access.create_customer = true
-            access.create_employee = true
-            access.create_access = true
-            access.create_time_card = true
-            access.create_transfer = true
-            access.create_stock_adjustmen = true
-            access.create_inv_count = true
-            access.create_production = true
-            access.create_supplier = true
-            access.create_supplier_create_doc = true
-            access.create_fee = true
-            access.create_good_sale = true
-            access.create_good_category = true
-            access.create_modifier = true
-            access.create_discount = true
-            access.create_reciept = true
-
+            access.item_edit = true
             await instance.AccessRights.findByIdAndUpdate(
                 access._id,
                 access,
@@ -37,7 +15,6 @@ module.exports = fp((instance, options, next) => {
         console.log('time:', new Date().getTime() - start_time);
         console.log('ok');
     })
-    */
     instance.get('/items/inv_history', async (request, reply) => {
 
         const { from, to } = request.query
