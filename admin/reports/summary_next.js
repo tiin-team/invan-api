@@ -745,7 +745,7 @@ module.exports = (instance, _, next) => {
     var min = parseInt(request.params.min)
     var max = parseInt(request.params.max)
 
-    const {services} = req.body;
+    const {services} = request.body;
 
     const user_available_services = request.user.services.map(serv => serv.service.toString())
 
