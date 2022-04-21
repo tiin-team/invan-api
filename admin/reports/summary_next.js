@@ -744,11 +744,17 @@ module.exports = (instance, _, next) => {
     }
     var min = parseInt(request.params.min)
     var max = parseInt(request.params.max)
+
+    const {services} = req.body;
+
+    const user_available_services = request.user.services.map(serv => serv.service.toString())
+
     var query = {
       organization: admin.organization,
       debt_id: {
         $ne: null
       },
+      service: { $in: user_available_services },
       date: {
         $gte: min,
         $lte: max
@@ -760,10 +766,15 @@ module.exports = (instance, _, next) => {
       //     $in: request.body.employees
       //   }
       // }
-      if (request.body.services) {
-        if (request.body.services.length > 0) {
+      if (services) {
+        if (services.length > 0) {
+          for(const service of services){
+            if(!user_available_services.includes(service)){
+              return reply.error('Access denied!')
+            }
+          }
           query.service = {
-            $in: request.body.services
+            $in: services
           }
         }
       }
