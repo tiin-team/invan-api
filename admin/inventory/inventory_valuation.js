@@ -304,25 +304,25 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   const joinItems = {
     $group: {
       _id: "$primary_supplier_id",
-      name: {
-        $first: "$name",
-      },
-      product_id: { $first: "$_id" },
-      has_variants: {
-        $first: "$has_variants",
-      },
-      item_type: {
-        $first: "$item_type",
-      },
-      barcode: {
-        $first: "$barcode",
-      },
-      sku: {
-        $first: "$sku",
-      },
-      variant_items: {
-        $first: "$variant_items",
-      },
+      // name: {
+      //   $first: "$name",
+      // },
+      // product_id: { $first: "$_id" },
+      // has_variants: {
+      //   $first: "$has_variants",
+      // },
+      // item_type: {
+      //   $first: "$item_type",
+      // },
+      // barcode: {
+      //   $first: "$barcode",
+      // },
+      // sku: {
+      //   $first: "$sku",
+      // },
+      // variant_items: {
+      //   $first: "$variant_items",
+      // },
       cost: {
         $first: "$cost",
       },
@@ -356,25 +356,25 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       name: {
         $first: "$name",
       },
-      product_id: { $first: "$_id" },
+      // product_id: { $first: "$_id" },
       cost: {
         $first: "$cost",
       },
-      has_variants: {
-        $first: "$has_variants",
-      },
-      item_type: {
-        $first: "$item_type",
-      },
-      barcode: {
-        $first: "$barcode",
-      },
-      sku: {
-        $first: "$sku",
-      },
-      variant_items: {
-        $first: "$variant_items",
-      },
+      // has_variants: {
+      //   $first: "$has_variants",
+      // },
+      // item_type: {
+      //   $first: "$item_type",
+      // },
+      // barcode: {
+      //   $first: "$barcode",
+      // },
+      // sku: {
+      //   $first: "$sku",
+      // },
+      // variant_items: {
+      //   $first: "$variant_items",
+      // },
       in_stock: {
         $sum: {
           $cond: [is_service, 0, "$in_stock"],
@@ -420,19 +420,19 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       { $limit: limit },
       unwindServices,
       projectPrimaryFields,
-      // joinItems,
+      joinItems,
       $lookup,
       {
         $project: {
           _id: 1,
-          name: 1,
+          // name: 1,
           cost: 1,
-          has_variants: 1,
-          item_type: 1,
-          product_id: 1,
-          barcode: 1,
-          sku: 1,
-          variant_items: 1,
+          // has_variants: 1,
+          // item_type: 1,
+          // product_id: 1,
+          // barcode: 1,
+          // sku: 1,
+          // variant_items: 1,
           in_stock: 1,
           inventory: 1,
           retail: 1,
