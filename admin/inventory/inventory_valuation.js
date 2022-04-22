@@ -244,7 +244,7 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
     data: items,
   }
 }
-async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier_id, organization, service }, instance,) {
+async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, service }, instance,) {
 
   const query = {
     $match: {
@@ -420,7 +420,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
       { $limit: limit },
       unwindServices,
       projectPrimaryFields,
-      joinItems,
+      // joinItems,
       $lookup,
       {
         $project: {
@@ -437,8 +437,8 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
           inventory: 1,
           retail: 1,
           potential: 1,
-          // supplier_name: { $first: '$supps.supplier_name' },
-          // supplier_id: { $first: '$supps._id' },
+          supplier_name: { $first: '$supps.supplier_name' },
+          supplier_id: { $first: '$supps._id' },
         },
       },
       { $sort: { _id: 1 } },
@@ -1259,7 +1259,7 @@ module.exports = fp((instance, options, next) => {
     async (request, reply) => {
       instance.authorization(request, reply, async () => {
         try {
-          const { supplier_id, service } = request.query;
+          const { service } = request.query;
           const limit = !isNaN(parseInt(request.query.limit))
             ? parseInt(request.query.limit)
             : 10
@@ -1271,26 +1271,11 @@ module.exports = fp((instance, options, next) => {
 
           const result = await inventoryValuationResultByPrimarySupplier({
             limit, page,
-            supplier_id,
             organization: user.organization,
             service
           }, instance)
 
-          reply.ok(result);
-
-          try {
-            reply.ok({
-              ...total[0],
-              total: total_items,
-              margin:
-                (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
-                100,
-              page: Math.ceil(total_items / limit),
-              data: items,
-            });
-          } catch (error) {
-            reply.error(error.message);
-          }
+          return reply.ok(result);
         } catch (error) {
           reply.error(error.message)
         }
