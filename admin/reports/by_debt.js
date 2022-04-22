@@ -1,11 +1,11 @@
 module.exports = (instance, _, next) => {
 
-  var version = { version: '1.0.0' }
+  const version = { version: '1.0.0' }
 
 
   // reports by debts  <<receipt>>
 
-  var calculate_receipt_debts = (request, reply, receipts, user) => {
+  const calculate_receipt_debts = (request, reply, receipts, user) => {
     var Ans = []
     var inc = 0
     var inc_id = {}
@@ -55,12 +55,12 @@ module.exports = (instance, _, next) => {
         Answer.push(a)
       }
     }
-    if(request.body.employees) {
-      if(request.body.employees.length > 0) {
+    if (request.body.employees) {
+      if (request.body.employees.length > 0) {
         var answer = []
-        for(let i=0; i<Answer.length; i++) {
-          for(let j=0; j< request.body.employees.length; j++) {
-            if(Answer[i].employees.includes(request.body.employees[j])) {
+        for (let i = 0; i < Answer.length; i++) {
+          for (let j = 0; j < request.body.employees.length; j++) {
+            if (Answer[i].employees.includes(request.body.employees[j])) {
               answer.push(Answer[i])
               break;
             }
@@ -74,15 +74,14 @@ module.exports = (instance, _, next) => {
     Ans = Ans.splice(request.params.limit * (request.params.page - 1), request.params.limit)
     reply.ok({
       total: total,
-      page: Math.ceil(total/request.params.limit),
+      page: Math.ceil(total / request.params.limit),
       data: Ans
     })
   }
 
-  const user_available_services = request.user.services.map(serv => serv.service.toString())
-
-  var find_debts = (request, reply, user, handler = calculate_receipt_debts) => {
-    var query = {
+  const find_debts = (request, reply, user, handler = calculate_receipt_debts) => {
+    const user_available_services = request.user.services.map(serv => serv.service.toString())
+    const query = {
       organization: user.organization,
       service: { $in: user_available_services },
       $or: [{
@@ -99,8 +98,8 @@ module.exports = (instance, _, next) => {
         $lte: request.params.max
       }
     }
-    if(request.body) {
-      if(request.body.services) {
+    if (request.body) {
+      if (request.body.services) {
         const { services } = request.body
 
         for (const service of services) {
@@ -109,7 +108,7 @@ module.exports = (instance, _, next) => {
           }
         }
 
-        if(services.length > 0) {
+        if (services.length > 0) {
           query.service = {
             $in: services
           }
@@ -127,7 +126,7 @@ module.exports = (instance, _, next) => {
 
   instance.post('/reports/by_debt/:min/:max/:limit/:page', version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
-      if(admin){find_debts(request, reply, admin)}
+      if (admin) { find_debts(request, reply, admin) }
     })
   })
 
