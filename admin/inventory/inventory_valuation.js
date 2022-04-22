@@ -398,6 +398,22 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
       },
     };
   }
+  const $lookup = {
+    $lookup: {
+      from: 'adjustmentsuppliers',
+      let: { id: { $toString: '$_id' } },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: [{ $toString: '$_id' }, '$$id']
+            },
+          },
+        },
+      ],
+      as: 'supps',
+    },
+  }
   const items = await instance.goodsSales
     .aggregate([
       query,
@@ -406,6 +422,25 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
       unwindServices,
       projectPrimaryFields,
       joinItems,
+            $lookup,
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          cost: 1,
+          has_variants: 1,
+          item_type: 1,
+          barcode: 1,
+          sku: 1,
+          variant_items: 1,
+          in_stock: 1,
+          inventory: 1,
+          retail: 1,
+          potential: 1,
+          supplier_name: { $first: '$supps.supplier_name' },
+          supplier_id: { $first: '$supps._id' },
+        },
+      },
       { $sort: { _id: 1 } },
     ])
     .allowDiskUse(true)
