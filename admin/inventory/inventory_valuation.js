@@ -312,6 +312,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
       name: {
         $first: "$name",
       },
+      product_id: { $first: "_id" },
       has_variants: {
         $first: "$has_variants",
       },
@@ -363,6 +364,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
       name: {
         $first: "$name",
       },
+      product_id: { $first: "_id" },
       cost: {
         $first: "$cost",
       },
@@ -435,6 +437,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
           cost: 1,
           has_variants: 1,
           item_type: 1,
+          product_id: 1,
           barcode: 1,
           sku: 1,
           variant_items: 1,
