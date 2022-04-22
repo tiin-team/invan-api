@@ -312,7 +312,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
       name: {
         $first: "$name",
       },
-      product_id: { $first: "_id" },
+      product_id: { $first: "$_id" },
       has_variants: {
         $first: "$has_variants",
       },
@@ -364,7 +364,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
       name: {
         $first: "$name",
       },
-      product_id: { $first: "_id" },
+      product_id: { $first: "$_id" },
       cost: {
         $first: "$cost",
       },
