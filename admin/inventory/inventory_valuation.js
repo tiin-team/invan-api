@@ -351,9 +351,6 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
   };
   service = service + "";
   if (typeof service == typeof "invan" && service != "") {
-    try {
-      service = instance.ObjectId(service);
-    } catch (error) { }
     joinItems["$group"] = {
       _id: "$primary_supplier_id",
       name: {
@@ -440,8 +437,8 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
           inventory: 1,
           retail: 1,
           potential: 1,
-          supplier_name: { $first: '$supps.supplier_name' },
-          supplier_id: { $first: '$supps._id' },
+          // supplier_name: { $first: '$supps.supplier_name' },
+          // supplier_id: { $first: '$supps._id' },
         },
       },
       { $sort: { _id: 1 } },
@@ -470,11 +467,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
     },
   };
 
-  service = service + "";
   if (typeof service == typeof "invan" && service != "") {
-    try {
-      service = instance.ObjectId(service);
-    } catch (error) { }
     calculateTotal["$group"] = {
       _id: null,
       inventory: {
