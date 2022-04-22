@@ -257,14 +257,8 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
 
   const projectPrimaryFields = {
     $project: {
-      name: "$name",
-      has_variants: "$has_variants",
-      item_type: "$item_type",
-      barcode: "$barcode",
-      sku: "$sku",
       cost: "$cost",
       primary_supplier_id: "$primary_supplier_id",
-      variant_items: "$variant_items",
       service: "$services.service",
       in_stock: {
         $max: [0, "$services.in_stock"],
@@ -304,99 +298,14 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   const joinItems = {
     $group: {
       _id: "$primary_supplier_id",
-      // name: {
-      //   $first: "$name",
-      // },
-      // product_id: { $first: "$_id" },
-      // has_variants: {
-      //   $first: "$has_variants",
-      // },
-      // item_type: {
-      //   $first: "$item_type",
-      // },
-      // barcode: {
-      //   $first: "$barcode",
-      // },
-      // sku: {
-      //   $first: "$sku",
-      // },
-      // variant_items: {
-      //   $first: "$variant_items",
-      // },
-      cost: {
-        $first: "$cost",
-      },
-      inventory: {
-        $sum: "$inventory",
-      },
-      in_stock: {
-        $sum: "$in_stock",
-      },
-      retail: {
-        $sum: "$retail",
-      },
-      potential: {
-        $sum: "$potential",
-      },
+      cost: { $first: "$cost" },
+      inventory: { $sum: "$inventory" },
+      in_stock: { $sum: "$in_stock" },
+      retail: { $sum: "$retail" },
+      potential: { $sum: "$potential" },
     },
   };
 
-  service = instance.ObjectId(service);
-
-  let is_service = {
-    $and: [
-      { $ne: ["$service", service] },
-      { $ne: ["$service", service + ""] },
-    ],
-  };
-  service = service + "";
-  if (typeof service == typeof "invan" && service != "") {
-    joinItems["$group"] = {
-      _id: "$primary_supplier_id",
-      name: {
-        $first: "$name",
-      },
-      // product_id: { $first: "$_id" },
-      cost: {
-        $first: "$cost",
-      },
-      // has_variants: {
-      //   $first: "$has_variants",
-      // },
-      // item_type: {
-      //   $first: "$item_type",
-      // },
-      // barcode: {
-      //   $first: "$barcode",
-      // },
-      // sku: {
-      //   $first: "$sku",
-      // },
-      // variant_items: {
-      //   $first: "$variant_items",
-      // },
-      in_stock: {
-        $sum: {
-          $cond: [is_service, 0, "$in_stock"],
-        },
-      },
-      inventory: {
-        $sum: {
-          $cond: [is_service, 0, "$inventory"],
-        },
-      },
-      retail: {
-        $sum: {
-          $cond: [is_service, 0, "$retail"],
-        },
-      },
-      potential: {
-        $sum: {
-          $cond: [is_service, 0, "$potential"],
-        },
-      },
-    };
-  }
   const $lookup = {
     $lookup: {
       from: 'adjustmentsuppliers',
@@ -416,23 +325,17 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   const items = await instance.goodsSales
     .aggregate([
       query,
-      { $skip: limit * (page - 1) },
-      { $limit: limit },
       unwindServices,
       projectPrimaryFields,
       joinItems,
       $lookup,
+      { $skip: limit * (page - 1) },
+      { $limit: limit },
       {
         $project: {
           _id: 1,
-          // name: 1,
           cost: 1,
-          // has_variants: 1,
-          // item_type: 1,
-          // product_id: 1,
-          // barcode: 1,
-          // sku: 1,
-          // variant_items: 1,
+          primary_supplier_id: 1,
           in_stock: 1,
           inventory: 1,
           retail: 1,
@@ -467,27 +370,6 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     },
   };
 
-  if (typeof service == typeof "invan" && service != "") {
-    calculateTotal["$group"] = {
-      _id: null,
-      inventory: {
-        $sum: {
-          $cond: [{ $or: [is_service, "$has_variants"] }, 0, "$inventory"],
-        },
-      },
-      retail: {
-        $sum: {
-          $cond: [{ $or: [is_service, "$has_variants"] }, 0, "$retail"],
-        },
-      },
-      potential: {
-        $sum: {
-          $cond: [{ $or: [is_service, "$has_variants"] }, 0, "$potential"],
-        },
-      },
-    };
-  }
-
   let total = await instance.goodsSales
     .aggregate([
       query,
@@ -506,13 +388,23 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       retail: 0,
     }];
   }
+  // const total_items = await instance.goodsSales
+  //   .countDocuments(query["$match"])
+  //   .exec();
   const total_items = await instance.goodsSales
-    .countDocuments(query["$match"])
+    .aggregate([
+      query,
+      {
+        $group: {
+          _id: "$primary_supplier_id",
+        },
+      },
+    ])
     .exec();
 
   return {
     ...total[0],
-    total: total_items,
+    total: total_items.length,
     margin:
       (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
       100,
