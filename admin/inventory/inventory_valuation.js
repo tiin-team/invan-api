@@ -244,6 +244,189 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
     data: items,
   }
 }
+async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, service }, instance, services) {
+
+  const query = {
+    $match: {
+      organization: organization,
+      primary_supplier_id: { $exists: true },
+    }
+  };
+
+  const $pojectOne = {
+    $project: {
+      cost: "$cost",
+      primary_supplier_id: "$primary_supplier_id",
+      services: {
+        $filter: {
+          input: "$services",
+          as: "service",
+          cond: [{ $in: ['$$service.service', services] }]
+        }
+      },
+    }
+  }
+
+  const unwindServices = { $unwind: { path: "$services" } };
+
+  const projectPrimaryFields = {
+    $project: {
+      cost: "$cost",
+      primary_supplier_id: "$primary_supplier_id",
+      service: "$services.service",
+      in_stock: {
+        $max: [0, "$services.in_stock"],
+        // $max: [0, { $round: ["$services.in_stock", 3] }],
+      },
+      inventory: {
+        $multiply: [
+          { $max: ["$cost", 0] },
+          { $max: ["$services.in_stock", 0] },
+        ],
+      },
+      retail: {
+        $multiply: [
+          { $max: ["$services.price", 0] },
+          { $max: ["$services.in_stock", 0] },
+        ],
+      },
+      potential: {
+        $subtract: [
+          {
+            $multiply: [
+              { $max: ["$services.price", 0] },
+              { $max: ["$services.in_stock", 0] },
+            ],
+          },
+          {
+            $multiply: [
+              { $max: ["$cost", 0] },
+              { $max: ["$services.in_stock", 0] },
+            ],
+          },
+        ],
+      },
+    },
+  };
+
+  const joinItems = {
+    $group: {
+      _id: "$primary_supplier_id",
+      cost: { $first: "$cost" },
+      inventory: { $sum: "$inventory" },
+      in_stock: { $sum: "$in_stock" },
+      retail: { $sum: "$retail" },
+      potential: { $sum: "$potential" },
+    },
+  };
+
+  const $lookup = {
+    $lookup: {
+      from: 'adjustmentsuppliers',
+      let: { id: { $toString: '$_id' } },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: [{ $toString: '$_id' }, '$$id']
+            },
+          },
+        },
+      ],
+      as: 'supps',
+    },
+  }
+  const items = await instance.goodsSales
+    .aggregate([
+      query,
+      $pojectOne,
+      unwindServices,
+      projectPrimaryFields,
+      joinItems,
+      $lookup,
+      { $skip: limit * (page - 1) },
+      { $limit: limit },
+      {
+        $project: {
+          _id: 1,
+          cost: 1,
+          primary_supplier_id: 1,
+          in_stock: 1,
+          inventory: 1,
+          retail: 1,
+          potential: 1,
+          supplier_name: { $first: '$supps.supplier_name' },
+          supplier_id: { $first: '$supps._id' },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ])
+    .allowDiskUse(true)
+    .exec();
+
+  const calculateTotal = {
+    $group: {
+      _id: null,
+      inventory: {
+        $sum: {
+          $cond: ["$has_variants", 0, "$inventory"],
+        },
+      },
+      retail: {
+        $sum: {
+          $cond: ["$has_variants", 0, "$retail"],
+        },
+      },
+      potential: {
+        $sum: {
+          $cond: ["$has_variants", 0, "$potential"],
+        },
+      },
+    },
+  };
+
+  let total = await instance.goodsSales
+    .aggregate([
+      query,
+      unwindServices,
+      projectPrimaryFields,
+      calculateTotal,
+    ])
+    .allowDiskUse(true)
+    .exec();
+  if (!(total instanceof Array) || total.length == 0) {
+    total = [{
+      inventory: 0,
+      margin: 0,
+      page: 1,
+      potential: 0,
+      retail: 0,
+    }];
+  }
+  // const total_items = await instance.goodsSales
+  //   .countDocuments(query["$match"])
+  //   .exec();
+  const total_items = await instance.goodsSales
+    .aggregate([
+      query,
+      {
+        $group: {
+          _id: "$primary_supplier_id",
+        },
+      },
+    ])
+    .exec();
+
+  return {
+    ...total[0],
+    total: total_items.length,
+    margin:
+      (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
+      100,
+    page: page,
+    data: items,
+  }
+}
 async function inventoryValuationResultBySupplier({ limit, page, supplier_id, organization, service }, instance,) {
 
   const query = {
@@ -983,7 +1166,7 @@ module.exports = fp((instance, options, next) => {
     async (request, reply) => {
       instance.authorization(request, reply, async () => {
         try {
-          const { supplier_id, service } = request.query;
+          const { service } = request.query;
           const limit = !isNaN(parseInt(request.query.limit))
             ? parseInt(request.query.limit)
             : 10
@@ -992,77 +1175,19 @@ module.exports = fp((instance, options, next) => {
             : 1
 
           const user = request.user;
-
-          const result = await inventoryValuationResultBySupplier({
-            limit, page,
-            supplier_id,
-            organization: user.organization,
-            service
-          }, instance)
-
-          reply.ok(result);
-
-          try {
-            reply.ok({
-              ...total[0],
-              total: total_items,
-              margin:
-                (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
-                100,
-              page: Math.ceil(total_items / limit),
-              data: items,
-            });
-          } catch (error) {
-            reply.error(error.message);
+          const user_available_services = user.services.map(serv => serv.service.toString())
+          if (service && !user_available_services.find(serv => serv.service.toString() == service)) {
+            return reply.error('Acces denied')
           }
-        } catch (error) {
-          reply.error(error.message)
-        }
-        return reply;
-      })
-
-      return reply;
-    }
-  );
-  instance.get(
-    "/inventory/valuation",
-    {
-      version: '2.0.0',
-      schema: {
-        query: {
-          type: "object",
-          properties: {
-            limit: { type: "integer", minimum: 1 },
-            page: { type: "integer", minimum: 1 },
-            service: { type: "string" },
-            supplier_id: { type: "string" },
-          },
-          required: [],
-          additionalProperties: false,
-        },
-      },
-    },
-    async (request, reply) => {
-      instance.authorization(request, reply, async () => {
-        try {
-          const { supplier_id, service } = request.query;
-          const limit = isNaN(parseInt(request.query.limit))
-            ? 10
-            : parseInt(request.query.limit)
-          const page = isNaN(parseInt(request.query.page))
-            ? 1
-            : parseInt(request.query.page)
-
-          const user = request.user;
-
-          const result = await inventoryValuationResultPartiation({
+          const result = await inventoryValuationResultByPrimarySupplier({
             limit, page,
-            supplier_id,
             organization: user.organization,
-            service
-          }, instance, 'supplier')
+          },
+            instance,
+            service ? [service] : user_available_services,
+          )
 
-          reply.ok(result);
+          return reply.ok(result);
         } catch (error) {
           reply.error(error.message)
         }
@@ -1072,7 +1197,7 @@ module.exports = fp((instance, options, next) => {
       return reply;
     }
   );
-
+  // xato qilingan
   instance.get(
     "/inventory/valuation/:supplier_id",
     {
