@@ -246,7 +246,12 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
 }
 async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier_id, organization, service }, instance,) {
 
-  const query = { $match: { organization } };
+  const query = {
+    $match: {
+      organization: organization,
+      primary_supplier_id: { $ne: '' },
+    }
+  };
 
   if (supplier_id) {
     try {
@@ -422,7 +427,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
       unwindServices,
       projectPrimaryFields,
       joinItems,
-            $lookup,
+      $lookup,
       {
         $project: {
           _id: 1,
