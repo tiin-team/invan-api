@@ -495,7 +495,7 @@ module.exports = fp((instance, _, next) => {
     }
   })
 
-  //  service
+  // service
 
   instance.decorate('delete_service', (request, reply, user) => {
     instance.posDevices.find({

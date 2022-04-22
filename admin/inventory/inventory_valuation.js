@@ -244,7 +244,7 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
     data: items,
   }
 }
-async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, service }, instance,) {
+async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, service }, instance, services) {
 
   const query = {
     $match: {
@@ -252,6 +252,20 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       primary_supplier_id: { $exists: true },
     }
   };
+
+  const $pojectOne = {
+    $project: {
+      cost: "$cost",
+      primary_supplier_id: "$primary_supplier_id",
+      services: {
+        $filter: {
+          input: "$services",
+          as: "service",
+          cond: [{ $in: ['$$service.service', services] }]
+        }
+      },
+    }
+  }
 
   const unwindServices = { $unwind: { path: "$services" } };
 
@@ -325,6 +339,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   const items = await instance.goodsSales
     .aggregate([
       query,
+      $pojectOne,
       unwindServices,
       projectPrimaryFields,
       joinItems,
@@ -1160,12 +1175,17 @@ module.exports = fp((instance, options, next) => {
             : 1
 
           const user = request.user;
-
+          const user_available_services = user.services.map(serv => serv.service.toString())
+          if (service && !user_available_services.find(serv => serv.service.toString() == service)) {
+            return reply.error('Acces denied')
+          }
           const result = await inventoryValuationResultByPrimarySupplier({
             limit, page,
             organization: user.organization,
-            service
-          }, instance)
+          },
+            instance,
+            service ? [service] : user_available_services,
+          )
 
           return reply.ok(result);
         } catch (error) {
