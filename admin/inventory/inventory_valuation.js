@@ -253,11 +253,6 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
     }
   };
 
-  if (supplier_id) {
-    try {
-      query["$match"].primary_supplier_id = instance.ObjectId(supplier_id);
-    } catch (error) { }
-  }
   const unwindServices = { $unwind: { path: "$services" } };
 
   const projectPrimaryFields = {
@@ -528,7 +523,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, supplier
     margin:
       (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
       100,
-    page: Math.ceil(total_items / limit),
+    page: page,
     data: items,
   }
 }
