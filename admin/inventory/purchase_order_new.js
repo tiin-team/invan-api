@@ -101,7 +101,9 @@ module.exports = fp((instance, options, next) => {
 						additional_cost: purch.additional_cost,
 						is_service_changable: purch.is_service_changable,
 					}
-				});
+				},
+				{ new: true }
+			);
 			if (item_ids && item_ids.length == 0) {
 				return reply.ok(purch)
 			}
@@ -124,15 +126,11 @@ module.exports = fp((instance, options, next) => {
 				let balance_uzs = 0;
 				let balance_usd = 0;
 				if (purch.total_currency == 'usd') {
-					// current_supplier.balance_usd -= used_transaction / currency.value;
-					// supplier_used_transaction = -1 * used_transaction / currency.value;
 					current_supplier.balance_usd -= used_transaction / currency.value;
 					supplier_used_transaction = -1 * used_transaction / currency.value;
 					balance_usd += supplier_used_transaction;
 				}
 				else {
-					// current_supplier.balance -= used_transaction;
-					// supplier_used_transaction = -1 * used_transaction;
 					current_supplier.balance -= used_transaction;
 					supplier_used_transaction = -1 * used_transaction;
 					balance_uzs += supplier_used_transaction;
