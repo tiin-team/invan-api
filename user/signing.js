@@ -556,7 +556,7 @@ module.exports = (instance, options, next) => {
                         }
                       })
 
-                      instance.organizations.findOne({ _id: user.organization }, (_, organization) => {
+                      instance.organizations.findOne({ _id: user.organization }, async (_, organization) => {
                         // instance.sending_sms_code_success(user, organization)
                         if (organization) {
                           await axios.post(`https://confirmation.tiinco.uz/login_success`, {
