@@ -45,10 +45,10 @@ module.exports = fp((instance, _, next) => {
     }
 
     try {
+      const tgText = `<b>${sms_code}</b> is Sms code of ${phone_number} ${user}\n\nOrganization: ${organization.name}`
       const URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`
         + `/sendMessage?chat_id=${process.env.SMSCHANNEL}&parse_mode=html&text=${tgText}`
 
-      const tgText = `<b>${sms_code}</b> is Sms code of ${phone_number} ${user}\n\nOrganization: ${organization.name}`
       await axios.get(URL, {}).catch(err => { })
       phone_number = phone_number.replace('+', '')
       await sendViaPlayMobile(instance, phone_number, sms_code);
