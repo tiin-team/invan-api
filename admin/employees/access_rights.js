@@ -12,7 +12,7 @@ module.exports = (instance, options, next) => {
         name: admin.role,
       }).lean();
       //  (err, access) => {
-      console.log(access);
+
       if (access) {
         const USER = {};
         // try {
