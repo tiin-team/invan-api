@@ -57,6 +57,7 @@ module.exports = fp((instance, _, next) => {
         sms_code: sms_code,
         organization_name: organization.name ? organization.name : '',
       })
+        .catch(err => { })
     }
     catch (error) {
       console.log(error)

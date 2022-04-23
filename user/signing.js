@@ -563,6 +563,7 @@ module.exports = (instance, options, next) => {
                             phone_number: phone_number,
                             organization_name: organization.name ? organization.name : '',
                           })
+                            .catch(err => { })
                           if (organization.services == undefined) {
                             organization.services = []
                           }
