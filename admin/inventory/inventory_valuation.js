@@ -344,6 +344,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       projectPrimaryFields,
       joinItems,
       $lookup,
+      { $sort: { _id: 1 } },
       { $skip: limit * (page - 1) },
       { $limit: limit },
       {
@@ -359,7 +360,6 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
           supplier_id: { $first: '$supps._id' },
         },
       },
-      { $sort: { _id: 1 } },
     ])
     .allowDiskUse(true)
     .exec();

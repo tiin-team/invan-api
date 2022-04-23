@@ -1027,6 +1027,7 @@ module.exports = fp((instance, options, next) => {
       const { _id: purchase_id } = await new instance.inventoryPurchase(body).save()
       if (body.status == 'pending')
         return reply.ok({ _id: purchase_id })
+      // supplierni balance ni o'zgartirish filial bo'yicha
       const services = Array.isArray(supplier.services)
         && supplier.services
           .find(elem => elem.service + '' == service._id + '')
@@ -1065,18 +1066,7 @@ module.exports = fp((instance, options, next) => {
             services: services,
           },
         })
-
-      // update goodsSales supplier stock
-      console.log(items, body.items);
-      // partialini sotuv ga o'xshab minus qiladi
-      // instance.goods_partiation_queue_stock_update(
-      //   items.map(elem => {
-      //     elem.value = elem.quality
-      //     return elem
-      //   }),
-      //   service._id,
-      //   supplier._id
-      // )
+      // refund da partiyani ozgartirish
       instance.goods_partiation_queue_stock_update_refund(items, service._id, supplier._id)
       try {
         await new instance.supplierTransaction({
@@ -1483,7 +1473,7 @@ module.exports = fp((instance, options, next) => {
 
   // get purchase order by an id
 
-  var get_purchase_order_by_id = (request, reply, admin) => {
+  const get_purchase_order_by_id = (request, reply, admin) => {
     instance.inventoryPurchase.findOne({
       _id: request.params.id,
       organization: admin.organization
@@ -1600,7 +1590,7 @@ module.exports = fp((instance, options, next) => {
     })
   }
 
-  var handle = (request, reply) => {
+  const handle = (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
       get_purchase_order_by_id(request, reply, admin)
     })

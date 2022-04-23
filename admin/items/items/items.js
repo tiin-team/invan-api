@@ -465,7 +465,7 @@ module.exports = (instance, options, next) => {
         let supplier_id = request.body.supplier_id;
         try {
           supplier_id = instance.ObjectId(supplier_id);
-        } catch (error) {}
+        } catch (error) { }
 
         query.primary_supplier_id = {
           $eq: supplier_id,
@@ -505,7 +505,7 @@ module.exports = (instance, options, next) => {
           let s_id;
           try {
             s_id = instance.ObjectId(service_id);
-          } catch (error) {}
+          } catch (error) { }
           elemmatch = {
             $or: [
               {
@@ -580,7 +580,7 @@ module.exports = (instance, options, next) => {
         const category_result = await instance.get_child_category(category_id);
         ids = ids.concat(category_result);
       }
-    } catch (error) {}
+    } catch (error) { }
     if (ids.length > 0) {
       query.category = {
         $in: ids,
@@ -630,7 +630,7 @@ module.exports = (instance, options, next) => {
 
     try {
       items_count = await instance.goodsSales.countDocuments(query);
-    } catch (error) {}
+    } catch (error) { }
 
     let page;
     try {
@@ -639,7 +639,7 @@ module.exports = (instance, options, next) => {
       } else {
         page = 1;
       }
-    } catch (err) {}
+    } catch (err) { }
     let limit;
     try {
       if (parseInt(request.params.limit)) {
@@ -650,7 +650,7 @@ module.exports = (instance, options, next) => {
       } else {
         limit = 200;
       }
-    } catch (err) {}
+    } catch (err) { }
 
     /*
     instance.goodsSales.aggregate([
@@ -756,7 +756,7 @@ module.exports = (instance, options, next) => {
         let s_id;
         try {
           s_id = instance.ObjectId(service_id);
-        } catch (error) {}
+        } catch (error) { }
 
         cond['$and'].push({
           $or: [
@@ -1076,7 +1076,7 @@ module.exports = (instance, options, next) => {
         for (let i = 0; i < goods.length; i++) {
           try {
             goods[i] = goods[i].toObject();
-          } catch (error) {}
+          } catch (error) { }
           goods[i].in_stock = 0;
           if (!goods[i].services) {
             goods[i].services = [];
@@ -1111,7 +1111,7 @@ module.exports = (instance, options, next) => {
               if (parent) {
                 goods[i].name = `${parent.name} ( ${goods[i].name} )`;
               }
-            } catch (err) {}
+            } catch (err) { }
           }
         }
       }
@@ -1614,14 +1614,14 @@ module.exports = (instance, options, next) => {
                             item2._id,
                             item2.cost,
                             item2.services[i].in_stock -
-                              item1.services[i].in_stock,
+                            item1.services[i].in_stock,
                             item2.services[i].in_stock,
                             time
                           );
                         }
                         if (
                           item2.services[i].reminder !=
-                            item1.services[i].reminder &&
+                          item1.services[i].reminder &&
                           (typeof item2.services[i].reminder == typeof 5 ||
                             typeof item1.services[i].reminder == typeof 5)
                         ) {
@@ -2260,7 +2260,7 @@ module.exports = (instance, options, next) => {
             organization: user.organization,
             date: { $gte: time },
           });
-        } catch (error) {}
+        } catch (error) { }
         const resp = [];
         for (const it of deleted_items) {
           resp.push(it.item_id);
@@ -2292,8 +2292,8 @@ module.exports = (instance, options, next) => {
     return is_nds
       ? randomMxikCodeWithNds
       : randomMxikCode
-      ? randomMxikCode
-      : '02202002001010010';
+        ? randomMxikCode
+        : '02202002001010010';
   };
 
   const get_file = async (request, reply, admin) => {
@@ -2914,16 +2914,9 @@ module.exports = (instance, options, next) => {
                 { updatedAt: { $gte: from_time, $lte: to_time } },
                 { createdAt: { $gte: from_time, $lte: to_time } },
               ],
-              // updatedAt: {
-              //   $gte: from_time,
-              //   $lte: to_time
-              // }
             },
           };
-          // if (service)
-          //   $match.$match.services = {
-          //     $in: [service]
-          //   }
+
           instance.goodsSales.aggregate(
             [
               $match,
@@ -2963,7 +2956,7 @@ module.exports = (instance, options, next) => {
                 goods[index].price =
                   serv && serv.price ? serv.price : good.price;
                 goods[index].mxik = good.mxik ? good.mxik : randimMxik();
-                goods[index].nds_value = good.nds_value ? good.nds_value : 15;
+                goods[index].nds_value = good.nds_value || good.nds_value == 0 ? good.nds_value : 15;
 
                 delete goods[index].services;
               }
@@ -3359,12 +3352,10 @@ module.exports = (instance, options, next) => {
   instance.get(
     '/goods/sales/desktop/export/:organization/:service',
     (request, reply) => {
-      // instance.authorization(request, reply, (admin) => {
-      //_id, sku, name, sold_by, barcode, representation, prices, category, cost
-      get_file_desktop(request, reply, {
-        organization: request.params.organization,
-      });
-      // })
+      instance.authorization(request, reply, (admin) => {
+        //_id, sku, name, sold_by, barcode, representation, prices, category, cost
+        get_file_desktop(request, reply, admin);
+      })
     }
   );
   instance.get(

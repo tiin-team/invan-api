@@ -663,7 +663,7 @@ module.exports = (instance, _, next) => {
           // $gte: min - (process.env.TIME_DIFF | 0),
           // $lte: max - (process.env.TIME_DIFF | 0)
           $gte: min,
-          $lte: max
+          $lte: max,
         }
       }
 

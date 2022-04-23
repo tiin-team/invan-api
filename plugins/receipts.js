@@ -212,9 +212,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                   .lean();
                 const queue_query = {}
                 if (item.queue) queue_query._id = item.queue
-                else {
-                  queue_query = {}
-                }
+                else queue_query = { queue: -1 }
                 //xatolik bor
                 const queue = await instance.goodsSaleQueue
                   .findOne({
@@ -222,10 +220,12 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     service_id: service_id,
                     queue: item.queue,
                   })
-                  .sort({ queue: 1 })
+                  // .sort({ queue: 1 })
                   .lean()
-                $receiptModel.sold_item_list[i].queue_id = queue._id
-                $receiptModel.sold_item_list[i].queue = queue.queue
+                if (queue) {
+                  $receiptModel.sold_item_list[i].queue_id = queue._id
+                  $receiptModel.sold_item_list[i].queue = queue.queue
+                }
                 // bu keyinchalik olib tashlanadi
                 if (supplier) {
                   $receiptModel.sold_item_list[i].supplier_id = supplier._id;

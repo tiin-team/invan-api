@@ -71,7 +71,7 @@ module.exports = (instance, _, next) => {
 
   // reports by receipts
 
-  var by_receipt = async (request, reply, admin) => {
+  const by_receipt = async (request, reply, admin) => {
 
     const { min, max, limit, page, type } = request.params;
     const { custom, start, end, services, employees, search } = request.body;
