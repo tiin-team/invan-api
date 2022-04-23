@@ -32,7 +32,7 @@ module.exports = (instance, options, next) => {
                     instance.aldy_exs(reply, 'organization')
                   }
                   else {
-                    var organization_model = new instance.organizations({
+                    const organization_model = new instance.organizations({
                       name: organization_name,
                       address: request.body.address,
                       services: [],
@@ -45,7 +45,7 @@ module.exports = (instance, options, next) => {
                       else {
                         instance.organizations.findOne({ name: organization_name }, (error, organization) => {
                           // columns
-                          var summ1 = instance.summaryTable({
+                          const summ1 = instance.summaryTable({
                             organization: organization._id,
                           })
                           summ1.save((err) => {
@@ -53,7 +53,7 @@ module.exports = (instance, options, next) => {
                               instance.send_Error('table', JSON.stringify(err))
                             }
                           })
-                          var summ2 = instance.by_itemTable({
+                          const summ2 = instance.by_itemTable({
                             organization: organization._id,
                           })
                           summ2.save((err) => {
@@ -61,7 +61,7 @@ module.exports = (instance, options, next) => {
                               instance.send_Error('table', JSON.stringify(err))
                             }
                           })
-                          var summ3 = instance.by_categoryTable({
+                          const summ3 = instance.by_categoryTable({
                             organization: organization._id,
                           })
                           summ3.save((err) => {
@@ -70,7 +70,7 @@ module.exports = (instance, options, next) => {
                             }
                           })
                           /////////////
-                          var featureModel = instance.settingFeatures({
+                          const featureModel = instance.settingFeatures({
                             organization: organization._id
                           })
                           featureModel.save((err) => {
@@ -89,13 +89,13 @@ module.exports = (instance, options, next) => {
                             // token: (new TokenGenerator()).generate(),
                             image_url: request.body.image_url
                           }
-                          var User_model = new instance.User(data)
+                          const User_model = new instance.User(data)
                           User_model.save((error) => {
                             if (error) {
                               reply.error('Could not save!')
                             }
                             else {
-                              var serviceModel = new instance.services({
+                              const serviceModel = new instance.services({
                                 name: organization.name,
                                 organization: organization._id
                               })
@@ -114,7 +114,7 @@ module.exports = (instance, options, next) => {
                                       instance.send_Error('creating pos device', JSON.stringify(err))
                                     }
                                   })
-                                  var section = new instance.goodsSection({
+                                  const section = new instance.goodsSection({
                                     organization: organization._id,
                                     name: "Other",
                                     is_other: true
@@ -124,7 +124,7 @@ module.exports = (instance, options, next) => {
                                       instance.send_Error('creating section', JSON.stringify(err))
                                     }
                                   })
-                                  var categoryModel = new instance.goodsCategory({
+                                  const categoryModel = new instance.goodsCategory({
                                     organization: organization._id,
                                     section: section._id,
                                     section_id: instance.ObjectId(section._id),
@@ -142,9 +142,10 @@ module.exports = (instance, options, next) => {
                                 organization: organization._id,
                                 name: 'boss',
                                 is_bos: true,
+                                can_sell: true,
                                 pos: true,
                                 close_ticket: true,
-                                can_sell: true,
+                                wharehouse_manager: true,
                                 print_pre_check: true,
                                 receipt_save_as_draft: true,
                                 can_change_price: true,
@@ -154,7 +155,6 @@ module.exports = (instance, options, next) => {
                                 show_shift_history: true,
                                 apply_discount: true,
                                 change_settings: true,
-                                show_stock: true,
                                 edit_items: true,
                                 edit_ticket: true,
                                 split_ticket: true,
@@ -163,16 +163,82 @@ module.exports = (instance, options, next) => {
                                 show_all_tickets: true,
                                 can_access_to_shift: true,
                                 back_office: true,
+                                create: true,
+                                create_purchase: true,
+                                create_taxes: true,
+                                create_store: true,
+                                create_pos_device: true,
+                                create_customer: true,
+                                create_employee: true,
+                                create_access: true,
+                                create_time_card: true,
+                                create_transfer: true,
+                                create_stock_adjustmen: true,
+                                create_inv_count: true,
+                                create_production: true,
+                                create_supplier: true,
+                                create_supplier_create_doc: true,
+                                create_fee: true,
+                                create_good_sale: true,
+                                create_good_category: true,
+                                create_modifier: true,
+                                create_discount: true,
+                                create_reciept: true,
                                 reports: true,
+                                report_sale: true,
+                                report_accaunt: true,
+                                report_abs: true,
+                                report_sale_by_item: true,
+                                report_sale_by_category: true,
+                                report_sale_by_supplier: true,
+                                report_employee: true,
+                                report_sale_by_payment: true,
+                                report_receipt: true,
+                                report_debt: true,
+                                report_discount: true,
+                                report_taxes: true,
+                                report_shift: true,
                                 items: true,
+                                item_edit: true,
+                                item_list: true,
+                                item_mxik_search: true,
+                                item_composite_item: true,
+                                item_add_from_warehause: true,
+                                item_print_label: true,
+                                item_price_change_history: true,
+                                item_categories: true,
+                                item_modifiers: true,
+                                item_discount: true,
                                 employees: true,
+                                employee_list: true,
+                                employee_list_add: true,
+                                employee_list_del: true,
+                                employee_access_rights: true,
+                                employee_access_rights_add: true,
+                                employee_access_rights_del: true,
+                                employee_time_cards: true,
+                                employee_total_worked: true,
                                 customers: true,
                                 settings: true,
+                                setting_general: true,
+                                setting_organization: true,
+                                setting_nds: true,
+                                setting_payment_types: true,
+                                setting_currency: true,
+                                setting_loyalty: true,
+                                setting_taxes: true,
+                                setting_receipt: true,
+                                setting_open_tickets: true,
+                                setting_buttons: true,
+                                setting_options: true,
+                                setting_stores: true,
+                                setting_pos_devices: true,
                                 edit_profile: true,
                                 set_the_taxes: true,
                                 manage_pos_devices: true,
                                 can_delete_item: true,
                                 inventory: true,
+                                inv_supplier_valuation: true,
                                 inv_purchase_orders: true,
                                 inv_purchase_mark: true,
                                 inv_purchase_orders_cost: true,
@@ -188,8 +254,8 @@ module.exports = (instance, options, next) => {
                                 inv_fees: true,
                                 inv_inventory_history: true,
                                 inv_inventory_valuation: true,
+                                workgroup: true,
                                 workgroup_edit_cost: true,
-                                workgroup: true
                               })
                               boss.save((err) => {
                                 if (err) {

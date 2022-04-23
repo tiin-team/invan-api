@@ -1613,6 +1613,7 @@ module.exports = fp((instance, _, next) => {
     can_delete_item: boolean,
     // inventory
     inventory: boolean,
+    inv_supplier_valuation: boolean,
     inv_purchase_orders: boolean,
     inv_purchase_mark: boolean,
     inv_purchase_orders_cost: boolean,
