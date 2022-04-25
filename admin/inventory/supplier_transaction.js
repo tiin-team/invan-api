@@ -62,7 +62,6 @@ async function supplierTransactionsGet(request, reply, instance) {
                                     },
                                     { $ne: ['pending', '$status'] },
                                     { $ne: ['$$document_id', '$p_order'] },
-                                    // $ne: ['$p_order', '$$document_id'],
                                 ]
                             },
                         },
@@ -227,6 +226,8 @@ async function supplierTransactionsGet(request, reply, instance) {
 
         const pipeline = [$match, $sort];
 
+        if (!name) pipeline.push($skip, $limit);
+
         pipeline.push($lookupInv);
         pipeline.push($unwindInv);
         pipeline.push($lookup);
@@ -235,7 +236,6 @@ async function supplierTransactionsGet(request, reply, instance) {
         pipeline.push($fixProject);
         pipeline.push($sort);
         pipeline.push($project);
-        if (!name) pipeline.push($skip, $limit);
 
         const suppliers = await instance.adjustmentSupplier.aggregate(pipeline)
             .allowDiskUse(true)
