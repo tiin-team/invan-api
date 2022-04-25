@@ -628,6 +628,7 @@ module.exports = fp((instance, _, next) => {
     service_id: mongoose.Types.ObjectId,
     service_name: String,
     good_id: mongoose.Types.ObjectId,
+    cost: Number,
     quantity: Number,
     quantity_left: Number,
     queue: Number,

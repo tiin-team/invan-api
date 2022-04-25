@@ -29,7 +29,7 @@ async function sendViaPlayMobile(instance, phone_number, otp) {
 module.exports = fp((instance, _, next) => {
 
   instance.decorate('sending_sms_code', async (phone_number, sms_code, user = 'user', organization = {}) => {
-    console.log(sms_code);
+
     const time = parseInt((new Date().getTime()) / 1000)
     const data = {
       utime: time,

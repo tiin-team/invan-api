@@ -8,27 +8,18 @@ async function supplierTransactionsGet(request, reply, instance) {
         const { name } = request.params;
         const user = request.user;
 
-        // const service_ids = user.services.map(serv => serv.service);
+        const user_aviable_service_ids = user.services.map(serv => serv.service.toString());
 
-        // if (request.query.service) {
-        //     const find_service = request.query.service
-        //         ? user.services.find(serv => serv.service == request.query.service)
-        //         : null;
+        const query_service_index = user.services
+            .findIndex(
+                serv => serv.service.toString() == service
+            )
 
-        //     if (!find_service) return reply.error('Forbidden')
-        //     else service_ids = [find_service];
-        // }
-        //3ta if 1ta find 1 map
-        //4ta if 1ta find 1 map
-        const find_service = request.query.service
-            ? user.services.find(serv => serv.service == request.query.service)
-            : null;
-        const service_ids = request.query.service
-            ? find_service
-                ? find_service.service
-                : []
-            : user.services.map(serv => serv.service);
-        if (!service_ids.length) return reply.error('Forbidden')
+        if (service && query_service_index == -1) return reply.error('Forbidden')
+
+        const service_ids = service && query_service_index != -1
+            ? [service]
+            : user_aviable_service_ids
 
         const $match = {
             $match: {
@@ -51,6 +42,60 @@ async function supplierTransactionsGet(request, reply, instance) {
                 as: 'transactions',
             },
         };
+
+        const $lookupInv = {
+            $lookup: {
+                from: 'inventorypurchases',
+                let: { supp_id: '$_id', document_id: '$document_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$organization', user.organization] },
+                                    { $in: [{ $toString: '$service' }, service_ids] },
+                                    {
+                                        $eq: [
+                                            { $toString: '$$supp_id' },
+                                            { $toString: '$supplier_id' },
+                                        ],
+                                    },
+                                    { $ne: ['pending', '$status'] },
+                                    { $ne: ['$$document_id', '$p_order'] },
+                                    // $ne: ['$p_order', '$$document_id'],
+                                ]
+                            },
+                        },
+                    },
+                    {
+                        $project: {
+                            type: 1,
+                            balance_type: 'cash',
+                            balance: {
+                                $cond: [
+                                    { $eq: ['$type', 'coming'] },
+                                    '$total',
+                                    '$total',
+                                ],
+                            },
+                            total_currency: 1,
+                            purchase_order_date: 1,
+                            p_order: 1,
+                            _id: 1,
+                            ordered_by_name: 1,
+                            type: 1,
+                            status: 1,
+                            supplier_id: 1,
+                        },
+                    },
+                ],
+                as: 'inv_purchases',
+            }
+        }
+        const $unwindInv = {
+            $unwind: { path: '$inv_purchases', preserveNullAndEmptyArrays: true },
+        };
+
         const $unwind = {
             $unwind: { path: '$transactions', preserveNullAndEmptyArrays: true },
         };
@@ -182,16 +227,20 @@ async function supplierTransactionsGet(request, reply, instance) {
 
         const pipeline = [$match, $sort];
 
-        if (!name) pipeline.push($skip, $limit);
-
+        pipeline.push($lookupInv);
+        pipeline.push($unwindInv);
         pipeline.push($lookup);
         pipeline.push($unwind);
         pipeline.push($group);
         pipeline.push($fixProject);
         pipeline.push($sort);
         pipeline.push($project);
+        if (!name) pipeline.push($skip, $limit);
 
-        const suppliers = await instance.adjustmentSupplier.aggregate(pipeline).allowDiskUse(true).exec();
+        const suppliers = await instance.adjustmentSupplier.aggregate(pipeline)
+            .allowDiskUse(true)
+            .exec()
+
         for (const index in suppliers) {
             try {
                 suppliers[index].total_receive = Math.round(suppliers[index].total_receive * 100) / 100;
