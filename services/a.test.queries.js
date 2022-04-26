@@ -1,6 +1,13 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
+    instance.get('/get/tiin/transaction/dublicat/:organization', (request, reply) => {
+        const transactions = await instance.supplierTransaction.find(
+            { organization: request.params.organization },
+        )
+            .lean()
+        return reply.ok(transactions)
+    })
     // (async () => {
     //     const start_time = new Date().getTime()
     //     const accesses = await instance.AccessRights.find({}).lean();
