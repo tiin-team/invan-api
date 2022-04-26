@@ -45,7 +45,7 @@ module.exports = (instance, options, next) => {
         }
         //kerak emas
         // let data = transactions.filter(element => element.status != 'pending')
-        delete query.status
+        // delete query.status
         query.organization = supp.organization
         const purChase = await instance.inventoryPurchase.find(query).lean();
         // .find({ supplier_id: supp._id, organization: supp.organization })
