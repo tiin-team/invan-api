@@ -17,12 +17,12 @@ module.exports = (instance, options, next) => {
 
         const transactions = await instance.supplierTransaction.find(query).lean();
 
-        //for (const [indexTran, tranItem] of transactions.entries()) {
-        //          if (tranItem.document_id[0] == 'P' && (tranItem.document_id[1] == 0 || tranItem.document_id[1] == 1))
-        //            await instance.supplierTransaction.findByIdAndUpdate(tranItem._id, {
-        //              balance: -Math.abs(tranItem.balance)
-        //            })
-        //        }
+        for (const [indexTran, tranItem] of transactions.entries()) {
+          if (tranItem.document_id[0] == 'P' && (tranItem.document_id[1] == 0 || tranItem.document_id[1] == 1))
+            await instance.supplierTransaction.findByIdAndUpdate(tranItem._id, {
+              balance: -Math.abs(tranItem.balance)
+            })
+        }
 
         for (const [index, item] of transactions.entries()) {
           invent = await instance.inventoryPurchase.findOne({ _id: item.purchase_id }).lean()
