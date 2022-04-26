@@ -1,9 +1,13 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
-    instance.get('/get/tiin/transaction/dublicat/:organization', async (request, reply) => {
+    instance.get('/get/tiin/transaction/dublicat/:service', async (request, reply) => {
         const transactions = await instance.supplierTransaction.find(
-            { organization: request.params.organization },
+            {
+                service: request.params.service,
+                status: "active"
+            },
+            // { service: instance.ObjectId(request.params.service) },
         )
             .lean()
         return reply.ok(transactions)
