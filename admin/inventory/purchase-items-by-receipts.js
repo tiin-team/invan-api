@@ -69,19 +69,19 @@ module.exports = ((instance, _, next) => {
       try {
         const { service, supplier_id } = request.body;
 
-        const org_ser = await instance.services.findById(service);
+        const org_ser = await instance.services.findById(service).lean();
         if (!org_ser) {
           return reply.fourorfour('Service')
         }
         request.body.service_name = org_ser.name
 
-        const org_supp = await instance.adjustmentSupplier.findById(supplier_id);
+        const org_supp = await instance.adjustmentSupplier.findById(supplier_id).lean();
         if (!org_supp) {
           return reply.fourorfour('Supplier')
         }
         request.body.supplier_name = org_supp.supplier_name
         const user = request.user;
-        const receipts = await instance.Receipts.find({ _id: request.body.receipts });
+        const receipts = await instance.Receipts.find({ _id: request.body.receipts }).lean();
         const barcodes = []
         const itemsMap = {}
         for (const r of receipts) {
@@ -103,10 +103,12 @@ module.exports = ((instance, _, next) => {
           }
         }
 
-        const items = await instance.goodsSales.find({
-          organization: user.organization,
-          barcode: { $elemMatch: { $in: barcodes } }
-        });
+        const items = await instance.goodsSales
+          .find({
+            organization: user.organization,
+            barcode: { $elemMatch: { $in: barcodes } }
+          })
+          .lean();
 
         const existBarcode = {};
         const itemsIdMap = {};
@@ -120,7 +122,7 @@ module.exports = ((instance, _, next) => {
           }
         }
         // services
-        const services = await instance.services.find({ organization: user.organization });
+        const services = await instance.services.find({ organization: user.organization }).lean();
         const itemServices = []
         for (const s of services) {
           itemServices.push({
@@ -137,7 +139,10 @@ module.exports = ((instance, _, next) => {
         for (const b of barcodes) {
           if (!existBarcode[b]) {
             let last_sku = 10000;
-            const lastItem = await instance.goodsSales.findOne({ organization: user.organization }).sort({ sku: -1 });
+            const lastItem = await instance.goodsSales
+              .findOne({ organization: user.organization })
+              .lean()
+              .sort({ sku: -1 });
             if (lastItem && lastItem.sku) {
               last_sku = lastItem.sku + 1
             }

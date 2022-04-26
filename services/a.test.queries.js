@@ -4,7 +4,7 @@ module.exports = fp((instance, options, next) => {
     instance.get('/get/tiin/transaction/dublicat/:service', async (request, reply) => {
         const transactions = await instance.supplierTransaction.find(
             {
-                service: request.params.service,
+                service: instance.ObjectId(request.params.service),
                 status: "active"
             },
             // { service: instance.ObjectId(request.params.service) },
