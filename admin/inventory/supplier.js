@@ -110,6 +110,8 @@ module.exports = (instance, options, next) => {
       })
     })
   */
+  const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
+
   instance.get('/inventory/get_supplier/:id', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, async (admin) => {
       try {
@@ -178,7 +180,6 @@ module.exports = (instance, options, next) => {
         }
 
         allSum = 0
-        const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
 
         for (let i = 0; i < data.length; i++) {
           allSum += data[i].status == 'pending' ? 0 : getFloat(data[i].balance)
