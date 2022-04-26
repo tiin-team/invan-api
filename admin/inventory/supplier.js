@@ -140,7 +140,7 @@ module.exports = (instance, options, next) => {
 
       return reply.ok({
         total: total,
-        page: Math.ceil(total / limit),
+        page: page,
         data: suppliers
       })
     } else {
@@ -150,7 +150,7 @@ module.exports = (instance, options, next) => {
 
       return reply.ok({
         total: total,
-        page: page,
+        page: Math.ceil(total / limit),
         data: suppliers
       })
     }
