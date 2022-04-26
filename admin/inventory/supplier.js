@@ -127,7 +127,7 @@ module.exports = (instance, options, next) => {
         const purChase = await instance.inventoryPurchase.find(query).lean();
         const data = purChase.map(elem => {
           return {
-            total: elem.balance,
+            balance: elem.total,
             balance_type: "cash",
             currency: elem.total_currency,
             date: elem.purchase_order_date,
@@ -150,7 +150,7 @@ module.exports = (instance, options, next) => {
 
             data.push({
               // _id: "61ac9418a914c3ba42f9e877",
-              total: item.status == 'coming'
+              balance: item.status == 'coming'
                 ? -1 * item.balance
                 : getFloat(item.balance),
               balance_type: "cash",
