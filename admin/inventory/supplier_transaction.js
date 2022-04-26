@@ -92,7 +92,7 @@ async function supplierTransactionsGet(request, reply, instance) {
             }
         }
         const $unwindInv = {
-            $unwind: { path: '$inv_purchases', preserveNullAndEmptyArrays: true },
+            $unwind: { path: '$inv_purchases' },
         };
 
         const $unwind = {

@@ -12,17 +12,17 @@ module.exports = (instance, options, next) => {
         if (!supp) return reply.fourorfour('Supplier')
 
         const query = { supplier_id: supp._id, status: { $ne: 'pending' } };
-        if (request.query.service) query.service = request.query.service;
-        else query.service = { $in: request.user.services.map(elem => elem.service.toString()) };
+        // if (request.query.service) query.service = request.query.service;
+        // else query.service = { $in: request.user.services.map(elem => elem.service) };
 
         const transactions = await instance.supplierTransaction.find(query).lean();
 
-        for (const [indexTran, tranItem] of transactions.entries()) {
-          if (tranItem.document_id[0] == 'P' && (tranItem.document_id[1] == 0 || tranItem.document_id[1] == 1))
-            await instance.supplierTransaction.findByIdAndUpdate(tranItem._id, {
-              balance: -Math.abs(tranItem.balance)
-            })
-        }
+        // for (const [indexTran, tranItem] of transactions.entries()) {
+        //   if (tranItem.document_id[0] == 'P' && (tranItem.document_id[1] == 0 || tranItem.document_id[1] == 1))
+        //     await instance.supplierTransaction.findByIdAndUpdate(tranItem._id, {
+        //       balance: -Math.abs(tranItem.balance)
+        //     })
+        // }
 
         for (const [index, item] of transactions.entries()) {
           invent = await instance.inventoryPurchase.findOne({ _id: item.purchase_id }).lean()
@@ -130,22 +130,47 @@ module.exports = (instance, options, next) => {
       ]
     }
 
-    instance.adjustmentSupplier.find(query, (err, suppliers) => {
-      if (err || suppliers == null) suppliers = []
+    const total = await instance.adjustmentSupplier.countDocuments(query)
+    if (page) {
+      const suppliers = await instance.adjustmentSupplier
+        .find(query)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
 
-      if (page) {
-        const total = suppliers.length
-        suppliers = suppliers.splice(limit * (page - 1), limit)
-        reply.ok({
-          total: total,
-          page: Math.ceil(total / limit),
-          data: suppliers
-        })
-      }
-      else {
-        reply.ok(suppliers)
-      }
-    })
+      return reply.ok({
+        total: total,
+        page: page,
+        data: suppliers
+      })
+    } else {
+      const suppliers = await instance.adjustmentSupplier
+        .find(query)
+        .lean()
+
+      return reply.ok({
+        total: total,
+        page: page,
+        data: suppliers
+      })
+    }
+    // instance.adjustmentSupplier.find(query, (err, suppliers) => {
+    //   if (err || suppliers == null) suppliers = []
+
+    //   if (page) {
+    //     const total = suppliers.length
+    //     suppliers = suppliers.splice(limit * (page - 1), limit)
+    //     reply.ok({
+    //       total: total,
+    //       page: Math.ceil(total / limit),
+    //       data: suppliers
+    //     })
+    //   }
+    //   else {
+    //     reply.ok(suppliers)
+    //   }
+    // })
+    //   .lean()
   }
 
   instance.post('/inventory/get_suppliers/:limit/:page', options.version, (request, reply) => {
