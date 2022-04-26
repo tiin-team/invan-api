@@ -94,9 +94,8 @@ async function supplierTransactionsGet(request, reply, instance) {
         const $unwindInv = {
             $unwind: { path: '$inv_purchases' },
         };
-
         const $unwind = {
-            $unwind: { path: '$transactions', preserveNullAndEmptyArrays: true },
+            $unwind: { path: '$transactions' },
         };
         const $group = {
             $group: {
