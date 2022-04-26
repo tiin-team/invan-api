@@ -123,7 +123,20 @@ module.exports = (instance, options, next) => {
         // else query.service = { $in: request.user.services.map(elem => elem.service) };
 
         const purChase = await instance.inventoryPurchase.find(query).lean();
-        const data = purChase
+        const data = purChase.map(elem => {
+          return {
+            total: elem.balance,
+            balance_type: "cash",
+            currency: elem.total_currency,
+            date: elem.purchase_order_date,
+            document_id: elem.p_order,
+            purchase_id: elem._id,
+            employee_name: elem.ordered_by_name,
+            status: elem.status,
+            supplier_id: elem.supplier_id,
+            elem,
+          }
+        })
 
         const transactions = await instance.supplierTransaction.find(query).lean();
         for (const [index, item] of transactions.entries()) {
