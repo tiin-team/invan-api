@@ -148,11 +148,7 @@ module.exports = (instance, options, next) => {
         .find(query)
         .lean()
 
-      return reply.ok({
-        total: total,
-        page: Math.ceil(total / limit),
-        data: suppliers
-      })
+      return reply.ok(suppliers)
     }
     // instance.adjustmentSupplier.find(query, (err, suppliers) => {
     //   if (err || suppliers == null) suppliers = []
