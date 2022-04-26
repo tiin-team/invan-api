@@ -111,7 +111,7 @@ module.exports = (instance, options, next) => {
 
   // get suppliers
 
-  const get_suppliers = (request, reply, admin) => {
+  const get_suppliers = async (request, reply, admin) => {
     const page = parseInt(request.params.page)
     const limit = parseInt(request.params.limit)
 
