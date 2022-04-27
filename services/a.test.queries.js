@@ -14,6 +14,9 @@ module.exports = fp((instance, options, next) => {
                     let: { service: '$_id' },
                     pipeline: [
                         {
+                            $match: { service: { $exists: true } },
+                        },
+                        {
                             $match: {
                                 $expr: {
                                     $and: [
