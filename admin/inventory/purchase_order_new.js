@@ -491,6 +491,338 @@ module.exports = fp((instance, options, next) => {
 		instance.decorate('create_purchase_order_new', createPurchaseOrder)
 		*/
 
+	const receive_purchase = async (pruchase, purchase_id, currency, reply, admin) => {
+		try {
+			const body = pruchase || {}
+			// const purchase_id = pruchase._id
+
+			if (!(body.items instanceof Array)) body.items = []
+
+			if (!(body.additional_cost instanceof Array))
+				body.additional_cost = []
+
+			const purch = await instance.inventoryPurchase
+				.findOne({ _id: purchase_id })
+				.lean();
+			if (!purch) return reply.fourorfour('purchase_order')
+			const current_service = await instance.services.findById(purch.service).lean()
+			let items = body.items;
+			let item_ids = [];
+			let reqObj = {};
+			for (let i = 0; i < items.length; i++) {
+				item_ids.push(items[i]._id)
+				reqObj[items[i]._id] = items[i]
+				reqObj[items[i]._id].to_receive = parseFloat(reqObj[items[i]._id].to_receive)
+			}
+			items = await instance.purchaseItem.find({ _id: { $in: item_ids } }).lean();
+
+			let goodsObj = {}
+			let pro_ids = []
+			let itemObj = {}
+			let received = 0
+			let is_changed = false
+
+			let check_closed = true
+			let used_transaction = 0.0;
+
+			for (let i = 0; i < items.length; i++) {
+				if (
+					reqObj[items[i]._id].to_receive + items[i].received <= items[i].quality
+					&& reqObj[items[i]._id].to_receive >= 0
+				) {
+					items[i].to_receive = +reqObj[items[i]._id].to_receive
+					purch.is_service_changable = false
+					if (items[i].to_receive != 0) {
+						var pro_id = instance.ObjectId(items[i].product_id)
+
+						if (goodsObj[pro_id] == undefined) {
+							pro_ids.push(items[i].product_id)
+							goodsObj[pro_id] = items[i]
+						}
+						else {
+							goodsObj[pro_id].purchase_cost =
+								(
+									(+goodsObj[pro_id].purchase_cost) * (+goodsObj[pro_id].to_receive)
+									+ (+items[i].purchase_cost) * (+items[i].to_receive)
+								)
+								/ ((+items[i].to_receive) + (+goodsObj[pro_id].to_receive))
+							goodsObj[pro_id].to_receive += (+items[i].to_receive);
+						}
+					}
+					is_changed = is_changed || items[i].to_receive > 0
+					received += reqObj[items[i]._id].to_receive
+					let used_purchase_cost = items[i].purchase_cost
+
+					if (items[i].purchase_cost_currency == 'usd') {
+						used_purchase_cost = used_purchase_cost * currency.value
+					}
+					used_transaction += (+reqObj[items[i]._id].to_receive) * (+used_purchase_cost)
+					items[i].to_receive = 0
+					items[i].received += (+reqObj[items[i]._id].to_receive)
+				}
+				check_closed = check_closed && (items[i].received == items[i].quality)
+				itemObj[items[i]._id] = items[i]
+			}
+			let additional_costObj = {}
+			for (const add of body.additional_cost) {
+				additional_costObj[add._id] = add
+			}
+
+			for (let i = 0; i < purch.additional_cost.length; i++) {
+				if (additional_costObj[purch.additional_cost[i]._id] !== undefined) {
+					if (is_changed) {
+						if (
+							!purch.additional_cost[i].is_received
+							&& additional_costObj[purch.additional_cost[i]._id].is_received
+						) {
+							let received_amount = +purch.additional_cost[i].amount
+
+							if (purch.additional_cost[i].amount_currency == 'usd') {
+								received_amount = received_amount * currency.value
+							}
+							used_transaction += received_amount
+						}
+						purch.additional_cost[i].is_received = additional_costObj[purch.additional_cost[i]._id].is_received
+						check_closed = check_closed && (additional_costObj[purch.additional_cost[i]._id].is_received)
+					}
+				}
+			}
+			let status = (check_closed) ? "closed" : (is_changed || received > 0) ? 'partially' : 'pending'
+			await instance.inventoryPurchase.updateOne(
+				{ _id: purchase_id },
+				{
+					$inc: { received: received },
+					$set: {
+						status: status,
+						additional_cost: purch.additional_cost,
+						is_service_changable: purch.is_service_changable,
+					}
+				});
+			if (item_ids && item_ids.length == 0) {
+				return reply.ok(purch)
+			}
+			for (const id of item_ids) {
+				await instance.purchaseItem.updateOne({ _id: id }, { $set: itemObj[id] })
+			};
+
+			// supplier transaction
+			const current_supplier = await instance.adjustmentSupplier
+				.findOne({ _id: purch.supplier_id })
+				.lean();
+			if (current_supplier) {
+				if (!current_supplier.balance) {
+					current_supplier.balance = 0
+				}
+				if (!current_supplier.balance_usd) {
+					current_supplier.balance_usd = 0
+				}
+				let supplier_used_transaction;
+				let balance_uzs = 0;
+				let balance_usd = 0;
+				if (purch.total_currency == 'usd') {
+					// current_supplier.balance_usd -= used_transaction / currency.value;
+					// supplier_used_transaction = -1 * used_transaction / currency.value;
+					current_supplier.balance_usd -= used_transaction / currency.value;
+					supplier_used_transaction = -1 * used_transaction / currency.value;
+					balance_usd += supplier_used_transaction;
+				}
+				else {
+					// current_supplier.balance -= used_transaction;
+					// supplier_used_transaction = -1 * used_transaction;
+					current_supplier.balance -= used_transaction;
+					supplier_used_transaction = -1 * used_transaction;
+					balance_uzs += supplier_used_transaction;
+				}
+				const services = Array.isArray(current_supplier.services)
+					? current_supplier.services
+					: [{
+						service: current_service._id,
+						service_name: current_service.name,
+						balance: 0,
+						balance_usd: 0,
+					}]
+				if (
+					current_supplier.services &&
+					!current_supplier.services
+						.find(elem => elem.service + '' == purch.service + '')
+				) {
+					current_supplier.services.push({
+						service: current_service._id,
+						service_name: current_service.name,
+						balance: 0,
+						balance_usd: 0,
+					})
+				}
+				// update adjustmentSupplier service balance
+				for (const [index, serv] of services.entries()) {
+					if (serv.service.toString() == current_service._id.toString()) {
+						services[index].balance += balance_uzs
+						services[index].balance_usd += balance_usd
+					}
+				}
+
+				await instance.adjustmentSupplier.updateOne(
+					{ _id: purch.supplier_id },
+					{
+						$set: {
+							balance: current_supplier.balance,
+							balance_usd: current_supplier.balance_usd,
+							services: services,
+						},
+					}
+				)
+
+				await new instance.supplierTransaction({
+					service: purch.service,
+					supplier_id: current_supplier._id,
+					document_id: purch.p_order,
+					employee: admin._id,
+					employee_name: admin.name,
+					status: 'active',
+					balance: supplier_used_transaction,
+					currency: purch.total_currency,
+					date: new Date().getTime(),
+					purchase_id: purch._id
+				})
+					.save();
+			}
+
+			// update item partiation queue
+			for (const purch_item of items) {
+				// console.log(purch_item, 'item');
+				//update queue
+				const queue = await instance.goodsSaleQueue
+					.findOne(
+						{
+							service_id: current_service._id,
+							good_id: purch_item.product_id,
+						},
+						{ queue: 1 }
+					)
+					.sort('-queue')
+					.lean()
+
+				num_queue = queue && queue.queue ? parseInt(queue.queue) + 1 : 1
+
+				await new instance.goodsSaleQueue({
+					purchase_id: purch._id,
+					p_order: purch.p_order,
+					supplier_id: current_supplier._id,
+					supplier_name: current_supplier.supplier_name,
+					service_id: current_service._id,
+					service_name: current_service.name,
+					good_id: purch_item.product_id,
+					quantity: purch_item.received,
+					quantity_left: purch_item.received,
+					queue: num_queue,
+				}).save()
+				//update item suppliers
+				const goood1 = await instance.goodsSales.findById(purch_item.product_id).lean();
+
+				const good_of_suppliers =
+					Array.isArray(goood1.suppliers)
+						? goood1.suppliers
+						: [{
+							supplier_id: current_supplier._id,
+							supplier_name: current_supplier.supplier_name,
+							service_id: current_service._id,
+							service_name: current_service.name,
+							stock: 0,
+						}]
+
+				if (
+					goood1.suppliers &&
+					!goood1.suppliers
+						.find(elem =>
+							elem.supplier_id + '' == current_supplier._id + '' &&
+							elem.service_id + '' == purch.service + ''
+						)) {
+					goood1.suppliers.push({
+						supplier_id: current_supplier._id,
+						supplier_name: current_supplier.supplier_name,
+						service_id: current_service._id,
+						service_name: current_service.name,
+						stock: 0,
+					})
+				}
+				// update adjustmentSupplier service balance
+				for (const [index, supp] of good_of_suppliers.entries()) {
+					if (
+						supp.service_id + '' == current_service._id + '' &&
+						supp.supplier_id + '' == current_supplier._id + ''
+					) {
+						good_of_suppliers[index].stock += purch_item.received
+					}
+				}
+
+				await instance.goodsSales.updateOne(
+					{ _id: purch_item.product_id },
+					{ $set: { suppliers: good_of_suppliers } },
+					{ lean: true },
+				)
+			}
+			// update items cost
+			const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } }).lean();
+
+			for (const g of goods) {
+				var in_stock = null
+				var index = -1
+				var In_STOCK = 0;
+				for (let i = 0; i < g.services.length; i++) {
+					if (g.services[i].in_stock != '' && g.services[i].in_stock != null) {
+						In_STOCK += +g.services[i].in_stock
+					}
+					if (g.services[i].service + "" == purch.service + "") {
+						in_stock = +g.services[i].in_stock
+						index = i
+					}
+				}
+				if (in_stock != null) {
+					if (in_stock > 0) {
+						if (g.cost_currency == 'usd') {
+							g.cost = g.cost * currency.value
+						}
+						if (goodsObj[g._id].purchase_cost_currency == 'usd') {
+							goodsObj[g._id].purchase_cost = (+goodsObj[g._id].purchase_cost) * currency.value
+						}
+						g.cost = (g.cost * In_STOCK + (+goodsObj[g._id].purchase_cost) * (+goodsObj[g._id].to_receive))
+							/ (In_STOCK + (+goodsObj[g._id].to_receive))
+						if (g.max_cost < g.cost || g.max_cost == 0) {
+							g.max_cost = g.cost
+						}
+					}
+					else {
+						if (g.max_cost < goodsObj[g._id].purchase_cost || g.max_cost == 0) {
+							g.max_cost = +goodsObj[g._id].purchase_cost
+						}
+						if (goodsObj[g._id].purchase_cost_currency == 'usd') {
+							goodsObj[g._id].purchase_cost = (+goodsObj[g._id].purchase_cost) * currency.value
+						}
+						g.cost = (+goodsObj[g._id].purchase_cost)
+					}
+
+					if (g.cost_currency == 'usd') {
+						g.cost = g.cost / currency.value
+					}
+					g.services[index].in_stock += (+goodsObj[g._id].to_receive)
+
+					// create inv history
+
+					// ('create_inventory_history', (user, reason, unique, service_id, product_id, cost, adjustment, stock_after, date)
+
+					await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].to_receive, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
+					g.last_updated = new Date().getTime()
+					g.last_stock_updated = new Date().getTime()
+					await instance.goodsSales.updateOne({ _id: g._id }, { $set: g })
+				}
+			}
+
+			reply.ok(purch)
+		} catch (error) {
+			reply.send_Error('receive_purchase v:2.0.0', JSON.stringify(error.message))
+			return reply.error(error.message)
+		}
+	};
 	const create_purchase_order = async (request, reply, admin) => {
 		const body = request.body
 		body.type = 'coming'
@@ -606,49 +938,39 @@ module.exports = fp((instance, options, next) => {
 		}
 		purchaseModel.total = total
 		purchaseModel.items = purchase_items
-		if (purchaseModel.items.length > 0) {
-			purchaseModel.save((err, purch) => {
-				if (err || purch == null) {
-					reply.error('Error on saving purchase order')
-					instance.send_Error('saving purchase', JSON.stringify(err))
+		if (purchaseModel.items.length <= 0)
+			return reply.error('items can\'t be empty')
+
+		purchaseModel.save((err, purch) => {
+			if (err || purch == null) {
+				instance.send_Error('saving purchase', JSON.stringify(err))
+				return reply.error('Error on saving purchase order')
+			}
+			instance.purchaseItem.insertMany(purchase_items, (err, purchaseitems) => {
+				if (err || purchaseitems == null) {
+					instance.send_Error('saving purchase item', JSON.stringify(err))
+					return reply.error('Error on saving purchase items')
+				}
+				if (body.status == 'returned_order') {
+					reply.ok(purch)
+					return_purchase_order(purch, purchase_items, admin)
+				}
+				else if (body.status == 'closed') {
+					for (let i = 0; i < purchaseitems.length; i++) {
+						purchaseitems[i].to_receive = purchaseitems[i].quality
+					}
+					for (let i = 0; i < purch.additional_cost.length; i++) {
+						purch.additional_cost[i].is_received = true
+					}
+					purch.items = purchaseitems
+					return receive_purchase(purch, purch._id, currency, reply, admin)
+					// return receive_purchase(purch, { body: purch, params: { id: purch._id } }, reply, admin)
 				}
 				else {
-					instance.purchaseItem.insertMany(purchase_items, (err, purchaseitems) => {
-						if (err || purchaseitems == null) {
-							reply.error('Error on saving purchase items')
-							instance.send_Error('saving purchase item', JSON.stringify(err))
-						}
-						else {
-							if (body.status == 'returned_order') {
-								reply.ok(purch)
-								return_purchase_order(purch, purchase_items, admin)
-							}
-							else if (body.status == 'closed') {
-								for (let i = 0; i < purchaseitems.length; i++) {
-									purchaseitems[i].to_receive = purchaseitems[i].quality
-								}
-								for (let i = 0; i < purch.additional_cost.length; i++) {
-									purch.additional_cost[i].is_received = true
-								}
-								purch.items = purchaseitems
-								receive_purchase({ body: purch, params: { id: purch._id } }, reply, admin)
-							}
-							else {
-								reply.ok(purch)
-							}
-						}
-					})
+					return reply.ok(purch)
 				}
 			})
-		}
-		else {
-			reply.error('items can\'t be empty')
-		}
-
-
-
-
-
+		})
 	}
 	instance.post('/inventory/create_purchase_order', { version: '2.0.0' }, (request, reply) => {
 		instance.oauth_admin(request, reply, async (admin) => {

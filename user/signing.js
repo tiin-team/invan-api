@@ -9,7 +9,7 @@ module.exports = (instance, options, next) => {
   instance.post('/user/register', options.version, (request, reply) => {
     if (request.body) {
       const phone_number = request.body.phone_number
-      if (/^\+9989[012345789][0-9]{7}$/.test(phone_number))
+      if (!/^\+9989[012345789][0-9]{7}$/.test(phone_number))
         return reply.error('phone_number validation error')
 
       if (phone_number) {

@@ -1,15 +1,37 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
-    instance.get('/get/tiin/transaction/dublicat/:service', async (request, reply) => {
-        const transactions = await instance.supplierTransaction.find(
+    instance.get('/get/tiin/transaction/dublicat/:organization/:service', async (request, reply) => {
+        console.log(instance.ObjectId(request.params.service));
+        const transactions = await instance.supplierTransaction.aggregate([
             {
-                service: instance.ObjectId(request.params.service),
-                status: "active"
+                $match: {
+                    organization: request.params.organization,
+                    service: instance.ObjectId(request.params.service),
+                    status: { $ne: 'pending' },
+                }
             },
             // { service: instance.ObjectId(request.params.service) },
-        )
-            .lean()
+        ])
+            .exec()
+        return reply.ok(transactions)
+    })
+    instance.get('/get/tiin/inv_puchase/dublicat/:organization/:service', async (request, reply) => {
+        const transactions = await instance.inventoryPurchase
+            .aggregate([
+                {
+                    $match: {
+                        organization: request.params.organization,
+                        $or: {
+                            service: request.params.service,
+                            service: instance.ObjectId(request.params.service),
+                        },
+                        status: { $ne: 'pending' },
+                    }
+                },
+                // { service: instance.ObjectId(request.params.service) },
+            ])
+            .exec()
         return reply.ok(transactions)
     })
     // (async () => {
