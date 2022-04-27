@@ -51,7 +51,7 @@ module.exports = fp((instance, options, next) => {
             }
         ])
 
-        return reply.ok(data[0].transactions)
+        return reply.ok(data[0])
     })
     instance.get('/get/tiin/inv_puchase/dublicat/:organization/:service', async (request, reply) => {
         const transactions = await instance.inventoryPurchase
