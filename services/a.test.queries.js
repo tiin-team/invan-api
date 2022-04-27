@@ -6,15 +6,11 @@ module.exports = fp((instance, options, next) => {
         const transactions = await instance.supplierTransaction.aggregate([
             {
                 $match: {
-                    $or: [
-                        { organization: request.params.organization },
-                        { service: request.params.service },
-                        { service: instance.ObjectId(request.params.service) },
-                    ],
+                    // organization: request.params.organization,
+                    service: instance.ObjectId(request.params.service),
                     status: { $ne: 'pending' },
-                }
+                },
             },
-            // { service: instance.ObjectId(request.params.service) },
         ])
             .exec()
         return reply.ok(transactions)
