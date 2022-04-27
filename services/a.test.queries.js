@@ -2,10 +2,7 @@ const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
     instance.get('/get/tiin/transaction/dublicat/:organization/:service', async (request, reply) => {
-        console.log(
-            instance.ObjectId(request.params.service),
-            request.params.organization
-        );
+
         const transactions = await instance.supplierTransaction.aggregate([
             {
                 $match: {
@@ -14,7 +11,7 @@ module.exports = fp((instance, options, next) => {
                         { service: request.params.service },
                         { service: instance.ObjectId(request.params.service) },
                     ],
-                    status: { $ne: 'closed' },
+                    status: { $ne: 'pending' },
                 }
             },
             // { service: instance.ObjectId(request.params.service) },
