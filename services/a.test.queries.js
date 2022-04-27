@@ -22,12 +22,12 @@ module.exports = fp((instance, options, next) => {
                                     $and: [
                                         {
                                             $eq: [
-                                                '$$service', '$service'
+                                                '$service', '$$service'
                                                 // '$$service',
                                                 //     { $toString: '$service' },
                                             ]
                                         },
-                                        { $ne: ['pending', '$status'] },
+                                        { $ne: ['$status', 'pending'] },
                                     ]
                                 },
                             },
