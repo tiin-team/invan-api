@@ -2,20 +2,56 @@ const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
     instance.get('/get/tiin/transaction/dublicat/:organization/:service', async (request, reply) => {
-        const tr = await instance.supplierTransaction.findById('5f5bcf406786602b6cf19aa3').lean()
-        const transactions = await instance.supplierTransaction.find(
-            // [{
-            // $match:
+        const data = await instance.services.aggregate([
             {
-                // organization: request.params.organization,
-                service: instance.ObjectId(request.params.service),
-                status: { $ne: 'pending' },
+                $match: { _id: instance.ObjectId("5f5641e8dce4e706c0628380") }
             },
-            // }]
-        )
-            .lean()
-        // .exec()
-        return reply.ok(transactions)
+            { $project: { _id: 1 } },
+            { $limit: 1 },
+            {
+                $lookup: {
+                    from: 'suppliertransactions',
+                    let: { service: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        {
+                                            $eq: [
+                                                '$$service', '$service'
+                                                // '$$service',
+                                                //     { $toString: '$service' },
+                                            ]
+                                        },
+                                        { $ne: ['pending', '$status'] },
+                                    ]
+                                },
+                            },
+                        },
+                        {
+                            $project: {
+                                service: 1,
+                                date: 1,
+                                employee_name: 1,
+                                status: 1,
+                                document_id: 1,
+                                balance: 1,
+                                supplier_id: 1
+                            },
+                        },
+                    ],
+                    as: 'transactions'
+                },
+            },
+            {
+                $project: {
+                    transactions: 1,
+                }
+            }
+        ])
+
+        return reply.ok(data[0].transactions)
     })
     instance.get('/get/tiin/inv_puchase/dublicat/:organization/:service', async (request, reply) => {
         const transactions = await instance.inventoryPurchase
