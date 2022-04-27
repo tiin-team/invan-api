@@ -440,7 +440,8 @@ module.exports = ((instance, _, next) => {
 
         const itemsQuery = {
           $match: {
-            organization: org_id
+            organization: org_id,
+            sold_by: 'weight'
           }
         }
 

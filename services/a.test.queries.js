@@ -6,7 +6,7 @@ module.exports = fp((instance, options, next) => {
             {
                 $match: { _id: instance.ObjectId(request.params.service) }
             },
-            { $project: { _id: 1 } },
+            // { $project: { _id: 1, name: 1 } },
             { $limit: 1 },
             {
                 $lookup: {
@@ -49,6 +49,7 @@ module.exports = fp((instance, options, next) => {
             },
             {
                 $project: {
+                    name: 1,
                     transactions: 1,
                 }
             }

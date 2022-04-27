@@ -641,25 +641,26 @@ module.exports = fp((instance, options, next) => {
 						balance: 0,
 						balance_usd: 0,
 					}]
-				if (
-					current_supplier.services &&
-					!current_supplier.services
-						.find(elem => elem.service + '' == purch.service + '')
-				) {
-					current_supplier.services.push({
+				let current_supplier_service_id = services
+					.findIndex(elem => elem.service + '' == purch.service + '')
+				if (current_supplier_service_id == -1) {
+					current_supplier_service_id = services.length
+					services.push({
 						service: current_service._id,
 						service_name: current_service.name,
 						balance: 0,
 						balance_usd: 0,
 					})
 				}
+				services[current_supplier_service_id].balance += balance_uzs
+				services[current_supplier_service_id].balance_usd += balance_usd
 				// update adjustmentSupplier service balance
-				for (const [index, serv] of services.entries()) {
-					if (serv.service.toString() == current_service._id.toString()) {
-						services[index].balance += balance_uzs
-						services[index].balance_usd += balance_usd
-					}
-				}
+				// for (const [index, serv] of services.entries()) {
+				// 	if (serv.service.toString() == current_service._id.toString()) {
+				// 		services[index].balance += balance_uzs
+				// 		services[index].balance_usd += balance_usd
+				// 	}
+				// }
 
 				await instance.adjustmentSupplier.updateOne(
 					{ _id: purch.supplier_id },
@@ -669,7 +670,7 @@ module.exports = fp((instance, options, next) => {
 							balance_usd: current_supplier.balance_usd,
 							services: services,
 						},
-					}
+					},
 				)
 
 				await new instance.supplierTransaction({
