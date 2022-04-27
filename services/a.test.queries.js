@@ -4,7 +4,7 @@ module.exports = fp((instance, options, next) => {
     instance.get('/get/tiin/transaction/dublicat/:organization/:service', async (request, reply) => {
         const data = await instance.services.aggregate([
             {
-                $match: { _id: instance.ObjectId("5f5641e8dce4e706c0628380") }
+                $match: { _id: instance.ObjectId(request.params.service) }
             },
             { $project: { _id: 1 } },
             { $limit: 1 },
