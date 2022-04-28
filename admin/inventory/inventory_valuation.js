@@ -250,6 +250,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     $match: {
       organization: organization,
       primary_supplier_id: { $exists: true },
+      primary_supplier_id: { $ne: null }
     }
   };
 
