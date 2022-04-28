@@ -173,6 +173,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
           total_discount += total_item_discount;
 
           $receiptModel.sold_item_list[i].receipt_id = $receiptModel._id;
+
           try {
             const item = await instance.goodsSales
               .findById($receiptModel.sold_item_list[i].product_id)
@@ -180,7 +181,20 @@ const receiptCreateGroup = async (request, reply, instance) => {
             if (item) {
               $receiptModel.sold_item_list[i].sku = item.sku;
               $receiptModel.sold_item_list[i].barcode =
-                item.barcode && item.barcode.length > 0 ? item.barcode[0] : "";
+                item.barcode
+                  && item.barcode.length > 0
+                  ? item.barcode[0]
+                  : "";
+              const serv = item.services
+                .find(serv => serv.service + '' == service_id)
+
+              const prices = serv && serv.prices ? serv.prices.sort((a, b) => a.from - b.from) : []
+              $receiptModel.sold_item_list[i].price_position = 0
+              for (const f_price_index in prices) {
+                if ($receiptModel.sold_item_list[i].value >= prices[f_price_index].from) {
+                  $receiptModel.sold_item_list[i].price_position = f_price_index
+                }
+              }
 
               // set category id and supplier id
 
@@ -265,7 +279,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
         need_to_save.push($receiptModel);
       }
     }
-
+    return
     // let result = instance.Receipts.insertMany(need_to_save);
     let result = []
     for (const r of need_to_save) {

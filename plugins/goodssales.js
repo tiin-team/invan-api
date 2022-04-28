@@ -113,8 +113,8 @@ module.exports = fp((instance, _, next) => {
 
     return product_suppliers
   }
-  //supplier_id ni adminkadan refun qilganda ishlatilgan edi
-  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id, supplier_id) => {
+
+  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id) => {
     try {
       // console.log(goods.length, 'goods.length');
       const service = await instance.services

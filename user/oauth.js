@@ -1,5 +1,10 @@
-const fp = require('fastify-plugin')
+const fp = require('fastify-plugin');
+const routes = require('./routes');
 
+// const checkAcces = async () => {
+//    console.log(routes);
+// }
+// checkAcces()
 module.exports = fp((instance, _, next) => {
 
    // check all

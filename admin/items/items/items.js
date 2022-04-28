@@ -2956,7 +2956,7 @@ module.exports = (instance, options, next) => {
                 goods[index].price =
                   serv && serv.price ? serv.price : good.price;
                 goods[index].mxik = good.mxik ? good.mxik : randimMxik();
-                goods[index].nds_value = good.nds_value || good.nds_value == 0 ? good.nds_value : 15;
+                goods[index].nds_value = isNaN(parseFloat(good.nds_value)) ? 15 : parseFloat(good.nds_value);
 
                 delete goods[index].services;
               }
@@ -3550,6 +3550,12 @@ module.exports = (instance, options, next) => {
             // "$price"
             // ]
           },
+          // min_price: {
+          //   $min: '$services.prices.price',
+          // },
+          // max_price: {
+          //   $max: '$services.prices.price',
+          // },
           barcode: 1,
           sku: 1,
           type: '$sold_by',
