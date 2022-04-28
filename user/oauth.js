@@ -30,8 +30,8 @@ module.exports = fp((instance, _, next) => {
                const access = await instance.AccessRights
                   .findOne({ name: user.role, organization: user.organization })
                   .lean()
-               if (!checkAcces(request.raw.url, access))
-                  return instance.forbidden(reply)
+               // if (!checkAcces(request.raw.url, access))
+               //    return instance.forbidden(reply)
 
                if (acceptUser === 'employee') {
                   user.service = request.headers['accept-service']
