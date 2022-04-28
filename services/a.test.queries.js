@@ -6,23 +6,52 @@ module.exports = fp((instance, options, next) => {
             {
                 $match: { _id: instance.ObjectId(request.params.service) }
             },
-            // { $project: { _id: 1, name: 1 } },
             { $limit: 1 },
             {
                 $lookup: {
-                    from: 'suppliertransactions',
+                    from: 'adjustmentsuppliers',
                     let: { service: '$_id' },
                     pipeline: [
                         {
-                            $match: { service: { $exists: true } },
+                            $match: {
+                                organization: request.params.organization,
+                            },
                         },
+                        {
+                            $group: {
+                                _id: null,
+                                ids: { $push: '$_id' }
+                            },
+                        },
+                    ],
+                    as: 'supplier_ids'
+                }
+            },
+            {
+                $project: {
+                    name: 1,
+                    supplier_ids: { $first: '$supplier_ids.ids' },
+                    // transactions: 1,
+                    // employees_ids: 1,
+                }
+            },
+            {
+                $lookup: {
+                    from: 'suppliertransactions',
+                    let: { service: '$_id', supplier_ids: '$supplier_ids' },
+                    pipeline: [
+                        // {
+                        //     $match: {
+                        //         service: { $exists: true },
+                        //     },
+                        // },
                         {
                             $match: {
                                 $expr: {
                                     $and: [
                                         {
-                                            $eq: [
-                                                '$service', '$$service'
+                                            $in: [
+                                                '$supplier_id', '$$supplier_ids'
                                                 // '$$service',
                                                 //     { $toString: '$service' },
                                             ]
@@ -50,7 +79,9 @@ module.exports = fp((instance, options, next) => {
             {
                 $project: {
                     name: 1,
+                    employees_id: { $first: '$supplier_ids.ids' },
                     transactions: 1,
+                    // employees_ids: 1,
                 }
             }
         ])
