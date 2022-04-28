@@ -157,7 +157,7 @@ module.exports = (instance, options, next) => {
               currency: item.currency,
               date: item.date,
               document_id: item.document_id,
-              purchase_id: item._id,
+              purchase_id: item.purchase_id,
               // employee: item.organization"5f5c7d286786602b6cf1dc7a",
               employee_name: item.employee_name,
               status: item.status,
