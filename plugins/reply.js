@@ -76,6 +76,11 @@ module.exports = fp((instance, _, next) => {
       reply.status(401).send('Unauthorized')
   })
 
+  instance.decorate('forbidden', (reply) => {
+    if (reply.status)
+      reply.status(403).send('Forbidden')
+  })
+
   instance.decorate('aldy_exs', (reply, status = '') => {
     var aldy_exs = {
       statusCode: 419,
@@ -100,7 +105,7 @@ module.exports = fp((instance, _, next) => {
     })
   })
 
-  instance.decorateReply('allready_exist', function (name, code = 411, data=null) {
+  instance.decorateReply('allready_exist', function (name, code = 411, data = null) {
     this.send({
       statusCode: code,
       message: name,

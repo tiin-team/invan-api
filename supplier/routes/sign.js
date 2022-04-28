@@ -5,7 +5,7 @@ async function signSupplier(request, reply, instance) {
     try {
         let { phone_number } = request.body;
         phone_number = `+${phone_number.replace(/[^0-9]/i, '')}`;
-        const supplier = await instance.adjustmentSupplier.findOne({ phone_number });
+        const supplier = await instance.adjustmentSupplier.findOne({ phone_number }).lean();
         if (!supplier) {
             throw { message: 'not found' }
         }
@@ -27,12 +27,12 @@ async function verifySupplier(request, reply, instance) {
     try {
         let { phone_number, otp } = request.body;
         phone_number = `+${phone_number.replace(/[^0-9]/i, '')}`;
-        const supplier = await instance.adjustmentSupplier.findOne({ phone_number });
+        const supplier = await instance.adjustmentSupplier.findOne({ phone_number }).lean();
         if (!supplier) {
             throw { message: 'not found' }
         }
         // check otp
-        const sms = await instance.SmsModel.findOne({ phone_number: supplier.phone_number });
+        const sms = await instance.SmsModel.findOne({ phone_number: supplier.phone_number }).lean();
         if (!(sms && sms.otp == otp)) {
             throw { message: 'otp error' }
         }

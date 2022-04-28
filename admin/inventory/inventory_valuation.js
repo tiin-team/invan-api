@@ -385,6 +385,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     },
   };
 
+  delete query.$match.primary_supplier_id
   let total = await instance.goodsSales
     .aggregate([
       query,

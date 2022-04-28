@@ -1,15 +1,19 @@
 const fp = require('fastify-plugin');
-const routes = require('./routes');
+const routes = require('./routes.json');
 
-// const checkAcces = async () => {
-//    console.log(routes);
-// }
-// checkAcces()
+const checkAcces = (link, accesses) => {
+   const route = routes.find(route => route.link == link)
+   // console.log(route, route.role);
+   console.log(accesses, 'acc');
+   return route && accesses ? accesses[route.role] : false
+}
+
 module.exports = fp((instance, _, next) => {
 
    // check all
 
    instance.decorate('authorization', async (request, reply, next) => {
+      // request url ni check qil. request.raw.url
 
       try {
          const acceptUser = request.headers['accept-user']
@@ -21,8 +25,14 @@ module.exports = fp((instance, _, next) => {
          if (!token) return instance.unauthorized(reply)
 
          const query = { [`${acceptUser}_token`]: token }
-         instance.User.findOne(query, (_, user) => {
+         instance.User.findOne(query, async (_, user) => {
             if (user) {
+               const access = await instance.AccessRights
+                  .findOne({ name: user.role, organization: user.organization })
+                  .lean()
+               if (!checkAcces(request.raw.url, access))
+                  return instance.forbidden(reply)
+
                if (acceptUser === 'employee') {
                   user.service = request.headers['accept-service']
                }
@@ -32,6 +42,7 @@ module.exports = fp((instance, _, next) => {
             }
             return instance.unauthorized(reply)
          })
+            .lean()
          /*
          const user = await instance.User.findOne(query)
          if (!user) {
