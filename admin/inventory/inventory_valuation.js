@@ -385,7 +385,6 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     },
   };
 
-  delete query.$match.primary_supplier_id
   let total = await instance.goodsSales
     .aggregate([
       query,
@@ -407,6 +406,8 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   // const total_items = await instance.goodsSales
   //   .countDocuments(query["$match"])
   //   .exec();
+  delete query.$match.primary_supplier_id
+
   const total_items = await instance.goodsSales
     .aggregate([
       query,
