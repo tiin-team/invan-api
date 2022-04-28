@@ -250,8 +250,8 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     $match: {
       organization: organization,
       primary_supplier_id: { $exists: true },
-      primary_supplier_id: { $ne: null },
-      primary_supplier_id: { $ne: '' },
+      // primary_supplier_id: { $ne: null },
+      // primary_supplier_id: { $ne: '' },
     }
   };
 
@@ -420,10 +420,11 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       },
     ])
     .exec();
-
+  const total_suppliers = await instance.adjustmentSupplier.countDocuments({ organization: organization })
   return {
     ...total[0],
-    total: total_items.length,
+    // total: total_items.length,
+    total: total_suppliers,
     margin:
       (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
       100,
