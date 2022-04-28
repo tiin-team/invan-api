@@ -64,12 +64,15 @@ module.exports = fp((instance, options, next) => {
                         {
                             $project: {
                                 service: 1,
+                                service_name: 1,
                                 date: 1,
                                 employee_name: 1,
                                 status: 1,
                                 document_id: 1,
                                 balance: 1,
-                                supplier_id: 1
+                                document_id: 1,
+                                supplier_id: 1,
+                                purchase_id: 1,
                             },
                         },
                     ],
