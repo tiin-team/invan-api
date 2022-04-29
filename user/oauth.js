@@ -2,7 +2,7 @@ const fp = require('fastify-plugin');
 const routes = require('./routes.json');
 
 const checkAcces = (link, accesses) => {
-   const route = routes.find(route => route.link == link)
+   const route = routes.find(route => new RegExp(`^${route.link}`).test(link))
    // console.log(route, route.role);
    // console.log(accesses, 'acc');
    return route && accesses ? accesses[route.role] : false

@@ -391,7 +391,8 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     {
       $match: { organization: organization },
     },
-    { $limit: 10 },
+    { $skip: (page - 1) * limit },
+    { $limit: limit },
     {
       $lookup: {
         from: 'goodssales',
