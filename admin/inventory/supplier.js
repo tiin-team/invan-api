@@ -236,7 +236,7 @@ module.exports = (instance, options, next) => {
 
       return reply.ok({
         total: total,
-        page: page,
+        page: Math.ceil(total / limit),
         data: suppliers
       })
     } else {

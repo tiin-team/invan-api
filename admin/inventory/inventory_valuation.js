@@ -463,7 +463,10 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   //   .exec();
 
   const total_suppliers = await instance.adjustmentSupplier
-    .countDocuments({ organization: organization })
+    .countDocuments({
+      organization: organization,
+      is_deleted: { $ne: true },
+    })
   return {
     ...total[0],
     total: total_suppliers,
