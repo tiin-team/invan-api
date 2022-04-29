@@ -6,11 +6,15 @@ async function supplierTransations(request, reply, instance) {
     try {
         const { phone_number } = request.user;
         const { organization, } = request.body;
-        const supplier = await instance.adjustmentSupplier.findOne({ organization, phone_number });
+        const supplier = await instance.adjustmentSupplier
+            .findOne({ organization, phone_number })
+            .lean();
         if (!supplier) {
             throw { message: 'not found' }
         }
-        const transactions = await instance.supplierTransaction.find({ supplier_id: supplier._id })
+        const transactions = await instance.supplierTransaction
+            .find({ supplier_id: supplier._id })
+            .lean()
         reply.ok(transactions);
     } catch (error) {
         reply.error(error.message)

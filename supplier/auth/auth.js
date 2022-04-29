@@ -9,13 +9,15 @@ module.exports = fp((instance, _, next) => {
     console.log('auth')
     instance.decorate('auth_supplier', (request, reply, next) => {
         try {
-            const token = request.headers['authorization'];
+            const token = request.headers['authorization'].replace('Bearer ', '');
+            console.log(token);
             const user = verifyToken(token);
             if (!user) throw { message: 'wrong token' }
             request.user = user;
             next();
         }
         catch (error) {
+            console.log(error);
             reply.status(401).send({ statusCode: 401 })
         }
     });

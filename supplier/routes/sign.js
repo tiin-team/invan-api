@@ -49,7 +49,7 @@ async function verifySupplier(request, reply, instance) {
 }
 
 module.exports = fp((instance, _, next) => {
-    console.log('sign')
+    // console.log('sign')
     const bodySchema = {
         body: {
             type: 'object',
