@@ -249,25 +249,25 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   const query = {
     $match: {
       organization: organization,
-      primary_supplier_id: { $exists: true },
+      // primary_supplier_id: { $exists: true },
       // primary_supplier_id: { $ne: null },
       // primary_supplier_id: { $ne: '' },
     }
   };
 
-  const $pojectOne = {
-    $project: {
-      cost: "$cost",
-      primary_supplier_id: "$primary_supplier_id",
-      services: {
-        $filter: {
-          input: "$services",
-          as: "service",
-          cond: [{ $in: ['$$service.service', services] }]
-        }
-      },
-    }
-  }
+  // const $pojectOne = {
+  //   $project: {
+  //     cost: "$cost",
+  //     primary_supplier_id: "$primary_supplier_id",
+  //     services: {
+  //       $filter: {
+  //         input: "$services",
+  //         as: "service",
+  //         cond: [{ $in: ['$$service.service', services] }]
+  //       }
+  //     },
+  //   }
+  // }
 
   const unwindServices = { $unwind: { path: "$services" } };
 
@@ -311,60 +311,60 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     },
   };
 
-  const joinItems = {
-    $group: {
-      _id: "$primary_supplier_id",
-      cost: { $first: "$cost" },
-      inventory: { $sum: "$inventory" },
-      in_stock: { $sum: "$in_stock" },
-      retail: { $sum: "$retail" },
-      potential: { $sum: "$potential" },
-    },
-  };
+  // const joinItems = {
+  //   $group: {
+  //     _id: "$primary_supplier_id",
+  //     cost: { $first: "$cost" },
+  //     inventory: { $sum: "$inventory" },
+  //     in_stock: { $sum: "$in_stock" },
+  //     retail: { $sum: "$retail" },
+  //     potential: { $sum: "$potential" },
+  //   },
+  // };
 
-  const $lookup = {
-    $lookup: {
-      from: 'adjustmentsuppliers',
-      let: { id: { $toString: '$_id' } },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $eq: [{ $toString: '$_id' }, '$$id']
-            },
-          },
-        },
-      ],
-      as: 'supps',
-    },
-  }
-  const items = await instance.goodsSales
-    .aggregate([
-      query,
-      $pojectOne,
-      unwindServices,
-      projectPrimaryFields,
-      joinItems,
-      $lookup,
-      { $sort: { _id: 1 } },
-      { $skip: limit * (page - 1) },
-      { $limit: limit },
-      {
-        $project: {
-          _id: 1,
-          cost: 1,
-          primary_supplier_id: 1,
-          in_stock: 1,
-          inventory: 1,
-          retail: 1,
-          potential: 1,
-          supplier_name: { $first: '$supps.supplier_name' },
-          supplier_id: { $first: '$supps._id' },
-        },
-      },
-    ])
-    .allowDiskUse(true)
-    .exec();
+  // const $lookup = {
+  //   $lookup: {
+  //     from: 'adjustmentsuppliers',
+  //     let: { id: { $toString: '$_id' } },
+  //     pipeline: [
+  //       {
+  //         $match: {
+  //           $expr: {
+  //             $eq: [{ $toString: '$_id' }, '$$id']
+  //           },
+  //         },
+  //       },
+  //     ],
+  //     as: 'supps',
+  //   },
+  // }
+  // const items = await instance.goodsSales
+  //   .aggregate([
+  //     query,
+  //     $pojectOne,
+  //     unwindServices,
+  //     projectPrimaryFields,
+  //     joinItems,
+  //     $lookup,
+  //     { $sort: { _id: 1 } },
+  //     { $skip: limit * (page - 1) },
+  //     { $limit: limit },
+  //     {
+  //       $project: {
+  //         _id: 1,
+  //         cost: 1,
+  //         primary_supplier_id: 1,
+  //         in_stock: 1,
+  //         inventory: 1,
+  //         retail: 1,
+  //         potential: 1,
+  //         supplier_name: { $first: '$supps.supplier_name' },
+  //         supplier_id: { $first: '$supps._id' },
+  //       },
+  //     },
+  //   ])
+  //   .allowDiskUse(true)
+  //   .exec();
 
   const calculateTotal = {
     $group: {
@@ -386,6 +386,52 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       },
     },
   };
+  // console.log(organization);
+  const suppliers = await instance.adjustmentSupplier.aggregate([
+    {
+      $match: { organization: organization },
+    },
+    { $limit: 10 },
+    {
+      $lookup: {
+        from: 'goodssales',
+        let: { supplier_id: '$_id', organization: organization },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ['$primary_supplier_id', '$$supplier_id'] },
+                  { $eq: ['$organization', '$$organization'] },
+                ],
+              },
+            },
+          },
+          unwindServices,
+          projectPrimaryFields,
+          calculateTotal,
+        ],
+        as: 'goods'
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        organization: 1,
+        supplier_name: 1,
+        phone_number: 1,
+        website: 1,
+        email: 1,
+        contact: 1,
+        balance: 1,
+        balance_usd: 1,
+        balance_currency: 1,
+        inventory: { $first: '$goods.inventory' },
+        retail: { $first: '$goods.retail' },
+        potential: { $first: '$goods.potential' },
+      }
+    }
+  ])
 
   let total = await instance.goodsSales
     .aggregate([
@@ -406,30 +452,27 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     }];
   }
   // const total_items = await instance.goodsSales
-  //   .countDocuments(query["$match"])
+  //   .aggregate([
+  //     query,
+  //     {
+  //       $group: {
+  //         _id: "$primary_supplier_id",
+  //       },
+  //     },
+  //   ])
   //   .exec();
-  // delete query.$match.primary_supplier_id
 
-  const total_items = await instance.goodsSales
-    .aggregate([
-      query,
-      {
-        $group: {
-          _id: "$primary_supplier_id",
-        },
-      },
-    ])
-    .exec();
-  const total_suppliers = await instance.adjustmentSupplier.countDocuments({ organization: organization })
+  const total_suppliers = await instance.adjustmentSupplier
+    .countDocuments({ organization: organization })
   return {
     ...total[0],
-    // total: total_items.length,
     total: total_suppliers,
-    margin:
-      (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
-      100,
+    // margin:
+    //   (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
+    //   100,
     page: page,
-    data: items,
+    limit: limit,
+    data: suppliers,
   }
 }
 async function inventoryValuationResultBySupplier({ limit, page, supplier_id, organization, service }, instance,) {

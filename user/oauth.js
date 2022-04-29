@@ -4,7 +4,7 @@ const routes = require('./routes.json');
 const checkAcces = (link, accesses) => {
    const route = routes.find(route => route.link == link)
    // console.log(route, route.role);
-   console.log(accesses, 'acc');
+   // console.log(accesses, 'acc');
    return route && accesses ? accesses[route.role] : false
 }
 
