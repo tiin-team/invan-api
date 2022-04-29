@@ -2949,7 +2949,7 @@ module.exports = (instance, options, next) => {
 
               for (const [index, good] of goods.entries()) {
                 serv = good.services.find(
-                  (serv) => serv.service == request.params.service
+                  (serv) => serv.service + '' == request.params.service
                 );
                 goods[index].prices =
                   serv && serv.prices ? serv.prices : good.prices;

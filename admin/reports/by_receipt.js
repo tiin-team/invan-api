@@ -192,7 +192,7 @@ module.exports = (instance, _, next) => {
     const refund_count = await instance.Receipts.countDocuments({ ...filterReceipts, is_refund: true });
     const drafts_count = await instance.Receipts.countDocuments({ ...filterReceipts, receipt_state: 'draft' })
 
-    console.log(drafts_count)
+    // console.log(drafts_count)
 
     let total_count;
     let receiptsFilter;
@@ -234,16 +234,10 @@ module.exports = (instance, _, next) => {
         }
       },
       {
-        $sort: {
-          date: -1
-        }
+        $sort: { date: -1 }
       },
-      {
-        $skip: (page - 1) * limit
-      },
-      {
-        $limit: limit
-      }
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
     ])
 
     const serviceMap = {}
@@ -258,7 +252,7 @@ module.exports = (instance, _, next) => {
       // service
       if (!serviceMap[receipts[index].service]) {
         try {
-          const service = await instance.services.findById(receipts[index].service)
+          const service = await instance.services.findById(receipts[index].service).lean();
           if (service) {
             serviceMap[service._id] = service
           }
