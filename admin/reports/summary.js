@@ -1147,8 +1147,7 @@ module.exports = (instance, _, next) => {
         for (const r of result[0].data) {
           for (let i = lastDate; i < r.date; i += dateDiffer) {
             if (!existTime[i]) {
-              if (min <= i || i <= max)
-                data.push([i, 0]);
+              data.push([i, 0]);
               lastDateTail = i;
               existTime[i] = true;
             }
@@ -1156,8 +1155,7 @@ module.exports = (instance, _, next) => {
           lastDate = lastDateTail;
           lastMax = r.date;
           existTime[r.date] = true;
-          if (min <= r.date || r.date <= max)
-            data.push([r.date, r[target]]);
+          data.push([r.date, r[target]]);
         }
 
         // for (let i = lastMax; i < max - TIME_DIFF; i += dateDiffer) {
@@ -1267,7 +1265,7 @@ module.exports = (instance, _, next) => {
         ])
           .allowDiskUse(true)
           .exec();
-        result.filter(res => res.date >= min && res.date <= max)
+
         reply.ok({
           total: totalResult,
           page: Math.ceil(totalResult / limit),
