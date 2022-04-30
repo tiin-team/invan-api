@@ -1267,6 +1267,7 @@ module.exports = (instance, _, next) => {
         ])
           .allowDiskUse(true)
           .exec();
+        result.filter(res => res.date >= min && res.date <= max)
         reply.ok({
           total: totalResult,
           page: Math.ceil(totalResult / limit),
