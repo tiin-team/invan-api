@@ -1147,7 +1147,8 @@ module.exports = (instance, _, next) => {
         for (const r of result[0].data) {
           for (let i = lastDate; i < r.date; i += dateDiffer) {
             if (!existTime[i]) {
-              data.push([i, 0]);
+              if (min <= i || i <= max)
+                data.push([i, 0]);
               lastDateTail = i;
               existTime[i] = true;
             }
@@ -1155,7 +1156,8 @@ module.exports = (instance, _, next) => {
           lastDate = lastDateTail;
           lastMax = r.date;
           existTime[r.date] = true;
-          data.push([r.date, r[target]]);
+          if (min <= i || i <= max)
+            data.push([r.date, r[target]]);
         }
 
         // for (let i = lastMax; i < max - TIME_DIFF; i += dateDiffer) {
