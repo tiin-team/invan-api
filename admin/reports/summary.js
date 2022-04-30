@@ -936,16 +936,24 @@ module.exports = (instance, _, next) => {
       const projectReport = {
         $project: {
           count_type: {
-            $floor: {
-              $divide: [{ $max: [0, '$date'] }, dateDiffer],
-            },
+            // $floor: {
+            //   $divide: [{ $max: [0, '$date'] }, dateDiffer],
+            // },
+            $round: [
+              { $divide: [{ $max: [0, '$date'] }, dateDiffer] },
+              0
+            ],
           },
           date: {
             $multiply: [
               {
-                $floor: {
-                  $divide: [{ $max: [0, '$date'] }, dateDiffer],
-                },
+                // $floor: {
+                //   $divide: [{ $max: [0, '$date'] }, dateDiffer],
+                // },
+                $round: [
+                  { $divide: [{ $max: [0, '$date'] }, dateDiffer] },
+                  0
+                ],
               },
               dateDiffer,
             ],
