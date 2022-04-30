@@ -890,12 +890,18 @@ module.exports = (instance, _, next) => {
     request.headers['Authorization'] = request.body.token
     instance.authorization(request, reply, (user) => {
       var imei = request.body.imei
-      instance.posDevices.find({ organization: user.organization, $or: [{ imei: imei }, { status: false }] }, (err, devices) => {
-        if (err || devices == []) {
-          devices = []
-        }
-        reply.ok(devices)
-      })
+      instance.posDevices
+        .find({
+          organization: user.organization,
+          $or: [{ imei: imei },
+          { status: false }]
+        }, (err, devices) => {
+          if (err || devices == []) {
+            devices = []
+          }
+          reply.ok(devices)
+        })
+        .lean()
     })
   })
 
@@ -933,13 +939,14 @@ module.exports = (instance, _, next) => {
                 if (result.length == 0) {
                   device.receipt_no = 0
                   reply.ok(device)
-                  instance.posDevices.updateOne({
-                    _id: device._id
-                  }, { $set: device }, (err, _) => {
-                    if (err) {
-                      instance.send_Error('updating pos device number', JSON.stringify(err))
-                    }
-                  })
+                  instance.posDevices.updateOne(
+                    { _id: device._id },
+                    { $set: device },
+                    (err, _) => {
+                      if (err) {
+                        instance.send_Error('updating pos device number', JSON.stringify(err))
+                      }
+                    })
                 }
                 else {
                   instance.Receipts.find({
@@ -961,13 +968,14 @@ module.exports = (instance, _, next) => {
                       device.receipt_no = parseInt(receipt[0].receipt_no.replace(/\D+/, ""));
                       reply.ok(device)
                     }
-                    instance.posDevices.updateOne({
-                      _id: device._id
-                    }, { $set: device }, (err, _) => {
-                      if (err) {
-                        instance.send_Error('updating pos device number', JSON.stringify(err))
-                      }
-                    })
+                    instance.posDevices.updateOne(
+                      { _id: device._id },
+                      { $set: device },
+                      (err, _) => {
+                        if (err) {
+                          instance.send_Error('updating pos device number', JSON.stringify(err))
+                        }
+                      })
                   }).sort({ date: -1 }).limit(1)
                 }
               }).sort({ opening_time: -1 }).limit(1)

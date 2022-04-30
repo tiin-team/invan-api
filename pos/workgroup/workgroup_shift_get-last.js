@@ -1,15 +1,15 @@
 
-const workgroupOrderShiftGetLast = async function(request, reply, instance) {
+const workgroupOrderShiftGetLast = async function (request, reply, instance) {
     try {
         const user = request.user;
         const service_id = request.headers['accept-service']
         const service = await instance.services.findById(service_id);
-        if(!service) {
+        if (!service) {
             return reply.fourorfour('Service')
         }
         const pos_id = request.headers['accept-id']
-        const pos = await instance.posDevices.findById(pos_id);
-        if(!pos) {
+        const pos = await instance.posDevices.findById(pos_id).lean();
+        if (!pos) {
             return reply.fourorfour('Pos')
         }
 
@@ -21,7 +21,7 @@ const workgroupOrderShiftGetLast = async function(request, reply, instance) {
             closing_time: 0
         })
 
-        if(!lastShift) {
+        if (!lastShift) {
             return reply.fourorfour('lastShift')
         }
 

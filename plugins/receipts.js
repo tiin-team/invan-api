@@ -39,15 +39,17 @@ const receiptCreateGroup = async (request, reply, instance) => {
     }
     let receiptss = []
     if (receipts_find_query.length > 0) {
-      receiptss = await instance.Receipts.find({
-        organization: user.organization,
-        service: service_id,
-        $or: receipts_find_query
-        // $and: [
-        //   { date: { $in: dates } },
-        //   { receipt_no: { $in: receipt_numbers } },
-        // ],
-      });
+      receiptss = await instance.Receipts
+        .find({
+          organization: user.organization,
+          service: service_id,
+          $or: receipts_find_query
+          // $and: [
+          //   { date: { $in: dates } },
+          //   { receipt_no: { $in: receipt_numbers } },
+          // ],
+        })
+        .lean();
     }
 
     if (!receiptss) {

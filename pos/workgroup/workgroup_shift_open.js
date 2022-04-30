@@ -1,16 +1,16 @@
 
-const workgroupOrderShiftOpen = async function(request, reply, instance) {
+const workgroupOrderShiftOpen = async function (request, reply, instance) {
     try {
         const user = request.user;
         const service_id = request.headers['accept-service']
         const service = await instance.services.findById(service_id);
-        if(!service) {
+        if (!service) {
             return reply.fourorfour('Service')
         }
         request.body.service = service._id;
         const pos_id = request.headers['accept-id']
-        const pos = await instance.posDevices.findById(pos_id);
-        if(!pos) {
+        const pos = await instance.posDevices.findById(pos_id).lean();
+        if (!pos) {
             return reply.fourorfour('Pos')
         }
         request.body.pos_id = pos._id;
@@ -23,12 +23,12 @@ const workgroupOrderShiftOpen = async function(request, reply, instance) {
             closing_time: 0
         })
 
-        if(notClosed) {
+        if (notClosed) {
             return reply.response(411, 'Shift not closed');
         }
 
         const id = await instance.WorkgroupShift.insertWorkgroupShift(request.body, user);
-        reply.ok({id})
+        reply.ok({ id })
     } catch (error) {
         reply.error(error.message)
     }
@@ -60,7 +60,7 @@ module.exports = ((instance, _, next) => {
             preValidation: [instance.authorize_employee]
         },
         (request, reply) => {
-            if(request.validationError) {
+            if (request.validationError) {
                 return reply.validation(request.validationError.message)
             }
             workgroupOrderShiftOpen(request, reply, instance)

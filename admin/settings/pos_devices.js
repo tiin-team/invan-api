@@ -17,6 +17,7 @@ module.exports = (instance, options, next) => {
       }
       reply.ok(devices)
     })
+      .lean()
   }
 
   instance.post('/posdevices/get', options.version, (request, reply) => {
@@ -46,6 +47,6 @@ module.exports = (instance, options, next) => {
   instance.get('/logging/out', options.version, (request, reply) => {
     update_pos(request, reply)
   })
-  
+
   next()
 }

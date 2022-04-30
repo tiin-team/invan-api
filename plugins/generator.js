@@ -1495,6 +1495,7 @@ module.exports = fp((instance, _, next) => {
         reply.error('Device not found')
       }
     })
+      .lean()
   }
 
   function subtrack_or_add_products(is_group, request, user, reply, tickets, item_datas) {
@@ -2076,6 +2077,7 @@ module.exports = fp((instance, _, next) => {
                   })
                 }
               })
+                .lean()
             }
             else if ($model.collection.name == 'goodssales') {
               request.body.last_updated = new Date().getTime()

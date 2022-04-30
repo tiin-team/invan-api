@@ -600,6 +600,7 @@ module.exports = fp((instance, _, next) => {
         })
       }
     })
+      .lean()
   })
 
   instance.decorate('csv_to_json_converter', (data) => {

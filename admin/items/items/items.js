@@ -2604,7 +2604,7 @@ module.exports = (instance, options, next) => {
                 if (err) {
                   instance.send_Error('writing to file', JSON.stringify(err));
                 }
-                reply.sendFile('./' + file, (err) => {
+                reply.sendFile(`./${file}` + file, (err) => {
                   instance.send_Error('on sending file', JSON.stringify(err));
                 });
                 setTimeout(() => {
@@ -2886,8 +2886,10 @@ module.exports = (instance, options, next) => {
             }
           );
         }
-      );
-    });
+      )
+        .lean();
+    })
+      .lean();
   };
   const get_file_desktop = async (request, reply, admin) => {
     instance.organizations.findOne({ _id: admin.organization }, (err, org) => {
@@ -2965,8 +2967,10 @@ module.exports = (instance, options, next) => {
             }
           );
         }
-      );
-    });
+      )
+        .lean();
+    })
+      .lean();
   };
 
   const get_goods_with_correct_image = async (request, reply, admin) => {

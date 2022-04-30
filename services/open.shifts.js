@@ -28,7 +28,7 @@ module.exports = ((instance, _, next) => {
     async function updateShift(request, reply, user) {
         const body = request.body;
         const shiftId = request.params.id;
-        const pos_device = await instance.posDevices.findById(body.pos_id);
+        const pos_device = await instance.posDevices.findById(body.pos_id).lean();
         if (!pos_device)
             return reply.error('Pos device not found')
 

@@ -104,7 +104,7 @@ module.exports = (instance, options, next) => {
                                   instance.send_Error('creating service', JSON.stringify(err))
                                 }
                                 else {
-                                  var deviceModel = new instance.posDevices({
+                                  const deviceModel = new instance.posDevices({
                                     name: 'Pos 1',
                                     organization: organization._id,
                                     service: serviceModel._id
