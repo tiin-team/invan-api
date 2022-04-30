@@ -1,5 +1,19 @@
 const fp = require('fastify-plugin');
+// const begin = 1650999600000
+// const end = 1651086000000 - 1
+// const check_start = 1650999697297
+// const dateDiffer = 86400000;
+// console.log('start:', new Date(begin), 'end:', new Date(end));
+// console.log((begin + 18000000) / dateDiffer);
+// console.log((end + 18000000) / dateDiffer);
 
+// // console.log(Math.ceil(begin / dateDiffer));
+// // console.log(Math.ceil(end / dateDiffer));
+
+// const date1 = new Date(dateDiffer * 19109)
+// console.log(date1);
+// console.log(begin - date1.getTime());
+// console.log(end - date1.getTime());
 module.exports = fp((instance, _, next) => {
   /**
    * partiali tovar

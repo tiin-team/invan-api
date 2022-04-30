@@ -937,14 +937,14 @@ module.exports = (instance, _, next) => {
         $project: {
           count_type: {
             $floor: {
-              $divide: [{ $max: [0, '$date'] }, dateDiffer],
+              $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
             },
           },
           date: {
             $multiply: [
               {
                 $floor: {
-                  $divide: [{ $max: [0, '$date'] }, dateDiffer],
+                  $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
                 },
               },
               dateDiffer,
