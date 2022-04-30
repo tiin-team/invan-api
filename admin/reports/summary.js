@@ -1156,7 +1156,7 @@ module.exports = (instance, _, next) => {
           lastDate = lastDateTail;
           lastMax = r.date;
           existTime[r.date] = true;
-          if (min <= i || i <= max)
+          if (min <= r.date || r.date <= max)
             data.push([r.date, r[target]]);
         }
 
