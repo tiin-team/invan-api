@@ -937,14 +937,14 @@ module.exports = (instance, _, next) => {
         $project: {
           count_type: {
             $floor: {
-              $divide: [{ $max: [0, '$date'] }, dateDiffer],
-            },
+              $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
+            }
           },
           date: {
             $multiply: [
               {
                 $floor: {
-                  $divide: [{ $max: [0, '$date'] }, dateDiffer],
+                  $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
                 },
               },
               dateDiffer,
@@ -1117,14 +1117,14 @@ module.exports = (instance, _, next) => {
         if (count_type != 2) {
           projectReport.$project.count_type = {
             $floor: {
-              $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
-            }
+              $divide: [{ $max: [0, '$date'] }, dateDiffer],
+            },
           }
           projectReport.$project.date = {
             $multiply: [
               {
                 $floor: {
-                  $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
+                  $divide: [{ $max: [0, '$date'] }, dateDiffer],
                 },
               },
               dateDiffer,
@@ -1186,6 +1186,7 @@ module.exports = (instance, _, next) => {
         result[0].data = data;
         return reply.ok(result[0]);
       } else {
+
         const countTotalReport = {
           $group: {
             _id: null,
