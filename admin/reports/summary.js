@@ -937,14 +937,14 @@ module.exports = (instance, _, next) => {
         $project: {
           count_type: {
             $floor: {
-              $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
+              $divide: [{ $max: [0, '$date'] }, dateDiffer],
             },
           },
           date: {
             $multiply: [
               {
                 $floor: {
-                  $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
+                  $divide: [{ $max: [0, '$date'] }, dateDiffer],
                 },
               },
               dateDiffer,
@@ -973,6 +973,23 @@ module.exports = (instance, _, next) => {
           cash_back: 1,
         },
       };
+      if (count_type == 2) {
+        projectReport.$project.count_type = {
+          $floor: {
+            $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
+          }
+        }
+        projectReport.$project.date = {
+          $multiply: [
+            {
+              $floor: {
+                $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
+              },
+            },
+            dateDiffer,
+          ],
+        }
+      }
 
       const groupByDate = {
         $group: {
