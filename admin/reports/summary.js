@@ -973,23 +973,6 @@ module.exports = (instance, _, next) => {
           cash_back: 1,
         },
       };
-      if (count_type != 2) {
-        projectReport.$project.count_type = {
-          $floor: {
-            $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
-          }
-        }
-        projectReport.$project.date = {
-          $multiply: [
-            {
-              $floor: {
-                $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
-              },
-            },
-            dateDiffer,
-          ],
-        }
-      }
 
       const groupByDate = {
         $group: {
@@ -1131,6 +1114,23 @@ module.exports = (instance, _, next) => {
       };
 
       if (!limit) {
+        if (count_type != 2) {
+          projectReport.$project.count_type = {
+            $floor: {
+              $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
+            }
+          }
+          projectReport.$project.date = {
+            $multiply: [
+              {
+                $floor: {
+                  $divide: [{ $max: [0, { $add: ['$date', 18000000] }] }, dateDiffer],
+                },
+              },
+              dateDiffer,
+            ],
+          }
+        }
         const result = await instance.Receipts.aggregate([
           {
             $match: filterReceipts,
