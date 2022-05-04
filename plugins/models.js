@@ -772,7 +772,7 @@ module.exports = fp((instance, _, next) => {
     brand: String,
     description: String,
     mxik: String,
-    nds_value: String,
+    nds_value: Number,
   })
   instance.decorate('goodsSales', goodsSales)
 

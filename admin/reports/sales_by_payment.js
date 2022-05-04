@@ -55,7 +55,7 @@ module.exports = (instance, _, next) => {
 
   // reports sales by payment type
 
-  var by_payment = async (request, reply, admin) => {
+  const by_payment = async (request, reply, admin) => {
 
     const { min, max } = request.params;
     const { custom, start, end, services, employees } = request.body;

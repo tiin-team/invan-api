@@ -63,7 +63,7 @@ module.exports = (instance, options, next) => {
 
   // create production
 
-  var create_production = (request, reply, admin) => {
+  const create_production = (request, reply, admin) => {
     var my_var = request.body
     my_var.created_time = new Date().getTime()
     delete my_var._id
@@ -272,7 +272,7 @@ module.exports = (instance, options, next) => {
 
   // get production
 
-  var get_pro = (request, reply, admin) => {
+  const get_pro = (request, reply, admin) => {
     var query = { organization: admin.organization }
     var limit = parseInt(request.params.limit)
     var page = parseInt(request.params.page)
@@ -339,7 +339,7 @@ module.exports = (instance, options, next) => {
 
   // get pro by id
 
-  var get_pro_by_id = (request, reply, admin) => {
+  const get_pro_by_id = (request, reply, admin) => {
     if (request.params.id) {
       instance.Production.findOne({
         _id: request.params.id

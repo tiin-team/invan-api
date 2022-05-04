@@ -613,7 +613,7 @@ module.exports = fp((instance, options, next) => {
           .sort('-queue')
           .lean()
 
-        num_queue = queue && queue.queue ? parseInt(queue.queue) + 1 : 1
+        num_queue = queue && !isNaN(parseInt(queue.queue)) ? parseInt(queue.queue) + 1 : 1
 
         await new instance.goodsSaleQueue({
           purchase_id: purch._id,
