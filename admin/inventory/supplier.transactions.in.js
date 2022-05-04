@@ -72,17 +72,107 @@ module.exports = (instance, options, next) => {
                         supplier_name: 1,
                     }
                 }
-
+                const unwindServices = { $unwind: { path: "$services" } };
+                const projectPrimaryFields = {
+                    $project: {
+                        // primary_supplier_id: "$primary_supplier_id",
+                        // service: "$services.service",
+                        // in_stock: {
+                        //     $max: [0, "$services.in_stock"],
+                        //     // $max: [0, { $round: ["$services.in_stock", 3] }],
+                        // },
+                        inventory: {
+                            $multiply: [
+                                { $max: ["$cost", 0] },
+                                { $max: ["$services.in_stock", 0] },
+                            ],
+                        },
+                        retail: {
+                            $multiply: [
+                                { $max: ["$services.price", 0] },
+                                { $max: ["$services.in_stock", 0] },
+                            ],
+                        },
+                        potential: {
+                            $subtract: [
+                                {
+                                    $multiply: [
+                                        { $max: ["$services.price", 0] },
+                                        { $max: ["$services.in_stock", 0] },
+                                    ],
+                                },
+                                {
+                                    $multiply: [
+                                        { $max: ["$cost", 0] },
+                                        { $max: ["$services.in_stock", 0] },
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                };
+                const calculateTotal = {
+                    $group: {
+                        _id: null,
+                        inventory: {
+                            $sum: {
+                                $cond: ["$has_variants", 0, "$inventory"],
+                            },
+                        },
+                        retail: {
+                            $sum: {
+                                $cond: ["$has_variants", 0, "$retail"],
+                            },
+                        },
+                        potential: {
+                            $sum: {
+                                $cond: ["$has_variants", 0, "$potential"],
+                            },
+                        },
+                    },
+                };
+                const $lookup = {
+                    $lookup: {
+                        from: 'goodssales',
+                        let: { supplier_id: '$_id', organization: user.organization },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$primary_supplier_id', '$$supplier_id'] },
+                                            { $eq: ['$organization', '$$organization'] },
+                                        ],
+                                    },
+                                },
+                            },
+                            unwindServices,
+                            projectPrimaryFields,
+                            calculateTotal,
+                        ],
+                        as: 'goods'
+                    }
+                }
                 const pipeline = [
                     $match,
                     $project,
                     $skip,
                     $limit,
+                    $lookup,
+                    {
+                        $project: {
+                            _id: 1,
+                            supplier_name: 1,
+                            inventory: { $first: '$goods.inventory' },
+                            retail: { $first: '$goods.retail' },
+                            potential: { $first: '$goods.potential' },
+                        }
+                    },
                     $sort,
                 ];
                 const suppliers = await instance.adjustmentSupplier.aggregate(pipeline)
                     .exec()
-                console.log(suppliers);
+
                 for (const index in suppliers) {
                     suppliers[index].balance = await getSupplierTransactions(suppliers[index])
                 }
