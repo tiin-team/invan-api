@@ -1318,6 +1318,7 @@ module.exports = fp((instance, options, next) => {
   const get_purchase_order_new_ = (request, reply, admin) => {
     const limit = parseInt(request.params.limit)
     const page = parseInt(request.params.page)
+
     const query = {
       organization: admin.organization
     }
@@ -1326,6 +1327,9 @@ module.exports = fp((instance, options, next) => {
     }
     if (request.body.status != undefined && request.body.status != '') {
       query.status = request.body.status
+    }
+    if (request.body.type != undefined && request.body.type != '') {
+      query.type = request.body.type
     }
     if (request.body.supplier_id != undefined && request.body.supplier_id != '') {
       query.supplier_id = instance.ObjectId(request.body.supplier_id)
