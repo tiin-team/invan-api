@@ -402,6 +402,7 @@ module.exports = (instance, options, next) => {
           items: true,
           item_list: true,
           item_mxik_search: true,
+          item_mark: true,
           item_composite_item: true,
           item_add_from_warehause: true,
           item_print_label: true,

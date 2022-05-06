@@ -668,7 +668,8 @@ module.exports = fp((instance, _, next) => {
         stopped_item: { type: Boolean, default: false },
         sku: Number,
         printed_time: { type: Number, default: 0 },
-        printed_price_change_time: { type: Number, default: 0 }
+        printed_price_change_time: { type: Number, default: 0 },
+        last_price_change: { type: Number, default: 0 },
       }
     ],
     stopped_item: { type: Boolean, default: false },
@@ -1574,6 +1575,7 @@ module.exports = fp((instance, _, next) => {
     items: boolean,
     item_edit: boolean,
     item_list: boolean,
+    item_mark: boolean,
     item_mxik_search: boolean,
     item_composite_item: boolean,
     item_add_from_warehause: boolean,

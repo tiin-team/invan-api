@@ -113,98 +113,7 @@ module.exports = fp((instance, options, next) => {
         const start_time = new Date().getTime()
         const accesses = await instance.AccessRights.find({ name: 'boss' }).lean();
         for (const access of accesses) {
-            access.item_edit = true
-            access.create = true
-            access.create_purchase = true
-            access.create_taxes = true
-            access.create_store = true
-            access.create_pos_device = true
-            access.create_customer = true
-            access.create_employee = true
-            access.create_access = true
-            access.create_time_card = true
-            access.create_transfer = true
-            access.create_stock_adjustmen = true
-            access.create_inv_count = true
-            access.create_production = true
-            access.create_supplier = true
-            access.create_supplier_create_doc = true
-            access.create_fee = true
-            access.create_good_sale = true
-            access.create_good_category = true
-            access.create_modifier = true
-            access.create_discount = true
-            access.create_reciept = true
-            access.reports = true
-            access.report_sale = true
-            access.report_accaunt = true
-            access.report_abs = true
-            access.report_sale_by_item = true
-            access.report_sale_by_category = true
-            access.report_sale_by_supplier = true
-            access.report_employee = true
-            access.report_sale_by_payment = true
-            access.report_receipt = true
-            access.report_debt = true
-            access.report_discount = true
-            access.report_taxes = true
-            access.report_shift = true
-            access.items = true
-            access.item_edit = true
-            access.item_list = true
-            access.item_mxik_search = true
-            access.item_composite_item = true
-            access.item_add_from_warehause = true
-            access.item_print_label = true
-            access.item_price_change_history = true
-            access.item_categories = true
-            access.item_modifiers = true
-            access.item_discount = true
-            access.employees = true
-            access.employee_list = true
-            access.employee_list_add = true
-            access.employee_list_del = true
-            access.employee_access_rights = true
-            access.employee_access_rights_add = true
-            access.employee_access_rights_del = true
-            access.employee_time_cards = true
-            access.employee_total_worked = true
-            access.customers = true
-            access.settings = true
-            access.setting_general = true
-            access.setting_organization = true
-            access.setting_nds = true
-            access.setting_payment_types = true
-            access.setting_currency = true
-            access.setting_loyalty = true
-            access.setting_taxes = true
-            access.setting_receipt = true
-            access.setting_open_tickets = true
-            access.setting_buttons = true
-            access.setting_options = true
-            access.setting_stores = true
-            access.setting_pos_devices = true
-            access.edit_profile = true
-            access.set_the_taxes = true
-            access.manage_pos_devices = true
-            access.can_delete_item = true
-            access.inventory = true
-            access.inv_supplier_valuation = true
-            access.inv_purchase_orders = true
-            access.inv_purchase_mark = true
-            access.inv_purchase_orders_cost = true
-            access.inv_transfer_orders = true
-            access.inv_stock_adjusment = true
-            access.inv_stock_adjusment_cost = true
-            access.inv_inventory_counts = true
-            access.inv_productions = true
-            access.inv_productions_cost = true
-            access.inv_suppliers = true
-            access.inv_supplier_transaction = true
-            access.inv_supplier_transaction_corrector = true
-            access.inv_fees = true
-            access.inv_inventory_history = true
-            access.inv_inventory_valuation = true
+            access.item_mark = true
             await instance.AccessRights.findByIdAndUpdate(
                 access._id,
                 access,
@@ -213,7 +122,7 @@ module.exports = fp((instance, options, next) => {
         }
         console.log('time:', new Date().getTime() - start_time);
         console.log('ok');
-    })
+    })()
     instance.get('/items/inv_history', async (request, reply) => {
 
         const { from, to } = request.query
