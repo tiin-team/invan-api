@@ -1850,7 +1850,7 @@ module.exports = (instance, options, next) => {
                     request.body.price != serviceMap[ser._id + ''].price
                   ) {
                     updateItem.last_price_change = new Date().getTime();
-                    serviceMap[ser._id + ''] = new Date().getTime();
+                    serviceMap[ser._id + ''].last_price_change = new Date().getTime();
                   }
                   if (
                     prices instanceof Array &&
@@ -1861,7 +1861,7 @@ module.exports = (instance, options, next) => {
                     )
                   ) {
                     updateItem.last_price_change = new Date().getTime();
-                    serviceMap[ser._id + ''] = new Date().getTime();
+                    serviceMap[ser._id + ''].last_price_change = new Date().getTime();
                   }
                   updateItem.services.push({
                     ...serviceMap[ser._id + ''],

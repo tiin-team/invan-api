@@ -1,10 +1,10 @@
 
 const fp = require('fastify-plugin')
 const mongoose = require('mongoose')
-const mongodb = require('mongodb')
-const TokenGenerator = require('uuid-token-generator')
+// const mongodb = require('mongodb')
+// const TokenGenerator = require('uuid-token-generator')
+// const qs = require('qs');
 const axios = require('axios')
-const qs = require('qs');
 const FCM = require('fcm-node')
 // const categories = require('../admin/items/categories')
 const serverKey = 'AAAACPKexKE:APA91bHcaxbRaXNjWGaxWglbs0U4OpbI1MLxb1IvF3UY1OZnkllgQ_nizhvVyr9fXv2EBVyZxjb3C9rmrXFDuMap4Z96bgZ_kcVM7YA0kWgvMbpUAisdycuxCdUd_x3ib4gMN0y5Mlml'
