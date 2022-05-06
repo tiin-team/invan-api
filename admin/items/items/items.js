@@ -2,7 +2,7 @@ const fs = require('fs');
 const moment = require('moment');
 
 module.exports = (instance, options, next) => {
-  var version = { version: '1.0.0' };
+  const version = { version: '1.0.0' };
 
   const item_variant = async (data, admin, reply, item_id) => {
     data.last_updated = new Date().getTime();
@@ -1070,13 +1070,13 @@ module.exports = (instance, options, next) => {
         goods = [];
       }
       if (
-        request.headers['accept-user'] == 'boss' ||
-        request.headers['accept-user'] == 'admin'
+        request.headers['accept-user'] == 'boss'
+        || request.headers['accept-user'] == 'admin'
       ) {
         for (let i = 0; i < goods.length; i++) {
-          try {
-            goods[i] = goods[i].toObject();
-          } catch (error) { }
+          // try {
+          //   goods[i] = goods[i].toObject();
+          // } catch (error) { }
           goods[i].in_stock = 0;
           if (!goods[i].services) {
             goods[i].services = [];
@@ -1117,7 +1117,8 @@ module.exports = (instance, options, next) => {
       }
 
       reply.ok(goods);
-    });
+    })
+      .lean();
   };
 
   instance.get('/items/list_of_items', version, (request, reply) => {
@@ -1510,9 +1511,7 @@ module.exports = (instance, options, next) => {
     data.last_updated = new Date().getTime();
     data.last_stock_updated = new Date().getTime();
     instance.goodsSales.findOne(
-      {
-        _id: id,
-      },
+      { _id: id },
       (_, item1) => {
         if (!item1) {
           return reply.fourorfour('Item');
@@ -1557,9 +1556,7 @@ module.exports = (instance, options, next) => {
           }
 
           instance.goodsSales.updateOne(
-            {
-              _id: id,
-            },
+            { _id: id },
             { $set: data },
             (err, result) => {
               if (result.ok) {
@@ -1582,9 +1579,7 @@ module.exports = (instance, options, next) => {
                 // create inv history
 
                 instance.goodsSales.findOne(
-                  {
-                    _id: id,
-                  },
+                  { _id: id },
                   (_, item2) => {
                     if (item2) {
                       // if (item2.is_track_stock || (item2.is_composite_item && item2.use_production)) {
@@ -1680,7 +1675,8 @@ module.exports = (instance, options, next) => {
                       // }
                     }
                   }
-                );
+                )
+                  .lean();
               } else {
                 instance.send_Error('updating item', JSON.stringify(err));
                 reply.error('Error on updating item');
@@ -1691,7 +1687,8 @@ module.exports = (instance, options, next) => {
           reply.error('Error on finding item');
         }
       }
-    );
+    )
+      .lean();
   };
 
   instance.post('/items/update_item/:id', version, (request, reply) => {
@@ -1792,12 +1789,12 @@ module.exports = (instance, options, next) => {
         }
         if (request.body.service) {
           try {
-            const services = await instance.services.find({
-              organization: admin.organization,
-            });
-            const item = await instance.goodsSales.findOne({
-              _id: request.params.id,
-            });
+            const services = await instance.services
+              .find({ organization: admin.organization })
+              .lean();
+            const item = await instance.goodsSales
+              .findOne({ _id: request.params.id })
+              .lean();
             const serviceMap = {};
             if (typeof item.services == typeof []) {
               for (const ser of item.services) {
@@ -1841,18 +1838,19 @@ module.exports = (instance, options, next) => {
             updateItem.services = [];
             for (const ser of services) {
               if (serviceMap[ser._id + '']) {
-                try {
-                  serviceMap[ser._id + ''] =
-                    serviceMap[ser._id + ''].toObject();
-                } catch (error) {
-                  instance.send_Error('to Object', error.message);
-                }
+                // try {
+                //   serviceMap[ser._id + ''] =
+                //     serviceMap[ser._id + ''].toObject();
+                // } catch (error) {
+                //   instance.send_Error('to Object', error.message);
+                // }
                 if (service_id + '' == ser._id + '') {
                   if (
                     typeof request.body.price == typeof 5 &&
                     request.body.price != serviceMap[ser._id + ''].price
                   ) {
                     updateItem.last_price_change = new Date().getTime();
+                    serviceMap[ser._id + ''] = new Date().getTime();
                   }
                   if (
                     prices instanceof Array &&
@@ -1863,6 +1861,7 @@ module.exports = (instance, options, next) => {
                     )
                   ) {
                     updateItem.last_price_change = new Date().getTime();
+                    serviceMap[ser._id + ''] = new Date().getTime();
                   }
                   updateItem.services.push({
                     ...serviceMap[ser._id + ''],
@@ -1904,6 +1903,7 @@ module.exports = (instance, options, next) => {
                       request.body && request.body.reminder != undefined
                         ? request.body.reminder
                         : 0,
+                    last_price_change: new Date().getTime(),
                   });
                 } else {
                   updateItem.services.push({
@@ -1950,11 +1950,11 @@ module.exports = (instance, options, next) => {
           goods = [];
         }
         for (let i = 0; i < goods.length; i++) {
-          try {
-            goods[i] = goods[i].toObject();
-          } catch (error) {
-            instance.send_Error('to Object', error.message);
-          }
+          // try {
+          //   goods[i] = goods[i].toObject();
+          // } catch (error) {
+          //   instance.send_Error('to Object', error.message);
+          // }
           for (var s of goods[i].services) {
             if (s.in_stock) {
               if (request.body.service) {
@@ -1971,7 +1971,8 @@ module.exports = (instance, options, next) => {
         }
         reply.ok(goods);
       }
-    );
+    )
+      .lean();
   };
 
   instance.post(
@@ -1989,7 +1990,9 @@ module.exports = (instance, options, next) => {
       try {
         const time = parseInt(request.params.time);
         const service_id = request.headers['accept-service'];
-        const service = await instance.services.findById(service_id);
+        const service = await instance.services
+          .findById(service_id)
+          .lean();
         if (!service) {
           return reply.fourorfour('Service');
         }
@@ -2006,12 +2009,12 @@ module.exports = (instance, options, next) => {
           },
         };
 
-        const testNumbers = ['+998994056972', '+998933213326'];
+        // const testNumbers = ['+998994056972', '+998933213326'];
 
-        if (testNumbers.includes(user.phone_number)) {
-          //   console.log('TEST REQUEST')
-          return instance.getGoodsSales(request, reply);
-        }
+        // if (testNumbers.includes(user.phone_number)) {
+        //   //   console.log('TEST REQUEST')
+        //   return instance.getGoodsSales(request, reply);
+        // }
         if (request.params.type == 'without_stock') {
           delete query.last_updated;
           query.last_stock_updated = {
@@ -2176,7 +2179,8 @@ module.exports = (instance, options, next) => {
         goods = await instance.goodsSales
           .find(query)
           .sort({ last_updated: -1 })
-          .limit(100);
+          .limit(100)
+          .lean();
         // }
         // else {
         //   goods = await instance.goodsSales.find(query).sort({ last_updated: -1 })
@@ -2191,11 +2195,11 @@ module.exports = (instance, options, next) => {
               goods[i].in_stock = s.in_stock;
               goods[i].reminder = s.reminder;
               goods[i].price = s.price;
-              try {
-                goods[i] = goods[i].toObject();
-              } catch (error) {
-                instance.send_Error('to Object', error.message);
-              }
+              // try {
+              //   goods[i] = goods[i].toObject();
+              // } catch (error) {
+              //   instance.send_Error('to Object', error.message);
+              // }
               goods[i].prices = s.prices;
               goods[i].stopped_item = s.stopped_item;
             }
