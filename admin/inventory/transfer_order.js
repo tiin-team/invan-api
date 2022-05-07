@@ -605,7 +605,7 @@ module.exports = (instance, options, next) => {
                 tran[0].second_service_name = tran[0].second[0].name;
               }
               tran[0].second = undefined;
-              let total_cost=0;
+              let total_cost = 0;
               for (let i = 0; i < tran[0].items.length; i++) {
                 const current_item = tran[0].items[i];
                 try {
@@ -641,7 +641,7 @@ module.exports = (instance, options, next) => {
                     // }
                     // current_item.price = price;
                   }
-                } catch (error) {}
+                } catch (error) { }
                 tran[0].items[i].first_stock = 0;
                 tran[0].items[i].second_stock = 0;
                 tran[0].items[i] = current_item;
@@ -735,7 +735,7 @@ module.exports = (instance, options, next) => {
     let count_items = 0;
     try {
       count_items = await instance.goodsSales.countDocuments(query);
-    } catch (error) {}
+    } catch (error) { }
     const limit =
       request.params.limit == "all"
         ? count_items == 0
@@ -757,11 +757,11 @@ module.exports = (instance, options, next) => {
           }
 
           for (let i = 0; i < goods.length; i++) {
-            try {
-              goods[i] = goods[i].toObject();
-            } catch (error) {
-              instance.send_Error("to Object", error.message);
-            }
+            // try {
+            //   goods[i] = goods[i].toObject();
+            // } catch (error) {
+            //   instance.send_Error("to Object", error.message);
+            // }
             goods[i].first = 0;
             goods[i].second = 0;
             for (var s of goods[i].services) {
@@ -804,7 +804,7 @@ module.exports = (instance, options, next) => {
                     Answer.push(goods[i]);
                   }
                 }
-              } catch (err) {}
+              } catch (err) { }
             } else {
               Answer.push(goods[i]);
             }
@@ -819,6 +819,7 @@ module.exports = (instance, options, next) => {
       )
       .skip(limit * (page - 1))
       .limit(limit)
+      .lean()
       .sort({ _id: -1 });
   };
 
@@ -922,18 +923,18 @@ module.exports = (instance, options, next) => {
       for (const ind in indexes) {
         try {
           indexes[ind] = instance.ObjectId(indexes[ind]);
-        } catch (error) {}
+        } catch (error) { }
       }
 
       let firstServiceId = first_service;
       try {
         firstServiceId = instance.ObjectId(firstServiceId);
-      } catch (error) {}
+      } catch (error) { }
 
       let secondServiceId = second_service;
       try {
         secondServiceId = instance.ObjectId(secondServiceId);
-      } catch (error) {}
+      } catch (error) { }
 
       const matchQuery = {
         $match: {

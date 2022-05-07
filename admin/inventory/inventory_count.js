@@ -654,16 +654,16 @@ module.exports = (instance, options, next) => {
 
   const getcount = async (request, reply, admin) => {
     try {
-      let count = await instance.inventoryCount.findOne({
-        _id: request.params.id
-      });
+      let count = await instance.inventoryCount
+        .findOne({ _id: request.params.id })
+        .lean();
       if (!count) {
         return reply.fourorfour('count')
       }
 
-      try {
-        count = count.toObject();
-      } catch (error) { }
+      // try {
+      //   count = count.toObject();
+      // } catch (error) { }
 
       let countitems = await instance.inventoryCountItem.find({
         count_id: count._id
@@ -740,24 +740,26 @@ module.exports = (instance, options, next) => {
 
   const get_items = async (request, reply, admin) => {
     try {
-      const invcount = await instance.inventoryCount.findOne({
-        _id: request.params.id
-      });
+      const invcount = await instance.inventoryCount
+        .findOne({ _id: request.params.id })
+        .lean();
       let query = {
         organization: admin.organization
       }
       if (invcount.service != undefined && invcount.service != '') {
         query.services = { $elemMatch: { service: { $eq: invcount.service } } }
       }
-      let goods = await instance.goodsSales.find(query, { name: 1, sku: 1, cost: 1, services: 1 });
+      let goods = await instance.goodsSales
+        .find(query, { name: 1, sku: 1, cost: 1, services: 1 })
+        .lean();
 
       for (let i = 0; i < goods.length; i++) {
-        try {
-          goods[i] = goods[i].toObject()
-        }
-        catch (error) {
-          instance.send_Error('to Object', error.message)
-        }
+        // try {
+        //   goods[i] = goods[i].toObject()
+        // }
+        // catch (error) {
+        //   instance.send_Error('to Object', error.message)
+        // }
         for (var s of goods[i].services) {
           if (s.in_stock) {
             if (invcount.service) {

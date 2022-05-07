@@ -797,15 +797,17 @@ module.exports = (instance, _, next) => {
       const { min, max, limit, page } = request.params;
       const { custom, start, end, services, employees, count_type, target } =
         request.body;
-      const user_available_services = request.user.services.map((serv) =>
-        serv.service.toString()
-      );
+      const user_available_services = request
+        .user
+        .services
+        .map((serv) => serv.service.toString());
+
       const filterReceipts = {
         organization: admin.organization,
         receipt_state: {
           $ne: 'draft',
         },
-        // service: { $in: user_available_services },
+        service: { $in: user_available_services },
         debt_id: null,
         date: {
           // $gte: min - (TIME_DIFF | 0),

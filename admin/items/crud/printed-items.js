@@ -21,7 +21,8 @@ async function printedItemsSet(request, reply, instance) {
                     $set: {
                         'services.$.printed_time': printed_time
                     }
-                }
+                },
+                { lean: true },
             );
         }
         reply.ok('ok')
