@@ -11,14 +11,15 @@ async function supplierTransations(request, reply, instance) {
             ? parseInt(request.query.page)
             : 1
 
-        const { _id } = request.user;
-        const supplier = await instance.adjustmentSupplier
-            .findById(_id)
-            .lean();
+        // const { _id } = request.user;
+        const supplier = request.user
+        // const supplier = await instance.adjustmentSupplier
+        //     .findById(_id)
+        //     .lean();
 
-        if (!supplier) {
-            return reply.code(404).send('Supplier not found')
-        }
+        // if (!supplier) {
+        //     return reply.code(404).send('Supplier not found')
+        // }
 
         const transactions = await instance.supplierTransaction
             .find({ supplier_id: supplier._id })
