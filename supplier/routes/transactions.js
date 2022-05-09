@@ -61,6 +61,7 @@ module.exports = fp((instance, _, next) => {
     instance.get(
         '/supplier/transactions',
         {
+            version: '1.0.0',
             schema: querySchema,
             attachValidation: true,
             preValidation: [instance.auth_supplier]

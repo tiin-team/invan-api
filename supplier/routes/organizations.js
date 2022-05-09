@@ -3,10 +3,11 @@ const fp = require('fastify-plugin')
 
 async function getOrganizations(request, reply, instance) {
     try {
-        const { phone_number } = request.user;
+        const supplier = request.user
+
         const result = await instance.adjustmentSupplier.aggregate([
             {
-                $match: { phone_number }
+                $match: { phone_number: supplier.phone_number },
             },
             {
                 $group: {
@@ -16,10 +17,14 @@ async function getOrganizations(request, reply, instance) {
             }
         ]);
         const ids = result.length == 0 ? [] : result[0].ids;
-        const organizations = await instance.organizations.find({ _id: { $in: ids } }, { name: 1 });
-        reply.ok(organizations);
+
+        const organizations = await instance.organizations
+            .find({ _id: { $in: ids } }, { name: 1 })
+            .lean();
+
+        return reply.ok(organizations);
     } catch (error) {
-        reply.error(error)
+        return reply.error(error)
     }
     return reply;
 }
@@ -27,9 +32,12 @@ async function getOrganizations(request, reply, instance) {
 module.exports = fp((instance, _, next) => {
     instance.get(
         '/organizations',
-        { preValidation: [instance.auth_supplier] },
-        (request, reply) => {
-            return getOrganizations(request, reply, instance)
+        {
+            version: '1.0.0',
+            preValidation: [instance.auth_supplier]
+        },
+        async (request, reply) => {
+            return await getOrganizations(request, reply, instance)
         }
     );
 

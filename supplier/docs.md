@@ -9,6 +9,7 @@ https://dev.in1.uz/api/invan-supplier/
 - Supplier
   - [Login](#login)
   - [Verify](#verify)
+  - [Get organizations](#get-organizations)
   - [Dashboard](#dashboard)
   - [Transactions get](#transactions-get)
   - [Get Supplier valuation](#get-supplier-valuation)
@@ -22,6 +23,10 @@ https://dev.in1.uz/api/invan-supplier/
 | Name         | Required | Example         | Note         |
 | ------------ | -------- | --------------- | ------------ |
 | phone_number | yes      | "+998954334567" | Valid number |
+
+```
+/supplier/login
+```
 
 #### Request:
 
@@ -58,6 +63,10 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/login' \
 
 ## Verify
 
+```
+/supplier/login
+```
+
 ### Request
 
 ```cURL
@@ -81,7 +90,25 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/verify' \
 
 {}
 
+## Get organizations
+
+```
+/organizations
+```
+
+### Request
+
+```cURL
+curl --location --request GET 'http://0.0.0.0:3003/organizations' \
+--header 'Accept-version: 1.0.0' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk'
+```
+
 ## Dashboard
+
+```
+/dashboard/:min/:max/:limit/:page
+```
 
 ### Parameters
 
@@ -96,6 +123,9 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/verify' \
 | count_type | yes      | 2           | must enum [1, 2, 3, 4, 5, 6]                                                |
 | target     | yes      | gross_sales | must enum ['gross_sales', 'refunds','discounts','net_sales','gross_profit'] |
 
+### Request
+
+```cURL
 curl --location --request POST 'http://0.0.0.0:3003/dashboard/1546282800000/1652085011829/10/1' \
 --header 'Accept-version: 1.0.0' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk' \
@@ -108,8 +138,13 @@ curl --location --request POST 'http://0.0.0.0:3003/dashboard/1546282800000/1652
 "employees": [],
 "search": "search"
 }'
+```
 
 ## Transactions get
+
+```
+/supplier/transactions
+```
 
 ### Request
 
@@ -119,6 +154,10 @@ curl --location --request GET 'http://0.0.0.0:3003/supplier/transactions' \
 ```
 
 ## Get Supplier valuation
+
+```
+/supplier/valuation
+```
 
 ### Request
 
