@@ -131,6 +131,7 @@ module.exports = ((instance, _, next) => {
           $in: ids
         }
       })
+        .lean()
 
       const updated_items = [];
 
@@ -227,12 +228,9 @@ module.exports = ((instance, _, next) => {
           setData.last_stock_updated = new Date().getTime()
 
           const res = await instance.goodsSales.updateOne(
-            {
-              _id: item._id
-            },
-            {
-              $set: setData
-            }
+            { _id: item._id },
+            { $set: setData },
+            { lean: true },
           )
 
           if (res && res.nModified) {

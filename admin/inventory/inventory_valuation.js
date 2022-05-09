@@ -1212,9 +1212,7 @@ module.exports = fp((instance, options, next) => {
   );
   instance.get(
     "/inventory/valuation/by_supplier",
-    {
-      version: '2.0.0'
-    },
+    { version: '2.0.0' },
     async (request, reply) => {
       instance.authorization(request, reply, async () => {
         try {
