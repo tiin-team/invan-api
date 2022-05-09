@@ -49,6 +49,7 @@ const by_supplier_report = async (request, reply, instance) => {
 
     const filterReceipts = {
         organization: supplier.organization,
+        "sold_item_list.supplier_id": supplier._id,
         receipt_state: { $ne: 'draft' },
         debt_id: null,
         date: {

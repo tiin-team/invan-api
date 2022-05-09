@@ -11,7 +11,6 @@ module.exports = fp((instance, _, next) => {
 
 
     SmsModelSchema.statics.saveOtp = async (phone_number, otp) => {
-        await instance.sending_sms_code(phone_number, otp, 'supplier')
         await SmsModel.findOneAndUpdate({ phone_number }, { $set: { otp } }, { lean: true, upsert: true })
     }
 

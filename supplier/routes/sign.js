@@ -6,7 +6,7 @@ async function signSupplier(request, reply, instance) {
         let { phone_number } = request.body;
         phone_number = `+${phone_number.replace(/[^0-9]/i, '')}`;
         const supplier = await instance.adjustmentSupplier
-            .findOne({ phone_number }, { phone_number: 1 })
+            .findOne({ phone_number }, { phone_number: 1, supplier_name: 1 })
             .lean();
         if (!supplier) {
             return reply.code(404).send('Supplier not found')
@@ -17,6 +17,7 @@ async function signSupplier(request, reply, instance) {
             .toString()
             .substr(2, 4);
         console.log(otp);
+        await instance.sending_sms_code(phone_number, otp, 'supplier', { name: supplier.supplier_name })
         await instance.SmsModel.saveOtp(supplier.phone_number, otp);
         reply.ok({ phone_number })
     } catch (error) {
