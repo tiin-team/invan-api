@@ -3436,6 +3436,7 @@ module.exports = (instance, options, next) => {
           goods = [];
         }
         const item = goods[0];
+        if (!item) return reply.code(404).send('not found')
         const item_detail = {
           _id: item._id,
           name: item.name,
