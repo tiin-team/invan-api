@@ -352,12 +352,8 @@ const calculateReportSummary = async (request, reply, instance) => {
                 totalReport && totalReport.length && totalReport[0].count
                     ? totalReport[0].count
                     : 1;
-            const skipResult = {
-                $skip: limit * (page - 1),
-            };
-            const limitResult = {
-                $limit: limit,
-            };
+            const skipResult = { $skip: limit * (page - 1) };
+            const limitResult = { $limit: limit };
 
             const netSalesAndProfit = {
                 $project: {
@@ -433,7 +429,7 @@ const calculateReportSummary = async (request, reply, instance) => {
             });
         }
     } catch (error) {
-        reply.error(error.message);
+        return reply.error(error.message);
     }
 };
 const by_supplier_report = async (request, reply, instance) => {
@@ -692,7 +688,8 @@ module.exports = fp((instance, _, next) => {
                 type: 'object',
                 required: [
                     'custom', 'end',
-                    'services', 'start'
+                    'services', 'start',
+                    'count_type', 'target'
                 ],
                 properties: {
                     custom: { type: 'boolean' },
@@ -709,6 +706,20 @@ module.exports = fp((instance, _, next) => {
                     search: {
                         type: 'string',
                         default: ''
+                    },
+                    count_type: {
+                        type: 'integer',
+                        enum: [1, 2, 3, 4, 5, 6],
+                    },
+                    target: {
+                        type: 'string',
+                        enum: [
+                            'gross_sales',
+                            'refunds',
+                            'discounts',
+                            'net_sales',
+                            'gross_profit',
+                        ],
                     }
                 }
             }

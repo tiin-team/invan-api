@@ -87,12 +87,14 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/verify' \
 
 <!-- | search   | no       | ""      | length = 4        | -->
 
-| Name     | Required | Example | Note              |
-| -------- | -------- | ------- | ----------------- |
-| custom   | yes      | false   | Boolean           |
-| start    | yes      | 10      | min = 0, max = 23 |
-| end      | yes      | 12      | min = 0, max = 23 |
-| services | yes      | [""]    | service_ids       |
+| Name       | Required | Example     | Note                                                                        |
+| ---------- | -------- | ----------- | --------------------------------------------------------------------------- |
+| custom     | yes      | false       | Boolean                                                                     |
+| start      | yes      | 10          | min = 0, max = 23                                                           |
+| end        | yes      | 12          | min = 0, max = 23                                                           |
+| services   | yes      | [""]        | service_ids                                                                 |
+| count_type | yes      | 2           | must enum [1, 2, 3, 4, 5, 6]                                                |
+| target     | yes      | gross_sales | must enum ['gross_sales', 'refunds','discounts','net_sales','gross_profit'] |
 
 curl --location --request POST 'http://0.0.0.0:3003/dashboard/1546282800000/1652085011829/10/1' \
 --header 'Accept-version: 1.0.0' \
