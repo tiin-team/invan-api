@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 
 const getToken = (data) => jwt.sign(data, process.env.JWT_SECRET);
 const verifyToken = (token) => jwt.verify(token, process.env.JWT_SECRET);
-
+// const token = ''
+// console.log(verifyToken(token))/;
 module.exports = fp((instance, _, next) => {
     console.log('auth')
     instance.decorate('auth_supplier', async (request, reply, next) => {

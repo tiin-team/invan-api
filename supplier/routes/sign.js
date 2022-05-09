@@ -19,7 +19,12 @@ async function signSupplier(request, reply, instance) {
         console.log(otp);
         await instance.sending_sms_code(phone_number, otp, 'supplier', { name: supplier.supplier_name })
         await instance.SmsModel.saveOtp(supplier.phone_number, otp);
-        reply.ok({ phone_number })
+        reply.code(200).send({
+            statusCode: 200,
+            error: "Ok",
+            message: "Success",
+            phone_number
+        })
     } catch (error) {
         reply.error(error.message)
     }
@@ -53,7 +58,13 @@ async function verifySupplier(request, reply, instance) {
             role: 'supplier'
         }
         const token = instance.sign_supplier(params);
-        reply.ok({ phone_number, token })
+        return reply.code(200).send({
+            statusCode: 200,
+            error: "Ok",
+            message: "Success",
+            phone_number,
+            token
+        })
     } catch (error) {
         reply.error(error.message)
     }
