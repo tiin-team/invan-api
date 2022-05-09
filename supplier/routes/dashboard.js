@@ -491,20 +491,6 @@ module.exports = fp((instance, _, next) => {
         }
     }
     instance.post(
-        '/dashboard/:min/:max',
-        {
-            ...supplierParams,
-            attachValidation: true,
-            preValidation: [instance.auth_supplier]
-        },
-        async (request, reply) => {
-            if (request.validationError) {
-                return reply.validation(request.validationError.message)
-            }
-            return await calculateReportSummary(request, reply, instance)
-        }
-    );
-    instance.post(
         '/dashboard/:min/:max/:limit/:page',
         {
             ...supplierParams,
@@ -518,6 +504,19 @@ module.exports = fp((instance, _, next) => {
             return await calculateReportSummary(request, reply, instance)
         }
     );
-
+    instance.post(
+        '/dashboard/:min/:max',
+        {
+            ...supplierParams,
+            attachValidation: true,
+            preValidation: [instance.auth_supplier]
+        },
+        async (request, reply) => {
+            if (request.validationError) {
+                return reply.validation(request.validationError.message)
+            }
+            return await calculateReportSummary(request, reply, instance)
+        }
+    );
     next()
 })
