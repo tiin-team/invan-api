@@ -44,13 +44,13 @@ module.exports = (instance, options, next) => {
         })
     }
     const get_services_new = (request, reply, admin) => {
-        const user_available_services = user.services.map(serv => serv.service.toString())
+        const user_available_services = admin.services.map(serv => serv.service.toString())
         const $match = {
             $match: {
                 organization: admin.organization,
             }
         }
-        if (user.role !== 'boss')
+        if (admin.role !== 'boss')
             $match.$match._id = { $in: user_available_services }
 
         instance.services.aggregate([
