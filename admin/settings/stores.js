@@ -44,7 +44,7 @@ module.exports = (instance, options, next) => {
         })
     }
     const get_services_new = (request, reply, admin) => {
-        const user_available_services = admin.services.map(serv => serv.service.toString())
+        const user_available_services = admin.services.map(serv => serv.service + '')
         const $match = {
             $match: {
                 organization: admin.organization,
@@ -66,7 +66,7 @@ module.exports = (instance, options, next) => {
             },
             { $addFields: { settingReceipt: { $first: "$settingReceipt" } } }
         ], (err, services) => {
-            if (services == null) {
+            if (services == null || err) {
                 services = []
             }
             // data = []
