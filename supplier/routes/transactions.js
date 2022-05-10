@@ -26,13 +26,14 @@ async function supplierTransations(request, reply, instance) {
             .skip((page - 1) * limit)
             .limit(limit)
             .lean()
-
+        const total = await instance.supplierTransaction.countDocuments({ supplier_id: supplier._id })
         return reply.code(200).send({
             statusCode: 200,
             error: "Ok",
             message: "Success",
             limit: limit,
             page: page,
+            total: total,
             data: transactions,
         })
     } catch (error) {
