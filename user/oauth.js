@@ -27,9 +27,9 @@ module.exports = fp((instance, _, next) => {
          const query = { [`${acceptUser}_token`]: token }
          instance.User.findOne(query, async (_, user) => {
             if (user) {
-               const access = await instance.AccessRights
-                  .findOne({ name: user.role, organization: user.organization })
-                  .lean()
+               // const access = await instance.AccessRights
+               //    .findOne({ name: user.role, organization: user.organization })
+               //    .lean()
                // if (!checkAcces(request.raw.url, access))
                //    return instance.forbidden(reply)
 

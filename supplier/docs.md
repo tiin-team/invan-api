@@ -128,7 +128,7 @@ curl --location --request GET 'http://0.0.0.0:3003/organizations' \
 ### Request
 
 ```
-curl --location --request POST 'http://0.0.0.0:3003/dashboard/1546282800000/1652085011829' \
+curl --location --request POST 'https://dev.in1.uz/api/invan-supplier/dashboard/1546282800000/1652085011829' \
 --header 'Accept-version: 1.0.0' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk' \
 --header 'Content-Type: application/json' \
@@ -137,7 +137,9 @@ curl --location --request POST 'http://0.0.0.0:3003/dashboard/1546282800000/1652
     "start": 2,
     "end": 10,
     "services": [],
-    "search": "search"
+    "search": "search",
+    "target": "gross_sales",
+    "count_type": 1
 }'
 ```
 
@@ -161,17 +163,18 @@ curl --location --request POST 'http://0.0.0.0:3003/dashboard/1546282800000/1652
 ### Request
 
 ```cURL
-curl --location --request POST 'http://0.0.0.0:3003/dashboard/1546282800000/1652085011829/10/1' \
+curl --location --request POST 'https://dev.in1.uz/api/invan-supplier/dashboard/1546282800000/1652085011829/10/1' \
 --header 'Accept-version: 1.0.0' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-"custom": false,
-"start": 2,
-"end": 10,
-"services": [],
-"employees": [],
-"search": "search"
+    "custom": false,
+    "start": 2,
+    "end": 10,
+    "services": [],
+    "search": "search",
+    "target": "gross_sales",
+    "count_type": 1
 }'
 ```
 

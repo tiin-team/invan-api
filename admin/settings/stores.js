@@ -44,8 +44,17 @@ module.exports = (instance, options, next) => {
         })
     }
     const get_services_new = (request, reply, admin) => {
+        const user_available_services = user.services.map(serv => serv.service.toString())
+        const $match = {
+            $match: {
+                organization: admin.organization,
+            }
+        }
+        if (user.role !== 'boss')
+            $match.$match._id = { $in: user_available_services }
+
         instance.services.aggregate([
-            { $match: { organization: admin.organization } },
+            $match,
             { $addFields: { "service_id": { $toString: "$_id" } } },
             {
                 $lookup: {
@@ -56,23 +65,23 @@ module.exports = (instance, options, next) => {
                 }
             },
             { $addFields: { settingReceipt: { $first: "$settingReceipt" } } }
-        ], async (err, services) => {
+        ], (err, services) => {
             if (services == null) {
                 services = []
             }
-            data = []
-            if (admin.role == 'boss') {
-                data = services
-            } else
-                for (let i = 0; i < services.length; i++) {
-                    serv = admin.services.find(
-                        (elem) => elem.available && elem.service.toString() == services[i]._id.toString()
-                    )
-                    if (serv && serv.available) {
-                        data.push(services[i])
-                    }
-                }
-            reply.ok(data)
+            // data = []
+            // if (admin.role == 'boss') {
+            //     data = services
+            // } else
+            //     for (let i = 0; i < services.length; i++) {
+            //         serv = admin.services.find(
+            //             (elem) => elem.available && elem.service.toString() == services[i]._id.toString()
+            //         )
+            //         if (serv && serv.available) {
+            //             data.push(services[i])
+            //         }
+            //     }
+            reply.ok(services)
         })
     }
     instance.get('/services/get', options.version, (request, reply) => {

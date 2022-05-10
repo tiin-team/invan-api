@@ -438,17 +438,13 @@ module.exports = (instance, options, next) => {
 
   const get_list_of_items = async (request, reply, admin) => {
     var category_id;
-    var query = {
+    const query = {
       organization: admin.organization,
-      item_type: {
-        $ne: 'variant',
-      },
+      item_type: { $ne: 'variant' },
     };
 
     let elemmatch = {};
-    let sort_by = {
-      _id: 1,
-    };
+    let sort_by = { _id: 1 };
     if (request.body) {
       if (request.body.category != '' && request.body.category != null) {
         category_id = request.body.category;
@@ -474,15 +470,11 @@ module.exports = (instance, options, next) => {
       if (request.body.sort_by) {
         switch (request.body.sort_by) {
           case 'name': {
-            sort_by = {
-              name: 1,
-            };
+            sort_by = { name: 1 };
             break;
           }
           case 'sku': {
-            sort_by = {
-              sku: 1,
-            };
+            sort_by = { sku: 1 };
             break;
           }
           case 'stock': {
@@ -524,29 +516,21 @@ module.exports = (instance, options, next) => {
         switch (request.body.stock) {
           case 'positive': {
             elemmatch.in_stock = { $gt: 0 };
-            query['services'] = {
-              $elemMatch: elemmatch,
-            };
+            query['services'] = { $elemMatch: elemmatch };
             break;
           }
           case 'low': {
-            query['services'] = {
-              $elemMatch: elemmatch,
-            };
+            query['services'] = { $elemMatch: elemmatch };
             break;
           }
           case 'zero': {
             elemmatch.in_stock = { $eq: 0 };
-            query['services'] = {
-              $elemMatch: elemmatch,
-            };
+            query['services'] = { $elemMatch: elemmatch };
             break;
           }
           case 'out': {
             elemmatch.in_stock = { $lte: 0 };
-            query['services'] = {
-              $elemMatch: elemmatch,
-            };
+            query['services'] = { $elemMatch: elemmatch };
             break;
           }
         }
@@ -582,9 +566,7 @@ module.exports = (instance, options, next) => {
       }
     } catch (error) { }
     if (ids.length > 0) {
-      query.category = {
-        $in: ids,
-      };
+      query.category = { $in: ids };
     }
     var services = request.body.services;
     if (services != undefined) {
@@ -620,9 +602,7 @@ module.exports = (instance, options, next) => {
         },
       ];
       if (+name) {
-        query['$or'].push({
-          sku: +name,
-        });
+        query['$or'].push({ sku: +name });
       }
     }
 
@@ -703,11 +683,7 @@ module.exports = (instance, options, next) => {
     ],
     */
 
-    const pipeline = [
-      {
-        $match: query,
-      },
-    ];
+    const pipeline = [{ $match: query }];
 
     const projectionItems = {
       $project: {
@@ -785,16 +761,23 @@ module.exports = (instance, options, next) => {
       });
     }
 
-    pipeline.push({
-      $sort: sort_by,
-    });
+    pipeline.push({ $sort: sort_by });
+
+    pipeline.push({ $skip: limit * (page - 1) });
+    pipeline.push({ $limit: limit });
 
     pipeline.push({
-      $skip: limit * (page - 1),
-    });
-    pipeline.push({
-      $limit: limit,
-    });
+      $project: {
+        ...projectionItems.$project,
+        services: {
+          $filter: {
+            input: '$services',
+            as: 'service',
+            cond: { $in: ['$service', request.user.services.map(elem => elem.service + '')] },
+          },
+        }
+      }
+    })
 
     if (sort_by.in_stock == -1) {
       const calculateStockProject = {
@@ -853,9 +836,9 @@ module.exports = (instance, options, next) => {
       pipeline.push(calculateStockProject);
     }
 
-    const org_services = await instance.services.find({
-      organization: admin.organization,
-    });
+    const org_services = await instance.services
+      .find({ organization: admin.organization })
+      .lean();
     const servicesObj = {};
     for (const s of org_services) {
       servicesObj[s._id + ''] = true;
