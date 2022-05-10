@@ -23,6 +23,7 @@ async function supplierTransations(request, reply, instance) {
 
         const transactions = await instance.supplierTransaction
             .find({ supplier_id: supplier._id })
+            .sort({ date: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
             .lean()
