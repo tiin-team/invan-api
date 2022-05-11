@@ -3,14 +3,26 @@ const fp = require('fastify-plugin');
 
 async function supplierValuation(request, reply, instance) {
     try {
-        // const { phone_number } = request.user;
-        // const { organization, limit, page } = request.body;
         const limit = !isNaN(parseInt(request.query.limit))
             ? parseInt(request.query.limit)
             : 10
         const page = !isNaN(parseInt(request.query.page))
             ? parseInt(request.query.page)
             : 1
+        const sort = {}
+
+        switch (request.query.sort_by) {
+            case 'name':
+                sort.name = parseInt(request.query.sort_type)
+                break;
+            case 'in_stock':
+                sort.in_stock = parseInt(request.query.sort_type)
+                break;
+            default:
+                sort._id = 1
+                break;
+        }
+
         const result = await instance.inventory_valuation_result(
             {
                 limit,
@@ -18,7 +30,7 @@ async function supplierValuation(request, reply, instance) {
                 organization: request.user.organization,
                 service: '',
                 supplier_id: request.user._id,
-                sort: { _id: 1 },
+                sort: sort,
             },
             instance
         );
@@ -38,7 +50,7 @@ async function supplierValuation(request, reply, instance) {
         })
         // reply.ok(result)
     } catch (error) {
-        reply.error(error.message)
+        return reply.error(error.message)
     }
     return reply;
 }
@@ -49,11 +61,16 @@ module.exports = fp((instance, _, next) => {
             type: 'object',
             additionalProperties: false,
             // required: ['organization', 'limit', 'page'],
+            required: ['sort_by', 'sort_type'],
             properties: {
                 // organization: { type: 'string', minLength: 24, maxLength: 24 },
                 limit: { type: 'number', min: 1, max: 20 },
                 page: { type: 'number', min: 1 },
-                sort: { type: 'object' },
+                sort_by: { type: 'string', enum: ['name', 'in_stock'] },
+                sort_type: {
+                    type: 'number',
+                    enum: [1, -1],
+                },
             }
         }
     }
@@ -62,13 +79,13 @@ module.exports = fp((instance, _, next) => {
         '/supplier/valuation',
         {
             version: '1.0.0',
-            // schema: querySchema,
+            schema: querySchema,
             attachValidation: true,
             preValidation: [instance.auth_supplier]
         },
         (request, reply) => {
             if (request.validationError) {
-                return reply.validation(request.validationError.message)
+                return reply.code(400).send(request.validationError)
             }
 
             return supplierValuation(request, reply, instance)
