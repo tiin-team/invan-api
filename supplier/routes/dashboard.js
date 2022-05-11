@@ -390,9 +390,7 @@ module.exports = fp((instance, _, next) => {
         schema: {
             params: {
                 type: 'object',
-                required: [
-                    'min', 'max', 'limit', 'page'
-                ],
+                required: ['min', 'max'],
                 properties: {
                     min: { type: 'number', minimum: 1546282800000 },
                     max: { type: 'number', minimum: 1 },
