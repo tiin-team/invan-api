@@ -210,19 +210,6 @@ const calculateReportSummary = async (request, reply, instance) => {
                         $subtract: ['$gross_sales', { $add: ['$discounts', '$refunds'] }],
                     },
                 },
-                gross_profit: {
-                    $sum: {
-                        $subtract: [
-                            {
-                                $subtract: [
-                                    '$gross_sales',
-                                    { $add: ['$discounts', '$refunds'] },
-                                ],
-                            },
-                            '$cost_of_goods',
-                        ],
-                    },
-                },
                 data: {
                     $push: {
                         date: {
@@ -236,18 +223,7 @@ const calculateReportSummary = async (request, reply, instance) => {
                                 '$gross_sales',
                                 { $add: ['$discounts', '$refunds'] },
                             ],
-                        },
-                        gross_profit: {
-                            $subtract: [
-                                {
-                                    $subtract: [
-                                        '$gross_sales',
-                                        { $add: ['$discounts', '$refunds'] },
-                                    ],
-                                },
-                                '$cost_of_goods',
-                            ],
-                        },
+                        }
                     },
                 },
             },
@@ -289,7 +265,6 @@ const calculateReportSummary = async (request, reply, instance) => {
                     message: "Success",
                     cost_of_goods: 0,
                     discounts: 0,
-                    gross_profit: 0,
                     gross_sales: 0,
                     net_sales: 0,
                     refunds: 0,
@@ -379,30 +354,6 @@ const calculateReportSummary = async (request, reply, instance) => {
                             },
                         ],
                     },
-                    gross_profit: {
-                        $subtract: [
-                            {
-                                $subtract: [
-                                    {
-                                        $max: [0, '$gross_sales'],
-                                    },
-                                    {
-                                        $add: [
-                                            {
-                                                $max: [0, '$refunds'],
-                                            },
-                                            {
-                                                $max: [0, '$discounts'],
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
-                            {
-                                $max: [0, '$cost_of_goods'],
-                            },
-                        ],
-                    },
                 },
             };
 
@@ -483,7 +434,6 @@ module.exports = fp((instance, _, next) => {
                             'refunds',
                             'discounts',
                             'net_sales',
-                            'gross_profit',
                         ],
                     }
                 }

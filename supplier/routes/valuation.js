@@ -52,7 +52,8 @@ module.exports = fp((instance, _, next) => {
             properties: {
                 // organization: { type: 'string', minLength: 24, maxLength: 24 },
                 limit: { type: 'number', min: 1, max: 20 },
-                page: { type: 'number', min: 1 }
+                page: { type: 'number', min: 1 },
+                sort: { type: 'object' },
             }
         }
     }
@@ -61,7 +62,7 @@ module.exports = fp((instance, _, next) => {
         '/supplier/valuation',
         {
             version: '1.0.0',
-            schema: querySchema,
+            // schema: querySchema,
             attachValidation: true,
             preValidation: [instance.auth_supplier]
         },
@@ -69,6 +70,12 @@ module.exports = fp((instance, _, next) => {
             if (request.validationError) {
                 return reply.validation(request.validationError.message)
             }
+            sort_by
+            sort_type
+            const sort = JSON.parse(JSON.stringify(request.query.sort))
+            console.log('query', sort, typeof sort);
+            console.log('query', sort.sort);
+            return reply.ok()
             return supplierValuation(request, reply, instance)
         }
     );

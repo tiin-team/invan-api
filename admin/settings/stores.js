@@ -69,18 +69,7 @@ module.exports = (instance, options, next) => {
             if (services == null || err) {
                 services = []
             }
-            // data = []
-            // if (admin.role == 'boss') {
-            //     data = services
-            // } else
-            //     for (let i = 0; i < services.length; i++) {
-            //         serv = admin.services.find(
-            //             (elem) => elem.available && elem.service.toString() == services[i]._id.toString()
-            //         )
-            //         if (serv && serv.available) {
-            //             data.push(services[i])
-            //         }
-            //     }
+
             reply.ok(services)
         })
     }

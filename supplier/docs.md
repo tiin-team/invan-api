@@ -7,18 +7,23 @@ https://dev.in1.uz/api/invan-supplier/
 ```
 
 - Supplier
+  - [Auth](#auth)
   - [Login](#login)
   - [Verify](#verify)
   - [Get organizations](#get-organizations)
   - [Dashboard](#dashboard)
   - [Transactions get](#transactions-get)
   - [Get Supplier valuation](#get-supplier-valuation)
+  - [Reports](#reports)
+  - [Reports sales by item](#reports-sales-by-item)
 
 # Supplier
 
-## Login
+## Auth
 
-### Parameters
+### Login
+
+#### Parameters
 
 | Name         | Required | Example         | Note         |
 | ------------ | -------- | --------------- | ------------ |
@@ -28,7 +33,7 @@ https://dev.in1.uz/api/invan-supplier/
 /supplier/login
 ```
 
-#### Request:
+##### Request:
 
 ```cURL
 curl --location --request POST 'http://0.0.0.0:3003/supplier/login' \
@@ -39,9 +44,9 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/login' \
 }'
 ```
 
-### Example requests/responses
+#### Example requests/responses
 
-#### Success response:
+##### Success response:
 
 ```json
 {
@@ -52,7 +57,7 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/login' \
 }
 ```
 
-#### Response on fail
+##### Response on fail
 
 ```json
 {
@@ -61,13 +66,13 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/login' \
 }
 ```
 
-## Verify
+### Verify
 
 ```
 /supplier/login
 ```
 
-### Request
+#### Request
 
 ```cURL
 curl --location --request POST 'http://0.0.0.0:3003/supplier/verify' \
@@ -79,14 +84,14 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/verify' \
 }'
 ```
 
-### Parameters
+#### Parameters
 
 | Name         | Required | Example         | Note         |
 | ------------ | -------- | --------------- | ------------ |
 | phone_number | yes      | "+998909966551" | Valid number |
 | otp          | yes      | "3609"          | length = 4   |
 
-### Responses
+#### Responses
 
 {}
 
@@ -207,3 +212,35 @@ curl --location --request GET 'http://0.0.0.0:3003/supplier/valuation' \
 ### Responses
 
 {}
+
+## Reports
+
+### Reports sales by item
+
+```
+/report/sales/by_item/below/:min/:max
+```
+
+### Query Parameters
+
+<!-- | search   | no       | ""      | length = 4        | -->
+
+| Name     | Required | Example                  | Note              |
+| -------- | -------- | ------------------------ | ----------------- |
+| custom   | no       | false                    | Boolean           |
+| start    | no       | 10                       | min = 0, max = 23 |
+| end      | no       | 12                       | min = 0, max = 23 |
+| services | no       | [""]                     | service_ids       |
+| search   | no       | ""                       |                   |
+| limit    | no       | 10                       |                   |
+| page     | no       | 1                        |                   |
+| category | no       | 5fa2777181ca55194b9ae989 | mongodb ObjectID  |
+
+### Request
+
+```cURL
+curl --location --request GET 'http://0.0.0.0:3003/report/sales/by_item/below/1546282800000/1652085011829' \
+--header 'Accept-user: admin' \
+--header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk' \
+--header 'Accept-version: 1.0.0'
+```
