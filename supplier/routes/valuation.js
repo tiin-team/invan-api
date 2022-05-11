@@ -70,12 +70,7 @@ module.exports = fp((instance, _, next) => {
             if (request.validationError) {
                 return reply.validation(request.validationError.message)
             }
-            sort_by
-            sort_type
-            const sort = JSON.parse(JSON.stringify(request.query.sort))
-            console.log('query', sort, typeof sort);
-            console.log('query', sort.sort);
-            return reply.ok()
+
             return supplierValuation(request, reply, instance)
         }
     );

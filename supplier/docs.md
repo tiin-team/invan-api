@@ -231,7 +231,7 @@ curl --location --request GET 'http://0.0.0.0:3003/supplier/valuation' \
 | start    | no       | 10                       | min = 0, max = 23 |
 | end      | no       | 12                       | min = 0, max = 23 |
 | services | no       | [""]                     | service_ids       |
-| search   | no       | ""                       |                   |
+| search   | no       | ""                       | search by product |
 | limit    | no       | 10                       |                   |
 | page     | no       | 1                        |                   |
 | category | no       | 5fa2777181ca55194b9ae989 | mongodb ObjectID  |
