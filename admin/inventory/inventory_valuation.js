@@ -1,6 +1,6 @@
 const fp = require('fastify-plugin');
 
-async function inventoryValuationResult({ limit, page, supplier_id, organization, service }, instance,) {
+async function inventoryValuationResult({ limit, page, supplier_id, organization, service, sort }, instance,) {
 
   const query = { $match: { organization } };
 
@@ -153,15 +153,19 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
       },
     };
   }
+  const $sort = sort
+    ? { $sort: sort }
+    : { $sort: { _id: 1 } }
+
   const items = await instance.goodsSales
     .aggregate([
       query,
+      $sort,
       { $skip: limit * (page - 1) },
       { $limit: limit },
       unwindServices,
       projectPrimaryFields,
       joinItems,
-      { $sort: { _id: 1 } },
     ])
     .allowDiskUse(true)
     .exec();

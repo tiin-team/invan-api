@@ -12,7 +12,14 @@ async function supplierValuation(request, reply, instance) {
             ? parseInt(request.query.page)
             : 1
         const result = await instance.inventory_valuation_result(
-            { limit, page, organization: request.user.organization, service: '', supplier_id: request.user._id, },
+            {
+                limit,
+                page,
+                organization: request.user.organization,
+                service: '',
+                supplier_id: request.user._id,
+                sort: { _id: 1 },
+            },
             instance
         );
         return reply.code(200).send({

@@ -37,7 +37,7 @@ module.exports = (instance, options, next) => {
             }
             for (let i = 0; i < services.length; i++) {
                 services[i].count = services[i].count.length
-                services[i].settingReceipt = await instance.settingReceipt.findOne({ service: services[i]._id })
+                services[i].settingReceipt = await instance.settingReceipt.findOne({ service: services[i]._id }).lean()
             }
 
             reply.ok(services)
@@ -50,8 +50,8 @@ module.exports = (instance, options, next) => {
                 organization: admin.organization,
             }
         }
-        if (admin.role !== 'boss')
-            $match.$match._id = { $in: user_available_services }
+        // if (admin.role !== 'boss')
+        //     $match.$match._id = { $in: user_available_services }
 
         instance.services.aggregate([
             $match,
