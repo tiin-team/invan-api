@@ -11,12 +11,6 @@ const calculateReportSummary = async (request, reply, instance) => {
             $and: [
                 { organization: supplier.organization },
                 { receipt_state: { $ne: 'draft' } },
-                {
-                    $or: [
-                        { "sold_item_list.supplier_id": supplier._id },
-                        { "sold_item_list.supplier_id": supplier._id + '' },
-                    ],
-                },
                 { debt_id: null },
                 {
                     date: {
@@ -83,6 +77,31 @@ const calculateReportSummary = async (request, reply, instance) => {
 
         const sortByDate = { $sort: { date: 1 } };
 
+        const filterSupplier = {
+            $project: {
+                count_type: 1,
+                date: 1,
+                sold_item_list: {
+                    $filter: {
+                        input: '$sold_item_list',
+                        as: 'sold_item',
+                        cond: [
+                            {
+                                $or: [
+                                    { $eq: ["$$sold_item.supplier_id", supplier._id] },
+                                    { $eq: ["$$sold_item.supplier_id", supplier._id + ''] },
+                                ],
+                            },
+                        ]
+                    }
+                },
+                is_refund: 1,
+                total_discount: 1,
+                total_price: 1,
+                cost_of_goods: 1,
+                cash_back: 1,
+            }
+        }
         const projectReport = {
             $project: {
                 count_type: {
@@ -259,6 +278,7 @@ const calculateReportSummary = async (request, reply, instance) => {
             const result = await instance.Receipts.aggregate([
                 { $match: filterReceipts },
                 sortByDate,
+                filterSupplier,
                 projectReport,
                 groupByDate,
                 sortById,
@@ -325,6 +345,7 @@ const calculateReportSummary = async (request, reply, instance) => {
 
             const totalReport = await instance.Receipts.aggregate([
                 { $match: filterReceipts },
+                filterSupplier,
                 projectReport,
                 groupByDate,
                 countTotalReport,
@@ -369,6 +390,7 @@ const calculateReportSummary = async (request, reply, instance) => {
             const result = await instance.Receipts.aggregate([
                 { $match: filterReceipts },
                 sortByDate,
+                filterSupplier,
                 projectReport,
                 groupByDate,
                 sortById,
