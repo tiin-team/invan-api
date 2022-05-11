@@ -8,16 +8,25 @@ const calculateReportSummary = async (request, reply, instance) => {
         const { custom, start, end, services, count_type, target } = request.body;
 
         const filterReceipts = {
-            organization: supplier.organization,
-            receipt_state: { $ne: 'draft' },
-            "sold_item_list.supplier_id": supplier._id,
-            debt_id: null,
-            date: {
-                // $gte: min - (TIME_DIFF | 0),
-                // $lte: max - (TIME_DIFF | 0),
-                $gte: min,
-                $lte: max,
-            },
+            $and: [
+                { organization: supplier.organization },
+                { receipt_state: { $ne: 'draft' } },
+                {
+                    $or: [
+                        { "sold_item_list.supplier_id": supplier._id },
+                        { "sold_item_list.supplier_id": supplier._id + '' },
+                    ],
+                },
+                { debt_id: null },
+                {
+                    date: {
+                        // $gte: min - (TIME_DIFF | 0),
+                        // $lte: max - (TIME_DIFF | 0),
+                        $gte: min,
+                        $lte: max,
+                    },
+                },
+            ],
         };
 
         if (services && services.length > 0) {
