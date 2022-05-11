@@ -67,10 +67,7 @@ module.exports = fp((instance, _, next) => {
                 limit: { type: 'number', min: 1, max: 20 },
                 page: { type: 'number', min: 1 },
                 sort_by: { type: 'string', enum: ['name', 'in_stock'] },
-                sort_type: {
-                    type: 'number',
-                    enum: [1, -1],
-                },
+                sort_type: { type: 'number', enum: [1, -1] },
             }
         }
     }
