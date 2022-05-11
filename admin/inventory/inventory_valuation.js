@@ -160,12 +160,12 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
   const items = await instance.goodsSales
     .aggregate([
       query,
-      $sort,
-      { $skip: limit * (page - 1) },
-      { $limit: limit },
       unwindServices,
       projectPrimaryFields,
       joinItems,
+      $sort,
+      { $skip: limit * (page - 1) },
+      { $limit: limit },
     ])
     .allowDiskUse(true)
     .exec();
