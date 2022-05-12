@@ -765,9 +765,8 @@ module.exports = (instance, options, next) => {
 
     pipeline.push({ $skip: limit * (page - 1) });
     pipeline.push({ $limit: limit });
-    // console.log(request.user.services.map(elem => elem.service));
-    // console.log(projectionItems.$project);
-    const old_project = projectionItems.$project
+
+    const old_project = { ...projectionItems.$project }
     delete old_project.services
     pipeline.push({
       $project: {
@@ -775,18 +774,18 @@ module.exports = (instance, options, next) => {
         services: {
           $filter: {
             input: '$services',
-            as: 'service',
+            as: 'serv',
             cond: {
               $or: [
                 {
                   $in: [
-                    '$service.service',
+                    '$$serv.service',
                     request.user.services.map(elem => elem.service),
                   ],
                 },
                 {
                   $in: [
-                    '$service.service',
+                    '$$serv.service',
                     request.user.services.map(elem => elem.service + ''),
                   ],
                 },
@@ -866,7 +865,7 @@ module.exports = (instance, options, next) => {
       const goods = await instance.goodsSales
         .aggregate(pipeline)
         .allowDiskUse(true);
-      return reply.ok(goods)
+
       var total = goods.length;
       var with_stocks = [];
       for (let i = 0; i < goods.length; i++) {
