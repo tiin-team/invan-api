@@ -774,14 +774,10 @@ module.exports = (instance, options, next) => {
             input: '$services',
             as: 'service',
             cond: {
-              $or: [
-                {
-                  $in: ['$service', request.user.services.map(elem => elem.service + '')]
-                },
-                {
-                  $in: ['$service', request.user.services.map(elem => elem.service)]
-                },
-              ]
+              $in: [
+                { $toString: '$service.service' },
+                request.user.services.map(elem => elem.service + '')
+              ],
             },
           },
         }
@@ -854,8 +850,6 @@ module.exports = (instance, options, next) => {
     }
 
     try {
-      const user_available_services = admin.services.map(serv => serv.service)
-
       const goods = await instance.goodsSales
         .aggregate(pipeline)
         .allowDiskUse(true);
@@ -868,17 +862,12 @@ module.exports = (instance, options, next) => {
         }
         console.log(' goods[i].services', goods[i].services);
 
-        goods[i].services = goods[i].services.filter(serv => {
-          if (user_available_services.find(u_serv => u_serv.service + '' === serv.service + ''))
-            return serv;
-          else return false;
-        })
         goods[i].in_stock = 0;
         let item_reminder = 0;
         const SERVICES =
           request.body && request.body.services ? request.body.services : [];
         const SERVICE = request.body ? request.body.service : '';
-        console.log(' goods[i].services', goods[i].services);
+
         for (const service of goods[i].services) {
           if (typeof service.in_stock != 'number') {
             service.in_stock = 0;
