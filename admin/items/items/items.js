@@ -773,7 +773,16 @@ module.exports = (instance, options, next) => {
           $filter: {
             input: '$services',
             as: 'service',
-            cond: { $in: ['$service', request.user.services.map(elem => elem.service + '')] },
+            cond: {
+              $or: [
+                {
+                  $in: ['$service', request.user.services.map(elem => elem.service + '')]
+                },
+                {
+                  $in: ['$service', request.user.services.map(elem => elem.service)]
+                },
+              ]
+            },
           },
         }
       }
@@ -845,6 +854,8 @@ module.exports = (instance, options, next) => {
     }
 
     try {
+      const user_available_services = admin.services.map(serv => serv.service)
+
       const goods = await instance.goodsSales
         .aggregate(pipeline)
         .allowDiskUse(true);
@@ -855,6 +866,11 @@ module.exports = (instance, options, next) => {
         if (!goods[i].services || typeof goods[i].services != typeof []) {
           goods[i].services = [];
         }
+        goods[i].services = goods[i].services.filter(serv => {
+          if (user_available_services.find(u_serv => u_serv + '' === serv.service + ''))
+            return serv;
+          else return false;
+        })
         goods[i].in_stock = 0;
         let item_reminder = 0;
         const SERVICES =
@@ -867,9 +883,11 @@ module.exports = (instance, options, next) => {
           if (typeof service.reminder != 'number') {
             service.reminder = 0;
           }
+          console.log('goods[i].in_stock', goods[i].in_stock);
           service.in_stock = Math.round(service.in_stock * 100) / 100;
           service.reminder = Math.round(service.reminder * 100) / 100;
           if (servicesObj[service.service + '']) {
+            console.log('service.in_stock', service.in_stock);
             if ((SERVICES && SERVICES.length > 0) || SERVICE != '') {
               if (
                 SERVICES.includes(service.service + '') ||
