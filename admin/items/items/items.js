@@ -750,8 +750,9 @@ module.exports = (instance, options, next) => {
         },
       };
     }
-
-    // pipeline.push(projectionItems);
+    console.log('request.body.stock', request.body.stock, request.body.stock == 'low');
+    console.log(projectionItems);
+    pipeline.push(projectionItems);
 
     if (request.body && request.body.stock == 'low') {
       pipeline.push({
