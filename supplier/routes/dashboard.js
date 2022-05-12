@@ -114,7 +114,6 @@ const calculateReportSummary = async (request, reply, instance) => {
         const groupByDate = {
             $group: {
                 _id: '$count_type',
-                cash_backs: { $sum: '$cash_back' },
                 date: { $first: '$date' },
                 cost_of_goods: {
                     $sum: {
@@ -125,6 +124,9 @@ const calculateReportSummary = async (request, reply, instance) => {
                             },
                         ],
                     },
+                },
+                discounts: {
+                    $sum: '$total_discount',
                 },
                 gross_sales: {
                     $sum: {
@@ -170,7 +172,6 @@ const calculateReportSummary = async (request, reply, instance) => {
         const groupTotalReport = {
             $group: {
                 _id: null,
-                cash_backs: { $sum: '$cash_back' },
                 cost_of_goods: {
                     $sum: '$cost_of_goods',
                 },
