@@ -777,14 +777,14 @@ module.exports = (instance, options, next) => {
               $or: [
                 {
                   $in: [
+                    request.user.services.map(elem => elem.service),
                     '$service.service',
-                    request.user.services.map(elem => elem.service)
                   ],
                 },
                 {
                   $in: [
+                    request.user.services.map(elem => elem.service + ''),
                     '$service.service',
-                    request.user.services.map(elem => elem.service + '')
                   ],
                 },
               ]
