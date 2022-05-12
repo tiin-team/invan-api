@@ -876,6 +876,7 @@ module.exports = (instance, options, next) => {
         const SERVICES =
           request.body && request.body.services ? request.body.services : [];
         const SERVICE = request.body ? request.body.service : '';
+        console.log(' goods[i].services', goods[i].services);
         for (const service of goods[i].services) {
           if (typeof service.in_stock != 'number') {
             service.in_stock = 0;
