@@ -360,7 +360,7 @@ const calculateReportSummary = async (request, reply, instance) => {
                 sortById,
                 skipResult,
                 limitResult,
-                // netSalesAndProfit,
+                netSalesAndProfit,
             ])
                 .allowDiskUse(true)
                 .exec();
