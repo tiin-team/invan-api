@@ -771,7 +771,7 @@ module.exports = (instance, options, next) => {
     delete old_project.services
     pipeline.push({
       $project: {
-        old_project,
+        ...old_project,
         services: {
           $filter: {
             input: '$services',
