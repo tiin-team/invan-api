@@ -282,15 +282,6 @@ async function itemsGetPagin(request, reply, instance) {
                         else: ''
                     }
                 },
-                category: {
-                    $cond: {
-                        if: {
-                            $eq: [{ $type: '$category' }, 'string']
-                        },
-                        then: '$category',
-                        else: ''
-                    }
-                },
                 sold_by: {
                     $cond: {
                         if: {
@@ -466,12 +457,30 @@ async function itemsGetPagin(request, reply, instance) {
                     }
                 },
                 sale_is_avialable: true,
+                category: {
+                    $cond: {
+                        if: {
+                            $eq: [{ $type: '$category' }, 'string']
+                        },
+                        then: '$category',
+                        else: ''
+                    }
+                },
                 category_id: {
                     $cond: {
                         if: {
                             $eq: [{ $type: '$category' }, 'string']
                         },
                         then: '$category',
+                        else: ''
+                    }
+                },
+                category_name: {
+                    $cond: {
+                        if: {
+                            $eq: [{ $type: '$category_name' }, 'string']
+                        },
+                        then: '$category_name',
                         else: ''
                     }
                 },
@@ -530,13 +539,13 @@ async function itemsGetPagin(request, reply, instance) {
             console.log(error.message)
         }
 
-        reply.ok({
+        return reply.ok({
             total: total,
             items: items
         })
     } catch (error) {
         console.log(error.message)
-        reply.error(error.message)
+        return reply.error(error.message)
     }
     return reply;
 }
@@ -580,7 +589,6 @@ module.exports = ((instance, options, next) => {
             attachValidation: true,
         },
         (request, reply) => {
-            console.log(request.body);
             if (request.validationError) {
                 return reply.validation(request.validationError.message)
             }

@@ -14,8 +14,6 @@ const calculateReportSummary = async (request, reply, instance) => {
                 { debt_id: null },
                 {
                     date: {
-                        // $gte: min - (TIME_DIFF | 0),
-                        // $lte: max - (TIME_DIFF | 0),
                         $gte: min,
                         $lte: max,
                     },
@@ -70,8 +68,6 @@ const calculateReportSummary = async (request, reply, instance) => {
             }
         }
 
-        const sortByDate = { $sort: { date: 1 } };
-
         const projectReport = {
             $project: {
                 count_type: {
@@ -106,25 +102,10 @@ const calculateReportSummary = async (request, reply, instance) => {
                     ],
                 },
                 cost_of_goods: {
-                    // $reduce: {
-                    //     input: '$sold_item_list',
-                    //     initialValue: 0,
-                    //     in: {
-                    //         $add: [
-                    //             '$$value',
-                    //             {
-                    // $multiply: [
-                    //     { $max: [0, '$$this.value'] },
-                    //     { $max: [0, '$$this.cost'] },
-                    // ],
                     $multiply: [
                         { $max: [0, '$sold_item_list.value'] },
                         { $max: [0, '$sold_item_list.cost'] },
                     ],
-                    //         },
-                    //     ],
-                    // },
-                    // },
                 },
                 cash_back: 1,
             },
@@ -141,18 +122,6 @@ const calculateReportSummary = async (request, reply, instance) => {
                             '$cost_of_goods',
                             {
                                 $cond: ['$is_refund', -1, 1],
-                            },
-                        ],
-                    },
-                },
-                discounts: {
-                    $sum: {
-                        $multiply: [
-                            {
-                                $cond: ['$is_refund', -1, 1],
-                            },
-                            {
-                                $max: ['$total_discount', 0],
                             },
                         ],
                     },
