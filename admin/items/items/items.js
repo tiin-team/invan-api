@@ -774,10 +774,11 @@ module.exports = (instance, options, next) => {
             input: '$services',
             as: 'service',
             cond: {
-              $in: [
-                { $toString: '$service.service' },
-                request.user.services.map(elem => elem.service + '')
-              ],
+              true
+              // $in: [
+              //   { $toString: '$service.service' },
+              //   request.user.services.map(elem => elem.service + '')
+              // ],
             },
           },
         }
