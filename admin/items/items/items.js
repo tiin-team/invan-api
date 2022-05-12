@@ -766,9 +766,11 @@ module.exports = (instance, options, next) => {
     pipeline.push({ $skip: limit * (page - 1) });
     pipeline.push({ $limit: limit });
     console.log(request.user.services.map(elem => elem.service));
+    console.log(projectionItems.$project);
+    const { services, ...old_project } = projectionItems.$project
     pipeline.push({
       $project: {
-        ...projectionItems.$project,
+        old_project,
         services: {
           $filter: {
             input: '$services',
