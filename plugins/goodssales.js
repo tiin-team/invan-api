@@ -583,8 +583,15 @@ module.exports = fp((instance, _, next) => {
 
       // get Services
       try {
+        const user_available_services = admin.services.map(serv => serv.service)
         const services = await instance.services
-          .find({ organization: admin.organization })
+          .find(
+            {
+              _id: { $in: user_available_services },
+              organization: admin.organization,
+            },
+            { name: 1 },
+          )
           .lean();
         const servicesMap = {}
         for (const s of services) {
@@ -661,7 +668,7 @@ module.exports = fp((instance, _, next) => {
         instance.log.error(error.message)
       }
 
-      return reply.ok({ ...item, name: 'Umar' });
+      return reply.ok(item);
     } catch (error) {
       instance.log.error(error.message)
       reply.error(error.message);
