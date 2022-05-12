@@ -837,7 +837,7 @@ module.exports = (instance, options, next) => {
     }
 
     const org_services = await instance.services
-      .find({ organization: admin.organization })
+      .find({ organization: admin.organization }, { _id: 1 })
       .lean();
     const servicesObj = {};
     for (const s of org_services) {

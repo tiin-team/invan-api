@@ -66,7 +66,6 @@ module.exports = ((instance, _, next) => {
       schema: priceChangeSchema
     },
     (request, reply) => {
-
       instance.oauth_admin(request, reply, async (user) => {
         if (!user) {
           return reply.error('Access')
@@ -75,6 +74,10 @@ module.exports = ((instance, _, next) => {
         const historyMatch = {
           $match: {
             organization: user.organization,
+            $or: [
+              { service: { $in: user.services.map(serv => serv.service + '') } },
+              { service: { $in: user.services.map(serv => serv.service) } },
+            ],
             date: {
               $gte: from,
               $lte: to
@@ -132,7 +135,7 @@ module.exports = ((instance, _, next) => {
         }
 
         const total = await instance.itemPriceChangeHistory.countDocuments(historyMatch['$match']);
-        
+
         const history = await instance.itemPriceChangeHistory.aggregate([
           historyMatch,
           lookupWithServices,
@@ -150,7 +153,7 @@ module.exports = ((instance, _, next) => {
             $limit: limit
           }
         ])
-        
+
         for (let i = 0; i < history.length; i++) {
           if (history[i].product.length > 0) {
             if (history[i].product[0].item_type == 'variant') {
