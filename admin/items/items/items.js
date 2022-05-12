@@ -765,7 +765,7 @@ module.exports = (instance, options, next) => {
 
     pipeline.push({ $skip: limit * (page - 1) });
     pipeline.push({ $limit: limit });
-console.log(request.user.services.map(elem => elem.service));
+    console.log(request.user.services.map(elem => elem.service));
     pipeline.push({
       $project: {
         ...projectionItems.$project,
@@ -774,10 +774,20 @@ console.log(request.user.services.map(elem => elem.service));
             input: '$services',
             as: 'service',
             cond: {
-              $in: [
-                '$service.service',
-                request.user.services.map(elem => elem.service)
-              ],
+              $or: [
+                {
+                  $in: [
+                    '$service.service',
+                    request.user.services.map(elem => elem.service)
+                  ],
+                },
+                {
+                  $in: [
+                    '$service.service',
+                    request.user.services.map(elem => elem.service + '')
+                  ],
+                },
+              ]
             },
           },
         }
