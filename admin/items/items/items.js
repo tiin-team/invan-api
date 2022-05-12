@@ -750,8 +750,7 @@ module.exports = (instance, options, next) => {
         },
       };
     }
-    console.log('request.body.stock', request.body.stock, request.body.stock == 'low');
-    console.log(projectionItems);
+
     pipeline.push(projectionItems);
 
     if (request.body && request.body.stock == 'low') {
@@ -768,35 +767,35 @@ module.exports = (instance, options, next) => {
     pipeline.push({ $limit: limit });
     // console.log(request.user.services.map(elem => elem.service));
     // console.log(projectionItems.$project);
-    // const old_project = projectionItems.$project
-    // delete old_project.services
-    // pipeline.push({
-    //   $project: {
-    //     ...old_project,
-    //     services: {
-    //       $filter: {
-    //         input: '$services',
-    //         as: 'service',
-    //         cond: {
-    //           $or: [
-    //             {
-    //               $in: [
-    //                 '$service.service',
-    //                 request.user.services.map(elem => elem.service),
-    //               ],
-    //             },
-    //             {
-    //               $in: [
-    //                 '$service.service',
-    //                 request.user.services.map(elem => elem.service + ''),
-    //               ],
-    //             },
-    //           ]
-    //         },
-    //       },
-    //     }
-    //   }
-    // })
+    const old_project = projectionItems.$project
+    delete old_project.services
+    pipeline.push({
+      $project: {
+        ...old_project,
+        services: {
+          $filter: {
+            input: '$services',
+            as: 'service',
+            cond: {
+              $or: [
+                {
+                  $in: [
+                    '$service.service',
+                    request.user.services.map(elem => elem.service),
+                  ],
+                },
+                {
+                  $in: [
+                    '$service.service',
+                    request.user.services.map(elem => elem.service + ''),
+                  ],
+                },
+              ]
+            },
+          },
+        }
+      }
+    })
 
     if (sort_by.in_stock == -1) {
       const calculateStockProject = {
