@@ -36,7 +36,13 @@ module.exports = fp((instance, _, next) => {
                if (acceptUser === 'employee') {
                   user.service = request.headers['accept-service']
                }
-               user.services = user.services.filter(serv => serv.available)
+               if (user.role === 'boss')
+                  user.services = user.services.map(serv => {
+                     serv.available = true
+                     return serv
+                  })
+               else
+                  user.services = user.services.filter(serv => serv.available)
                request.user = user
                return next(user)
             }

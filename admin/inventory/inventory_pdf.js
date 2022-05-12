@@ -171,33 +171,33 @@ module.exports = ((instance, _, next) => {
             const { id } = request.params
             const { type } = request.query
 
-            const purchase = await instance.inventoryPurchase.findById(id)
+            const purchase = await instance.inventoryPurchase.findById(id).lean()
             if (!purchase) {
                 return reply.send('Purchase not found')
             }
 
             try {
-                const service = await instance.services.findById(purchase.service)
+                const service = await instance.services.findById(purchase.service).lean()
                 if (service) {
                     purchase.service_name = service.name
                 }
             } catch (error) { }
 
             try {
-                const supplier = await instance.adjustmentSupplier.findById(purchase.supplier_id)
+                const supplier = await instance.adjustmentSupplier.findById(purchase.supplier_id).lean()
                 if (supplier) {
                     purchase.supplier_name = supplier.supplier_name
                 }
             } catch (error) { }
 
             try {
-                const orderer = await instance.User.findById(purchase.ordered_by_id)
+                const orderer = await instance.User.findById(purchase.ordered_by_id).lean()
                 if (orderer) {
                     purchase.ordered_by_name = orderer.name
                 }
             } catch (error) { }
 
-            const items = await instance.purchaseItem.find({ purchase_id: purchase._id })
+            const items = await instance.purchaseItem.find({ purchase_id: purchase._id }).lean()
             const pdfItems = []
             const exelItems = []
             index = 1
@@ -206,7 +206,7 @@ module.exports = ((instance, _, next) => {
                 for (const it of items) {
                     let amount = it.quality * it.purchase_cost
                     try {
-                        const good = await instance.goodsSales.findById(it.product_id)
+                        const good = await instance.goodsSales.findById(it.product_id).lean()
 
                         if (good) {
                             it.sold_by = good.sold_by
@@ -240,7 +240,7 @@ module.exports = ((instance, _, next) => {
                 for (const it of items) {
                     let amount = it.quality * it.purchase_cost
                     try {
-                        const good = await instance.goodsSales.findById(it.product_id)
+                        const good = await instance.goodsSales.findById(it.product_id).lean()
                         if (good) {
                             it.product_name = good.name
                             if (good.item_type == 'variant') {
