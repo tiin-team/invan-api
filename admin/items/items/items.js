@@ -769,35 +769,34 @@ module.exports = (instance, options, next) => {
     console.log(projectionItems.$project);
     const old_project = projectionItems.$project
     delete old_project.services
-    pipeline.push({
-      $project: {
-        ...old_project,
-        services: {
-          $filter: {
-            input: '$services',
-            as: 'service',
-            cond: {
-              $or: [
-                {
-                  $in: [
-                    '$service.service',
-                    request.user.services.map(elem => elem.service),
-                  ],
-                },
-                {
-                  $in: [
-                    '$service.service',
-                    request.user.services.map(elem => elem.service + ''),
-                  ],
-                },
-              ]
-            },
-          },
-        }
-      }
-    })
-    console.log(pipeline[pipeline.length - 1].$project);
-    delete pipeline[pipeline.length - 1].$project;
+    // pipeline.push({
+    //   $project: {
+    //     ...old_project,
+    //     services: {
+    //       $filter: {
+    //         input: '$services',
+    //         as: 'service',
+    //         cond: {
+    //           $or: [
+    //             {
+    //               $in: [
+    //                 '$service.service',
+    //                 request.user.services.map(elem => elem.service),
+    //               ],
+    //             },
+    //             {
+    //               $in: [
+    //                 '$service.service',
+    //                 request.user.services.map(elem => elem.service + ''),
+    //               ],
+    //             },
+    //           ]
+    //         },
+    //       },
+    //     }
+    //   }
+    // })
+
     if (sort_by.in_stock == -1) {
       const calculateStockProject = {
         $project: {
