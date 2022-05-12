@@ -796,7 +796,8 @@ module.exports = (instance, options, next) => {
         }
       }
     })
-
+    console.log(pipeline[pipeline.length - 1].$project);
+    delete pipeline[pipeline.length - 1].$project;
     if (sort_by.in_stock == -1) {
       const calculateStockProject = {
         $project: {
@@ -866,6 +867,7 @@ module.exports = (instance, options, next) => {
       const goods = await instance.goodsSales
         .aggregate(pipeline)
         .allowDiskUse(true);
+      return reply.ok(goods)
       var total = goods.length;
       var with_stocks = [];
       for (let i = 0; i < goods.length; i++) {
