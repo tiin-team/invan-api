@@ -607,6 +607,11 @@ module.exports = fp((instance, _, next) => {
             if (!(v_item.services instanceof Array)) {
               v_item.services = []
             }
+            v_item.services = item.services.filter(serv => {
+              if (user_available_services.find(u_serv => u_serv + '' === serv.service + ''))
+                return serv;
+              else return false;
+            })
             const itemServicesMap = {};
             const sp_item_services = [];
             for (const s of v_item.services) {
@@ -641,6 +646,12 @@ module.exports = fp((instance, _, next) => {
         if (!(item.services instanceof Array)) {
           item.services = []
         }
+        item.services = item.services.filter(serv => {
+          if (user_available_services.find(u_serv => u_serv + '' === serv.service + ''))
+            return serv;
+          else return false;
+        })
+
         for (const s of item.services) {
           itemServicesMap[s.service + ''] = s;
         }
@@ -671,7 +682,7 @@ module.exports = fp((instance, _, next) => {
       return reply.ok(item);
     } catch (error) {
       instance.log.error(error.message)
-      reply.error(error.message);
+      return reply.error(error.message);
     }
 
     /*
