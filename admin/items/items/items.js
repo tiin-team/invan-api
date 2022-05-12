@@ -751,7 +751,7 @@ module.exports = (instance, options, next) => {
       };
     }
 
-    pipeline.push(projectionItems);
+    // pipeline.push(projectionItems);
 
     if (request.body && request.body.stock == 'low') {
       pipeline.push({
@@ -765,10 +765,10 @@ module.exports = (instance, options, next) => {
 
     pipeline.push({ $skip: limit * (page - 1) });
     pipeline.push({ $limit: limit });
-    console.log(request.user.services.map(elem => elem.service));
-    console.log(projectionItems.$project);
-    const old_project = projectionItems.$project
-    delete old_project.services
+    // console.log(request.user.services.map(elem => elem.service));
+    // console.log(projectionItems.$project);
+    // const old_project = projectionItems.$project
+    // delete old_project.services
     // pipeline.push({
     //   $project: {
     //     ...old_project,
