@@ -769,19 +769,19 @@ module.exports = (instance, options, next) => {
     pipeline.push({
       $project: {
         ...projectionItems.$project,
-        services: {
-          $filter: {
-            input: '$services',
-            as: 'service',
-            cond: {
-              true
-              // $in: [
-              //   { $toString: '$service.service' },
-              //   request.user.services.map(elem => elem.service + '')
-              // ],
-            },
-          },
-        }
+        // services: {
+        //   $filter: {
+        //     input: '$services',
+        //     as: 'service',
+        //     cond: {
+        //       true
+        //       // $in: [
+        //       //   { $toString: '$service.service' },
+        //       //   request.user.services.map(elem => elem.service + '')
+        //       // ],
+        //     },
+        //   },
+        // }
       }
     })
 
