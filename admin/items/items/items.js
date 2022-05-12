@@ -866,8 +866,10 @@ module.exports = (instance, options, next) => {
         if (!goods[i].services || typeof goods[i].services != typeof []) {
           goods[i].services = [];
         }
+        console.log(' goods[i].services', goods[i].services);
+
         goods[i].services = goods[i].services.filter(serv => {
-          if (user_available_services.find(u_serv => u_serv + '' === serv.service + ''))
+          if (user_available_services.find(u_serv => u_serv.service + '' === serv.service + ''))
             return serv;
           else return false;
         })
@@ -884,11 +886,10 @@ module.exports = (instance, options, next) => {
           if (typeof service.reminder != 'number') {
             service.reminder = 0;
           }
-          console.log('goods[i].in_stock', goods[i].in_stock);
+
           service.in_stock = Math.round(service.in_stock * 100) / 100;
           service.reminder = Math.round(service.reminder * 100) / 100;
           if (servicesObj[service.service + '']) {
-            console.log('service.in_stock', service.in_stock);
             if ((SERVICES && SERVICES.length > 0) || SERVICE != '') {
               if (
                 SERVICES.includes(service.service + '') ||
