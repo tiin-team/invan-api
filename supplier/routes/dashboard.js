@@ -24,11 +24,6 @@ const calculateReportSummary = async (request, reply, instance) => {
         };
 
         if (services && services.length > 0) {
-            for (const serv of services) {
-                if (!supplier.find(elem => elem._id + '' == serv)) {
-                    return reply.code(403).send('Forbidden service');
-                }
-            }
             filterReceipts.service = { $in: services };
         }
 
@@ -77,31 +72,6 @@ const calculateReportSummary = async (request, reply, instance) => {
 
         const sortByDate = { $sort: { date: 1 } };
 
-        const filterSupplier = {
-            $project: {
-                count_type: 1,
-                date: 1,
-                sold_item_list: {
-                    $filter: {
-                        input: '$sold_item_list',
-                        as: 'sold_item',
-                        cond: [
-                            {
-                                $or: [
-                                    { $eq: ["$$sold_item.supplier_id", supplier._id] },
-                                    { $eq: ["$$sold_item.supplier_id", supplier._id + ''] },
-                                ],
-                            },
-                        ]
-                    }
-                },
-                is_refund: 1,
-                total_discount: 1,
-                total_price: 1,
-                cost_of_goods: 1,
-                cash_back: 1,
-            }
-        }
         const projectReport = {
             $project: {
                 count_type: {
@@ -126,24 +96,35 @@ const calculateReportSummary = async (request, reply, instance) => {
                     ],
                 },
                 is_refund: 1,
-                total_discount: 1,
-                total_price: 1,
+                total_discount: {
+                    $sum: '$sold_item_list.total_discount'
+                },
+                total_price: {
+                    $multiply: [
+                        { $max: [0, '$sold_item_list.value'] },
+                        { $max: [0, '$sold_item_list.price'] },
+                    ],
+                },
                 cost_of_goods: {
-                    $reduce: {
-                        input: '$sold_item_list',
-                        initialValue: 0,
-                        in: {
-                            $add: [
-                                '$$value',
-                                {
-                                    $multiply: [
-                                        { $max: [0, '$$this.value'] },
-                                        { $max: [0, '$$this.cost'] },
-                                    ],
-                                },
-                            ],
-                        },
-                    },
+                    // $reduce: {
+                    //     input: '$sold_item_list',
+                    //     initialValue: 0,
+                    //     in: {
+                    //         $add: [
+                    //             '$$value',
+                    //             {
+                    // $multiply: [
+                    //     { $max: [0, '$$this.value'] },
+                    //     { $max: [0, '$$this.cost'] },
+                    // ],
+                    $multiply: [
+                        { $max: [0, '$sold_item_list.value'] },
+                        { $max: [0, '$sold_item_list.cost'] },
+                    ],
+                    //         },
+                    //     ],
+                    // },
+                    // },
                 },
                 cash_back: 1,
             },
@@ -257,6 +238,16 @@ const calculateReportSummary = async (request, reply, instance) => {
             },
         };
 
+        const unwindSoldItemList = { $unwind: '$sold_item_list' }
+        const filterSupplierMatch = {
+            $match: {
+                $or: [
+                    { "sold_item_list.supplier_id": supplier._id },
+                    { "sold_item_list.supplier_id": supplier._id + '' },
+                ],
+            },
+        }
+
         if (!limit) {
             if (count_type != 2) {
                 projectReport.$project.count_type = {
@@ -277,8 +268,9 @@ const calculateReportSummary = async (request, reply, instance) => {
             }
             const result = await instance.Receipts.aggregate([
                 { $match: filterReceipts },
-                sortByDate,
-                filterSupplier,
+                // sortByDate,
+                unwindSoldItemList,
+                filterSupplierMatch,
                 projectReport,
                 groupByDate,
                 sortById,
@@ -345,7 +337,8 @@ const calculateReportSummary = async (request, reply, instance) => {
 
             const totalReport = await instance.Receipts.aggregate([
                 { $match: filterReceipts },
-                filterSupplier,
+                unwindSoldItemList,
+                filterSupplierMatch,
                 projectReport,
                 groupByDate,
                 countTotalReport,
@@ -389,14 +382,15 @@ const calculateReportSummary = async (request, reply, instance) => {
 
             const result = await instance.Receipts.aggregate([
                 { $match: filterReceipts },
-                sortByDate,
-                filterSupplier,
+                // sortByDate,
+                unwindSoldItemList,
+                filterSupplierMatch,
                 projectReport,
                 groupByDate,
                 sortById,
                 skipResult,
                 limitResult,
-                netSalesAndProfit,
+                // netSalesAndProfit,
             ])
                 .allowDiskUse(true)
                 .exec();
