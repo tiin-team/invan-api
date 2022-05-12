@@ -765,23 +765,22 @@ module.exports = (instance, options, next) => {
 
     pipeline.push({ $skip: limit * (page - 1) });
     pipeline.push({ $limit: limit });
-
+console.log(request.user.services.map(elem => elem.service));
     pipeline.push({
       $project: {
         ...projectionItems.$project,
-        // services: {
-        //   $filter: {
-        //     input: '$services',
-        //     as: 'service',
-        //     cond: {
-        //       true
-        //       // $in: [
-        //       //   { $toString: '$service.service' },
-        //       //   request.user.services.map(elem => elem.service + '')
-        //       // ],
-        //     },
-        //   },
-        // }
+        services: {
+          $filter: {
+            input: '$services',
+            as: 'service',
+            cond: {
+              $in: [
+                '$service.service',
+                request.user.services.map(elem => elem.service)
+              ],
+            },
+          },
+        }
       }
     })
 
@@ -861,7 +860,6 @@ module.exports = (instance, options, next) => {
         if (!goods[i].services || typeof goods[i].services != typeof []) {
           goods[i].services = [];
         }
-        console.log(' goods[i].services', goods[i].services);
 
         goods[i].in_stock = 0;
         let item_reminder = 0;
