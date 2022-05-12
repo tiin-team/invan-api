@@ -661,7 +661,7 @@ module.exports = fp((instance, _, next) => {
         instance.log.error(error.message)
       }
 
-      return reply.ok(item);
+      return reply.ok({ ...item, name: 'Umar' });
     } catch (error) {
       instance.log.error(error.message)
       reply.error(error.message);
