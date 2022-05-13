@@ -1,10 +1,9 @@
-
 const PDFDocument = require('pdfkit');
-const PdfTable = require('voilab-pdf-table')
 const ExcelJs = require('exceljs');
 const fs = require('fs');
 const path = require('path')
 const moment = require('moment')
+
 const removeBorders = (worksheet, list) => {
     for (const cell of list) {
         worksheet.getCell(cell.cell).border = {

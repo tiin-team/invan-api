@@ -1,4 +1,3 @@
-
 'use strict'
 
 require('dotenv').config()
@@ -32,7 +31,6 @@ module.exports = function (fastify, opts, next) {
         dir: path.join(__dirname, 'admin/inventory'),
         options: Object.assign(options, opts)
     })
-
 
     next()
 }
