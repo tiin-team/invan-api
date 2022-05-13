@@ -1616,7 +1616,6 @@ module.exports = fp((instance, _, next) => {
     can_delete_item: boolean,
     // inventory
     inventory: boolean,
-    inv_supplier_valuation: boolean,
     inv_purchase_orders: boolean,
     inv_purchase_mark: boolean,
     inv_purchase_orders_cost: boolean,
@@ -1627,6 +1626,8 @@ module.exports = fp((instance, _, next) => {
     inv_productions: boolean,
     inv_productions_cost: boolean,
     inv_suppliers: boolean,
+    inv_supplier_delete: boolean,
+    inv_supplier_valuation: boolean,
     inv_supplier_transaction: boolean,
     inv_supplier_transaction_corrector: boolean,
     inv_fees: boolean,

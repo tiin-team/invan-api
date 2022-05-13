@@ -464,7 +464,6 @@ module.exports = (instance, options, next) => {
           create_reciept: true,
           //inventory
           inventory: true,
-          inv_supplier_valuation: true,
           inv_purchase_orders: true,
           inv_purchase_mark: true,
           inv_purchase_orders_cost: true,
@@ -475,6 +474,8 @@ module.exports = (instance, options, next) => {
           inv_productions: true,
           inv_productions_cost: true,
           inv_suppliers: true,
+          inv_supplier_delete: true,
+          inv_supplier_valuation: true,
           inv_supplier_transaction: true,
           inv_supplier_transaction_corrector: true,
           inv_fees: true,
@@ -568,9 +569,11 @@ module.exports = (instance, options, next) => {
               reply.error('Error on deleting');
             }
           }
-        );
+        )
+          .lean();
       }
-    );
+    )
+      .lean();
   };
 
   instance.post('/access/delete_group', options.version, (request, reply) => {
@@ -598,7 +601,8 @@ module.exports = (instance, options, next) => {
         }
         reply.ok(names);
       }
-    );
+    )
+      .lean();
   };
 
   instance.get('/access/get/roles', options.version, (request, reply) => {
