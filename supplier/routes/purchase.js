@@ -355,11 +355,11 @@ module.exports = fp((instance, _, next) => {
             attachValidation: true,
             preValidation: [instance.auth_supplier]
         },
-        (request, reply) => {
+        async (request, reply) => {
             if (request.validationError) {
                 return reply.validation(request.validationError.message)
             }
-            return getPurchasePdf(request, reply, instance)
+            return await getPurchasePdf(request, reply, instance)
         }
     );
 
