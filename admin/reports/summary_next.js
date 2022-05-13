@@ -1,12 +1,12 @@
 const fs = require('fs');
 module.exports = (instance, _, next) => {
 
-  var version = { version: '1.0.0' }
+  const version = { version: '1.0.0' }
 
   // reports summary first page of back office
   // chart and table
 
-  var return_dates = (start, end, cnt) => {
+  const return_dates = (start, end, cnt) => {
     var times = [start, 0]
     for (let i = 0; i < cnt - 2; i++) {
       if (cnt - 1 > 0) {
@@ -19,7 +19,7 @@ module.exports = (instance, _, next) => {
     return times
   }
 
-  var calculate_summary = (request, reply, items, paid_debts) => {
+  const calculate_summary = (request, reply, items, paid_debts) => {
     var gross_sale = 0.0;
     var refund = 0.0;
     var gifts = 0.0;
@@ -742,14 +742,14 @@ module.exports = (instance, _, next) => {
       request.params.min = request.params.min * 1 + request.body.start * 60 * 60 * 1000
       request.params.max = request.params.max * 1 - (24 - request.body.end) * 60 * 60 * 1000
     }
-    var min = parseInt(request.params.min)
-    var max = parseInt(request.params.max)
+    const min = parseInt(request.params.min)
+    const max = parseInt(request.params.max)
 
     const {services} = request.body;
 
     const user_available_services = request.user.services.map(serv => serv.service.toString())
 
-    var query = {
+    const query = {
       organization: admin.organization,
       debt_id: {
         $ne: null

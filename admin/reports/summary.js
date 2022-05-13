@@ -789,10 +789,10 @@ module.exports = (instance, _, next) => {
 
   const calculateReportSummary = async (request, reply, admin) => {
     try {
-      const TIME_DIFF =
-        typeof process.env.TIME_DIFF == typeof 5
-          ? process.env.TIME_DIFF
-          : +process.env.TIME_DIFF;
+      // const TIME_DIFF =
+      //   typeof process.env.TIME_DIFF == typeof 5
+      //     ? process.env.TIME_DIFF
+      //     : +process.env.TIME_DIFF;
 
       const { min, max, limit, page } = request.params;
       const { custom, start, end, services, employees, count_type, target } =
@@ -800,7 +800,7 @@ module.exports = (instance, _, next) => {
       const user_available_services = request
         .user
         .services
-        .map((serv) => serv.service.toString());
+        .map((serv) => serv.service + '');
 
       const filterReceipts = {
         organization: admin.organization,

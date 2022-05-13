@@ -13,6 +13,7 @@ https://dev.in1.uz/api/invan-supplier/
   - [Get organizations](#get-organizations)
   - [Dashboard](#dashboard)
   - [Transactions get](#transactions-get)
+  - [Get purchase pdf](#get-purchase-pdf)
   - [Get Supplier valuation](#get-supplier-valuation)
   - [Reports](#reports)
   - [Reports sales by item](#reports-sales-by-item)
@@ -194,6 +195,18 @@ curl --location --request POST 'https://dev.in1.uz/api/invan-supplier/dashboard/
 ```cURL
 curl --location --request GET 'http://0.0.0.0:3003/supplier/transactions' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk'
+```
+
+## Get purchase pdf
+
+```
+/inventory/purchase/pdf/:purchase_id/:name
+```
+
+### Request
+
+```cURL
+curl --location --request GET 'https://dev.in1.uz/api/inventory/purchase/pdf/627b6b5c8ee36f870b0ff8ff/name'
 ```
 
 ## Get Supplier valuation
