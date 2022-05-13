@@ -314,6 +314,7 @@ const getPurchasePdf = async (request, reply, instance) => {
                 instance.inventoryPdf(doc, data)
                 doc.end();
                 stream.on('finish', async function () {
+                    console.log('finish');
                     reply.sendFile(`/${time}.pdf`)
                     setTimeout(() => {
                         fs.unlink(`./static/${time}.pdf`, (err) => {
@@ -323,6 +324,7 @@ const getPurchasePdf = async (request, reply, instance) => {
                         })
                     }, 2000)
                 })
+                return
             }
             catch (error) {
                 return reply.send(error.message)
@@ -355,11 +357,11 @@ module.exports = fp((instance, _, next) => {
             attachValidation: true,
             preValidation: [instance.auth_supplier]
         },
-        async (request, reply) => {
+        (request, reply) => {
             if (request.validationError) {
                 return reply.validation(request.validationError.message)
             }
-            return await getPurchasePdf(request, reply, instance)
+            getPurchasePdf(request, reply, instance)
         }
     );
 

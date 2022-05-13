@@ -12,6 +12,11 @@ module.exports = function (fastify, opts, next) {
         origin: true
     })
 
+    fastify.register(require('fastify-static'), {
+        root: path.join(__dirname, 'static'),
+        prefix: '/static/'
+    })
+
     fastify.register(AutoLoad, {
         dir: path.join(__dirname, 'plugins'),
         options: Object.assign(options, opts)
