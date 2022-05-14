@@ -4,8 +4,10 @@ module.exports = (instance, options, next) => {
 
   // get employee page and limit
 
-  var search_employees = (request, reply, admin) => {
-    var query = { organization: admin.organization }
+  const search_employees = (request, reply, admin) => {
+    // const user_available_services = request.user.services.map(serv => serv.service);
+    const query = { organization: admin.organization }
+
     if (request.body) {
       if (request.body.service != '' && request.body.service != null) {
         query['$or'] = [
@@ -23,7 +25,7 @@ module.exports = (instance, options, next) => {
           },
           {
             role: 'boss'
-          }
+          },
         ]
       }
     }
@@ -36,14 +38,15 @@ module.exports = (instance, options, next) => {
       if (users == undefined) {
         users = []
       }
-      var page = parseInt(request.params.page)
-      var limit = parseInt(request.params.limit)
+      const page = parseInt(request.params.page)
+      const limit = parseInt(request.params.limit)
       reply.ok({
         total: users.length,
         page: Math.ceil(users.length / limit),
         data: users.splice(limit * (page - 1), limit)
       })
     })
+      .lean()
   }
 
   instance.post('/user/searching/:limit/:page', options.version, (request, reply) => {
@@ -56,8 +59,8 @@ module.exports = (instance, options, next) => {
 
   // get All employees
 
-  var getAllEmployees = (request, reply, user) => {
-    let query = {
+  const getAllEmployees = (request, reply, user) => {
+    const query = {
       organization: user.organization
     }
     if (request.body && request.body.service && request.body.service != '') {
@@ -79,6 +82,7 @@ module.exports = (instance, options, next) => {
       }
       reply.ok(employees)
     })
+      .lean()
   }
 
   const getUserListHanler = (request, reply) => {
@@ -138,6 +142,7 @@ module.exports = (instance, options, next) => {
       }
       reply.ok(employees)
     })
+      .lean()
   }
   const getUserListHanler2 = (request, reply) => {
     instance.authorization(request, reply, (user) => {
@@ -150,7 +155,7 @@ module.exports = (instance, options, next) => {
 
   // get employee by id
 
-  var getEmployeeByID = (request, reply, user) => {
+  const getEmployeeByID = (request, reply, user) => {
     instance.User.findOne({
       _id: request.params.id
     }, (err, employee) => {
@@ -158,7 +163,7 @@ module.exports = (instance, options, next) => {
         reply.error('Error on finding employee')
       }
       else {
-        var serviceObj = {}
+        const serviceObj = {}
         for (var s of employee.services) {
           serviceObj[s.service] = s.available
         }
@@ -177,6 +182,7 @@ module.exports = (instance, options, next) => {
         })
       }
     })
+      .lean()
   }
 
   instance.get('/getEmployeeByID/:id', options.version, (request, reply) => {
@@ -187,8 +193,8 @@ module.exports = (instance, options, next) => {
 
   // get employees only names
 
-  var get_employees = (request, reply, admin) => {
-    var query = {
+  const get_employees = (request, reply, admin) => {
+    const query = {
       organization: admin.organization
     }
     if (request.body != undefined) {
@@ -231,6 +237,7 @@ module.exports = (instance, options, next) => {
       }
       reply.ok(employees)
     })
+      .lean()
   }
 
   instance.post('/get_employees', options.version, (request, reply) => {
@@ -250,7 +257,7 @@ module.exports = (instance, options, next) => {
   })
 
   // get employees for POS
-  var get_employees_pos = (request, reply, user) => {
+  const get_employees_pos = (request, reply, user) => {
     instance.User.find({
       organization: user.organization,
       $or: [{ services: { $elemMatch: { service: { $eq: request.headers['accept-service'] }, available: { $eq: true } } } }, { role: 'boss' }]
@@ -264,6 +271,7 @@ module.exports = (instance, options, next) => {
       }
       reply.ok(users)
     })
+      .lean()
   }
 
   instance.get('/get_employees/pos', options.version, (request, reply) => {
