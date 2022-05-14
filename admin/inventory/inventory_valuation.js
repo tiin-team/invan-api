@@ -897,6 +897,7 @@ async function inventoryValuationResultPartiation({ limit, page, supplier_id, or
     data: items,
   }
 }
+
 module.exports = fp((instance, options, next) => {
 
   instance.decorate('inventory_valuation_result', inventoryValuationResult)
@@ -926,13 +927,17 @@ module.exports = fp((instance, options, next) => {
         try {
           const { limit, page, supplier_id } = request.body;
           let { service } = request.body;
-          const user = request.user;
 
+          const user_available_services = request.user.services.map(serv => serv.service);
+
+          if (service && !user_available_services.find(serv => serv + '' == service))
+            return reply.code(403).send('Forbidden service')
           const result = await inventoryValuationResult({
             limit, page,
             supplier_id,
             organization: user.organization,
-            service
+            service,
+            user_available_services,
           }, instance)
 
           reply.ok(result);
@@ -1229,8 +1234,8 @@ module.exports = fp((instance, options, next) => {
             : 1
 
           const user = request.user;
-          const user_available_services = user.services.map(serv => serv.service.toString())
-          if (service && !user_available_services.find(serv => serv.service.toString() == service)) {
+          const user_available_services = user.services.map(serv => serv.service + '')
+          if (service && !user_available_services.find(serv => serv.service + '' == service)) {
             return reply.error('Acces denied')
           }
           const result = await inventoryValuationResultByPrimarySupplier({
