@@ -36,8 +36,10 @@ module.exports = (instance, options, next) => {
 
     const { min, max, limit, page } = request.params;
     const { services, employees, reasons, search, category } = request.body;
+    const user_available_services = user.services.map(serv => serv.service + '');
 
     const query = {
+      service: { service: { $in: user_available_services } },
       organization: admin.organization,
       date: {
         // $gte: min - (process.env.TIME_DIFF | 0),
@@ -48,6 +50,8 @@ module.exports = (instance, options, next) => {
     }
 
     for (const ind in services) {
+      if (!user_available_services.find(serv => serv + '' == request.body.service))
+        return reply.code(403).send('Forbidden service')
       try { services[ind] = instance.ObjectId(services[ind]) }
       catch (error) { }
     }

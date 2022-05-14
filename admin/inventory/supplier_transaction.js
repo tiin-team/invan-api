@@ -8,18 +8,18 @@ async function supplierTransactionsGet(request, reply, instance) {
         const { name } = request.params;
         const user = request.user;
 
-        const user_aviable_service_ids = user.services.map(serv => serv.service.toString());
+        const user_available_services = user.services.map(serv => serv.service + '');
 
         const query_service_index = user.services
             .findIndex(
-                serv => serv.service.toString() == service
+                serv => serv.service + '' == service
             )
 
         if (service && query_service_index == -1) return reply.error('Forbidden')
 
         const service_ids = service && query_service_index != -1
             ? [service]
-            : user_aviable_service_ids
+            : user_available_services
 
         const $match = {
             $match: {

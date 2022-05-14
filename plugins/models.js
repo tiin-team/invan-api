@@ -1415,7 +1415,7 @@ module.exports = fp((instance, _, next) => {
         'returned_order', 'transferred',
         'recounted', 'damaged', 'lost',
         'item edit', 'production',
-        'workgroup_order', 'fee', 'loss'
+        'workgroup_order', 'fee', 'loss',
       ]
     },
     type: {
