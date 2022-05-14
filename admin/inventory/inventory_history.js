@@ -39,7 +39,7 @@ module.exports = (instance, options, next) => {
     const user_available_services = request.user.services.map(serv => serv.service);
 
     const query = {
-      service: { service: { $in: user_available_services } },
+      service: { $in: user_available_services },
       organization: admin.organization,
       date: {
         // $gte: min - (process.env.TIME_DIFF | 0),
@@ -108,7 +108,7 @@ module.exports = (instance, options, next) => {
     if (category) {
       query.category_id = category;
     }
-console.log(query);
+    console.log(query.service);
     const all_history = await instance.inventoryHistory.countDocuments(query).exec();
 
     const historyMatch = {
