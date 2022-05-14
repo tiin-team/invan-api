@@ -456,12 +456,18 @@ module.exports = (instance, options, next) => {
 
   // get transfer for table
 
-  var get_transfer = (request, reply, admin) => {
-    var query = {
+  const get_transfer = (request, reply, admin) => {
+    const user_available_services = request.user.services.map(serv => serv.service)
+
+    const query = {
       organization: admin.organization,
+      $or: {
+        first_service: { $in: user_available_services },
+        second_service: { $in: user_available_services },
+      },
     };
-    var limit = parseInt(request.params.limit);
-    var page = parseInt(request.params.page);
+    const limit = parseInt(request.params.limit);
+    const page = parseInt(request.params.page);
     if (request.body.status != undefined && request.body.status != "") {
       query.status = request.body.status;
     }
