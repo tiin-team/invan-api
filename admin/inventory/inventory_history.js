@@ -108,7 +108,7 @@ module.exports = (instance, options, next) => {
     if (category) {
       query.category_id = category;
     }
-
+console.log(query);
     const all_history = await instance.inventoryHistory.countDocuments(query).exec();
 
     const historyMatch = {
