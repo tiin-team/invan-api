@@ -1184,7 +1184,7 @@ module.exports = fp((instance, options, next) => {
 
   // get purchase orders
 
-  var get_purchase_order = (request, reply, admin) => {
+  const get_purchase_order = (request, reply, admin) => {
     var limit = parseInt(request.params.limit)
     var page = parseInt(request.params.page)
     var query = {
@@ -1319,8 +1319,11 @@ module.exports = fp((instance, options, next) => {
     const limit = parseInt(request.params.limit)
     const page = parseInt(request.params.page)
 
+    const user_available_services = request.user.services.map(serv => serv.service)
+
     const query = {
-      organization: admin.organization
+      organization: admin.organization,
+      service: { $in: user_available_services },
     }
     if (request.body == undefined) {
       request.body = {}
@@ -1346,6 +1349,8 @@ module.exports = fp((instance, options, next) => {
       }
     }
     if (request.body.service) {
+      if (!user_available_services.find(serv => serv + "" === request.body.service))
+        return reply.code(403).send("Forbidden service")
       query.service = instance.ObjectId(request.body.service)
     }
     if (request.body.search != undefined && request.body.search != '') {
