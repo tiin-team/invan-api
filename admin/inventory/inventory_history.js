@@ -36,7 +36,7 @@ module.exports = (instance, options, next) => {
 
     const { min, max, limit, page } = request.params;
     const { services, employees, reasons, search, category } = request.body;
-    const user_available_services = request.user.services.map(serv => serv.service + '');
+    const user_available_services = request.user.services.map(serv => serv.service);
 
     const query = {
       service: { service: { $in: user_available_services } },
