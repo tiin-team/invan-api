@@ -151,7 +151,7 @@ module.exports = (instance, options, next) => {
                   for (var it of items) {
                     try {
                       let G = await instance.goodsSales.findById(it.product_id);
-                      if(!G) {
+                      if (!G) {
                         instance.log.error(`Item not found with id -> ${it.product_id}`);
                         continue;
                       }
@@ -180,7 +180,7 @@ module.exports = (instance, options, next) => {
                       if (!(G instanceof Array)) {
                         G = [G]
                       }
-                      
+
                       for (const g of G) {
                         var stock_after = 0
                         for (var s of g.services) {
@@ -273,9 +273,15 @@ module.exports = (instance, options, next) => {
   // get production
 
   const get_pro = (request, reply, admin) => {
-    var query = { organization: admin.organization }
-    var limit = parseInt(request.params.limit)
-    var page = parseInt(request.params.page)
+    const user_available_services = request.user.services.map(serv => serv.service)
+
+    const query = {
+      organization: admin.organization,
+      service: { $in: user_available_services },
+    }
+
+    const limit = parseInt(request.params.limit)
+    const page = parseInt(request.params.page)
     if (request.body.search != undefined && request.body.search != '') {
       query['$or'] = [
         {
@@ -291,6 +297,8 @@ module.exports = (instance, options, next) => {
       ]
     }
     if (request.body.service != null && request.body.service != '') {
+      if (!user_available_services.find(serv => serv + '' == request.body.service))
+        return reply.code(403).send('Forbidden service')
       query.service = instance.ObjectId(request.body.service)
     }
     if (request.body.type != null && request.body.type != '') {
