@@ -94,7 +94,7 @@ module.exports = (instance, options, next) => {
   instance.post('/getAllEmployees', options.version, getUserListHanler)
   const getAllEmployeesByService = (request, reply, user) => {
     // console.log(user);
-    const serv = user.services.find(elem => elem.service == request.params.service)
+    const serv = request.user.services.find(elem => elem.service == request.params.service)
 
     if (!(serv && serv.available))
       return reply.validation('you havent acces for this service')
