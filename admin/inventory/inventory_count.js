@@ -577,8 +577,11 @@ module.exports = (instance, options, next) => {
 
   const getcounts = async (request, reply, admin) => {
     try {
-      var query = {
-        organization: admin.organization
+      const user_available_services = request.user.services.map(serv => serv.service)
+
+      const query = {
+        organization: admin.organization,
+        service: { $in: user_available_services },
       }
 
       if (request.body) {
@@ -589,6 +592,8 @@ module.exports = (instance, options, next) => {
         }
         if (request.body.service) {
           if (request.body.service.length > 0) {
+            if (!user_available_services.find(serv => serv + '' == request.body.service))
+              return reply.code(403).send('Forbidden service')
             query.service = {
               $in: request.body.service
             }
@@ -628,7 +633,8 @@ module.exports = (instance, options, next) => {
         .find(query)
         .sort({ _id: -1 })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .lean();
 
       reply.ok({
         total,

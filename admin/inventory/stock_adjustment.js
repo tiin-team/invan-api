@@ -10,7 +10,7 @@ module.exports = (instance, options, next) => {
         var update = {
           cost: cost
         }
-        if (good.max_cost < cost|| good.max_cost == 0) {
+        if (good.max_cost < cost || good.max_cost == 0) {
           update.max_cost = cost
         }
         instance.goodsSales.updateOne({
@@ -104,7 +104,7 @@ module.exports = (instance, options, next) => {
       if (adjustment.reason == 'loss') {
         reason = adjustment.reason
       }
-      else if(adjustment.reason == 'damage') {
+      else if (adjustment.reason == 'damage') {
         reason = adjustment.reason
       }
       instance.update_in_stock_of_sold_items(items[i].product_id, adjustment.service, (-1) * items[i].changed, user, { receipt_no: adjustment.p_order, date: time }, reason)
@@ -246,11 +246,14 @@ module.exports = (instance, options, next) => {
 
   // get inventory stock adjustment
 
-  var get_adjustment = (request, reply, admin) => {
-    var page = parseInt(request.params.page)
-    var limit = parseInt(request.params.limit)
-    var query = {
-      organization: admin.organization
+  const get_adjustment = (request, reply, admin) => {
+    const page = parseInt(request.params.page)
+    const limit = parseInt(request.params.limit)
+    const user_available_services = request.user.services.map(serv => serv.service)
+
+    const query = {
+      organization: admin.organization,
+      service: { $in: user_available_services },
     }
     if (request.body) {
       if (request.body.service != '' && request.body.service != null) {
@@ -294,7 +297,7 @@ module.exports = (instance, options, next) => {
         }
       }
     ], (err, stocks) => {
-      var total = stocks.length
+      const total = stocks.length
       stocks = stocks.slice((page - 1) * limit, limit * page)
       for (var i = stocks.length - 1; i >= 0; i--) {
         if (stocks[i].serviceObj.length > 0) {
