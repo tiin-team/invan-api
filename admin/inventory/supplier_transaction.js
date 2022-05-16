@@ -224,14 +224,13 @@ async function supplierTransactionsGet(request, reply, instance) {
         };
 
         const pipeline = [$match, $sort];
-
-        if (!name) pipeline.push($skip, $limit);
-
+ 
         // pipeline.push($lookupInv);
         // pipeline.push($unwindInv);
         pipeline.push($lookup);
         pipeline.push($unwind);
         pipeline.push($group);
+        if (!name) pipeline.push($skip, $limit);
         pipeline.push($fixProject);
         pipeline.push($sort);
         pipeline.push($project);
@@ -256,6 +255,9 @@ async function supplierTransactionsGet(request, reply, instance) {
             const total = await instance.adjustmentSupplier.countDocuments($match.$match);
             return reply.ok({
                 total,
+                limit: limit,
+                current_page: page,
+                page: Math.ceil(total / limit),
                 // total_balance,
                 data: suppliers
             })
