@@ -8,7 +8,7 @@ async function supplierTransactionsGet(request, reply, instance) {
         const { name } = request.params;
         const user = request.user;
 
-        const user_available_services = user.services.map(serv => serv.service + '');
+        // const user_available_services = user.services.map(serv => serv.service + '');
 
         const query_service_index = user.services
             .findIndex(
@@ -17,9 +17,9 @@ async function supplierTransactionsGet(request, reply, instance) {
 
         if (service && query_service_index == -1) return reply.error('Forbidden')
 
-        const service_ids = service && query_service_index != -1
-            ? [service]
-            : user_available_services
+        // const service_ids = service && query_service_index != -1
+        //     ? [service]
+        //     : user_available_services
 
         const $match = {
             $match: {
@@ -43,57 +43,57 @@ async function supplierTransactionsGet(request, reply, instance) {
             },
         };
 
-        const $lookupInv = {
-            $lookup: {
-                from: 'inventorypurchases',
-                let: { supp_id: '$_id', document_id: '$document_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$organization', user.organization] },
-                                    { $in: [{ $toString: '$service' }, service_ids] },
-                                    {
-                                        $eq: [
-                                            { $toString: '$$supp_id' },
-                                            { $toString: '$supplier_id' },
-                                        ],
-                                    },
-                                    { $ne: ['pending', '$status'] },
-                                    { $ne: ['$$document_id', '$p_order'] },
-                                ]
-                            },
-                        },
-                    },
-                    {
-                        $project: {
-                            type: 1,
-                            balance_type: 'cash',
-                            balance: {
-                                $cond: [
-                                    { $eq: ['$type', 'coming'] },
-                                    '$total',
-                                    '$total',
-                                ],
-                            },
-                            total_currency: 1,
-                            purchase_order_date: 1,
-                            p_order: 1,
-                            _id: 1,
-                            ordered_by_name: 1,
-                            type: 1,
-                            status: 1,
-                            supplier_id: 1,
-                        },
-                    },
-                ],
-                as: 'inv_purchases',
-            }
-        }
-        const $unwindInv = {
-            $unwind: { path: '$inv_purchases' },
-        };
+        // const $lookupInv = {
+        //     $lookup: {
+        //         from: 'inventorypurchases',
+        //         let: { supp_id: '$_id', document_id: '$document_id' },
+        //         pipeline: [
+        //             {
+        //                 $match: {
+        //                     $expr: {
+        //                         $and: [
+        //                             { $eq: ['$organization', user.organization] },
+        //                             { $in: [{ $toString: '$service' }, service_ids] },
+        //                             {
+        //                                 $eq: [
+        //                                     { $toString: '$$supp_id' },
+        //                                     { $toString: '$supplier_id' },
+        //                                 ],
+        //                             },
+        //                             { $ne: ['pending', '$status'] },
+        //                             { $ne: ['$$document_id', '$p_order'] },
+        //                         ]
+        //                     },
+        //                 },
+        //             },
+        //             {
+        //                 $project: {
+        //                     type: 1,
+        //                     balance_type: 'cash',
+        //                     balance: {
+        //                         $cond: [
+        //                             { $eq: ['$type', 'coming'] },
+        //                             '$total',
+        //                             '$total',
+        //                         ],
+        //                     },
+        //                     total_currency: 1,
+        //                     purchase_order_date: 1,
+        //                     p_order: 1,
+        //                     _id: 1,
+        //                     ordered_by_name: 1,
+        //                     type: 1,
+        //                     status: 1,
+        //                     supplier_id: 1,
+        //                 },
+        //             },
+        //         ],
+        //         as: 'inv_purchases',
+        //     }
+        // }
+        // const $unwindInv = {
+        //     $unwind: { path: '$inv_purchases' },
+        // };
         const $unwind = {
             $unwind: { path: '$transactions' },
         };
@@ -223,8 +223,8 @@ async function supplierTransactionsGet(request, reply, instance) {
             }
         };
 
-        const pipeline = [$match, $sort];
- 
+        const pipeline = [$match];
+
         if (!name) pipeline.push($skip, $limit);
         // pipeline.push($lookupInv);
         // pipeline.push($unwindInv);
@@ -234,6 +234,7 @@ async function supplierTransactionsGet(request, reply, instance) {
         pipeline.push($fixProject);
         pipeline.push($sort);
         pipeline.push($project);
+        pipeline.push($sort);
 
         const suppliers = await instance.adjustmentSupplier.aggregate(pipeline)
             .allowDiskUse(true)

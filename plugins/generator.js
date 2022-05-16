@@ -2050,6 +2050,7 @@ module.exports = fp((instance, _, next) => {
               }
               query.service = service_id
               instance.posDevices.find(query, (err, len) => {
+                console.log(98234895238458328587);
                 if (err || len == null) {
                   if (err) {
                     instance.send_Error(request.raw.url, JSON.stringify(err))
