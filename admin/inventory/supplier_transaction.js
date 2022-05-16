@@ -234,12 +234,12 @@ async function supplierTransactionsGet(request, reply, instance) {
         pipeline.push($fixProject);
         pipeline.push($sort);
         pipeline.push($project);
-        pipeline.push($sort);
+        // pipeline.push($sort);
 
         const suppliers = await instance.adjustmentSupplier.aggregate(pipeline)
             .allowDiskUse(true)
             .exec()
-        console.log(suppliers.length);
+
         for (const index in suppliers) {
             try {
                 suppliers[index].total_receive = Math.round(suppliers[index].total_receive * 100) / 100;
