@@ -44,6 +44,7 @@ module.exports = fp((instance, _, next) => {
             instance.check_sku(request, organization, next)
           }
         })
+          .lean()
       }
       else {
         request.body.category = cat._id
@@ -51,6 +52,7 @@ module.exports = fp((instance, _, next) => {
         instance.check_sku(request, organization, next)
       }
     })
+      .lean()
   })
 
   // check sku
@@ -103,6 +105,7 @@ module.exports = fp((instance, _, next) => {
                       })
                     }
                   })
+                    .lean()
                 }
                 else {
                   next({
@@ -167,6 +170,7 @@ module.exports = fp((instance, _, next) => {
           }
         }
       })
+        .lean()
     }
     else {
       next({

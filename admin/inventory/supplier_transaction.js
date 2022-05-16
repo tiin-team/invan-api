@@ -239,7 +239,7 @@ async function supplierTransactionsGet(request, reply, instance) {
         const suppliers = await instance.adjustmentSupplier.aggregate(pipeline)
             .allowDiskUse(true)
             .exec()
-
+        console.log(suppliers.length);
         for (const index in suppliers) {
             try {
                 suppliers[index].total_receive = Math.round(suppliers[index].total_receive * 100) / 100;
@@ -296,7 +296,7 @@ async function supplierTransactionsGet(request, reply, instance) {
         }, 2000);
 
     } catch (error) {
-        reply.error(error.message)
+        return reply.error(error.message)
     }
     return reply;
 }
@@ -459,7 +459,7 @@ module.exports = ((instance, options, next) => {
             if (request.validationError) {
                 return reply.validation(request.validationError.message)
             }
-            return supplierTransactionsGet(request, reply, instance)
+            supplierTransactionsGet(request, reply, instance)
         }
     );
 
