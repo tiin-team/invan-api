@@ -38,7 +38,7 @@ module.exports = fp((instance, _, next) => {
                     processing: processing
                 }
             },
-            { new: true, upsert: true }
+            { new: true, upsert: true, lean: true }
         );
     }
 

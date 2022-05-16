@@ -6,6 +6,7 @@ module.exports = (instance, options, next) => {
   instance.get('/inventory/get_supplier/:id', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, async (admin) => {
       try {
+        const { service } = request.query
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
           .lean();
@@ -18,9 +19,12 @@ module.exports = (instance, options, next) => {
           status: { $ne: 'pending' },
           service: { $in: user_available_services },
         };
-        // if (request.query.service) query.service = request.query.service;
-        // else query.service = { $in: request.user.services.map(elem => elem.service) };
+        if (service) {
+          if (!user_available_services.find(serv => serv + '' === service))
+            return reply.code(403).send('Forbidden service')
 
+          query.service = instance.ObjectId(request.query.service);
+        }
         const transactions = await instance.supplierTransaction.find(query).lean();
 
         // for (const [indexTran, tranItem] of transactions.entries()) {

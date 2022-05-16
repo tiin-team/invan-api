@@ -101,18 +101,21 @@ async function itemsPricesSet(request, reply, instance) {
         const first_service = await instance.services.findOne({
             _id: first_service_id,
             organization: user.organization
-        });
+        })
+            .lean();
         const second_service = await instance.services.findById({
             _id: second_service_id,
             organization: user.organization
-        });
+        })
+            .lean();
         if (!first_service || !second_service) {
             return reply.fourorfour('store')
         }
 
         const process = await instance.ProcessModel.findProcess({
             organization: user.organization
-        });
+        })
+            .lean();
         if (process.processing) {
             return reply.allready_exist('processing')
         }
