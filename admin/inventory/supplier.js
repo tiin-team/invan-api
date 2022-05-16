@@ -11,7 +11,13 @@ module.exports = (instance, options, next) => {
           .lean();
         if (!supp) return reply.fourorfour('Supplier')
 
-        const query = { supplier_id: supp._id, status: { $ne: 'pending' } };
+        const user_available_services = request.user.services.map(serv => serv.service);
+
+        const query = {
+          supplier_id: supp._id,
+          status: { $ne: 'pending' },
+          service: { $in: user_available_services },
+        };
         // if (request.query.service) query.service = request.query.service;
         // else query.service = { $in: request.user.services.map(elem => elem.service) };
 
