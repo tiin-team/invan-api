@@ -122,6 +122,7 @@ module.exports = (instance, _, next) => {
       // reply.ok(receipts)
       handler(request, reply, receipts, user)
     })
+      .lean()
   }
 
   instance.post('/reports/by_debt/:min/:max/:limit/:page', version, (request, reply) => {

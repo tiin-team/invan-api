@@ -804,9 +804,7 @@ module.exports = (instance, _, next) => {
 
       const filterReceipts = {
         organization: admin.organization,
-        receipt_state: {
-          $ne: 'draft',
-        },
+        receipt_state: { $ne: 'draft' },
         service: { $in: user_available_services },
         debt_id: null,
         date: {
@@ -824,9 +822,7 @@ module.exports = (instance, _, next) => {
           }
         }
         // filter qilish krk return error Access
-        filterReceipts.service = {
-          $in: services,
-        };
+        filterReceipts.service = { $in: services };
       }
 
       if (custom) {
@@ -1134,9 +1130,7 @@ module.exports = (instance, _, next) => {
           }
         }
         const result = await instance.Receipts.aggregate([
-          {
-            $match: filterReceipts,
-          },
+          { $match: filterReceipts },
           sortByDate,
           projectReport,
           groupByDate,
@@ -1199,9 +1193,7 @@ module.exports = (instance, _, next) => {
         };
 
         const totalReport = await instance.Receipts.aggregate([
-          {
-            $match: filterReceipts,
-          },
+          { $match: filterReceipts },
           projectReport,
           groupByDate,
           countTotalReport,
@@ -1294,7 +1286,7 @@ module.exports = (instance, _, next) => {
       }
       // instance.get_receipt_by_range(request, reply, admin, find_paid_debts)
     } catch (error) {
-      reply.error(error.message);
+      return reply.error(error.message);
     }
   };
 

@@ -641,8 +641,7 @@ module.exports = (instance, _, next) => {
 
       reply.ok({
         total: total_result,
-        // page: page, // buni Umar qo'shgan
-        page: Math.ceil(total_result / limit), // avvalgi holi
+        page: Math.ceil(total_result / limit),
         data: result,
       })
     }

@@ -73,7 +73,6 @@ module.exports = (instance, _, next) => {
     }
 
     if (services && services.length > 0) {
-
       for (const service of services) {
         if (!user_available_services.includes(service)) {
           return reply.error('Acces denied')

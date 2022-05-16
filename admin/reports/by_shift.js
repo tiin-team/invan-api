@@ -12,7 +12,7 @@ module.exports = (instance, _, next) => {
 
     const { services } = request.body.services;
 
-    const user_available_services = request.user.services.map(serv => serv.service.toString())
+    const user_available_services = request.user.services.map(serv => serv.service + '')
 
     const Query = {
       organization: user.organization,
@@ -27,7 +27,6 @@ module.exports = (instance, _, next) => {
     }
     if (services) {
       if (services.length > 0) {
-
         for (const service of services) {
           if (!user_available_services.includes(service)) {
             return reply.error('Acces denied')

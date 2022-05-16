@@ -4,7 +4,7 @@ module.exports = (instance, _, next) => {
 
   // reports sales by category
 
-  var sales_by_category = (request, reply, user, recepts, goods_sales, goods_category) => {
+  const sales_by_category = (request, reply, user, recepts, goods_sales, goods_category) => {
     var forindex = {}
     var sales = []
     var sold_product = []
@@ -371,7 +371,7 @@ module.exports = (instance, _, next) => {
     }
   }
 
-  var reportsGoodsCategories = (request, reply, user, recepts, goodsSales, handler = sales_by_category) => {
+  const reportsGoodsCategories = (request, reply, user, recepts, goodsSales, handler = sales_by_category) => {
     if (!user) {
       reply.error("Access")
     } else {
@@ -400,7 +400,7 @@ module.exports = (instance, _, next) => {
     }
   }
 
-  var reportsGoodsSales = (request, reply, recepts, user, handler = reportsGoodsCategories) => {
+  const reportsGoodsSales = (request, reply, recepts, user, handler = reportsGoodsCategories) => {
     if (!user) {
       reply.error('Access')
     } else {
@@ -780,8 +780,7 @@ module.exports = (instance, _, next) => {
       }
     }
 
-    if (services && services.length > 0) {
-      
+    if (services && services.length > 0) { 
       for (const service of services) {
         if (!user_available_services.includes(service)) {
           return reply.error('Acces denied')

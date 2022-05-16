@@ -23,10 +23,6 @@ module.exports = fp((instance, _, next) => {
             const filterReceipts = {
                 organization: user.organization,
                 receipt_state: { $ne: 'draft' },
-                $or: [
-                    { "sold_item_list.supplier_id": user._id },
-                    { "sold_item_list.supplier_id": user._id + "" },
-                ],
                 debt_id: null,
                 date: {
                     // $gte: min - (process.env.TIME_DIFF | 0),
@@ -196,7 +192,18 @@ module.exports = fp((instance, _, next) => {
             };
             const projectCategoryFilter = {
                 $project: {
-                    sold_item_list: 1,
+                    sold_item_list: {
+                        $filter: {
+                            input: '$sold_item_list',
+                            as: 'sold_item',
+                            cond: {
+                                $or: [
+                                    { $eq: ["$$sold_item.supplier_id", user._id] },
+                                    { $eq: ["$$sold_item.supplier_id", user._id + ""] },
+                                ],
+                            }
+                        }
+                    },
                     is_refund: 1,
                 }
             }
