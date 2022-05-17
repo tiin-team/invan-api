@@ -33,13 +33,10 @@ async function updateItemPrices(
                 if (s.service + '' == first_service_id + '') {
                     price = s.price;
                     prices = s.prices;
-                    if (prices instanceof Array) {
-                        for (const p of prices) {
-                            if (p.price > 0) {
-                                is_all_zero = false;
-                            }
-                        }
+                    if (price > 0) {
+                        is_all_zero = false;
                     }
+
                 }
             }
 
@@ -75,7 +72,6 @@ async function updateItemPrices(
             );
         }
 
-        console.log('items count', items.length);
         if (items.length < limit) {
             console.log('Processing items finished on page', page);
             return await instance.ProcessModel.setProcessing({ organization: organization }, false);
