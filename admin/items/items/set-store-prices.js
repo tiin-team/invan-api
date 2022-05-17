@@ -33,10 +33,13 @@ async function updateItemPrices(
                 if (s.service + '' == first_service_id + '') {
                     price = s.price;
                     prices = s.prices;
-                    if (price > 0) {
-                        is_all_zero = false;
+                    if (prices instanceof Array) {
+                        for (const p of prices) {
+                            if (p.price > 0) {
+                                is_all_zero = false;
+                            }
+                        }
                     }
-
                 }
             }
 
@@ -89,7 +92,95 @@ async function updateItemPrices(
     }
 }
 
-async function itemsPricesSet(request, reply, instance) {
+async function updateItemPrice(
+    instance, organization, first_service_id, second_service_id, page = 1, limit = 50
+) {
+    try {
+        console.log('On page', page);
+        const $match = {
+            $match: { organization }
+        }
+
+        const $sort = {
+            $sort: { _id: 1 }
+        }
+        const $skip = {
+            $skip: limit * (page - 1)
+        }
+        const $limit = {
+            $limit: limit
+        }
+
+        const items = await instance.goodsSales.aggregate([
+            $match,
+            $sort,
+            $skip,
+            $limit
+        ]).allowDiskUse(true).exec();
+
+        for (const item of items) {
+            let price, prices = [];
+            let is_all_zero = true;
+            for (const s of item.services) {
+                if (s.service + '' == first_service_id + '') {
+                    price = s.price;
+                    prices = s.prices;
+                    if (price > 0) {
+                        is_all_zero = false;
+                    }
+                }
+            }
+
+            if (is_all_zero) {
+                continue;
+            }
+
+            instance.goodsSales.updateOne(
+                {
+                    _id: item._id,
+                    services: {
+                        $elemMatch: {
+                            $or: [
+                                {
+                                    service: instance.ObjectId(second_service_id)
+                                },
+                                {
+                                    service: second_service_id + ''
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    $set: {
+                        'services.$.prices': prices,
+                        'services.$.price': price,
+                        last_price_change: new Date().getTime(),
+                        last_updated: new Date().getTime(),
+                    }
+                },
+                () => { }
+            );
+        }
+
+        if (items.length < limit) {
+            console.log('Processing items finished on page', page);
+            return await instance.ProcessModel.setProcessing({ organization: organization }, false);
+        }
+
+        return updateItemPrice(instance, organization, first_service_id, second_service_id, page + 1);
+    } catch (error) {
+        console.log(error.message)
+        await instance.ProcessModel.setProcessing(
+            {
+                organization: organization
+            },
+            false
+        )
+    }
+}
+
+async function itemsPricesSet(request, reply, instance, multi_price = true) {
     try {
         const user = request.user;
         const { first_service_id, second_service_id } = request.body;
@@ -115,7 +206,10 @@ async function itemsPricesSet(request, reply, instance) {
         }
 
         await instance.ProcessModel.setProcessing({ organization: process.organization }, true);
-        await updateItemPrices(instance, user.organization, first_service_id, second_service_id, 1, 1000);
+        if (multi_price)
+            await updateItemPrices(instance, user.organization, first_service_id, second_service_id, 1, 100);
+        else
+            await updateItemPrice(instance, user.organization, first_service_id, second_service_id, 1, 100);
         return reply.ok();
     } catch (error) {
         return reply.error(error.message)
@@ -176,6 +270,22 @@ module.exports = ((instance, _, next) => {
                 return reply.validation(request.validationError.message)
             }
             return itemsPricesSet(request, reply, instance);
+        }
+    )
+
+    instance.post(
+        '/items/price/set/by-store',
+        {
+            ...schema,
+            version: '1.0.0',
+            preValidation: [instance.authorize_admin],
+            attachValidation: true
+        },
+        (request, reply) => {
+            if (request.validationError) {
+                return reply.validation(request.validationError.message)
+            }
+            return itemsPricesSet(request, reply, instance, false);
         }
     )
 
