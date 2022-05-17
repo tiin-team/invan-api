@@ -503,7 +503,7 @@ module.exports = (instance, options, next) => {
 
   // update user
 
-  var update_user = async (request, reply, user) => {
+  const update_user = async (request, reply, user) => {
     var update = request.body
     if (update.fire_token) {
       if (request.headers['accept-user'] == 'boss' && update.fire_token) {
@@ -515,7 +515,9 @@ module.exports = (instance, options, next) => {
       update.fire_token = undefined
     }
     if (typeof update.role == typeof 'invan') {
-      const role = await instance.AccessRights.findOne({ organization: user.organization, name: update.role })
+      const role = await instance.AccessRights
+        .findOne({ organization: user.organization, name: update.role })
+        .lean()
       if (!role) {
         return reply.fourorfour('Role')
       }

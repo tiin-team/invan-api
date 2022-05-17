@@ -114,8 +114,7 @@ async function itemsPricesSet(request, reply, instance) {
 
         const process = await instance.ProcessModel.findProcess({
             organization: user.organization
-        })
-            .lean();
+        });
         if (process.processing) {
             return reply.allready_exist('processing')
         }
