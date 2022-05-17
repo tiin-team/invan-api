@@ -12,7 +12,25 @@ module.exports = fp((instance, _, next) => {
                 end,
                 services,
                 search,
+                sort_by,
+                sort_type,
             } = request.query;
+            const sort = {}
+
+            switch (sort_by) {
+                case 'name':
+                    sort.product_name = parseInt(sort_type)
+                    break;
+                case 'items_sold':
+                    sort.items_sold = parseInt(sort_type)
+                    break;
+                case 'gross_sales':
+                    sort.gross_sales = parseInt(sort_type)
+                    break;
+                default:
+                    sort.gross_sales = -1;
+                    break;
+            }
             const limit = !isNaN(parseInt(request.query.limit))
                 ? parseInt(request.query.limit)
                 : 10
@@ -153,7 +171,7 @@ module.exports = fp((instance, _, next) => {
                 }
             }
 
-            const sortResult = { $sort: { gross_sales: -1 } };
+            const sortResult = { $sort: sort };
 
             const skipResult = { $skip: limit * (page - 1) };
 
@@ -321,7 +339,17 @@ module.exports = fp((instance, _, next) => {
                     search: {
                         type: 'string',
                         default: ''
-                    }
+                    },
+                    sort_by: {
+                        type: 'string',
+                        enum: ['name', 'items_sold', 'gross_sales'],
+                        default: 'gross_sales'
+                    },
+                    sort_type: {
+                        type: 'number',
+                        enum: [1, -1],
+                        default: -1
+                    },
                 }
             }
         }

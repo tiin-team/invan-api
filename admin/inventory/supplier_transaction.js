@@ -15,7 +15,7 @@ async function supplierTransactionsGet(request, reply, instance) {
                 serv => serv.service + '' == service
             )
 
-        if (service && query_service_index == -1) return reply.error('Forbidden')
+        if (service && query_service_index == -1) return reply.code(403).send('Forbidden service')
 
         // const service_ids = service && query_service_index != -1
         //     ? [service]
