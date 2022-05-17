@@ -75,6 +75,7 @@ async function updateItemPrices(
             );
         }
 
+        console.log('items count', items.length);
         if (items.length < limit) {
             console.log('Processing items finished on page', page);
             return await instance.ProcessModel.setProcessing({ organization: organization }, false);
