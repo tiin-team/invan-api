@@ -1,18 +1,16 @@
 
 
 async function updateItemPrices(
-    instance, organization, first_service_id, second_service_id, page = 1
+    instance, organization, first_service_id, second_service_id, page = 1, limit = 50
 ) {
     try {
         console.log('On page', page);
         const $match = {
             $match: { organization }
         }
-        const limit = 50;
+
         const $sort = {
-            $sort: {
-                _id: 1
-            }
+            $sort: { _id: 1 }
         }
         const $skip = {
             $skip: limit * (page - 1)
@@ -120,10 +118,10 @@ async function itemsPricesSet(request, reply, instance) {
         }
 
         await instance.ProcessModel.setProcessing({ organization: process.organization }, true);
-        updateItemPrices(instance, user.organization, first_service_id, second_service_id);
-        reply.ok();
+        await updateItemPrices(instance, user.organization, first_service_id, second_service_id, 1, 1000);
+        return reply.ok();
     } catch (error) {
-        reply.error(error.message)
+        return reply.error(error.message)
     }
     return reply;
 }
@@ -134,9 +132,9 @@ async function itemsPricesCheck(request, reply, instance) {
         const process = await instance.ProcessModel.findProcess({
             organization: user.organization
         });
-        reply.ok(process)
+        return reply.ok(process)
     } catch (error) {
-        reply.error(error.message)
+        return reply.error(error.message)
     }
     return reply;
 }
@@ -191,7 +189,7 @@ module.exports = ((instance, _, next) => {
             preValidation: [instance.authorize_admin],
         },
         (request, reply) => {
-            return itemsPricesCheck(request, reply, instance);
+            itemsPricesCheck(request, reply, instance);
         }
     )
 
