@@ -106,9 +106,9 @@ module.exports = fp((instance, _, next) => {
       })
     };
     fcm.send(message, function (err, response) {
-      if (err) {
-        send_Error('pushnotification', JSON.stringify(err))
-      }
+      // if (err) {
+      //   send_Error('pushnotification', JSON.stringify(err))
+      // }
     })
   })
 

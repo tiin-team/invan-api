@@ -80,7 +80,7 @@ async function updateItemPrices(
             return await instance.ProcessModel.setProcessing({ organization: organization }, false);
         }
 
-        return updateItemPrices(instance, organization, first_service_id, second_service_id, page + 1);
+        return await updateItemPrices(instance, organization, first_service_id, second_service_id, page + 1);
     } catch (error) {
         console.log(error.message)
         await instance.ProcessModel.setProcessing(
@@ -97,19 +97,10 @@ async function updateItemPrice(
 ) {
     try {
         console.log('On page', page);
-        const $match = {
-            $match: { organization }
-        }
-
-        const $sort = {
-            $sort: { _id: 1 }
-        }
-        const $skip = {
-            $skip: limit * (page - 1)
-        }
-        const $limit = {
-            $limit: limit
-        }
+        const $match = { $match: { organization } }
+        const $sort = { $sort: { _id: 1 } }
+        const $skip = { $skip: limit * (page - 1) }
+        const $limit = { $limit: limit }
 
         const items = await instance.goodsSales.aggregate([
             $match,
@@ -168,7 +159,7 @@ async function updateItemPrice(
             return await instance.ProcessModel.setProcessing({ organization: organization }, false);
         }
 
-        return updateItemPrice(instance, organization, first_service_id, second_service_id, page + 1);
+        return await updateItemPrice(instance, organization, first_service_id, second_service_id, page + 1);
     } catch (error) {
         console.log(error.message)
         await instance.ProcessModel.setProcessing(
@@ -184,15 +175,21 @@ async function itemsPricesSet(request, reply, instance, multi_price = true) {
     try {
         const user = request.user;
         const { first_service_id, second_service_id } = request.body;
-        const first_service = await instance.services.findOne({
-            _id: first_service_id,
-            organization: user.organization
-        })
+        const first_service = await instance.services.findOne(
+            {
+                _id: first_service_id,
+                organization: user.organization
+            },
+            { _id: 1 }
+        )
             .lean();
-        const second_service = await instance.services.findById({
-            _id: second_service_id,
-            organization: user.organization
-        })
+        const second_service = await instance.services.findById(
+            {
+                _id: second_service_id,
+                organization: user.organization
+            },
+            { _id: 1 }
+        )
             .lean();
         if (!first_service || !second_service) {
             return reply.fourorfour('store')

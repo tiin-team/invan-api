@@ -25,6 +25,7 @@ module.exports = (instance, options, next) => {
 
           query.service = instance.ObjectId(request.query.service);
         }
+
         const transactions = await instance.supplierTransaction.find(query).lean();
 
         // for (const [indexTran, tranItem] of transactions.entries()) {

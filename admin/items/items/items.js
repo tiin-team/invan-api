@@ -1,5 +1,4 @@
 const fs = require('fs');
-const moment = require('moment');
 
 module.exports = (instance, options, next) => {
   const version = { version: '1.0.0' };
@@ -104,18 +103,12 @@ module.exports = (instance, options, next) => {
     try {
       if (item_id) {
         await instance.goodsSales.updateOne(
-          {
-            _id: item_id,
-          },
-          {
-            $set: data,
-          }
+          { _id: item_id },
+          { $set: data }
         );
       } else {
         let res = await new instance.goodsSales(data).save();
-        if (res) {
-          item_id = res._id;
-        }
+        if (res) { item_id = res._id }
       }
       if (item_id) {
         await instance.goodsSales.updateMany(
@@ -182,12 +175,8 @@ module.exports = (instance, options, next) => {
           items: {
             type: 'object',
             required: [
-              'name',
-              'price',
-              'price_currency',
-              'cost',
-              'cost_currency',
-              'sku',
+              'name', 'price', 'price_currency',
+              'cost', 'cost_currency', 'sku',
             ],
             properties: {
               name: { type: 'string' },
@@ -225,11 +214,8 @@ module.exports = (instance, options, next) => {
             type: 'object',
             additionalProperties: false,
             required: [
-              'service',
-              'price',
-              'price_currency',
-              'available',
-              'sku',
+              'service', 'price', 'price_currency',
+              'available', 'sku',
             ],
             properties: {
               service: {
@@ -1335,7 +1321,7 @@ module.exports = (instance, options, next) => {
     if (data.primary_supplier_id == '' || data.primary_supplier_id == null) {
       delete data.primary_supplier_id;
     }
-    var $model = new instance.goodsSales(
+    const $model = new instance.goodsSales(
       Object.assign({ organization: admin.organization }, data)
     );
     instance.services.find(
@@ -1367,7 +1353,7 @@ module.exports = (instance, options, next) => {
           for (var s of services) {
             if (serviceObj[s._id + ''] == undefined) {
               serviceObj[s._id + ''] = {};
-              serviceObj[s._id + ''].available = false;
+              serviceObj[s._id + ''].available = true;
               serviceObj[s._id + ''].service = instance.ObjectId(s._id);
               serviceObj[s._id + ''].in_stock = 0;
               serviceObj[s._id + ''].low_stock = 0;
@@ -1472,7 +1458,8 @@ module.exports = (instance, options, next) => {
           }
         });
       }
-    );
+    )
+      .lean();
   };
 
   instance.post('/items/create_item', version, (request, reply) => {
