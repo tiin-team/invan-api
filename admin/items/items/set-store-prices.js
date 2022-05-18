@@ -204,9 +204,9 @@ async function itemsPricesSet(request, reply, instance, multi_price = true) {
 
         await instance.ProcessModel.setProcessing({ organization: process.organization }, true);
         if (multi_price)
-            await updateItemPrices(instance, user.organization, first_service_id, second_service_id, 1, 100);
+            updateItemPrices(instance, user.organization, first_service_id, second_service_id, 1, 100);
         else
-            await updateItemPrice(instance, user.organization, first_service_id, second_service_id, 1, 100);
+            updateItemPrice(instance, user.organization, first_service_id, second_service_id, 1, 100);
         return reply.ok();
     } catch (error) {
         return reply.error(error.message)
