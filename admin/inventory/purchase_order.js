@@ -1318,8 +1318,8 @@ module.exports = fp((instance, options, next) => {
   const get_purchase_order_new_ = (request, reply, admin) => {
     const limit = parseInt(request.params.limit);
     const page = parseInt(request.params.page);
-    const min = parseInt(request.params.min);
-    const max = parseInt(request.params.max);
+    const min = parseInt(request.body.min);
+    const max = parseInt(request.body.max);
 
     const user_available_services = request.user.services.map(serv => serv.service)
 
@@ -1488,12 +1488,6 @@ module.exports = fp((instance, options, next) => {
     })
   })
 
-  instance.post('/inventory/get_purchase_order/:min/:max/:limit/:page', options.version, (request, reply) => {
-    instance.oauth_admin(request, reply, (admin) => {
-      get_purchase_order_new_(request, reply, admin)
-      // get_purchase_order(request, reply, admin)
-    })
-  })
   // get purchase order by an id
 
   const get_purchase_order_by_id = (request, reply, admin) => {
