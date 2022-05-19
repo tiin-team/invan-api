@@ -3542,36 +3542,22 @@ module.exports = (instance, options, next) => {
       {
         $project: {
           name: 1,
-          price: 1,
-          prices: { $first: '$services.prices' },
-          barcode: 1,
-          services: 1,
-          sku: 1,
-          type: '$sold_by',
-        }
-      },
-      {
-        $project: {
-          name: 1,
-          price: {
-            $min: { $arrayElemAt: ['$prices.price', '$price'] },
-          },
-          min_price: {
-            $min: '$prices.price',
-          },
-          max_price: {
-            $max: '$prices.price',
-          },
           services: {
+            service_id: 1,
             service_name: 1,
             price_currency: 1,
             in_stock: 1,
             sku: 1,
+            price: 1,
             min_price: {
-              $min: '$services.prices.price',
+              $min: {
+                $arrayElemAt: ['$services.prices.price', '$price'],
+              },
             },
             max_price: {
-              $max: '$services.prices.price',
+              $max: {
+                $arrayElemAt: ['$services.prices.price', '$price'],
+              },
             },
           },
           barcode: 1,
