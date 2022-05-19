@@ -3545,6 +3545,7 @@ module.exports = (instance, options, next) => {
           price: 1,
           prices: { $first: '$services.prices' },
           barcode: 1,
+          services: 1,
           sku: 1,
           type: '$sold_by',
         }
@@ -3560,6 +3561,18 @@ module.exports = (instance, options, next) => {
           },
           max_price: {
             $max: '$prices.price',
+          },
+          services: {
+            service_name: 1,
+            price_currency: 1,
+            in_stock: 1,
+            sku: 1,
+            min_price: {
+              $min: '$services.prices.price',
+            },
+            max_price: {
+              $max: '$services.prices.price',
+            },
           },
           barcode: 1,
           sku: 1,

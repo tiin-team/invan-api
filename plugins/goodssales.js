@@ -562,7 +562,7 @@ module.exports = fp((instance, _, next) => {
               cost_currency: 1
             }
           )
-        lean();
+          .lean();
         let cost = 0;
         const updated_composite_items = [];
         for (const it of composite_items) {

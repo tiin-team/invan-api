@@ -1316,14 +1316,22 @@ module.exports = fp((instance, options, next) => {
     })
   }
   const get_purchase_order_new_ = (request, reply, admin) => {
-    const limit = parseInt(request.params.limit)
-    const page = parseInt(request.params.page)
+    const limit = parseInt(request.params.limit);
+    const page = parseInt(request.params.page);
+    const min = parseInt(request.params.min);
+    const max = parseInt(request.params.max);
 
     const user_available_services = request.user.services.map(serv => serv.service)
 
     const query = {
       organization: admin.organization,
       service: { $in: user_available_services },
+    }
+    if (!(isNaN(min) && isNaN(max))) {
+      query.purchase_order_date = {
+        $gte: min,
+        $lte: max,
+      }
     }
     if (request.body == undefined) {
       request.body = {}
@@ -1480,6 +1488,12 @@ module.exports = fp((instance, options, next) => {
     })
   })
 
+  instance.post('/inventory/get_purchase_order/:min/:max/:limit/:page', options.version, (request, reply) => {
+    instance.oauth_admin(request, reply, (admin) => {
+      get_purchase_order_new_(request, reply, admin)
+      // get_purchase_order(request, reply, admin)
+    })
+  })
   // get purchase order by an id
 
   const get_purchase_order_by_id = (request, reply, admin) => {

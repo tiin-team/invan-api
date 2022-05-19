@@ -3041,7 +3041,6 @@ module.exports = fp((instance, _, next) => {
   // getway
 
   instance.decorateReply('get', function (request, model, user, options) {
-    console.log('get');
     if (options.public_search && request.headers['accept-user'] == 'QRCode') {
       model.findOne({ "_id": request.params.id }, { table_name: 0 }, (err, item) => {
         if (err) {
