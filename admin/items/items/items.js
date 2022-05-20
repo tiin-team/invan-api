@@ -2908,7 +2908,8 @@ module.exports = (instance, options, next) => {
               item_type: { $ne: 'variant' },
               // services: { $in: [request.params.service] },
               $or: [
-                { updatedAt: { $gte: from_time, $lte: to_time } },
+                // { updatedAt: { $gte: from_time, $lte: to_time } },
+                { last_price_change: { $gte: from_time.getTime(), $lte: to_time.getTime() } },
                 { createdAt: { $gte: from_time, $lte: to_time } },
               ],
             },
@@ -3270,7 +3271,8 @@ module.exports = (instance, options, next) => {
             }
           );
         }
-      );
+      )
+        .lean();
     });
   };
   instance.get('/goods/sales/export/:organization/:name', (request, reply) => {
