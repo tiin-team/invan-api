@@ -111,6 +111,7 @@ module.exports = (instance, _, next) => {
         reply.ok(organizations)
       }
     })
+      .lean()
   })
 
   instance.post('/admin/register', {

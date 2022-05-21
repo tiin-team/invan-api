@@ -2599,7 +2599,7 @@ module.exports = (instance, options, next) => {
                 if (err) {
                   instance.send_Error('writing to file', JSON.stringify(err));
                 }
-                reply.sendFile(`./${file}` + file, (err) => {
+                reply.sendFile(`./${file}`, (err) => {
                   instance.send_Error('on sending file', JSON.stringify(err));
                 });
                 setTimeout(() => {
@@ -3548,17 +3548,22 @@ module.exports = (instance, options, next) => {
             service_id: 1,
             service_name: 1,
             price_currency: 1,
-            in_stock: 1,
+            in_stock: {
+              $max: [
+                { $first: "$services.in_stock" },
+                0,
+              ]
+            },
             sku: 1,
             price: 1,
             min_price: {
               $min: {
-                $arrayElemAt: ['$services.prices.price', '$price'],
+                $arrayElemAt: ['$services.prices.price', 0],
               },
             },
             max_price: {
               $max: {
-                $arrayElemAt: ['$services.prices.price', '$price'],
+                $arrayElemAt: ['$services.prices.price', 0],
               },
             },
           },

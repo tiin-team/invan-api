@@ -586,7 +586,7 @@ module.exports = (instance, _, next) => {
   })
 
   instance.get('/organization/:id/services', { version: '1.0.0' }, (request, reply) => {
-    var id = request.params.id
+    const id = request.params.id
     instance.organizations.findOne({ _id: id }, (error, organization) => {
       if (error) {
         send_Error(request.raw.url, JSON.stringify(error))
@@ -612,6 +612,7 @@ module.exports = (instance, _, next) => {
               }
             }
           })
+            .lean()
         }
         else {
           send_Error(request.raw.url, 'Organization could not found')
@@ -619,6 +620,7 @@ module.exports = (instance, _, next) => {
         }
       }
     })
+      .lean()
   })
 
   instance.get('/organization', { version: '1.0.0' }, (request, reply) => {
@@ -942,7 +944,7 @@ module.exports = (instance, _, next) => {
                             available: false
                           }
                         }
-                      }, () => {})
+                      }, () => { })
                     }
                   })
                 }

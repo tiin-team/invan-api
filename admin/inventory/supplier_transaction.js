@@ -422,7 +422,30 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
     return reply;
 }
 module.exports = ((instance, options, next) => {
-
+    (async () => {
+        const transactions = await instance.supplierTransaction.find().lean()
+        console.log(transactions.length);
+        const start_time = new Date().getTime()
+        for (const tran of transactions) {
+            if (!tran.service) {
+                const supplier = await instance.adjustmentSupplier
+                    .findById(tran.supplier_id, { organization: 1 })
+                    .lean()
+                const service = await instance.services
+                    .findOne(
+                        { organization: supplier.organization },
+                        { name: 1 },
+                    )
+                    .lean()
+                tran.service = service._id;
+                tran.service_name = service.name;
+                await instance.supplierTransaction.findByIdAndUpdate(tran._id, tran)
+                    .lean()
+            }
+        }
+        const end_time = new Date().getTime()
+        console.log('ketgan vaqt', end_time - start_time);
+    })
     const schema = {
         schema: {
             body: {

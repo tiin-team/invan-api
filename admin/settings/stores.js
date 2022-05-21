@@ -1,6 +1,6 @@
 module.exports = (instance, options, next) => {
 
-    var get_services = (request, reply, admin) => {
+    const get_services = (request, reply, admin) => {
         // instance.services.find({
         //     organization: admin.organization
         // }, { name: 1, address: 1, count: 1 }, (err, services) => {
