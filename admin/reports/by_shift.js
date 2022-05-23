@@ -53,7 +53,7 @@ module.exports = (instance, _, next) => {
       'cash_drawer.act_cash_amount': 1,
       'cash_drawer.difference': 1,
       'sales_summary': 1,
-    }, (err, shifts) => {
+    }, async (err, shifts) => {
       if (err || shifts == null) {
         shifts = []
       }
