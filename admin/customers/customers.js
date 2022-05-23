@@ -785,13 +785,14 @@ module.exports = (instance, options, next) => {
   const get_customer_by_id = async (request, reply, user) => {
     try {
       const id = request.params.id;
-      let customer = await instance.clientsDatabase.findOne({ _id: id });
+      let customer = await instance.clientsDatabase.findOne({ _id: id })
+        .lean();
       if (!customer) {
         return reply.fourorfour("Customer");
       }
-      try {
-        customer = customer.toObject();
-      } catch (error) { }
+      // try {
+      //   customer = customer.toObject();
+      // } catch (error) { }
       customer.debt = await calculateDebt(instance, customer, user)
 
       const matchReceipts = {

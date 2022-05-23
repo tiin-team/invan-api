@@ -51,21 +51,22 @@ module.exports = (instance, _, next) => {
       closing_time: 1,
       'cash_drawer.exp_cash_amount': 1,
       'cash_drawer.act_cash_amount': 1,
-      'cash_drawer.difference': 1
+      'cash_drawer.difference': 1,
+      'sales_summary': 1,
     }, (err, shifts) => {
       if (err || shifts == null) {
         shifts = []
       }
       if (request.params.name == undefined) {
-        const total = shifts.length
-        shifts = shifts.splice((page - 1) * limit, limit)
+        const total = await instance.Shifts.countDocuments(Query);
+        // shifts = shifts.splice((page - 1) * limit, limit)
         for (let i = 0; i < shifts.length; i++) {
-          try {
-            shifts[i] = shifts[i].toObject()
-          }
-          catch (error) {
-            instance.send_Error('to Object', error.message)
-          }
+          // try {
+          //   shifts[i] = shifts[i].toObject()
+          // }
+          // catch (error) {
+          //   instance.send_Error('to Object', error.message)
+          // }
           shifts[i].exp_cash_amount = shifts[i].cash_drawer.exp_cash_amount
           shifts[i].act_cash_amount = shifts[i].cash_drawer.act_cash_amount
           shifts[i].difference = shifts[i].cash_drawer.difference
@@ -98,7 +99,11 @@ module.exports = (instance, _, next) => {
         }
         instance.send_csv(answer, 'by_shift', reply)
       }
-    }).sort({ opening_time: -1 })
+    })
+      .sort({ opening_time: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
   }
 
   instance.post('/reports/by_shift/:min/:max/:limit/:page', version, (request, reply) => {
