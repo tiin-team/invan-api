@@ -50,7 +50,7 @@ module.exports = (instance, options, next) => {
     }
 
     for (const ind in services) {
-      if (!user_available_services.find(serv => serv + '' == request.body.service))
+      if (!user_available_services.find(serv => serv + '' == services[ind]))
         return reply.code(403).send('Forbidden service')
       try { services[ind] = instance.ObjectId(services[ind]) }
       catch (error) { }
