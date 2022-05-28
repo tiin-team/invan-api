@@ -10,6 +10,7 @@ module.exports = (instance, options, next) => {
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
           .lean();
+        console.log(supp);
         if (!supp) return reply.fourorfour('Supplier')
 
         const user_available_services = request.user.services.map(serv => serv.service);
