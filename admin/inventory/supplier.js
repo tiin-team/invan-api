@@ -6,12 +6,11 @@ module.exports = (instance, options, next) => {
   instance.get('/inventory/get_supplier/:id', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, async (admin) => {
       try {
-        // const { service } = request.query
+        const { service } = request.query
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
           .lean();
-        console.log(!supp);
-        console.log(supp);
+
         if (!supp) return reply.fourorfour('Supplier')
 
         const user_available_services = request.user.services.map(serv => serv.service);
@@ -117,7 +116,7 @@ module.exports = (instance, options, next) => {
         })
       }
       catch (error) {
-        console.log(error);
+        instance.send_Error("get Supplier /:id", JSON.stringify(error))
         return reply.fourorfour('Supplier')
       }
     })
