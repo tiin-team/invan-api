@@ -15,14 +15,16 @@ module.exports = fp((instance, options, next) => {
                     .lean()
                 const service = await instance.services
                     .findOne(
-                        { organization: supplier.organization },
+                        { organization: supplier?.organization },
                         { _id: 1, name: 1 },
                     )
                     .lean()
-                tran.service = service._id;
-                tran.service_name = service.name;
-                await instance.supplierTransaction.findByIdAndUpdate(tran._id, tran)
-                    .lean()
+                if (service._id && service.name) {
+
+                    tran.service = service._id;
+                    tran.service_name = service.name;
+                    await instance.supplierTransaction.findByIdAndUpdate(tran._id, tran)
+                }
             }
         }
         const end_time = new Date().getTime()
