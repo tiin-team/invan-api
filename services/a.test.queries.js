@@ -13,17 +13,20 @@ module.exports = fp((instance, options, next) => {
                 const supplier = await instance.adjustmentSupplier
                     .findById(tran.supplier_id, { organization: 1 })
                     .lean()
-                const service = await instance.services
-                    .findOne(
-                        { organization: supplier?.organization },
-                        { _id: 1, name: 1 },
-                    )
-                    .lean()
-                if (service._id && service.name) {
+                if (supplier && supplier.organization) {
 
-                    tran.service = service._id;
-                    tran.service_name = service.name;
-                    await instance.supplierTransaction.findByIdAndUpdate(tran._id, tran)
+                    const service = await instance.services
+                        .findOne(
+                            { organization: supplier.organization },
+                            { _id: 1, name: 1 },
+                        )
+                        .lean()
+                    if (service._id && service.name) {
+
+                        tran.service = service._id;
+                        tran.service_name = service.name;
+                        await instance.supplierTransaction.findByIdAndUpdate(tran._id, tran)
+                    }
                 }
             }
         }
