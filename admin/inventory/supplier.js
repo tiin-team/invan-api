@@ -10,6 +10,7 @@ module.exports = (instance, options, next) => {
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
           .lean();
+        console.log(!supp);
         console.log(supp);
         if (!supp) return reply.fourorfour('Supplier')
 
@@ -116,6 +117,7 @@ module.exports = (instance, options, next) => {
         })
       }
       catch (error) {
+        console.log(error);
         return reply.fourorfour('Supplier')
       }
     })
