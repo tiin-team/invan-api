@@ -1,38 +1,38 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
-    (async () => {
-        const transactions = await instance.supplierTransaction.find(
-            {},
-            { _id: 1, service: 1, service_name: 1, supplier_id: 1, }
-        ).lean()
-        console.log(transactions.length);
-        const start_time = new Date().getTime()
-        for (const tran of transactions) {
-            if (!tran.service) {
-                const supplier = await instance.adjustmentSupplier
-                    .findById(tran.supplier_id, { organization: 1 })
-                    .lean()
-                if (supplier && supplier.organization) {
+    // (async () => {
+    //     const transactions = await instance.supplierTransaction.find(
+    //         {},
+    //         { _id: 1, service: 1, service_name: 1, supplier_id: 1, }
+    //     ).lean()
+    //     console.log(transactions.length);
+    //     const start_time = new Date().getTime()
+    //     for (const tran of transactions) {
+    //         if (!tran.service) {
+    //             const supplier = await instance.adjustmentSupplier
+    //                 .findById(tran.supplier_id, { organization: 1 })
+    //                 .lean()
+    //             if (supplier && supplier.organization) {
 
-                    const service = await instance.services
-                        .findOne(
-                            { organization: supplier.organization },
-                            { _id: 1, name: 1 },
-                        )
-                        .lean()
-                    if (service._id && service.name) {
+    //                 const service = await instance.services
+    //                     .findOne(
+    //                         { organization: supplier.organization },
+    //                         { _id: 1, name: 1 },
+    //                     )
+    //                     .lean()
+    //                 if (service._id && service.name) {
 
-                        tran.service = service._id;
-                        tran.service_name = service.name;
-                        await instance.supplierTransaction.findByIdAndUpdate(tran._id, tran)
-                    }
-                }
-            }
-        }
-        const end_time = new Date().getTime()
-        console.log('ketgan vaqt', end_time - start_time);
-    })()
+    //                     tran.service = service._id;
+    //                     tran.service_name = service.name;
+    //                     await instance.supplierTransaction.findByIdAndUpdate(tran._id, tran)
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     const end_time = new Date().getTime()
+    //     console.log('ketgan vaqt', end_time - start_time);
+    // })
     instance.get('/get/tiin/transaction/dublicat/:organization/:service', async (request, reply) => {
         const data = await instance.services.aggregate([
             {
