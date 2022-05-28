@@ -1,6 +1,33 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
+    (async () => {
+        const transactions = await instance.supplierTransaction.find(
+            {},
+            { _id: 1, service: 1, service_name: 1, supplier_id: 1, }
+        ).lean()
+        console.log(transactions.length);
+        const start_time = new Date().getTime()
+        for (const tran of transactions) {
+            if (!tran.service) {
+                const supplier = await instance.adjustmentSupplier
+                    .findById(tran.supplier_id, { organization: 1 })
+                    .lean()
+                const service = await instance.services
+                    .findOne(
+                        { organization: supplier.organization },
+                        { _id: 1, name: 1 },
+                    )
+                    .lean()
+                tran.service = service._id;
+                tran.service_name = service.name;
+                await instance.supplierTransaction.findByIdAndUpdate(tran._id, tran)
+                    .lean()
+            }
+        }
+        const end_time = new Date().getTime()
+        console.log('ketgan vaqt', end_time - start_time);
+    })()
     instance.get('/get/tiin/transaction/dublicat/:organization/:service', async (request, reply) => {
         const data = await instance.services.aggregate([
             {
@@ -111,7 +138,6 @@ module.exports = fp((instance, options, next) => {
     });
 
     instance.get('/items/inv_history', async (request, reply) => {
-
         const { from, to } = request.query
 
         const $match = {
@@ -149,7 +175,6 @@ module.exports = fp((instance, options, next) => {
         reply.ok(goods)
     })
     instance.get('/items/unchange', async (request, reply) => {
-
         const $match = {
             $match: {
                 organization: '5f5641e8dce4e706c062837a',
@@ -179,7 +204,7 @@ module.exports = fp((instance, options, next) => {
         if (request.query.optimal_stock) $project.$project.optimal_stock = 1
         if (request.query.primary_supplier_id) $project.$project.primary_supplier_id = 1
         if (request.query.show_on_bot) $project.$project.show_on_bot = 1
-        console.log($project);
+
         const aggregate = [$match, $project]
 
         const goods = await instance.goodsSales.aggregate(aggregate).exec()

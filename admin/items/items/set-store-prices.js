@@ -6,7 +6,10 @@ async function updateItemPrices(
     try {
         console.log('On page', page);
         const $match = {
-            $match: { organization }
+            $match: { 
+                organization: organization,
+                // last_price_change: 
+             }
         }
 
         const $sort = {
@@ -67,6 +70,7 @@ async function updateItemPrices(
                     $set: {
                         'services.$.prices': prices,
                         'services.$.price': price,
+                        'services.$.last_price_change': new Date().getTime(),
                         last_price_change: new Date().getTime(),
                         last_updated: new Date().getTime(),
                     }

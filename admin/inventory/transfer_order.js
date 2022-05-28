@@ -3,7 +3,7 @@ const axios = require("axios");
 module.exports = (instance, options, next) => {
   // create transfer order
 
-  var create_transfer = (request, reply, admin) => {
+  const create_transfer = (request, reply, admin) => {
     var trans = request.body;
     delete trans._id;
     var status = trans.status;
@@ -101,10 +101,10 @@ module.exports = (instance, options, next) => {
                       ITEMS.push(trans.items[i]);
                     }
                   }
-                  console.log(ITEMS)
+                  // console.log(ITEMS)
                   trans.items = ITEMS;
                   var transferModel = instance.Transfer(trans);
-                  console.log(transferModel.items)
+                  // console.log(transferModel.items)
                   transferModel.save((err, tran) => {
                     if (err) {
                       reply.error("Error on saving transfer");
@@ -134,14 +134,16 @@ module.exports = (instance, options, next) => {
                     }
                   });
                 }
-              );
+              )
+                .lean();
             }
           );
         } else {
           reply.error("Services could not found");
         }
       }
-    );
+    )
+      .lean();
   };
 
   instance.post(

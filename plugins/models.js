@@ -2541,5 +2541,33 @@ module.exports = fp((instance, _, next) => {
   });
   instance.decorate('soliqgoods', soliqgoodsSchema);
 
+  const employeesOrdersSchema = instance.model('employeesorder', {
+    organization_id: mongoose.Types.ObjectId,
+    organization_name: String,
+    service_id: mongoose.Types.ObjectId,
+    service_name: String,
+    employee_id: mongoose.Types.ObjectId,
+    employee_name: String,
+    date: Number,
+    sector_name: String,
+    items: [{
+      product_id: mongoose.Schema.Types.ObjectId,
+      product_name: String,
+      product_sku: Number,
+      supplier_id: mongoose.Types.ObjectId,
+      sector_name: String,
+      first_stock: {
+        type: Number,
+        default: 0
+      },
+      barcode: {
+        type: Array,
+        default: []
+      },
+      order_quality: Number,
+      note: String,
+    }]
+  });
+  instance.decorate('employeesorder', employeesOrdersSchema);
   next()
 })
