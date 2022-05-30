@@ -36,17 +36,17 @@ module.exports = (instance, options, next) => {
         //     })
         // }
 
-        for (const [index, item] of transactions.entries()) {
-          invent = await instance.inventoryPurchase.findOne({ _id: item.purchase_id }).lean()
-          if (invent) {
-            blnc = item.balance
-            if (invent.type == 'coming')
-              blnc = -Math.abs(item.balance)
-            if (invent.type == 'refund')
-              blnc = Math.abs(item.balance)
-            await instance.supplierTransaction.findByIdAndUpdate(item._id, { balance: blnc })
-          }
-        }
+        // for (const [index, item] of transactions.entries()) {
+        //   invent = await instance.inventoryPurchase.findOne({ _id: item.purchase_id }).lean()
+        //   if (invent) {
+        //     blnc = item.balance
+        //     if (invent.type == 'coming')
+        //       blnc = -Math.abs(item.balance)
+        //     if (invent.type == 'refund')
+        //       blnc = Math.abs(item.balance)
+        //     await instance.supplierTransaction.findByIdAndUpdate(item._id, { balance: blnc })
+        //   }
+        // }
 
         let data = transactions
         allSum = 0

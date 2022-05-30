@@ -400,16 +400,21 @@ module.exports = fp((instance, options, next) => {
 
   const receive_purchase = async (request, reply, admin) => {
     try {
-      if (request.body == undefined) request.body = {}
+      if (request.body == undefined)
+        request.body = {}
 
-      if (!(request.body.items instanceof Array)) request.body.items = []
+      if (!(request.body.items instanceof Array))
+        request.body.items = []
 
-      if (!(request.body.additional_cost instanceof Array)) request.body.additional_cost = []
+      if (!(request.body.additional_cost instanceof Array))
+        request.body.additional_cost = []
 
       const purch = await instance.inventoryPurchase
         .findOne({ _id: request.params.id })
         .lean();
-      if (!purch) return reply.fourorfour('purchase_order')
+      if (!purch)
+        return reply.fourorfour('purchase_order')
+
       const current_service = await instance.services.findById(purch.service).lean()
       let items = request.body.items;
       let item_ids = [];
@@ -513,7 +518,10 @@ module.exports = fp((instance, options, next) => {
         return reply.ok(purch)
       }
       for (const id of item_ids) {
-        await instance.purchaseItem.updateOne({ _id: id }, { $set: itemObj[id] })
+        await instance.purchaseItem.updateOne(
+          { _id: id },
+          { $set: itemObj[id] },
+        )
       };
 
       // supplier transaction
@@ -552,12 +560,12 @@ module.exports = fp((instance, options, next) => {
             balance: 0,
             balance_usd: 0,
           }]
-        if (
-          current_supplier.services &&
-          !current_supplier.services
-            .find(elem => elem.service + '' == purch.service + '')
-        ) {
-          current_supplier.services.push({
+        let supp_cur_serv_index = services
+          .findIndex(elem => elem.service + '' == purch.service + '')
+
+        if (supp_cur_serv_index === -1) {
+          supp_cur_serv_index = services.length
+          services.push({
             service: current_service._id,
             service_name: current_service.name,
             balance: 0,
@@ -565,12 +573,8 @@ module.exports = fp((instance, options, next) => {
           })
         }
         // update adjustmentSupplier service balance
-        for (const [index, serv] of services.entries()) {
-          if (serv.service.toString() == current_service._id.toString()) {
-            services[index].balance += balance_uzs
-            services[index].balance_usd += balance_usd
-          }
-        }
+        services[supp_cur_serv_index].balance += balance_uzs
+        services[supp_cur_serv_index].balance_usd += balance_usd
 
         await instance.adjustmentSupplier.updateOne(
           { _id: purch.supplier_id },
@@ -599,81 +603,12 @@ module.exports = fp((instance, options, next) => {
       }
 
       // update item partiation queue
-      for (const purch_item of items) {
-        // console.log(purch_item, 'item');
-        //update queue
-        const queue = await instance.goodsSaleQueue
-          .findOne(
-            {
-              service_id: current_service._id,
-              good_id: purch_item.product_id,
-            },
-            { queue: 1 }
-          )
-          .sort('-queue')
-          .lean()
+      instance.create_partiation_queue(items, current_service, current_supplier, purch,)
 
-        num_queue = queue && !isNaN(parseInt(queue.queue)) ? parseInt(queue.queue) + 1 : 1
-
-        await new instance.goodsSaleQueue({
-          purchase_id: purch._id,
-          p_order: purch.p_order,
-          supplier_id: current_supplier._id,
-          supplier_name: current_supplier.supplier_name,
-          service_id: current_service._id,
-          service_name: current_service.name,
-          good_id: purch_item.product_id,
-          quantity: purch_item.received,
-          quantity_left: purch_item.received,
-          queue: num_queue,
-        }).save()
-        //update item suppliers
-        const goood1 = await instance.goodsSales.findById(purch_item.product_id).lean();
-
-        const good_of_suppliers =
-          Array.isArray(goood1.suppliers)
-            ? goood1.suppliers
-            : [{
-              supplier_id: current_supplier._id,
-              supplier_name: current_supplier.supplier_name,
-              service_id: current_service._id,
-              service_name: current_service.name,
-              stock: 0,
-            }]
-
-        if (
-          goood1.suppliers &&
-          !goood1.suppliers
-            .find(elem =>
-              elem.supplier_id + '' == current_supplier._id + '' &&
-              elem.service_id + '' == purch.service + ''
-            )) {
-          goood1.suppliers.push({
-            supplier_id: current_supplier._id,
-            supplier_name: current_supplier.supplier_name,
-            service_id: current_service._id,
-            service_name: current_service.name,
-            stock: 0,
-          })
-        }
-        // update adjustmentSupplier service balance
-        for (const [index, supp] of good_of_suppliers.entries()) {
-          if (
-            supp.service_id + '' == current_service._id + '' &&
-            supp.supplier_id + '' == current_supplier._id + ''
-          ) {
-            good_of_suppliers[index].stock += purch_item.received
-          }
-        }
-
-        await instance.goodsSales.updateOne(
-          { _id: purch_item.product_id },
-          { $set: { suppliers: good_of_suppliers } },
-          { lean: true },
-        )
-      }
       // update items cost
-      const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } }).lean();
+      const goods = await instance.goodsSales
+        .find({ _id: { $in: pro_ids } })
+        .lean();
 
       for (const g of goods) {
         var in_stock = null
@@ -751,7 +686,7 @@ module.exports = fp((instance, options, next) => {
           receipt_no: purch.p_order
         },
         'returned_order',
-      )
+      );
     }
   }
 
@@ -790,7 +725,8 @@ module.exports = fp((instance, options, next) => {
           instance.inventoryPurchase.countDocuments(
             { organization: admin.organization },
             async (err, orders) => {
-              if (err || !orders) orders = 0
+              if (err || !orders)
+                orders = 0
 
               const p_order = 'P' + ('00000000000' + (orders + 1001)).slice(-5);
               request.body.p_order = p_order
@@ -811,7 +747,8 @@ module.exports = fp((instance, options, next) => {
               }
               const purchaseModel = new instance.inventoryPurchase(request.body)
 
-              if (purchaseModel.status == 'closed') purchaseModel.status = 'pending'
+              if (purchaseModel.status == 'closed')
+                purchaseModel.status = 'pending'
 
               purchaseModel.supplier_name = supp.supplier_name
               purchaseModel.service_name = service.name
@@ -909,7 +846,6 @@ module.exports = fp((instance, options, next) => {
         else {
           reply.error('Supplier not found')
         }
-
       }
       else {
         reply.error('Time error')
@@ -965,7 +901,7 @@ module.exports = fp((instance, options, next) => {
       // get currency
       let currency = { value: 1 }
       try {
-        currency = await instance.Currency.findOne({ organization: admin.organization })
+        currency = await instance.Currency.findOne({ organization: admin.organization }).lean()
         if (!currency || !currency.value) {
           currency = { value: 1 }
         }
@@ -1005,9 +941,11 @@ module.exports = fp((instance, options, next) => {
       }
       delete body.items
       body.total = total;
-      if (!supplier.balance) supplier.balance = 0;
+      if (!supplier.balance)
+        supplier.balance = 0;
 
-      if (!supplier.balance_usd) supplier.balance_usd = 0;
+      if (!supplier.balance_usd)
+        supplier.balance_usd = 0;
 
       let balance_uzs = 0;
       let balance_usd = 0;
@@ -1027,6 +965,7 @@ module.exports = fp((instance, options, next) => {
       const { _id: purchase_id } = await new instance.inventoryPurchase(body).save()
       if (body.status == 'pending')
         return reply.ok({ _id: purchase_id })
+
       // supplierni balance ni o'zgartirish filial bo'yicha
       const services = Array.isArray(supplier.services)
         && supplier.services
@@ -1038,24 +977,20 @@ module.exports = fp((instance, options, next) => {
           balance: 0,
           balance_usd: 0,
         }]
-      if (
-        supplier.services &&
-        !supplier.services
-          .find(elem => elem.service + '' == service._id + '')
-      ) {
-        supplier.services.push({
+      let supp_serv_index = services
+        .findIndex(elem => elem.service + '' == service._id + '')
+
+      if (supp_serv_index === -1) {
+        supp_serv_index = services.length
+        services.push({
           service: service._id,
           service_name: service.name,
           balance: 0,
           balance_usd: 0,
         })
       }
-      for (const [index, serv] of services.entries()) {
-        if (serv.service.toString() == service._id.toString()) {
-          services[index].balance += balance_uzs
-          services[index].balance_usd += balance_usd
-        }
-      }
+      services[supp_serv_index].balance += balance_uzs
+      services[supp_serv_index].balance_usd += balance_usd
 
       await instance.adjustmentSupplier.updateOne(
         { _id: supplier._id, 'services.service': service_id },
