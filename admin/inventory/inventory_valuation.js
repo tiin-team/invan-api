@@ -937,7 +937,7 @@ module.exports = fp((instance, options, next) => {
             supplier_id,
             organization: user.organization,
             service,
-            user_available_services,
+            // user_available_services,
           }, instance)
 
           reply.ok(result);
@@ -1197,19 +1197,19 @@ module.exports = fp((instance, options, next) => {
           //   .countDocuments(query["$match"])
           //   .exec();
 
-          try {
-            reply.ok({
-              ...total[0],
-              total: total_items,
-              margin:
-                (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
-                100,
-              page: Math.ceil(total_items / limit),
-              data: items,
-            });
-          } catch (error) {
-            reply.error(error.message);
-          }
+          // try {
+          //   reply.ok({
+          //     ...total[0],
+          //     total: total_items,
+          //     margin:
+          //       (total[0].inventory != 0 ? total[0].potential / total[0].inventory : 0) *
+          //       100,
+          //     page: Math.ceil(total_items / limit),
+          //     data: items,
+          //   });
+          // } catch (error) {
+          //   reply.error(error.message);
+          // }
         } catch (error) {
           reply.error(error.message)
         }
