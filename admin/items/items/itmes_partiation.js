@@ -22,7 +22,7 @@ module.exports = fp((instance, options, next) => {
             .lean();
 
           const $match = {
-            $match: { _id: id }
+            $match: { _id: instance.objectId(id) }
           };
           const lookup_filter = service_id
             ? ({ service_id: service_id })
@@ -78,10 +78,10 @@ module.exports = fp((instance, options, next) => {
             .exec()
           )[0];
 
-          item.nds_value = item.nds_value >= 0 ? item.nds_value : organization.nds_value;
           if (!item) {
             return reply.fourorfour('Item')
           }
+          item.nds_value = item.nds_value >= 0 ? item.nds_value : organization.nds_value;
 
           return reply.ok(item);
         } catch (error) {
