@@ -18,7 +18,7 @@ module.exports = fp((instance, options, next) => {
 				const itemObj = {}
 				const received = 0
 				let is_changed = false
-	
+		
 				let check_closed = true
 				let used_transaction = 0.0;
 				const currency =
@@ -27,7 +27,7 @@ module.exports = fp((instance, options, next) => {
 						.lean()
 					|| { value: 1 };
 				// if (!currency || !currency.value) currency = { value: 1 }
-	
+		
 				for (let i = 0; i < purchase_items.length; i++) {
 					if (
 						reqObj[purchase_items[i]._id].to_receive + purchase_items[i].received <= purchase_items[i].quality
@@ -37,7 +37,7 @@ module.exports = fp((instance, options, next) => {
 						purch.is_service_changable = false
 						if (purchase_items[i].to_receive != 0) {
 							var pro_id = instance.ObjectId(purchase_items[i].product_id)
-	
+		
 							if (goodsObj[pro_id] == undefined) {
 								pro_ids.push(purchase_items[i].product_id)
 								// try {
@@ -61,7 +61,7 @@ module.exports = fp((instance, options, next) => {
 						is_changed = is_changed || purchase_items[i].to_receive > 0
 						received += reqObj[purchase_items[i]._id].to_receive
 						let used_purchase_cost = purchase_items[i].purchase_cost
-	
+		
 						if (purchase_items[i].purchase_cost_currency == 'usd') {
 							used_purchase_cost = used_purchase_cost * currency.value
 						}
@@ -76,13 +76,13 @@ module.exports = fp((instance, options, next) => {
 				for (const add of purch.additional_cost) {
 					additional_costObj[add._id] = add
 				}
-	
+		
 				for (let i = 0; i < purch.additional_cost.length; i++) {
 					if (additional_costObj[purch.additional_cost[i]._id] !== undefined) {
 						if (is_changed) {
 							if (!purch.additional_cost[i].is_received && additional_costObj[purch.additional_cost[i]._id].is_received) {
 								let received_amount = +purch.additional_cost[i].amount
-	
+		
 								if (purch.additional_cost[i].amount_currency == 'usd') {
 									received_amount = received_amount * currency.value
 								}
@@ -112,7 +112,7 @@ module.exports = fp((instance, options, next) => {
 				for (const id of item_ids) {
 					await instance.purchaseItem.updateOne({ _id: id }, { $set: itemObj[id] })
 				};
-	
+		
 				// supplier transaction
 				const current_supplier = await instance.adjustmentSupplier
 					.findOne({ _id: purch.supplier_id })
@@ -147,7 +147,7 @@ module.exports = fp((instance, options, next) => {
 						}]
 					let supp_cur_serv_index = services
 						.findIndex(elem => elem.service + '' == purch.service + '')
-	
+		
 					if (supp_cur_serv_index == -1) {
 						supp_cur_serv_index = current_supplier.services.length
 						services.push({
@@ -159,7 +159,7 @@ module.exports = fp((instance, options, next) => {
 					}
 					services[supp_cur_serv_index].balance += balance_uzs
 					services[supp_cur_serv_index].balance_usd += balance_usd
-	
+		
 					await instance.adjustmentSupplier.updateOne(
 						{ _id: purch.supplier_id },
 						{
@@ -170,7 +170,7 @@ module.exports = fp((instance, options, next) => {
 							},
 						}
 					)
-	
+		
 					await new instance.supplierTransaction({
 						service: purch.service,
 						supplier_id: current_supplier._id,
@@ -185,7 +185,7 @@ module.exports = fp((instance, options, next) => {
 					})
 						.save();
 				}
-	
+		
 				// update item partiation queue
 				for (const purch_item of purchase_items) {
 					// console.log(purch_item, 'item');
@@ -200,9 +200,9 @@ module.exports = fp((instance, options, next) => {
 						)
 						.sort('-queue')
 						.lean()
-	
+		
 					num_queue = queue && parseInt(queue.queue) + 1 || 1
-	
+		
 					await new instance.goodsSaleQueue({
 						purchase_id: purch._id,
 						p_order: purch.p_order,
@@ -222,7 +222,7 @@ module.exports = fp((instance, options, next) => {
 						})
 					//update item suppliers
 					const goood1 = await instance.goodsSales.findById(purch_item.product_id).lean();
-	
+		
 					const good_of_suppliers =
 						Array.isArray(goood1.suppliers)
 							? goood1.suppliers
@@ -233,7 +233,7 @@ module.exports = fp((instance, options, next) => {
 								service_name: current_service.name,
 								stock: 0,
 							}]
-	
+		
 					if (
 						goood1.suppliers &&
 						!goood1.suppliers
@@ -258,7 +258,7 @@ module.exports = fp((instance, options, next) => {
 							good_of_suppliers[index].stock += purch_item.received
 						}
 					}
-	
+		
 					await instance.goodsSales.updateOne(
 						{ _id: purch_item.product_id },
 						{ $set: { suppliers: good_of_suppliers } },
@@ -267,7 +267,7 @@ module.exports = fp((instance, options, next) => {
 				}
 				// update items cost
 				const goods = await instance.goodsSales.find({ _id: { $in: pro_ids } }).lean();
-	
+		
 				for (const g of goods) {
 					var in_stock = null
 					var index = -1
@@ -304,30 +304,30 @@ module.exports = fp((instance, options, next) => {
 							}
 							g.cost = (+goodsObj[g._id].purchase_cost)
 						}
-	
+		
 						if (g.cost_currency == 'usd') {
 							g.cost = g.cost / currency.value
 						}
 						g.services[index].in_stock += (+goodsObj[g._id].to_receive)
-	
+		
 						// create inv history
-	
+		
 						// ('create_inventory_history', (user, reason, unique, service_id, product_id, cost, adjustment, stock_after, date)
-	
+		
 						await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].to_receive, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
 						g.last_updated = new Date().getTime()
 						g.last_stock_updated = new Date().getTime()
 						await instance.goodsSales.updateOne({ _id: g._id }, { $set: g })
 					}
 				}
-	
+		
 				reply.ok(purch)
 			} catch (error) {
 				instance.send_Error('receive_purchase purchase order_new.js\n', JSON.stringify(err))
 				return reply.error(error.message)
 			}
 		};
-	
+		
 		const createPurchaseOrder = async (request, reply, admin) => {
 			if (!request.body) {
 				request.body = {}
@@ -338,11 +338,11 @@ module.exports = fp((instance, options, next) => {
 				.findById(request.body.service, { name: 1 })
 				.lean()
 			if (!service) return reply.error('Error on finding service')
-	
+		
 			if (!supplier_id) return reply.error('Error on finding supplier')
 			const supp = await instance.adjustmentSupplier.findOne({ _id: supplier_id }).lean();
 			if (!supp) return reply.error('Supplier not found')
-	
+		
 			var valid = true
 			if (request.body.purchase_order_date == "" || request.body.purchase_order_date == null) {
 				request.body.purchase_order_date = new Date().getTime()
@@ -353,18 +353,18 @@ module.exports = fp((instance, options, next) => {
 				}
 			}
 			if (!valid) return reply.error('Time error')
-	
+		
 			let currency = await instance.Currency.findOne({ organization: admin.organization }).lean();
-	
+		
 			if (!currency || !currency.value) currency = { value: 1 }
-	
+		
 			const orders = await instance.inventoryPurchase.countDocuments({ organization: admin.organization })
 			// async (err, orders) => {
 			// if (err || !orders) orders = 0
-	
+		
 			const p_order = 'P' + ('00000000000' + (orders + 1001)).slice(-5);
 			request.body.p_order = p_order
-	
+		
 			try {
 				request.body.supplier_id = instance.ObjectId(supplier_id)
 				request.body.service = instance.ObjectId(request.body.service)
@@ -372,7 +372,7 @@ module.exports = fp((instance, options, next) => {
 			} catch (error) {
 				return reply.error(error.message)
 			}
-	
+		
 			request.body.ordered_by_name = admin.name
 			request.body.organization = admin.organization
 			delete request.body._id
@@ -382,13 +382,13 @@ module.exports = fp((instance, options, next) => {
 			const purchaseModel = new instance.inventoryPurchase(request.body)
 			// status pending nega?? tekshir
 			if (purchaseModel.status == 'closed') purchaseModel.status = 'pending'
-	
+		
 			purchaseModel.supplier_name = supp.supplier_name
 			purchaseModel.service_name = service.name
 			const purchase_items = []
 			var total_count = 0
 			var total = 0
-	
+		
 			if (request.body.items && request.body.items.length > 0) {
 				for (let i = 0; i < request.body.items.length; i++) {
 					delete request.body.items[i]._id
@@ -412,7 +412,7 @@ module.exports = fp((instance, options, next) => {
 							}
 							total += amount_quality
 						}
-	
+		
 					}
 					if (
 						parseFloat(request.body.items[i].purchase_cost)
@@ -426,7 +426,7 @@ module.exports = fp((instance, options, next) => {
 						)
 					}
 					purchase_items.push(request.body.items[i])
-	
+		
 				}
 				if (request.body.additional_cost == undefined) {
 					request.body.additional_cost = []
@@ -441,7 +441,7 @@ module.exports = fp((instance, options, next) => {
 						total += additional_amount
 					}
 				}
-	
+		
 			}
 			purchaseModel.total_count = total_count
 			if (request.body.total_currency == 'usd') {
@@ -478,7 +478,7 @@ module.exports = fp((instance, options, next) => {
 								reply, admin
 							)
 						}
-	
+		
 						return reply.ok(purch)
 					})
 				})
@@ -487,10 +487,10 @@ module.exports = fp((instance, options, next) => {
 				return reply.error('items can\'t be empty')
 			}
 		}
-	
+		
 		instance.decorate('create_purchase_order_new', createPurchaseOrder)
 		*/
-
+	/*
 	const receive_purchase = async (pruchase, purchase_id, currency, reply, admin) => {
 		try {
 			const body = pruchase || {}
@@ -980,6 +980,6 @@ module.exports = fp((instance, options, next) => {
 			}
 		})
 	})
-
+	*/
 	next()
 })
