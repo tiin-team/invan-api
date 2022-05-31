@@ -28,7 +28,8 @@ module.exports = fp((instance, options, next) => {
 
           const lookup_filter = service_id
             ? ({ $eq: ['$service_id', instance.ObjectId(service_id)] })
-            : ({ service_id: { $in: user_available_services } })
+            : ({ $in: ['$service_id', user_available_services] })
+
           const $lookup = {
             $lookup: {
               let: { prod_id: '$_id' },
@@ -48,8 +49,8 @@ module.exports = fp((instance, options, next) => {
                           $eq: ['$good_id', '$$prod_id']
                         },
                       ],
+                      ...lookup_filter,
                     }
-                    // ...lookup_filter,
                   },
                 },
                 { $sort: { queue: -1 } },
