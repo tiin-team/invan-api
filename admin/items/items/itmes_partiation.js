@@ -24,8 +24,10 @@ module.exports = fp((instance, options, next) => {
           const $match = {
             $match: { _id: instance.ObjectId(id) }
           };
+          ({ $eq: [{ $toString: "$$supplier.service_id" }, service_id] })
+
           const lookup_filter = service_id
-            ? ({ service_id: service_id })
+            ? ({ $eq: ['$service_id', instance.ObjectId(service_id)] })
             : ({ service_id: { $in: user_available_services } })
           const $lookup = {
             $lookup: {
@@ -34,7 +36,19 @@ module.exports = fp((instance, options, next) => {
               pipeline: [
                 {
                   $match: {
-                    good_id: '$$prod_id',
+                    $expr: {
+                      $or: [
+                        {
+                          $eq: [
+                            { $toString: '$good_id' },
+                            '$$prod_id',
+                          ]
+                        },
+                        {
+                          $eq: ['$good_id', '$$prod_id']
+                        },
+                      ],
+                    }
                     // ...lookup_filter,
                   },
                 },
@@ -44,7 +58,7 @@ module.exports = fp((instance, options, next) => {
             },
           };
           const filter = service_id
-            ? ({ $eq: [{ $toString: "$$supplier.service_id" }, service_id] })
+            ? ({ $eq: ["$$supplier.service_id", instance.ObjectId(service_id)] })
             : ({ $in: ["$$supplier.service_id", user_available_services] })
 
           const $project = {
