@@ -9,6 +9,7 @@ module.exports = fp((instance, options, next) => {
     (request, reply) => {
       instance.oauth_admin(request, reply, async (admin) => {
         try {
+          const id = request.params.id;
           const organization = await instance.organizations
             .findById(admin.organization, { nds_value: 1, name: 1 })
             .lean();
