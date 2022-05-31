@@ -38,18 +38,22 @@ module.exports = fp((instance, options, next) => {
                 {
                   $match: {
                     $expr: {
-                      $or: [
+                      $and: [
+                        ...lookup_filter,
                         {
-                          $eq: [
-                            { $toString: '$good_id' },
-                            '$$prod_id',
-                          ]
+                          $or: [
+                            {
+                              $eq: [
+                                { $toString: '$good_id' },
+                                '$$prod_id',
+                              ]
+                            },
+                            {
+                              $eq: ['$good_id', '$$prod_id']
+                            },
+                          ],
                         },
-                        {
-                          $eq: ['$good_id', '$$prod_id']
-                        },
-                      ],
-                      ...lookup_filter,
+                      ]
                     }
                   },
                 },
