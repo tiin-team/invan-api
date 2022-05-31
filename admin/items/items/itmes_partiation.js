@@ -19,7 +19,12 @@ module.exports = fp((instance, options, next) => {
             return reply.fourorfour('Item')
           }
 
+          const queues = await instance.goodsSaleQueue
+            .find({ good_id: item._id })
+            .sort('queue')
+            .lean()
           // get Category
+          item.partiations = queues;
           try {
             const category = await instance.goodsCategory
               .findById(item.category, { name: 1 })
