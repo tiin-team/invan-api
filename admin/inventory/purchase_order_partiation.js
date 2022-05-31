@@ -51,7 +51,7 @@ module.exports = fp((instance, options, next) => {
                 )
             if (good_of_supp_serv_index === -1) {
                 good_of_supp_serv_index = good_of_suppliers.length
-                services.push({
+                good_of_suppliers.push({
                     supplier_id: current_supplier._id,
                     supplier_name: current_supplier.supplier_name,
                     service_id: current_service._id,
