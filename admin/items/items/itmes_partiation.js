@@ -22,7 +22,7 @@ module.exports = fp((instance, options, next) => {
             .lean();
 
           const $match = {
-            $match: { _id: instance.objectId(id) }
+            $match: { _id: instance.ObjectId(id) }
           };
           const lookup_filter = service_id
             ? ({ service_id: service_id })
