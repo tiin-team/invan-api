@@ -3,57 +3,78 @@ const fp = require('fastify-plugin');
 module.exports = fp((instance, options, next) => {
   const version = { version: '2.0.0' };
 
-  instance.get(
+  instance.post(
     '/items/partiation/:id',
     version,
     (request, reply) => {
       instance.oauth_admin(request, reply, async (admin) => {
         try {
           const id = request.params.id;
+          const { supplier_id, service_id } = request.body
+
+          const user_available_services = request.user.services.map(serv => serv.service)
+          if (!user_available_services.find(serv => serv + '' === supplier_id))
+            return reply.code(403).send('Forbidden service')
+
           const organization = await instance.organizations
             .findById(admin.organization, { nds_value: 1, name: 1 })
             .lean();
 
-          const item = await instance.goodsSales.findById(id).lean();
+          const $match = {
+            $match: { _id: id }
+          };
+          const $lookup = {
+            $lookup: {
+              let: { prod_id: '$_id' },
+              from: 'goodssalequeues',
+              pipeline: [
+                {
+                  $match: {
+                    good_id: '$$prod_id',
+                    service_id: { $in: user_available_services },
+                  },
+                  $sort: { queue: -1 },
+                }
+              ],
+              as: 'partiations',
+            },
+          };
+          const $project = {
+            $project: {
+              stopped_item: 1,
+              name: 1,
+              sale_is_avialable: 1,
+              nds_value: 1,
+              sku: 1,
+              category_name: 1,
+              category_id: 1,
+              primary_supplier_id: 1,
+              primary_supplier_name: 1,
+              partiations: 1,
+              suppliers: {
+                $filter: {
+                  input: "$suppliers",
+                  as: "supplier",
+                  cond: {
+                    $in: ["$$supplier.service_id", user_available_services]
+                  }
+                }
+              }
+            },
+          }
+
+          const item = (await instance.goodsSales.aggregate([
+            $match,
+            $lookup,
+            $project,
+          ])
+            .allowDiskUse(true)
+            .exec()
+          )[0];
+
           item.nds_value = item.nds_value >= 0 ? item.nds_value : organization.nds_value;
           if (!item) {
             return reply.fourorfour('Item')
-          }
-
-          const queues = await instance.goodsSaleQueue
-            .find({ good_id: item._id })
-            .sort('queue')
-            .lean()
-          // get Category
-          item.partiations = queues;
-          try {
-            const category = await instance.goodsCategory
-              .findById(item.category, { name: 1 })
-              .lean();
-            if (!category) {
-              const other_category = await instance.goodsCategory
-                .findOne(
-                  { organization: admin.organization, is_other: true },
-                  { name: 1 }
-                )
-                .lean();
-              if (other_category) {
-                item.category = other_category._id;
-                item.category_name = other_category.name;
-              }
-              else {
-                delete item.category;
-                delete item.category_name;
-              }
-            }
-            else {
-              item.category = category._id
-              item.category_name = category.name
-            }
-          } catch (error) {
-            delete item.category;
-            delete item.category_name;
-            instance.log.error(error.message)
           }
 
           return reply.ok(item);
