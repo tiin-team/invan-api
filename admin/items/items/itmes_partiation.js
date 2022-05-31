@@ -14,7 +14,7 @@ module.exports = fp((instance, options, next) => {
 
           const user_available_services = request.user.services.map(serv => serv.service)
           if (service_id)
-            if (!user_available_services.find(serv => serv + '' === supplier_id))
+            if (!user_available_services.find(serv => serv + '' === service_id))
               return reply.code(403).send('Forbidden service')
 
           const organization = await instance.organizations
@@ -35,7 +35,7 @@ module.exports = fp((instance, options, next) => {
                 {
                   $match: {
                     good_id: '$$prod_id',
-                    ...lookup_filter,
+                    // ...lookup_filter,
                   },
                 },
                 { $sort: { queue: -1 } },
