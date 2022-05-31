@@ -39,7 +39,7 @@ module.exports = fp((instance, options, next) => {
                   $match: {
                     $expr: {
                       $and: [
-                        ...lookup_filter,
+                        lookup_filter,
                         {
                           $or: [
                             {
