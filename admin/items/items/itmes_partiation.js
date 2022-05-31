@@ -1,7 +1,7 @@
 const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
-  const version = { version: '1.0.0' };
+  const version = { version: '2.0.0' };
 
   instance.get(
     '/items/partiation/:id',
