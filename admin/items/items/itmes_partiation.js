@@ -37,8 +37,8 @@ module.exports = fp((instance, options, next) => {
                     good_id: '$$prod_id',
                     ...lookup_filter,
                   },
-                  $sort: { queue: -1 },
-                }
+                },
+                { $sort: { queue: -1 } },
               ],
               as: 'partiations',
             },
