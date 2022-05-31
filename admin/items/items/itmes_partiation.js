@@ -7,7 +7,7 @@ module.exports = fp((instance, options, next) => {
     '/items/partiation/:id',
     version,
     (request, reply) => {
-      instance.oauth_admin(request, reply, (admin) => {
+      instance.oauth_admin(request, reply, async (admin) => {
         try {
           const organization = await instance.organizations
             .findById(admin.organization, { nds_value: 1, name: 1 })
