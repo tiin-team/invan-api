@@ -44,7 +44,7 @@ module.exports = fp((instance, options, next) => {
             },
           };
           const filter = service_id
-            ? ({ $eq: ["$$supplier.service_id", service_id] })
+            ? ({ $eq: [{ $toString: "$$supplier.service_id" }, service_id] })
             : ({ $in: ["$$supplier.service_id", user_available_services] })
 
           const $project = {
