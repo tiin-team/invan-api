@@ -13,8 +13,9 @@ module.exports = fp((instance, options, next) => {
           const { supplier_id, service_id } = request.body
 
           const user_available_services = request.user.services.map(serv => serv.service)
-          if (!user_available_services.find(serv => serv + '' === supplier_id))
-            return reply.code(403).send('Forbidden service')
+          if (service_id)
+            if (!user_available_services.find(serv => serv + '' === supplier_id))
+              return reply.code(403).send('Forbidden service')
 
           const organization = await instance.organizations
             .findById(admin.organization, { nds_value: 1, name: 1 })
@@ -23,6 +24,9 @@ module.exports = fp((instance, options, next) => {
           const $match = {
             $match: { _id: id }
           };
+          const lookup_filter = service_id
+            ? ({ service_id: service_id })
+            : ({ service_id: { $in: user_available_services } })
           const $lookup = {
             $lookup: {
               let: { prod_id: '$_id' },
@@ -31,7 +35,7 @@ module.exports = fp((instance, options, next) => {
                 {
                   $match: {
                     good_id: '$$prod_id',
-                    service_id: { $in: user_available_services },
+                    ...lookup_filter,
                   },
                   $sort: { queue: -1 },
                 }
@@ -39,6 +43,10 @@ module.exports = fp((instance, options, next) => {
               as: 'partiations',
             },
           };
+          const filter = service_id
+            ? ({ $eq: ["$$supplier.service_id", service_id] })
+            : ({ $in: ["$$supplier.service_id", user_available_services] })
+
           const $project = {
             $project: {
               stopped_item: 1,
@@ -55,9 +63,7 @@ module.exports = fp((instance, options, next) => {
                 $filter: {
                   input: "$suppliers",
                   as: "supplier",
-                  cond: {
-                    $in: ["$$supplier.service_id", user_available_services]
-                  }
+                  cond: filter,
                 }
               }
             },
