@@ -30,6 +30,7 @@ module.exports = fp((instance, options, next) => {
                 service_id: current_service._id,
                 service_name: current_service.name,
                 good_id: purch_item.product_id,
+                good_name: curr_good.name,
                 quantity: purch_item.received,
                 quantity_left: purch_item.received,
                 queue: num_queue,
