@@ -168,6 +168,7 @@ module.exports = fp((instance, options, next) => {
               service_id: 1,
               service_name: 1,
               good_id: 1,
+              good_name: 1,
               cost: 1,
               quantity: 1,
               quantity_left: 1,
