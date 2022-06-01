@@ -158,8 +158,8 @@ module.exports = fp((instance, options, next) => {
             limit,
             page,
             sort_type,
+            sort_by,
           } = request.body
-          const sort_by = request.body.sort_by ?? '_id'
 
           const { min, max } = request.params;
 
@@ -205,7 +205,11 @@ module.exports = fp((instance, options, next) => {
 
           const $limit = { $limit: limit }
           const $skip = { $skip: (page - 1) * limit };
-          const $sort = { $sort: { sort_by: sort_type } };
+          const sort = {}
+          if (sort_by) sort[sort_by] = sort_type;
+          else sort._id = sort_type;
+
+          const $sort = { $sort: sort };
 
           const items = await instance.goodsSaleQueue.aggregate([
             $match,
