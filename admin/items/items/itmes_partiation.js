@@ -147,7 +147,11 @@ module.exports = fp((instance, options, next) => {
           const { supplier_id, service_id, limit, page } = request.body
 
           const user_available_services = request.user.services.map(serv => serv.service)
-          const query = { quantity_left: { $ne: 0 } }
+          const query = {
+            organization: admin.organization,
+            service_id: { $in: user_available_services },
+            quantity_left: { $ne: 0 },
+          }
 
           if (service_id) {
             if (!user_available_services.find(serv => serv + '' === service_id))
