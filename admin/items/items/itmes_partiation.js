@@ -24,7 +24,6 @@ module.exports = fp((instance, options, next) => {
           const $match = {
             $match: { _id: instance.ObjectId(id) }
           };
-          ({ $eq: [{ $toString: "$$supplier.service_id" }, service_id] })
 
           const lookup_filter = service_id
             ? ({ $eq: ['$service_id', instance.ObjectId(service_id)] })
@@ -112,5 +111,70 @@ module.exports = fp((instance, options, next) => {
     }
   );
 
+  instance.post('/items/partiations',
+    version,
+    (request, reply) => {
+      instance.oauth_admin(request, reply, async (admin) => {
+        try {
+          const { supplier_id, service_id, limit, page } = request.body
+
+          const user_available_services = request.user.services.map(serv => serv.service)
+          const query = { quantity_left: { $ne: 0 } }
+
+          if (service_id) {
+            if (!user_available_services.find(serv => serv + '' === service_id))
+              return reply.code(403).send('Forbidden service');
+            query.service_id = instance.ObjectId(service_id);
+          }
+          if (supplier_id)
+            query.supplier_id = instance.ObjectId(supplier_id);
+
+          const $match = { $match: query };
+
+          const $project = {
+            $project: {
+              supplier_id: 1,
+              supplier_name: 1,
+              purchase_id: 1,
+              p_order: 1,
+              service_id: 1,
+              service_name: 1,
+              good_id: 1,
+              cost: 1,
+              quantity: 1,
+              quantity_left: 1,
+              queue: 1,
+            }
+          }
+
+          const $limit = { $limit: limit }
+          const $skip = { $skip: (page - 1) * limit };
+          const $sort = { $sort: { _id: -1 } };
+
+          const items = await instance.goodsSales.aggregate([
+            $match,
+            $project,
+            $sort,
+            $skip,
+            $limit,
+          ])
+            .allowDiskUse(true)
+            .exec();
+          const total = await instance.clientsDatabase.countDocuments($match.$match);
+
+          return reply.ok({
+            limit: limit,
+            page: Math.ceil(total / limit),
+            current_page: page,
+            data: items,
+          }
+          );
+        } catch (error) {
+          instance.log.error(error.message)
+          return reply.error(error.message);
+        }
+
+      });
+    })
   next();
 });
