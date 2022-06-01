@@ -112,7 +112,35 @@ module.exports = fp((instance, options, next) => {
   );
 
   instance.post('/items/partiations',
-    version,
+    {
+      ...version,
+      schema: {
+        body: {
+          type: 'object',
+          required: ['limit', 'page'],
+          properties: {
+            supplier_id: {
+              type: 'string',
+              minLength: 24,
+              maxLength: 24
+            },
+            service_id: {
+              type: 'string',
+              minLength: 24,
+              maxLength: 24
+            },
+            limit: {
+              type: 'number',
+              minLength: 5,
+            },
+            page: {
+              type: 'number',
+              minLength: 1
+            }
+          }
+        }
+      }
+    },
     (request, reply) => {
       instance.oauth_admin(request, reply, async (admin) => {
         try {
