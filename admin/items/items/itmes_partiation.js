@@ -111,7 +111,7 @@ module.exports = fp((instance, options, next) => {
     }
   );
 
-  instance.post('/items/partiations',
+  instance.post('/items/partiations/:min/:max',
     {
       ...version,
       schema: {
@@ -136,6 +136,14 @@ module.exports = fp((instance, options, next) => {
             page: {
               type: 'number',
               minLength: 1
+            },
+            sort_by: {
+              type: 'string',
+              enum: ['quantity_left', 'date', '_id']
+            },
+            sort_type: {
+              type: 'number',
+              enum: [1, -1]
             }
           }
         }
@@ -144,13 +152,26 @@ module.exports = fp((instance, options, next) => {
     (request, reply) => {
       instance.oauth_admin(request, reply, async (admin) => {
         try {
-          const { supplier_id, service_id, limit, page } = request.body
+          const {
+            supplier_id,
+            service_id,
+            limit,
+            page,
+            sort_type,
+          } = request.body
+          const sort_by = request.body.sort_by ?? '_id'
+
+          const { min, max } = request.params;
 
           const user_available_services = request.user.services.map(serv => serv.service)
           const query = {
             organization_id: instance.ObjectId(admin.organization),
             service_id: { $in: user_available_services },
             quantity_left: { $ne: 0 },
+            date: {
+              $gte: min,
+              $lte: max,
+            },
           }
 
           if (service_id) {
@@ -184,7 +205,7 @@ module.exports = fp((instance, options, next) => {
 
           const $limit = { $limit: limit }
           const $skip = { $skip: (page - 1) * limit };
-          const $sort = { $sort: { _id: -1 } };
+          const $sort = { $sort: { sort_by: sort_type } };
 
           const items = await instance.goodsSaleQueue.aggregate([
             $match,
