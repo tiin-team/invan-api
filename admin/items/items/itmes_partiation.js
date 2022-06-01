@@ -157,10 +157,9 @@ module.exports = fp((instance, options, next) => {
             service_id,
             limit,
             page,
-            sort_type,
             sort_by,
           } = request.body
-
+          const sort_type = request.body.sort_type ? request.body.sort_type : -1
           const { min, max } = request.params;
 
           const user_available_services = request.user.services.map(serv => serv.service)
