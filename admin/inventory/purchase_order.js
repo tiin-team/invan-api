@@ -528,6 +528,8 @@ module.exports = fp((instance, options, next) => {
       const current_supplier = await instance.adjustmentSupplier
         .findOne({ _id: purch.supplier_id })
         .lean();
+      const create_date = new Date().getTime();
+
       if (current_supplier) {
         if (!current_supplier.balance) {
           current_supplier.balance = 0
@@ -586,7 +588,7 @@ module.exports = fp((instance, options, next) => {
             },
           }
         )
-        const create_date = new Date().getTime();
+
         await new instance.supplierTransaction({
           service: purch.service,
           supplier_id: current_supplier._id,
