@@ -151,7 +151,7 @@ module.exports = fp((instance, options, next) => {
           const $skip = { $skip: (page - 1) * limit };
           const $sort = { $sort: { _id: -1 } };
 
-          const items = await instance.goodsSales.aggregate([
+          const items = await instance.goodsSaleQueue.aggregate([
             $match,
             $project,
             $sort,
