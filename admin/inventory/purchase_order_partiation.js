@@ -2,7 +2,7 @@ const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
 
-    instance.decorate('create_partiation_queue', async (items, current_service, current_supplier, purch, goods) => {
+    instance.decorate('create_partiation_queue', async (items, current_service, current_supplier, purch, create_date) => {
         const queues = [];
         for (const purch_item of items) {
             const curr_good = await instance.goodsSales.findById(purch_item.product_id).lean();
@@ -21,6 +21,8 @@ module.exports = fp((instance, options, next) => {
             num_queue = queue && !isNaN(parseInt(queue.queue)) ? parseInt(queue.queue) + 1 : 1
 
             queues.push({
+                organization_id: current_service.organization,
+                date: create_date,
                 purchase_id: purch._id,
                 p_order: purch.p_order,
                 supplier_id: current_supplier._id,

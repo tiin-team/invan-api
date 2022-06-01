@@ -654,6 +654,7 @@ module.exports = fp((instance, _, next) => {
   })
 
   const goodsSaleQueue = instance.model('goodsSaleQueue', {
+    organization_id: mongoose.Types.ObjectId,
     supplier_id: mongoose.Types.ObjectId,
     supplier_name: String,
     purchase_id: mongoose.Types.ObjectId,
@@ -665,6 +666,7 @@ module.exports = fp((instance, _, next) => {
     quantity: Number,
     quantity_left: Number,
     queue: Number,
+    date: Number,
   })
   instance.decorate('goodsSaleQueue', goodsSaleQueue)
 

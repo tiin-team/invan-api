@@ -586,7 +586,7 @@ module.exports = fp((instance, options, next) => {
             },
           }
         )
-
+        const create_date = new Date().getTime();
         await new instance.supplierTransaction({
           service: purch.service,
           supplier_id: current_supplier._id,
@@ -596,14 +596,14 @@ module.exports = fp((instance, options, next) => {
           status: 'active',
           balance: supplier_used_transaction,
           currency: purch.total_currency,
-          date: new Date().getTime(),
+          date: create_date,
           purchase_id: purch._id
         })
           .save();
       }
 
       // update item partiation queue
-      instance.create_partiation_queue(items, current_service, current_supplier, purch,)
+      instance.create_partiation_queue(items, current_service, current_supplier, purch, create_date)
 
       // update items cost
       const goods = await instance.goodsSales
