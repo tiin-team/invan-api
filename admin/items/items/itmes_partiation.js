@@ -169,8 +169,8 @@ module.exports = fp((instance, options, next) => {
             service_id: { $in: user_available_services },
             quantity_left: { $ne: 0 },
             date: {
-              $gte: min,
-              $lte: max,
+              $gte: parseInt(min),
+              $lte: parseInt(max),
             },
           }
 
