@@ -173,6 +173,7 @@ module.exports = fp((instance, options, next) => {
               quantity: 1,
               quantity_left: 1,
               queue: 1,
+              date: 1,
             }
           }
 
