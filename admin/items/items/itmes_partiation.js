@@ -148,7 +148,7 @@ module.exports = fp((instance, options, next) => {
 
           const user_available_services = request.user.services.map(serv => serv.service)
           const query = {
-            organization: admin.organization,
+            organization_id: instance.ObjectId(admin.organization),
             service_id: { $in: user_available_services },
             quantity_left: { $ne: 0 },
           }
