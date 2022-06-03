@@ -314,46 +314,51 @@ module.exports = fp(function (instance, _, next) {
             fee_type,
             filter
           } = request.body;
-          const body = {
+          const query = {
             organization: user.organization,
             date: {
               $gte: startDate,
               $lte: endDate
             }
           }
-          if (amount_type) body.amount_type
-          if (service) body.service
-          if (supplier) body.supplier
+          if (amount_type) query.amount_type
+          if (service) query.service
+          if (supplier) query.supplier
 
           if (type != '') {
-            body.type = type
+            query.type = type
           }
 
           if (filter) {
             switch (fee_type) {
               case 'salary': {
-                body.employee = filter
+                query.employee = filter
                 break;
               }
               case 'company_to_fees': {
-                body.supplier = filter
+                query.supplier = filter
                 break;
               }
               case 'one_time_fees':
               case 'fees': {
-                body.service = filter
+                query.service = filter
                 break;
               }
             }
           }
           if (fee_type && fee_type != '') {
-            body.type = fee_type
+            query.type = fee_type
           }
 
-          const total = await instance.consumptionModel.find(body).countDocuments()
+          const total = await instance.consumptionModel.countDocuments(query);
 
           const limit = request.params.limit == 'all' ? (total == 0 ? 1 : total) : request.params.limit
-          const fees = await instance.consumptionModel.find(body).sort({ date: -1 }).skip((page - 1) * limit).limit(limit)
+          const fees = await instance.consumptionModel
+            .find(query)
+            .sort({ date: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean()
 
           reply.ok({
             total: total,
