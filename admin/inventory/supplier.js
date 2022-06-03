@@ -54,9 +54,6 @@ module.exports = (instance, options, next) => {
         allSum = 0
         const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
 
-        for (let i = 0; i < transactions.length; i++) {
-          allSum += data[i].status == 'pending' ? 0 : getFloat(data[i].balance)
-        }
         //kerak emas
         // let data = transactions.filter(element => element.status != 'pending')
         // delete query.status
@@ -103,6 +100,9 @@ module.exports = (instance, options, next) => {
         // const allSum = data.reduce((accum, item) => item.status == 'active' ? (getFloat(accum) + getFloat(item.balance)) : 0, 0)
 
         data.sort(((a, b) => b.date - a.date))
+        for (let i = 0; i < transactions.length; i++) {
+          allSum += data[i].status == 'pending' ? 0 : getFloat(data[i].balance)
+        }
         supp.transactions = data.slice((page - 1) * limit, limit * page);;
         //       supp.transactions = transactions;
         // Calculate supplier balance
