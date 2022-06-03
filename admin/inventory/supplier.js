@@ -100,6 +100,7 @@ module.exports = (instance, options, next) => {
         // const allSum = data.reduce((accum, item) => item.status == 'active' ? (getFloat(accum) + getFloat(item.balance)) : 0, 0)
 
         data.sort(((a, b) => b.date - a.date))
+        const total = data.length;
         for (let i = 0; i < transactions.length; i++) {
           allSum += data[i].status == 'pending' ? 0 : getFloat(data[i].balance)
         }
@@ -114,7 +115,8 @@ module.exports = (instance, options, next) => {
         reply.ok({
           ...supp,
           balance,
-          saved_balance: allSum
+          saved_balance: allSum,
+          total: total,
         })
       }
       catch (error) {
