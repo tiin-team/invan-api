@@ -102,26 +102,38 @@ module.exports = fp(function (instance, _, next) {
         body.option_id = option._id;
         body.option_name = option.name;
       }
+      const service = await instance.services
+        .findOne({ _id: body.service })
+        .lean()
+      if (!service) {
+        reply.fourorfour('Service')
+        return { body: null }
+      }
+      body.service_name = service.name
       switch (body.type) {
         case 'fees':
         case 'one_time_fees': {
-          try {
-            const service = await instance.services.findOne({ _id: body.service })
-            if (!service) {
-              reply.fourorfour('Service')
-              return { body: null }
-            }
-            body.service_name = service.name
-            return { body: body }
-          }
-          catch (error) {
-            reply.error(error.message)
-            return { body: null }
-          }
+          // try {
+          //   // const service = await instance.services
+          //   //   .findOne({ _id: body.service })
+          //   //   .lean()
+          //   // if (!service) {
+          //   //   reply.fourorfour('Service')
+          //   //   return { body: null }
+          //   // }
+          //   // body.service_name = service.name
+          return { body: body }
+          // }
+          // catch (error) {
+          //   reply.error(error.message)
+          //   return { body: null }
+          // }
         }
         case 'salary': {
           try {
-            const employee = await instance.User.findOne({ _id: body.employee })
+            const employee = await instance.User
+              .findOne({ _id: body.employee })
+              .lean()
             if (!employee) {
               reply.fourorfour('Employee')
               return { body: null }
@@ -135,7 +147,9 @@ module.exports = fp(function (instance, _, next) {
         }
         case 'company_to_fees': {
           try {
-            const supplier = await instance.adjustmentSupplier.findOne({ _id: body.supplier })
+            const supplier = await instance.adjustmentSupplier
+              .findOne({ _id: body.supplier })
+              .lean()
             if (!supplier) {
               reply.fourorfour('Supplier')
               return { body: null }
@@ -172,7 +186,9 @@ module.exports = fp(function (instance, _, next) {
       body.date = new Date().getTime()
       if (body.currency == 'usd') {
         try {
-          let currency = await instance.Currency.findOne({ organization: user.organization })
+          let currency = await instance.Currency
+            .findOne({ organization: user.organization })
+            .lean()
           if (!currency) {
             currency = { value: 1 }
           }
@@ -181,6 +197,23 @@ module.exports = fp(function (instance, _, next) {
       }
       else {
         body.amount = body.currency_amount
+      }
+      if (body.type === 'company_to_fees') {
+        const supplierTransaction = {
+          service: body.service,
+          supplier_id: body.supplier,
+          document_id: body.comment,
+          currency: body.currency,
+          status: 'active',
+          balance_type: body.amount_type,
+          balance: body.amount,
+          return_money: false,
+          employee: user._id,
+          employee_name: user.name,
+          date: body.date,
+        }
+        const { _id: transaction_id } = await new instance.supplierTransaction(supplierTransaction).save()
+        body.transaction_id = transaction_id;
       }
       const { _id: id } = await new instance.consumptionModel(body).save();
 
@@ -240,6 +273,9 @@ module.exports = fp(function (instance, _, next) {
         type: 'object',
         required: ['startDate', 'endDate'],
         properties: {
+          amount_type: { type: 'string', enum: ['cash', 'card'] },
+          service: { type: 'string', minLength: 24, maxLength: 24 },
+          supplier: { type: 'string', minLength: 24, maxLength: 24 },
           type: { type: 'string', default: '' },
           startDate: { type: 'integer', minimum: 1 },
           endDate: { type: 'integer', minimum: 1 },
@@ -258,7 +294,16 @@ module.exports = fp(function (instance, _, next) {
       instance.authorization(request, reply, async (user) => {
         try {
           const page = request.params.page
-          const { startDate, endDate, type, fee_type, filter } = request.body;
+          const {
+            startDate,
+            endDate,
+            type,
+            amount_type,
+            service,
+            supplier,
+            fee_type,
+            filter
+          } = request.body;
           const body = {
             organization: user.organization,
             date: {
@@ -266,6 +311,9 @@ module.exports = fp(function (instance, _, next) {
               $lte: endDate
             }
           }
+          if (amount_type) body.amount_type
+          if (service) body.service
+          if (supplier) body.supplier
 
           if (type != '') {
             body.type = type

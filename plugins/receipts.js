@@ -12,7 +12,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
     if (by_user == 'admin') {
       pos = {
         name: 'office',
-        _id: user._id
+        _id: user._id,
       }
     }
     else {
@@ -281,7 +281,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
         need_to_save.push($receiptModel);
       }
     }
-    return
+
     // let result = instance.Receipts.insertMany(need_to_save);
     let result = []
     for (const r of need_to_save) {
