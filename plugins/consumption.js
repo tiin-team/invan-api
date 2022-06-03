@@ -321,9 +321,9 @@ module.exports = fp(function (instance, _, next) {
               $lte: endDate
             }
           }
-          if (amount_type) query.amount_type
-          if (service) query.service
-          if (supplier) query.supplier
+          if (amount_type) query.amount_type = amount_type
+          if (service) query.service = service;
+          if (supplier) query.supplier = supplier;
 
           if (type != '') query.type = type
 
@@ -347,7 +347,7 @@ module.exports = fp(function (instance, _, next) {
           if (fee_type && fee_type != '') {
             query.type = fee_type
           }
-          console.log(request.body, query);
+
           const total = await instance.consumptionModel.countDocuments(query);
 
           const limit = request.params.limit == 'all' ? (total == 0 ? 1 : total) : request.params.limit
