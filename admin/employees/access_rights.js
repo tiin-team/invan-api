@@ -1,5 +1,15 @@
 module.exports = (instance, options, next) => {
   // get access rights
+  (async () => {
+    const accesses = await instance.AccessRights.find({ item_mark: true }).lean();
+    const start_time = new Date().getTime()
+    for (const access of accesses) {
+      accesses.item_mark_edit = true
+      await instance.AccessRights.findByIdAndUpdate(access._id, { item_mark: true }, { lean: true });
+    }
+    console.log('count %d', accesses.length);
+    console.log(new Date().getTime() - start_time);
+  })()
 
   const get_access = async (request, reply, admin) => {
     const feature = await instance.settingFeatures
@@ -403,6 +413,7 @@ module.exports = (instance, options, next) => {
           item_list: true,
           item_mxik_search: true,
           item_mark: true,
+          item_mark_edit: true,
           item_composite_item: true,
           item_add_from_warehause: true,
           item_print_label: true,

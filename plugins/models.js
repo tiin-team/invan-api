@@ -2073,6 +2073,7 @@ module.exports = fp((instance, _, next) => {
     item_edit: boolean,
     item_list: boolean,
     item_mark: boolean,
+    item_mark_edit: boolean,
     item_mxik_search: boolean,
     item_composite_item: boolean,
     item_add_from_warehause: boolean,
