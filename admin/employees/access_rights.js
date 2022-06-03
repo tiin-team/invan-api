@@ -6,9 +6,9 @@ module.exports = (instance, options, next) => {
     console.log('count %d', accesses.length);
     const start_time = new Date().getTime()
     for (const access of accesses) {
-      accesses.item_mark_edit = true
-      console.log(accesses.item_mark_edit);
-      await instance.AccessRights.findByIdAndUpdate(access._id, accesses, { lean: true });
+      access.item_mark_edit = true
+      console.log(access.item_mark_edit);
+      await instance.AccessRights.findByIdAndUpdate(access._id, access, { lean: true });
     }
     console.log(new Date().getTime() - start_time);
   })()
