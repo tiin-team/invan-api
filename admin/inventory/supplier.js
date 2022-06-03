@@ -6,8 +6,8 @@ module.exports = (instance, options, next) => {
   instance.get('/inventory/get_supplier/:id', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, async (admin) => {
       try {
-        const limit = !isNaN(request.params.limit) ? request.params.limit : 10;
-        const page = !isNaN(request.params.page) ? request.params.page : 1;
+        const limit = !isNaN(request.query.limit) ? request.query.limit : 10;
+        const page = !isNaN(request.query.page) ? request.query.page : 1;
         const { service } = request.query
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
