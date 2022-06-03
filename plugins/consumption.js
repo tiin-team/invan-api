@@ -347,7 +347,7 @@ module.exports = fp(function (instance, _, next) {
           if (fee_type && fee_type != '') {
             query.type = fee_type
           }
-console.log(query);
+          console.log(request.body, query);
           const total = await instance.consumptionModel.countDocuments(query);
 
           const limit = request.params.limit == 'all' ? (total == 0 ? 1 : total) : request.params.limit
