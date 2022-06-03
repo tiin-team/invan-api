@@ -6,6 +6,8 @@ module.exports = (instance, options, next) => {
   instance.get('/inventory/get_supplier/:id', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, async (admin) => {
       try {
+        const limit = !isNaN(request.params.limit) ? request.params.limit : 10;
+        const page = !isNaN(request.params.page) ? request.params.page : 1;
         const { service } = request.query
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
@@ -100,8 +102,8 @@ module.exports = (instance, options, next) => {
         // }
         // const allSum = data.reduce((accum, item) => item.status == 'active' ? (getFloat(accum) + getFloat(item.balance)) : 0, 0)
 
-        data.sort(((a, b) => a.date - b.date))
-        supp.transactions = data;
+        data.sort(((a, b) => b.date - a.date))
+        supp.transactions = data.slice((page - 1) * limit, limit * page);;
         //       supp.transactions = transactions;
         // Calculate supplier balance
         const $match = { $match: { supplier_id: supp._id } }
