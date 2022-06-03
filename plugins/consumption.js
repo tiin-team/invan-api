@@ -273,15 +273,25 @@ module.exports = fp(function (instance, _, next) {
         type: 'object',
         required: ['startDate', 'endDate'],
         properties: {
-          amount_type: { type: 'string', enum: ['cash', 'card'] },
-          service: { type: 'string', minLength: 24, maxLength: 24 },
-          supplier: { type: 'string', minLength: 24, maxLength: 24 },
+          amount_type: { type: 'string', enum: ['cash', 'card', ''] },
+          service: {
+            oneOf: [
+              { type: 'string', minLength: 24, maxLength: 24 },
+              { type: 'string', minLength: 0, maxLength: 0 },
+            ],
+          },
+          supplier: {
+            oneOf: [
+              { type: 'string', minLength: 24, maxLength: 24 },
+              { type: 'string', minLength: 0, maxLength: 0 },
+            ],
+          },
           type: { type: 'string', default: '' },
           startDate: { type: 'integer', minimum: 1 },
           endDate: { type: 'integer', minimum: 1 },
-        }
-      }
-    }
+        },
+      },
+    },
   }
 
   instance.post(
