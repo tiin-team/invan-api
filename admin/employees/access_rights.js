@@ -1,17 +1,5 @@
 module.exports = (instance, options, next) => {
   // get access rights
-  (async () => {
-    console.log('start');
-    const accesses = await instance.AccessRights.find({ item_mark: true }).lean();
-    console.log('count %d', accesses.length);
-    const start_time = new Date().getTime()
-    for (const access of accesses) {
-      access.item_mark_edit = true
-      console.log(access.item_mark_edit);
-      await instance.AccessRights.findByIdAndUpdate(access._id, access, { lean: true });
-    }
-    console.log(new Date().getTime() - start_time);
-  })()
 
   const get_access = async (request, reply, admin) => {
     const feature = await instance.settingFeatures
