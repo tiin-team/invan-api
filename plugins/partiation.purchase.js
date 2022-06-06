@@ -174,10 +174,10 @@ module.exports = fp((instance, _, next) => {
       for (const good of goods) {
         good.queue = good.queue ? good.queue : 1
 
-        let queu_index = queues.find(el => el.queue === good.queue)
-        if (queu_index === undefined) {
+        let queu_index = queues.findIndex(el => el.queue === good.queue)
+        if (queu_index === -1) {
           queu_index = 0
-          good.queue = queues[queu_index];
+          good.queue = queues[queu_index].queue;
         }
 
         if (good) {
