@@ -170,7 +170,12 @@ module.exports = fp((instance, _, next) => {
         })
         .sort({ queue: 1 })
         .lean()
+      if (queues.length <= 0) {
+        const msg = `goods_partiation_queue_stock_update, queues.length <= 0` +
+          `\nService: ${service_id}`
 
+        return instance.send_Error(msg)
+      }
       for (const good of goods) {
         good.queue = good.queue ? good.queue : 1
 
