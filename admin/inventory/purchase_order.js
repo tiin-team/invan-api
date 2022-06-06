@@ -654,7 +654,7 @@ module.exports = fp((instance, options, next) => {
           }
           console.log(g.services[index].in_stock);
           console.log(index);
-          console.log(g.services[i].service + "", purch.service + "");
+          console.log(g.services, purch.service);
           g.services[index].in_stock += (+goodsObj[g._id].to_receive)
           console.log(g.services[index].in_stock);
           // create inv history
