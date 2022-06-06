@@ -95,7 +95,7 @@ module.exports = fp(function (instance, _, next) {
     try {
       const body = request.body;
       if (body.option_id) {
-        const option = await instance.FeeOptions.findById(body.option_id);
+        const option = await instance.FeeOptions.findById(body.option_id).lean();
         if (!option) {
           return reply.fourorfour('Service')
         }

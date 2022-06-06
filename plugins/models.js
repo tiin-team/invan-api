@@ -179,7 +179,11 @@ module.exports = fp((instance, _, next) => {
       default: [
         {},
       ]
-    }
+    },
+    is_ofd: {
+      type: Boolean,
+      default: false
+    },
   })
 
   instance.decorate('organizations', organizations)

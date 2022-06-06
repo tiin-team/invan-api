@@ -652,8 +652,9 @@ module.exports = fp((instance, options, next) => {
           if (g.cost_currency == 'usd') {
             g.cost = g.cost / currency.value
           }
+          console.log(g.services[index].in_stock);
           g.services[index].in_stock += (+goodsObj[g._id].to_receive)
-
+          console.log(g.services[index].in_stock);
           // create inv history
 
           // ('create_inventory_history', (user, reason, unique, service_id, product_id, cost, adjustment, stock_after, date)

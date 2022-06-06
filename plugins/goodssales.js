@@ -345,7 +345,7 @@ module.exports = fp((instance, _, next) => {
 
             try {
               await instance.goodsSales.updateOne({ _id: id }, updateQuery1, updateQuery2)
-              const g = await instance.goodsSales.findOne({ _id: id })
+              const g = await instance.goodsSales.findOne({ _id: id }).lean()
               if (g) {
                 var insstock = 987654321;
                 for (const s of g.services) {
