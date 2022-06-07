@@ -11,12 +11,14 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('update_queue_sold_item_refund', async (receipt_id, sold_list, service_id) => {
     try {
       const receipt = await instance.Receipts.findById(receipt_id).lean();
-      instance.send_Error(`update_queue_sold_item_refund, chek topilmadi.
-      \nreceipt_id: ${receipt_id}
-      \service_id: ${service_id}
-      \nchek: ${receipt}
-      `)
-      if (!receipt) return;
+      if (!receipt) {
+        instance.send_Error(`update_queue_sold_item_refund, chek topilmadi.
+        \nreceipt_id: ${receipt_id}
+        \service_id: ${service_id}
+        \nchek: ${receipt}
+        `)
+        return
+      };
       const soldObj = {}
       const ids = []
 
