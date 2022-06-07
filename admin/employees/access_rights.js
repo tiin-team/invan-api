@@ -443,6 +443,7 @@ module.exports = (instance, options, next) => {
           can_delete_item: true,
           //create
           create: true,
+          create_mark: true,
           create_purchase: true,
           create_taxes: true,
           create_store: true,
