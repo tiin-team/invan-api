@@ -11,10 +11,6 @@ module.exports = fp((instance, options, next) => {
           type: 'object',
           required: [],
           properties: {
-            quantity_left: {
-              type: 'string',
-              enum: ['all', 'zero', 'not_zero']
-            },
             supplier_id: {
               type: 'string',
               minLength: 24,
@@ -34,7 +30,6 @@ module.exports = fp((instance, options, next) => {
         try {
           const id = request.params.id;
           const { supplier_id, service_id } = request.body
-          const quantity_left = request.body.quantity_left
 
           const user_available_services = request.user.services.map(serv => serv.service)
           if (service_id)
@@ -43,9 +38,8 @@ module.exports = fp((instance, options, next) => {
 
           const query = {
             good_id: instance.ObjectId(id),
+            quantity_left: { $ne: 0 },
           };
-          if (quantity_left === 'zero') query.quantity_left = { $eq: 0 }
-          if (quantity_left === 'not_zero') query.quantity_left = { $ne: 0 }
 
           if (service_id) query.service_id = instance.ObjectId(service_id);
           if (supplier_id) query.service_id = instance.ObjectId(supplier_id);
@@ -74,6 +68,10 @@ module.exports = fp((instance, options, next) => {
           type: 'object',
           required: ['limit', 'page'],
           properties: {
+            quantity_left: {
+              type: 'string',
+              enum: ['all', 'zero', 'not_zero']
+            },
             supplier_id: {
               type: 'string',
               minLength: 24,
@@ -115,18 +113,21 @@ module.exports = fp((instance, options, next) => {
             sort_by,
           } = request.body
           const sort_type = request.body.sort_type ? request.body.sort_type : -1
+          const quantity_left = request.body.quantity_left
           const { min, max } = request.params;
 
           const user_available_services = request.user.services.map(serv => serv.service)
           const query = {
             organization_id: instance.ObjectId(admin.organization),
             service_id: { $in: user_available_services },
-            quantity_left: { $ne: 0 },
+            // quantity_left: { $ne: 0 },
             date: {
               $gte: parseInt(min),
               $lte: parseInt(max),
             },
           }
+          if (quantity_left === 'zero') query.quantity_left = { $eq: 0 }
+          if (quantity_left === 'not_zero') query.quantity_left = { $ne: 0 }
 
           if (service_id) {
             if (!user_available_services.find(serv => serv + '' === service_id))
