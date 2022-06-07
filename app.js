@@ -58,6 +58,11 @@ module.exports = function (fastify, opts, next) {
   })
 
   fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/partiation'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'admin/releases'),
     options: Object.assign(options, opts)
   })

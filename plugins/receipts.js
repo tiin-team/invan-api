@@ -329,6 +329,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
   } catch (error) {
     console.log(error.message);
     reply.error(error.message);
+    instance.send_Error('receiptCreateGroup', error)
   }
   return reply;
 };
