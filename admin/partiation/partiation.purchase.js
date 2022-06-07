@@ -140,15 +140,17 @@ module.exports = fp((instance, _, next) => {
         return instance.send_Error(msg)
       }
       for (const good of goods) {
-        good.queue = good.queue ? good.queue : 1
+        goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
+          ? goods_obj[good.product_id].queue
+          : 1
 
-        let queu_index = queues.findIndex(el => el.queue === good.queue)
+        let queu_index = queues.findIndex(el => el.queue === goods_obj[good.product_id].queue)
         if (queu_index === -1) {
           queu_index = 0
-          good.queue = queues[queu_index].queue;
+          goods_obj[good.product_id].queue = queues[queu_index].queue;
         }
 
-        if (good) {
+        if (good && goods_obj[good.product_id]) {
           const suppliers = Array.isArray(goods_obj[good.product_id].suppliers)
             ? goods_obj[good.product_id].suppliers
             : [{
