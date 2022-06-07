@@ -206,7 +206,7 @@ module.exports = fp((instance, options, next) => {
           ])
             .allowDiskUse(true)
             .exec();
-          const total = await instance.clientsDatabase.countDocuments($match.$match);
+          const total = await instance.goodsSaleQueue.countDocuments(query);
 
           return reply.ok({
             limit: limit,

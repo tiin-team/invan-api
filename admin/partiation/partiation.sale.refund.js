@@ -59,7 +59,7 @@ module.exports = fp((instance, _, next) => {
 				}
 			}
 
-			const sold_item_list = []
+			// const sold_item_list = []
 			for (const sold_item of receipt.sold_item_list) {
 				if (sold_item != null) {
 					if (soldObj[sold_item._id] != null) {
@@ -84,7 +84,7 @@ module.exports = fp((instance, _, next) => {
 						service_id: service_id,
 						good_id: sold_item._id,
 					})
-					.sort({ queue: sort })
+					.sort({ queue: 1 })
 					.lean()
 				await instance.goodsSaleQueue.findByIdAndUpdate(
 					queue._id,
@@ -93,7 +93,7 @@ module.exports = fp((instance, _, next) => {
 				)
 			}
 		} catch (error) {
-			console.log(error.message)
+      instance.send_Error('update_queue_sold_item_refund', error)
 		}
 	})
 
