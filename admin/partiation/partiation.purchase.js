@@ -67,6 +67,14 @@ module.exports = fp((instance, _, next) => {
 
     return { num_queue: num_queue, suppliers: suppliers }
   }
+
+  /**
+ * update goodsSales
+ * @param {Number} id tovar _id si
+ * @param {Number} num_queue partiya tartibi
+ * @param {[any]} suppliers
+ * @returns goodsSales object
+ */
   async function updateGoodsSalesQueueOfSuppliers(id, num_queue, suppliers) {
     return await instance.goodsSales
       .findOneAndUpdate(
@@ -149,7 +157,8 @@ module.exports = fp((instance, _, next) => {
           queu_index = 0
           goods_obj[good.product_id].queue = queues[queu_index].queue;
         }
-
+        console.log(queu_index, 'queu_index');
+        console.log(queues[queu_index], 'queues[queu_index]');
         if (good && goods_obj[good.product_id]) {
           const suppliers = Array.isArray(goods_obj[good.product_id].suppliers)
             ? goods_obj[good.product_id].suppliers
@@ -195,7 +204,7 @@ module.exports = fp((instance, _, next) => {
           } else {
             suppliers[supp_cur_serv_index].stock -= good.value;
 
-            await updateGoodsSalesQueueOfSuppliers(good.product_id, queu_index.queue, suppliers)
+            await updateGoodsSalesQueueOfSuppliers(good.product_id, queues[queu_index].queue, suppliers)
 
             await updateGoodsSaleQueueQunatityLeft(
               good._id,
