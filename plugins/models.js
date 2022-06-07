@@ -2038,6 +2038,7 @@ module.exports = fp((instance, _, next) => {
     //create roles
     create: boolean,
     create_purchase: boolean,
+    create_mark: boolean,
     create_taxes: boolean,
     create_store: boolean,
     create_pos_device: boolean,
