@@ -145,7 +145,7 @@ module.exports = fp((instance, _, next) => {
         const msg = `goods_partiation_queue_stock_update, queues.length <= 0` +
           `\nService: ${service_id}`
 
-        return instance.send_Error(msg)
+        return instance.send_Error('goods_partiation_queue_stock_update', msg)
       }
       for (const good of goods) {
         goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
@@ -207,7 +207,7 @@ module.exports = fp((instance, _, next) => {
 
             await updateGoodsSaleQueueQunatityLeft(
               good._id,
-              parseInt(queues[queu_index].quantity_left) - parseInt(good.value)
+              parseFloat(queues[queu_index].quantity_left) - parseFloat(good.value)
             )
           }
         }

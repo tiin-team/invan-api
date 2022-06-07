@@ -12,11 +12,13 @@ module.exports = fp((instance, _, next) => {
     try {
       const receipt = await instance.Receipts.findById(receipt_id).lean();
       if (!receipt) {
-        instance.send_Error(`update_queue_sold_item_refund, chek topilmadi.
-        \nreceipt_id: ${receipt_id}
-        \service_id: ${service_id}
-        \nchek: ${receipt}
-        `)
+        instance.send_Error(
+          `update_queue_sold_item_refund`,
+          `chek topilmadi.
+          \nreceipt_id: ${receipt_id}
+          \service_id: ${service_id}
+          \nchek: ${receipt}`
+        )
         return
       };
       const soldObj = {}
@@ -102,11 +104,13 @@ module.exports = fp((instance, _, next) => {
             { new: true, lean: true },
           )
         else {
-          instance.send_Error(`update_queue_sold_item_refund, partiya topilmadi.
-          \nreceipt_id: ${sold_item.receipt_id}
-          \nproduct_id: ${sold_item.product_id}
-          \nvalue: ${sold_item.value}
-          `)
+          instance.send_Error(
+            `update_queue_sold_item_refund`,
+            `partiya topilmadi.
+            \nreceipt_id: ${sold_item.receipt_id}
+            \nproduct_id: ${sold_item.product_id}
+            \nvalue: ${sold_item.value}`
+          )
         }
       }
     } catch (error) {
