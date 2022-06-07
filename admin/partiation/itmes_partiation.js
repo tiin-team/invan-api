@@ -97,7 +97,10 @@ module.exports = fp((instance, options, next) => {
             sort_type: {
               type: 'number',
               enum: [1, -1]
-            }
+            },
+            search: {
+              type: 'string',
+            },
           }
         }
       }
@@ -111,6 +114,7 @@ module.exports = fp((instance, options, next) => {
             limit,
             page,
             sort_by,
+            search,
           } = request.body
           const sort_type = request.body.sort_type ? request.body.sort_type : -1
           const quantity_left = request.body.quantity_left
@@ -128,6 +132,33 @@ module.exports = fp((instance, options, next) => {
           }
           if (quantity_left === 'zero') query.quantity_left = { $eq: 0 }
           if (quantity_left === 'not_zero') query.quantity_left = { $ne: 0 }
+          if (search)
+            query["$or"] = [
+              {
+                supplier_name: {
+                  $regex: search,
+                  $options: "i",
+                },
+              },
+              {
+                service_name: {
+                  $regex: search,
+                  $options: "i",
+                },
+              },
+              {
+                p_order: {
+                  $regex: search,
+                  $options: "i",
+                },
+              },
+              {
+                good_name: {
+                  $regex: search,
+                  $options: "i",
+                },
+              },
+            ];
 
           if (service_id) {
             if (!user_available_services.find(serv => serv + '' === service_id))
