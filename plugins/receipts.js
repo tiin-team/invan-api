@@ -285,8 +285,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
     // let result = instance.Receipts.insertMany(need_to_save);
     let result = []
     for (const r of need_to_save) {
-      // //goods_partiation_queue_stock_update update stock queue
-      // instance.goods_partiation_queue_stock_update(r.sold_item_list, service_id)
       const check = await new instance.Receipts(r).save();
       // save agent transaction
       console.log('save agent transaction')
@@ -316,11 +314,10 @@ const receiptCreateGroup = async (request, reply, instance) => {
     for (const rr of result) {
       if (rr.is_refund) {
         // oxirgi queue ga stockni qoshib qoyish krk
-        await instance.update_queue_sold_item_refund(rr.refund, rr.sold_item_list, service_id)
+        await instance.update_queue_sold_item_refund(rr._id, rr.sold_item_list, service_id)
         await instance.update_receipt_sold_item(rr.refund, rr.sold_item_list);
       } else {
         //goods_partiation_queue_stock_update update stock queue
-        console.log(rr.sold_item_list, service_id);
         instance.goods_partiation_queue_stock_update(rr.sold_item_list, service_id)
       }
     }

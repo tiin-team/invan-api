@@ -157,8 +157,7 @@ module.exports = fp((instance, _, next) => {
           queu_index = 0
           goods_obj[good.product_id].queue = queues[queu_index].queue;
         }
-        console.log(queu_index, 'queu_index');
-        console.log(queues[queu_index], 'queues[queu_index]');
+
         if (good && goods_obj[good.product_id]) {
           const suppliers = Array.isArray(goods_obj[good.product_id].suppliers)
             ? goods_obj[good.product_id].suppliers
