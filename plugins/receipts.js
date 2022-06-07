@@ -312,6 +312,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
       }
     }
     for (const rr of result) {
+      console.log(rr.is_refund, 'rr.is_refund');
       if (rr.is_refund) {
         // oxirgi queue ga stockni qoshib qoyish krk
         await instance.update_queue_sold_item_refund(rr._id, rr.sold_item_list, service_id)

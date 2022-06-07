@@ -206,7 +206,7 @@ module.exports = fp((instance, _, next) => {
             await updateGoodsSalesQueueOfSuppliers(good.product_id, queues[queu_index].queue, suppliers)
 
             await updateGoodsSaleQueueQunatityLeft(
-              good._id,
+              queues[queu_index]._id,
               parseFloat(queues[queu_index].quantity_left) - parseFloat(good.value)
             )
           }
