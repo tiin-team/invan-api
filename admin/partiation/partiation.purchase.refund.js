@@ -146,9 +146,10 @@ module.exports = fp((instance, _, next) => {
 
       for (const good of goods) {
         const queue_index = queues.findIndex(elem => elem.good_id + '' === good.product_id + '')
-        num_queue = queues[queue_index].queue
+        // num_queue = queues[queue_index].queue
         if (queues[queue_index].quantity_left <= good.quality) {
-          num_queue = await updateSupplierPartiationQueueRefund(
+          // num_queue = 
+          await updateSupplierPartiationQueueRefund(
             queues.filter(elem => elem.good_id + '' === good.product_id + ''),
             good.quality,
             // good.product_id,
@@ -192,7 +193,8 @@ module.exports = fp((instance, _, next) => {
 
         suppliers[supp_index].stock -= good.quality
 
-        await updateGoodsSalesQueueOfSuppliers(good.product_id, num_queue, suppliers)
+        await updateGoodsSalesQueueOfSuppliers(good.product_id, goods_obj[good.product_id].queue, suppliers)
+        // await updateGoodsSalesQueueOfSuppliers(good.product_id, num_queue, suppliers)
       }
     } catch (err) {
       instance.send_Error(
