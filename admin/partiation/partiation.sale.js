@@ -197,7 +197,7 @@ module.exports = fp((instance, _, next) => {
               }
             )
 
-            res.suppliers = getGoodOfSuppliers(goods_obj[good.product_id].suppliers, res.suppliers)
+            res.suppliers = getGoodOfSuppliers(suppliers, res.suppliers)
 
             return await updateGoodsSalesQueueOfSuppliers(good.product_id, res.num_queue, res.suppliers)
           } else {

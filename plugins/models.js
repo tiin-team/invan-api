@@ -679,6 +679,7 @@ module.exports = fp((instance, _, next) => {
     organization: String,
     service: String,
     queue: Number,
+    //partiation qill
     suppliers: [{
       supplier_id: mongoose.Types.ObjectId,
       supplier_name: String,

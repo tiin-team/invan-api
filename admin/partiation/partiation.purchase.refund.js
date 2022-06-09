@@ -143,7 +143,7 @@ module.exports = fp((instance, _, next) => {
         })
         .sort({ queue: 1 })
         .lean();
-      [].filter(elem => { })
+
       for (const good of goods) {
         const queue_index = queues.findIndex(elem => elem.good_id + '' === good.product_id + '')
         num_queue = queues[queue_index].queue
