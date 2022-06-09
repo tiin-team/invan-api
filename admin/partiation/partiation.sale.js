@@ -145,7 +145,11 @@ module.exports = fp((instance, _, next) => {
         const msg = `goods_partiation_queue_stock_update, queues.length <= 0` +
           `\nService: ${service_id}`
 
-        return instance.send_Error('goods_partiation_queue_stock_update', msg)
+        return instance.send_Error(
+          `goods_partiation_queue_stock_update
+          \nservice_id: ${service_id}`,
+          msg,
+        )
       }
       for (const good of goods) {
         goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
@@ -213,7 +217,11 @@ module.exports = fp((instance, _, next) => {
         }
       }
     } catch (err) {
-      instance.send_Error('goods_partiation_queue_stock_update', err)
+      instance.send_Error(
+        `goods_partiation_queue_stock_update
+        \nservice_id: ${service_id}`,
+        err,
+      )
     }
   })
 

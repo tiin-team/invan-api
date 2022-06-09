@@ -195,7 +195,12 @@ module.exports = fp((instance, _, next) => {
         await updateGoodsSalesQueueOfSuppliers(good.product_id, num_queue, suppliers)
       }
     } catch (err) {
-      instance.send_Error('goods_partiation_queue_stock_update_refund', err)
+      instance.send_Error(
+        `goods_partiation_queue_stock_update_refund
+        \nservice_id: ${service_id}
+        \nsupplier_id: ${supplier_id}`,
+        err,
+      )
     }
   })
 

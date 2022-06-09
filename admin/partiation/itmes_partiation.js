@@ -46,11 +46,25 @@ module.exports = fp((instance, options, next) => {
 
           const $match = { $match: query };
 
-          const items = await instance.goodsSaleQueue.aggregate([$match])
+          const partiations = await instance.goodsSaleQueue.aggregate([$match])
             .allowDiskUse(true)
             .exec();
 
-          return reply.ok(items);
+          const item = await instance.goodsSales
+            .findById(instance.ObjectId(id), { queue: 1 })
+            .lean()
+          const total = await instance.goodsSaleQueue.countDocuments(query);
+          const total_stock = partiations.reduce((total_stock_sum, num) => total_stock_sum + num, 0)
+
+          return reply.code(200).send({
+            error: "Ok",
+            message: "Success",
+            statusCode: 200,
+            current_queue: item.queue,
+            total: total,
+            total_stock: total_stock,
+            data: partiations,
+          });
         } catch (error) {
           instance.log.error(error.message)
           return reply.error(error.message);

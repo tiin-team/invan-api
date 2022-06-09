@@ -16,7 +16,7 @@ module.exports = fp((instance, _, next) => {
           `update_queue_sold_item_refund`,
           `chek topilmadi.
           \nreceipt_id: ${receipt_id}
-          \service_id: ${service_id}
+          \nservice_id: ${service_id}
           \nchek: ${receipt}`
         )
         return
@@ -114,7 +114,12 @@ module.exports = fp((instance, _, next) => {
         }
       }
     } catch (error) {
-      instance.send_Error('update_queue_sold_item_refund', error)
+      instance.send_Error(
+        `update_queue_sold_item_refund.
+        \nreceipt_id: ${receipt_id}
+        \nservice_id: ${service_id}`,
+        error,
+      )
     }
   })
 
