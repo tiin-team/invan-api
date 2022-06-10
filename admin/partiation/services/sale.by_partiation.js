@@ -6,6 +6,10 @@ module.exports = fp((instance, _, next) => {
    * postavchiklarni partiya bo'yicha alhida stockni hisoblash
    */
 
+  /**
+   * @param {string} id partiyaning _id si
+   * @param {number} quantity_left
+  */
   async function updateGoodsSaleQueueQunatityLeft(id, quantity_left = 0) {
     return await instance.goodsSaleQueue
       .findOneAndUpdate(
@@ -15,6 +19,31 @@ module.exports = fp((instance, _, next) => {
       )
   }
 
+  /**
+    @param {[{
+      _id: string
+      supplier_id: string
+      service_id: string
+      quantity: number
+      quantity_left: number
+    }]} queues
+    @param {number} index_queue
+    @param {number} dec_count
+    @param { 
+        product_id: string 
+        service_id: string
+      }
+    @returns {
+      <{
+        num_queue: number
+        suppliers: [{
+          supplier_id: string
+          service_id: string
+          dec_count: number
+        }]
+    }>}
+    bitta tovarni partiya boyicha sotish
+  */
   async function recursiveUpdateGoodSaleQueueDec(queues, index_queue, good, dec_count, { product_id, service_id }) {
     num_queue = queues[index_queue].queue
 
@@ -117,8 +146,7 @@ module.exports = fp((instance, _, next) => {
   * @param goods - sotilgan tovarlar
   * @param service_id - filial _id si
   */
-
-  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id) => {
+  instance.decorate('partiation_receipt_sale_by_partiation', async (goods = [], service_id) => {
     try {
       // console.log(goods.length, 'goods.length');
       const service = await instance.services
@@ -152,69 +180,7 @@ module.exports = fp((instance, _, next) => {
         )
       }
       for (const good of goods) {
-        goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
-          ? goods_obj[good.product_id].queue
-          : 1
 
-        let queu_index = queues.findIndex(el => el.queue === goods_obj[good.product_id].queue)
-        if (queu_index === -1) {
-          queu_index = 0
-          goods_obj[good.product_id].queue = queues[queu_index].queue;
-        }
-
-        if (good && goods_obj[good.product_id]) {
-          const suppliers = Array.isArray(goods_obj[good.product_id].suppliers)
-            ? goods_obj[good.product_id].suppliers
-            : [{
-              supplier_id: queues[queu_index].supplier_id,
-              supplier_name: queues[queu_index].supplier_name,
-              service_id: service._id,
-              service_name: service.name,
-              stock: 0,
-            }]
-
-          let supp_cur_serv_index = suppliers
-            .findIndex(elem =>
-              elem.service_id + '' == service._id + ''
-              && elem.supplier_id + '' == queues[queu_index].supplier_id + ''
-            )
-          if (supp_cur_serv_index == -1) {
-            supp_cur_serv_index = suppliers.length
-            suppliers.push({
-              supplier_id: queues[queu_index].supplier_id,
-              supplier_name: queues[queu_index].supplier_name,
-              service_id: service._id,
-              service_name: service.name,
-              stock: 0,
-            })
-          }
-
-          if (queues[queu_index].quantity_left <= good.value) {
-            const res = await recursiveUpdateGoodSaleQueueDec(
-              queues,
-              queu_index,
-              good,
-              0,
-              {
-                service_id: service._id,
-                product_id: good.product_id,
-              }
-            )
-
-            res.suppliers = getGoodOfSuppliers(suppliers, res.suppliers)
-
-            return await updateGoodsSalesQueueOfSuppliers(good.product_id, res.num_queue, res.suppliers)
-          } else {
-            suppliers[supp_cur_serv_index].stock -= good.value;
-
-            await updateGoodsSalesQueueOfSuppliers(good.product_id, queues[queu_index].queue, suppliers)
-
-            await updateGoodsSaleQueueQunatityLeft(
-              queues[queu_index]._id,
-              parseFloat(queues[queu_index].quantity_left) - parseFloat(good.value)
-            )
-          }
-        }
       }
     } catch (err) {
       instance.send_Error(
