@@ -263,7 +263,7 @@ module.exports = fp((instance, options, next) => {
   };
 
   instance.post(
-    "/inventory/partiation/valuation/:good_id",
+    "/inventory/partiation/valuation/:supplier_id",
     {
       ...version,
       schema: bodySchema
@@ -278,9 +278,8 @@ module.exports = fp((instance, options, next) => {
             search,
             sort_by,
             service_id,
-            supplier_id
           } = request.body;
-          const { good_id } = request.params;
+          const { supplier_id } = request.params;
 
           if (!Array.isArray(request.user.services))
             return reply.code(403).send('Forbidden service')
@@ -292,11 +291,9 @@ module.exports = fp((instance, options, next) => {
 
           const query = {
             organization_id: instance.ObjectId(user.organization),
-            good_id: instance.ObjectId(good_id),
             service_id: { $in: user_available_services },
+            supplier_id: instance.ObjectId(supplier_id),
           }
-          if (supplier_id)
-            query.supplier_id = instance.ObjectId(supplier_id);
           if (service_id)
             query.service_id = instance.ObjectId(service_id);
 
@@ -344,7 +341,7 @@ module.exports = fp((instance, options, next) => {
 
           const result = await instance.goodsSaleQueue.aggregate([
             $match,
-            $group,
+            // $group,
             // $project,
             $sort,
             $skip,
