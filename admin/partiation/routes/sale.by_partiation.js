@@ -174,7 +174,7 @@ module.exports = fp((instance, options, next) => {
     },
   };
 
-   instance.post('/admin-partiation-receipt/create',
+  instance.post('/admin-partiation-receipt/create',
     {
       ...version,
       ...receiptBody,
@@ -191,8 +191,6 @@ module.exports = fp((instance, options, next) => {
       });
     }
   );
-
-
 
   next();
 });
