@@ -36,6 +36,7 @@ module.exports = fp((instance, options, next) => {
     const queue_query = {
       $and: [
         { $eq: ['$supplier_id', '$$supplier_id'] },
+        { $ne: ['$quantity_left', 0] },
       ],
     }
     if (service_id)
@@ -50,9 +51,23 @@ module.exports = fp((instance, options, next) => {
             $match: { $expr: queue_query },
           },
           {
+            $project: {
+              // cost: 1,
+              quantity: 1,
+              quantity_left: 1,
+            },
+          },
+          {
             $group: {
               _id: null,
-              cost: { $sum: '$cost' },
+              // cost: {
+              //   $sum: {
+              //     $multipy: [
+              //       { $max: ['$cost', 0] },
+              //       { $max: ['$quantity', 0] },
+              //     ],
+              //   },
+              // },
               quantity: { $sum: '$quantity' },
               quantity_left: { $sum: '$quantity_left' },
             }
@@ -66,8 +81,21 @@ module.exports = fp((instance, options, next) => {
     }
     const $limit = { $limit: limit };
 
+    const $project = {
+      $project: {
+        organization: 1,
+        supplier_name: 1,
+        contact: 1,
+        email: 1,
+        phone_number: 1,
+        website: 1,
+        quantity: { $first: '$partiations.quantity' },
+        quantity_left: { $first: '$partiations.quantity_left' },
+      }
+    }
+
     const result = await instance.adjustmentSupplier.aggregate([
-      $match, $skip, $limit, $lookup
+      $match, $skip, $limit, $lookup, $project
     ]);
 
     const total = await instance.adjustmentSupplier.countDocuments($match.$match)
