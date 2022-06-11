@@ -165,7 +165,7 @@ module.exports = fp((instance, _, next) => {
         .find({
           service_id: service._id,
           good_id: { $in: sale_goods_ids },
-          quantity_left: { $ne: 0 }
+          quantity_left: { $gt: 0 },
         })
         .sort({ queue: 1 })
         .lean()

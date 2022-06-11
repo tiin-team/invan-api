@@ -92,7 +92,7 @@ module.exports = fp((instance, _, next) => {
           .findOne({
             service_id: service_id,
             good_id: sold_item.product_id,
-            quantity_left: { $ne: 0 },
+            quantity_left: { $gt: 0 },
           })
           .sort({ queue: 1 })
           .lean()

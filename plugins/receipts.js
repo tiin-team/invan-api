@@ -235,8 +235,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     product_id: item._id,
                     service_id: service_id,
                     queue: item.queue,
+                    quantity_left: { $ne: 0 },
                   })
-                  // .sort({ queue: 1 })
+                  .sort({ queue: 1 })
                   .lean()
                 if (queue) {
                   $receiptModel.sold_item_list[i].queue_id = queue._id

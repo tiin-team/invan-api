@@ -74,6 +74,8 @@ module.exports = fp((instance, _, next) => {
         return res
       } else {
         ++num_queue
+
+        return { num_queue: num_queue, suppliers: suppliers }
       }
     } else
       if (queues[index_queue].quantity_left == good.value - dec_count) {
@@ -162,7 +164,7 @@ module.exports = fp((instance, _, next) => {
         .find({
           service_id: service._id,
           good_id: { $in: sale_goods_ids },
-          quantity_left: { $ne: 0 }
+          quantity_left: { $gt: 0 },
         })
         .sort({ queue: 1 })
         .lean()

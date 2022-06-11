@@ -139,7 +139,7 @@ module.exports = fp((instance, _, next) => {
           service_id: service._id,
           supplier_id: supplier._id,
           good_id: { $in: refund_good_ids },
-          quantity_left: { $ne: 0 }
+          quantity_left: { $gt: 0 },
         })
         .sort({ queue: 1 })
         .lean();
