@@ -6,9 +6,16 @@ module.exports = fp((instance, options, next) => {
   */
   instance.decorate('create_partiation_queue', async (items, current_service, current_supplier, purch, create_date) => {
     const queues = [];
-    for (const purch_item of items) {
-      const curr_good = await instance.goodsSales.findById(purch_item.product_id).lean();
+    const sale_goods_ids = items.map(elem => elem.product_id)
+    const db_goods = await instance.goodsSales
+      .find({ _id: { $in: sale_goods_ids } })
+      .lean()
+    const goods_obj = {}
+    for (const db_good of db_goods) {
+      goods_obj[db_good._id] = db_good
+    }
 
+    for (const purch_item of items) {
       const queue = await instance.goodsSaleQueue
         .findOne(
           {
@@ -31,10 +38,10 @@ module.exports = fp((instance, options, next) => {
         supplier_name: current_supplier.supplier_name,
         service_id: current_service._id,
         cost: purch_item.purchase_cost,
-        barcode: curr_good.barcode,
+        barcode: goods_obj[purch_item.product_id].barcode,
         service_name: current_service.name,
         good_id: purch_item.product_id,
-        good_name: curr_good.name,
+        good_name: goods_obj[purch_item.product_id].name,
         quantity: purch_item.received,
         quantity_left: purch_item.received,
         queue: num_queue,
@@ -42,8 +49,8 @@ module.exports = fp((instance, options, next) => {
 
       //update item suppliers
       const good_of_suppliers =
-        Array.isArray(curr_good.suppliers)
-          ? curr_good.suppliers
+        Array.isArray(goods_obj[purch_item.product_id].suppliers)
+          ? goods_obj[purch_item.product_id].suppliers
           : [{
             supplier_id: current_supplier._id,
             supplier_name: current_supplier.supplier_name,
