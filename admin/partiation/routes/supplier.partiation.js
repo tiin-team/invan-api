@@ -112,7 +112,7 @@ module.exports = fp((instance, options, next) => {
   instance.post("/inventory/partiation/valuation", { ...version }, async (request, reply) => {
     instance.authorization(request, reply, async (user) => {
       try {
-        return getSuppliers(user)
+        return getSuppliers(request, reply, user)
       } catch (error) {
         return reply.error(error.message)
       }
