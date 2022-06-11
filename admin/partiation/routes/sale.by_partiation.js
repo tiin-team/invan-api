@@ -182,7 +182,7 @@ module.exports = fp((instance, options, next) => {
     (request, reply) => {
       instance.oauth_admin(request, reply, async (admin) => {
         try {
-
+          return reply.ok()
         } catch (error) {
           instance.log.error(error.message)
           return reply.error(error.message);

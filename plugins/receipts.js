@@ -329,7 +329,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
     instance.push_changes(request, 102, service_id);
 
   } catch (error) {
-    console.log(error.message);
     reply.error(error.message);
     instance.send_Error('receiptCreateGroup', error)
   }
@@ -868,6 +867,7 @@ module.exports = fp((instance, _, next) => {
             "discount",
           ],
           properties: {
+            partiation_id: { type: "string", maxLength: 24, minLength: 24 },
             product_id: { type: "string" },
             sold_item_id: { type: "string" },
             product_name: { type: "string" },

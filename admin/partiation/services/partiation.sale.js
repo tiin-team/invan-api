@@ -30,7 +30,7 @@ module.exports = fp((instance, _, next) => {
         service_id: string
       }
     @returns {
-      <{
+      Promise<{
         num_queue: number
         suppliers: [{
           supplier_id: string
@@ -180,6 +180,15 @@ module.exports = fp((instance, _, next) => {
         goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
           ? goods_obj[good.product_id].queue
           : 1
+
+        if (good.partiation_id) {
+          const partiation = queues.find(el =>
+            el._id + '' === good.partiation_id
+          )
+          goods_obj[good.product_id].queue = partiation && partiation.queue
+            ? partiation.queue
+            : goods_obj[good.product_id].queue
+        }
 
         let queu_index = queues.findIndex(el => el.queue === goods_obj[good.product_id].queue)
         if (queu_index === -1) {
