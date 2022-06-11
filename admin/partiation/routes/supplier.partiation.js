@@ -17,10 +17,10 @@ module.exports = fp((instance, options, next) => {
   async function getSuppliers(request, reply, user) {
     const { service_id } = request.body;
     const limit = !isNaN(parseInt(request.body.limit))
-      ? parseInt(request.query.limit)
+      ? parseInt(request.body.limit)
       : 10
     const page = !isNaN(parseInt(request.body.page))
-      ? parseInt(request.query.page)
+      ? parseInt(request.body.page)
       : 1
 
     const user_available_services = user.services.map(serv => serv.service + '')
