@@ -668,6 +668,10 @@ module.exports = fp((instance, _, next) => {
     good_id: mongoose.Types.ObjectId,
     good_name: String,
     cost: Number,
+    barcode: {
+      type: Array,
+      default: []
+    },
     quantity: Number,
     quantity_left: Number,
     queue: Number,
