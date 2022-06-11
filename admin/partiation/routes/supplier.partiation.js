@@ -89,8 +89,12 @@ module.exports = fp((instance, options, next) => {
         email: 1,
         phone_number: 1,
         website: 1,
-        quantity: { $first: '$partiations.quantity' },
-        quantity_left: { $first: '$partiations.quantity_left' },
+        quantity: {
+          $max: [{ $first: '$partiations.quantity' }, 0]
+        },
+        quantity_left: {
+          $max: [{ $first: '$partiations.quantity_left' }, 0],
+        },
       }
     }
 
@@ -109,7 +113,7 @@ module.exports = fp((instance, options, next) => {
     })
   }
 
-  instance.post("/inventory/partiation/valuation", { ...version }, async (request, reply) => {
+  instance.post("/inventory/partiation/valuation", { ...version }, (request, reply) => {
     instance.authorization(request, reply, async (user) => {
       try {
         return getSuppliers(request, reply, user)
@@ -150,7 +154,7 @@ module.exports = fp((instance, options, next) => {
       ...version,
       schema: bodySchema
     },
-    async (request, reply) => {
+    (request, reply) => {
       instance.authorization(request, reply, async (user) => {
         try {
           const {
