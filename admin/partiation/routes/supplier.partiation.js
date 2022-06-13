@@ -253,6 +253,7 @@ module.exports = fp((instance, options, next) => {
 
           reply.ok({
             limit: limit,
+            total: total,
             page: Math.ceil(total / limit),
             current_page: page,
             data: result,
