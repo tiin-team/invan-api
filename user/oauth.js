@@ -42,7 +42,13 @@ module.exports = fp((instance, _, next) => {
                      .find({ organization: user.organization })
                      .lean();
 
-                  user.services = services
+                  user.services = services.map(serv => {
+                     return {
+                        service: serv._id,
+                        service_name: serv.name,
+                        available: true, service: serv._id,
+                     }
+                  })
                   // .map(serv => {
                   //    serv.available = true
                   //    return serv
