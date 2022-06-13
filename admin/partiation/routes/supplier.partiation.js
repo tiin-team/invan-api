@@ -136,11 +136,11 @@ module.exports = fp((instance, options, next) => {
         },
         sort_by: {
           type: 'string',
-          enum: ['quantity_left', 'date', '_id']
+          enum: ['quantity_left', 'name', 'p_order', 'date', '_id'],
         },
         sort_type: {
           type: 'number',
-          enum: [1, -1]
+          enum: [1, -1],
         },
       },
       required: ["limit", "page"],

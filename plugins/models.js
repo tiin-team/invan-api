@@ -84,6 +84,7 @@ module.exports = fp((instance, _, next) => {
       type: String,
       default: ''
     },
+    low_stock_date: { type: Number, default: 7 },
   })
   instance.decorate('services', services)
   instance.generate('/services', services, { public_search: true })

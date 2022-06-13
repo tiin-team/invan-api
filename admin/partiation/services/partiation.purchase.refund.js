@@ -147,6 +147,8 @@ module.exports = fp((instance, _, next) => {
       for (const good of goods) {
         const queue_index = queues.findIndex(elem => elem.good_id + '' === good.product_id + '')
         // num_queue = queues[queue_index].queue
+        if (queue_index === -1) continue
+
         if (queues[queue_index].quantity_left <= good.quality) {
           // num_queue = 
           await updateSupplierPartiationQueueRefund(

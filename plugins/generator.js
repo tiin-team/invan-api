@@ -65,20 +65,29 @@ function send_to_slack(method, model, er_or_suc) {
 
 function send_Error(url, error) {
   axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=Error On ${url} url :  \n${error}`)
-    .then(function (response) { }).catch(function (err) { }).then(function () { })
+    // .then(function (response) { })
+    .catch(function (err) { })
+  // .then(function () { })
 }
 
 module.exports = fp((instance, _, next) => {
 
   instance.get('/', (request, reply) => {
     axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.TELEGRAMID}&parse_mode=html&text=Hostname of server is ${request.hostname} \n ip of server is ${request.ip}`)
-      .then(function (response) { }).catch(function (err) { }).then(function () { })
+      // .then(function (response) { })
+      .catch(function (err) { })
+    // .then(function () { })
     reply.sendFile("./send.html")
   })
 
   instance.decorate('send_Error', (url, error) => {
-    axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=Error On ${url} url:\n${error}`)
-      .then(function (response) { }).catch(function (err) { }).then(function () { })
+    const msg = `Error On ${url} url:\n${error}\n\n${process.env.NODE_ENV}`;
+    const url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
+
+    axios.post(`${url}/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=${msg}`)
+      // .then(function (response) { })
+      .catch(function (err) { })
+    // .then(function () { })
   })
 
   instance.decorate('DATE', (timestamp) => {
