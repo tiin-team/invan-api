@@ -36,11 +36,18 @@ module.exports = fp((instance, _, next) => {
                if (acceptUser === 'employee') {
                   user.service = request.headers['accept-service']
                }
-               if (user.role === 'boss')
-                  user.services = user.services.map(serv => {
-                     serv.available = true
-                     return serv
-                  })
+               if (user.role === 'boss') {
+                  // olib tashlash krk, registratsiyani togirlagandan kyn
+                  const services = await instance.services
+                     .find({ organization: user.organization })
+                     .lean();
+
+                  user.services = services
+                  // .map(serv => {
+                  //    serv.available = true
+                  //    return serv
+                  // })
+               }
                else
                   user.services = user.services.filter(serv => serv.available)
                request.user = user

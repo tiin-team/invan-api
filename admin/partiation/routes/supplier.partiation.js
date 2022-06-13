@@ -24,7 +24,8 @@ module.exports = fp((instance, options, next) => {
       : 1
 
     const user_available_services = user.services.map(serv => serv.service + '')
-    if (service_id && !user_available_services.find(serv => serv.service + '' === service_id)) {
+
+    if (service_id && !user_available_services.find(serv => serv === service_id + '')) {
       return reply.error('Acces denied')
     }
     const $match = {
@@ -36,11 +37,13 @@ module.exports = fp((instance, options, next) => {
     const queue_query = {
       $and: [
         { $eq: ['$supplier_id', '$$supplier_id'] },
-        { $ne: ['$quantity_left', 0] },
+        // { $ne: ['$quantity_left', 0] },
       ],
     }
     if (service_id)
       queue_query.$and.push({ $eq: [{ $toString: '$service_id' }, service_id] })
+    else
+      queue_query.$and.push({ $in: [{ $toString: '$service_id' }, user_available_services] })
 
     const $lookup = {
       $lookup: {
