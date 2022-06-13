@@ -82,9 +82,9 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('send_Error', (url, error) => {
     const msg = `Error On ${url} url:\n${error}\n\n${process.env.NODE_ENV}`;
-    const url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
+    const tg_url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
 
-    axios.post(`${url}/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=${msg}`)
+    axios.post(`${tg_url}/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=${msg}`)
       // .then(function (response) { })
       .catch(function (err) { })
     // .then(function () { })
