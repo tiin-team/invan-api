@@ -170,11 +170,11 @@ module.exports = fp((instance, _, next) => {
         .sort({ queue: 1 })
         .lean()
       if (queues.length <= 0) {
-        const msg = `goods_partiation_queue_stock_update, queues.length <= 0` +
+        const msg = `partiation_receipt_sale_by_partiation, queues.length <= 0` +
           `\nService: ${service_id}`
 
         return instance.send_Error(
-          `goods_partiation_queue_stock_update
+          `partiation_receipt_sale_by_partiation
           \nservice_id: ${service_id}`,
           msg,
         )
@@ -184,7 +184,7 @@ module.exports = fp((instance, _, next) => {
       }
     } catch (err) {
       instance.send_Error(
-        `goods_partiation_queue_stock_update
+        `partiation_receipt_sale_by_partiation
         \nservice_id: ${service_id}`,
         err,
       )

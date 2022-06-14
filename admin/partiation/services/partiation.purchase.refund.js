@@ -113,7 +113,7 @@ module.exports = fp((instance, _, next) => {
    * @param {mongoose.Types.ObjectId} supplier_id - postavchik _id si
    * @returns {void}
    */
-  instance.decorate('goods_partiation_queue_stock_update_refund', async (goods = [], service_id, supplier_id) => {
+  instance.decorate('goods_partiation_purchase_refund', async (goods = [], service_id, supplier_id) => {
     try {
       const service = await instance.services
         .findById(service_id)
@@ -200,7 +200,7 @@ module.exports = fp((instance, _, next) => {
       }
     } catch (err) {
       instance.send_Error(
-        `goods_partiation_queue_stock_update_refund
+        `goods_partiation_purchase_refund
         \nservice_id: ${service_id}
         \nsupplier_id: ${supplier_id}`,
         err,

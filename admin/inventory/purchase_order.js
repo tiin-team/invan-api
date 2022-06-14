@@ -1013,7 +1013,7 @@ module.exports = fp((instance, options, next) => {
           },
         })
       // refund da partiyani ozgartirish
-      instance.goods_partiation_queue_stock_update_refund(items, service._id, supplier._id)
+      instance.goods_partiation_purchase_refund(items, service._id, supplier._id)
       try {
         await new instance.supplierTransaction({
           supplier_id: supplier._id,

@@ -319,8 +319,8 @@ const receiptCreateGroup = async (request, reply, instance) => {
         await instance.update_queue_sold_item_refund(rr._id, rr.sold_item_list, service_id)
         await instance.update_receipt_sold_item(rr.refund, rr.sold_item_list);
       } else {
-        //goods_partiation_queue_stock_update update stock queue
-        instance.goods_partiation_queue_stock_update(rr.sold_item_list, service_id)
+        //goods_partiation_sale update stock queue
+        instance.goods_partiation_sale(rr.sold_item_list, service_id)
       }
     }
 

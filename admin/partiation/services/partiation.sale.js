@@ -145,7 +145,7 @@ module.exports = fp((instance, _, next) => {
   * @param service_id - filial _id si
   */
 
-  instance.decorate('goods_partiation_queue_stock_update', async (goods = [], service_id) => {
+  instance.decorate('goods_partiation_sale', async (goods = [], service_id) => {
     try {
       // console.log(goods.length, 'goods.length');
       const service = await instance.services
@@ -169,11 +169,11 @@ module.exports = fp((instance, _, next) => {
         .sort({ queue: 1 })
         .lean()
       if (queues.length <= 0) {
-        const msg = `goods_partiation_queue_stock_update, queues.length <= 0` +
+        const msg = `goods_partiation_sale, queues.length <= 0` +
           `\nService: ${service_id}`
 
         return instance.send_Error(
-          `goods_partiation_queue_stock_update
+          `goods_partiation_sale
           \nservice_id: ${service_id}`,
           msg,
         )
@@ -254,7 +254,7 @@ module.exports = fp((instance, _, next) => {
       }
     } catch (err) {
       instance.send_Error(
-        `goods_partiation_queue_stock_update
+        `goods_partiation_sale
         \nservice_id: ${service_id}`,
         err,
       )
