@@ -2560,6 +2560,7 @@ module.exports = fp((instance, _, next) => {
     organization_name: String,
     service_id: mongoose.Types.ObjectId,
     service_name: String,
+    p_order: String,
     employee_id: mongoose.Types.ObjectId,
     employee_name: String,
     date: Number,
@@ -2582,6 +2583,6 @@ module.exports = fp((instance, _, next) => {
       note: String,
     }]
   });
-  instance.decorate('employeesorder', employeesOrdersSchema);
+  instance.decorate('employeesOrder', employeesOrdersSchema);
   next()
 })

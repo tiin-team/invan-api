@@ -223,12 +223,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
               } catch (error) { }
 
               try {
-                const supplier = await instance.adjustmentSupplier
-                  .findById(item.primary_supplier_id)
-                  .lean();
-                const queue_query = {}
-                if (item.queue) queue_query._id = item.queue
-                else queue_query = { queue: -1 }
+                // const queue_query = {}
+                // if (item.queue) queue_query.queue = item.queue
+                // else queue_query = { queue: -1 }
                 //xatolik bor
                 const queue = await instance.goodsSaleQueue
                   .findOne({
@@ -239,18 +236,20 @@ const receiptCreateGroup = async (request, reply, instance) => {
                   })
                   .sort({ queue: 1 })
                   .lean()
-                if (queue) {
-                  $receiptModel.sold_item_list[i].queue_id = queue._id
-                  $receiptModel.sold_item_list[i].queue = queue.queue
-                }
                 // bu keyinchalik olib tashlanadi
-                if (supplier) {
+                if (item.primary_supplier_id) {
+                  const supplier = await instance.adjustmentSupplier
+                    .findById(item.primary_supplier_id)
+                    .lean();
                   $receiptModel.sold_item_list[i].supplier_id = supplier._id;
                   $receiptModel.sold_item_list[i].supplier_name =
                     supplier.supplier_name;
                 }
-                // partiali tovar bo'yicha supplierni olish
+
                 if (queue) {
+                  $receiptModel.sold_item_list[i].queue_id = queue._id
+                  $receiptModel.sold_item_list[i].queue = queue.queue
+                  // partiali tovar bo'yicha supplierni olish
                   $receiptModel.sold_item_list[i].supplier_id = queue.supplier_id;
                   $receiptModel.sold_item_list[i].supplier_name = queue.supplier_name;
                 }
