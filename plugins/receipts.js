@@ -104,6 +104,13 @@ const receiptCreateGroup = async (request, reply, instance) => {
         const $receiptModel = new instance.Receipts(rr);
         let total_discount = 0;
         for (let i = 0; i < $receiptModel.sold_item_list.length; i++) {
+          if ($receiptModel.sold_item_list[i].partiation_id) {
+            $receiptModel.sold_item_list[i].partiation_id =
+              instance.ObjectId($receiptModel.sold_item_list[i].partiation_id)
+          }
+          try {
+
+          } catch (error) { }
           const reminder = Math.max(
             $receiptModel.sold_item_list[i].reminder,
             0
