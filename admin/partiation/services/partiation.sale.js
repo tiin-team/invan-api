@@ -243,7 +243,18 @@ module.exports = fp((instance, _, next) => {
           } else {
             suppliers[supp_cur_serv_index].stock -= good.value;
 
-            await updateGoodsSalesQueueOfSuppliers(good.product_id, queues[queu_index].queue, suppliers)
+            if (good.partiation_id)
+              await updateGoodsSalesQueueOfSuppliers(
+                good.product_id,
+                goods_obj[good.product_id].queue,
+                suppliers,
+              )
+            else
+              await updateGoodsSalesQueueOfSuppliers(
+                good.product_id,
+                queues[queu_index].queue,
+                suppliers,
+              )
 
             await updateGoodsSaleQueueQunatityLeft(
               queues[queu_index]._id,
