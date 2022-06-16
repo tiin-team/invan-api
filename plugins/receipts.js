@@ -328,7 +328,11 @@ const receiptCreateGroup = async (request, reply, instance) => {
       } else {
         try {
           //goods_partiation_sale update stock queue
-          instance.goods_partiation_sale(rr.sold_item_list, service_id)
+          instance.goods_partiation_sale(
+            rr.sold_item_list,
+            service_id,
+            body.with_partiation ? true : false
+          )
         } catch (error) {
           instance.send_Error(
             `goods_partiation_sale

@@ -145,8 +145,10 @@ module.exports = fp((instance, _, next) => {
   * @param service_id - filial _id si
   */
 
-  instance.decorate('goods_partiation_sale', async (goods = [], service_id) => {
+  instance.decorate('goods_partiation_sale', async (goods = [], service_id, with_partiation = false) => {
     try {
+      // o'ylab ko'rish krk
+      // if (with_partiation) return await withPartiationSale(goods)
       // console.log(goods.length, 'goods.length');
       const service = await instance.services
         .findById(service_id)
@@ -188,11 +190,13 @@ module.exports = fp((instance, _, next) => {
         goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
           ? goods_obj[good.product_id].queue
           : 1
-
+        console.log(good.partiation_id, 'good.partiation_id');
         if (good.partiation_id) {
           const partiation = queues.find(el =>
-            el._id + '' === good.partiation_id
+            el._id + '' === good.partiation_id + ''
           )
+          console.log(partiation, 'partiation');
+
           goods_obj[good.product_id].queue = partiation && partiation.queue
             ? partiation.queue
             : goods_obj[good.product_id].queue
@@ -203,7 +207,7 @@ module.exports = fp((instance, _, next) => {
           queu_index = 0
           goods_obj[good.product_id].queue = queues[queu_index].queue;
         }
-
+        console.log(goods_obj[good.product_id].queue, 'goods_obj[good.product_id].queue');
         if (good && goods_obj[good.product_id]) {
           const suppliers = Array.isArray(goods_obj[good.product_id].suppliers)
             ? goods_obj[good.product_id].suppliers
@@ -277,6 +281,124 @@ module.exports = fp((instance, _, next) => {
       )
     }
   })
+
+  // async function withPartiationSale(goods) {
+  //   try {
+  //     // console.log(goods.length, 'goods.length');
+  //     const sale_goods_ids = goods.map(elem => elem.product_id)
+  //     const db_goods = await instance.goodsSales
+  //       .find({ _id: { $in: sale_goods_ids } })
+  //       .lean()
+  //     const goods_obj = {}
+  //     for (const db_good of db_goods) {
+  //       goods_obj[db_good._id] = db_good
+  //     }
+  //     const queues = await instance.goodsSaleQueue
+  //       .find({
+  //         good_id: { $in: sale_goods_ids },
+  //         quantity_left: { $gt: 0 },
+  //       })
+  //       .sort({ queue: 1 })
+  //       .lean()
+  //     if (queues.length <= 0) {
+  //       const msg = `goods_partiation_sale, queues.length <= 0` +
+  //         `\nService: ${service_id}`
+
+  //       return instance.send_Error(
+  //         `goods_partiation_sale
+  //         \nservice_id: ${service_id}`,
+  //         msg,
+  //       )
+  //     }
+  //     for (const good of goods) {
+  //       let partiation = queues.find(el =>
+  //         el._id + '' === good.partiation_id
+  //       )
+
+  //       goods_obj[good.product_id].queue = partiation && partiation.queue
+  //         ? partiation.queue
+  //         : goods_obj[good.product_id].queue
+
+  //       let queu_index = queues.findIndex(el => el.queue === goods_obj[good.product_id].queue)
+  //       if (queu_index === -1) {
+  //         queu_index = 0
+  //         goods_obj[good.product_id].queue = queues[queu_index].queue;
+  //       }
+  //       partiation = queues[queu_index]
+  //       if (!partiation) {
+  //         instance.send_Error(
+  //           `partiation = queues[queu_index]
+  //           \nservice_id: ${good.product_id}, value: ${good.value}`,
+  //         )
+  //         continue
+  //       }
+
+  //       if (good && goods_obj[good.product_id]) {
+  //         const suppliers = Array.isArray(goods_obj[good.product_id].suppliers)
+  //           ? goods_obj[good.product_id].suppliers
+  //           : [{
+  //             supplier_id: queues[queu_index].supplier_id,
+  //             supplier_name: queues[queu_index].supplier_name,
+  //             service_id: partiation.service_id,
+  //             service_name: partiation.service_name,
+  //             stock: 0,
+  //           }]
+
+  //         let supp_cur_serv_index = suppliers
+  //           .findIndex(elem =>
+  //             elem.service_id + '' == partiation.service_id + ''
+  //             && elem.supplier_id + '' == queues[queu_index].supplier_id + ''
+  //           )
+  //         if (supp_cur_serv_index == -1) {
+  //           supp_cur_serv_index = suppliers.length
+  //           suppliers.push({
+  //             supplier_id: queues[queu_index].supplier_id,
+  //             supplier_name: queues[queu_index].supplier_name,
+  //             service_id: partiation.service_id,
+  //             service_name: partiation.service_name,
+  //             stock: 0,
+  //           })
+  //         }
+
+  //         if (queues[queu_index].quantity_left <= good.value) {
+  //           const res = await recursiveUpdateGoodSaleQueueDec(
+  //             queues,
+  //             queu_index,
+  //             good,
+  //             0,
+  //             {
+  //               service_id: partiation.service_id,
+  //               product_id: good.product_id,
+  //             }
+  //           )
+
+  //           res.suppliers = getGoodOfSuppliers(suppliers, res.suppliers)
+
+  //           return await updateGoodsSalesQueueOfSuppliers(good.product_id, res.num_queue, res.suppliers)
+  //         } else {
+  //           suppliers[supp_cur_serv_index].stock -= good.value;
+
+  //           await updateGoodsSalesQueueOfSuppliers(
+  //             good.product_id,
+  //             goods_obj[good.product_id].queue,
+  //             suppliers,
+  //           )
+
+  //           await updateGoodsSaleQueueQunatityLeft(
+  //             queues[queu_index]._id,
+  //             parseFloat(queues[queu_index].quantity_left) - parseFloat(good.value)
+  //           )
+  //         }
+  //       }
+  //     }
+  //   } catch (err) {
+  //     instance.send_Error(
+  //       `goods_partiation_sale
+  //       \nservice_id: ${service_id}`,
+  //       err,
+  //     )
+  //   }
+  // }
 
   next()
 })
