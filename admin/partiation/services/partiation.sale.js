@@ -151,7 +151,13 @@ module.exports = fp((instance, _, next) => {
       const service = await instance.services
         .findById(service_id)
         .lean()
-
+      if (!service) {
+        return instance.send_Error(
+          `goods_partiation_sale
+          \ncannat find service
+          \nservice_id: ${service_id}`,
+        )
+      }
       const sale_goods_ids = goods.map(elem => elem.product_id)
       const db_goods = await instance.goodsSales
         .find({ _id: { $in: sale_goods_ids } })
