@@ -314,12 +314,28 @@ const receiptCreateGroup = async (request, reply, instance) => {
     for (const rr of result) {
       console.log(rr.is_refund, 'rr.is_refund');
       if (rr.is_refund) {
-        // oxirgi queue ga stockni qoshib qoyish krk
-        await instance.update_queue_sold_item_refund(rr._id, rr.sold_item_list, service_id)
         await instance.update_receipt_sold_item(rr.refund, rr.sold_item_list);
+        try {
+          // oxirgi queue ga stockni qoshib qoyish krk
+          await instance.update_queue_sold_item_refund(rr._id, rr.sold_item_list, service_id)
+        } catch (error) {
+          instance.send_Error(
+            `update_queue_sold_item_refund
+            \nservice_id: ${service_id}`,
+            error,
+          )
+        }
       } else {
-        //goods_partiation_sale update stock queue
-        instance.goods_partiation_sale(rr.sold_item_list, service_id)
+        try {
+          //goods_partiation_sale update stock queue
+          instance.goods_partiation_sale(rr.sold_item_list, service_id)
+        } catch (error) {
+          instance.send_Error(
+            `goods_partiation_sale
+            \nservice_id: ${service_id}`,
+            error,
+          )
+        }
       }
     }
 

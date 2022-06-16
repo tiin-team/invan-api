@@ -608,8 +608,18 @@ module.exports = fp((instance, options, next) => {
           .save();
       }
 
-      // update item partiation queue
-      instance.create_partiation_queue(items, current_service, current_supplier, purch, create_date)
+      try {
+        // update item partiation queue
+        instance.create_partiation_queue(items, current_service, current_supplier, purch, create_date)
+      } catch (error) {
+        instance.send_Error(
+          `create_partiation_queue
+          \nfunksiyani chaqirishda
+          \nservice_id: ${current_service._id}
+          \nsupplier_id: ${current_supplier._id}`,
+          error,
+        )
+      }
 
       // update items cost
       const goods = await instance.goodsSales
@@ -1012,8 +1022,18 @@ module.exports = fp((instance, options, next) => {
             services: services,
           },
         })
-      // refund da partiyani ozgartirish
-      instance.goods_partiation_purchase_refund(items, service._id, supplier._id)
+      try {
+        // refund da partiyani ozgartirish
+        instance.goods_partiation_purchase_refund(items, service._id, supplier._id)
+      } catch (error) {
+        instance.send_Error(
+          `goods_partiation_purchase_refund
+          \nfunksiyani chaqirishda
+          \nservice_id: ${service._id}
+          \nsupplier_id: ${supplier._id}`,
+          error,
+        )
+      }
       try {
         await new instance.supplierTransaction({
           supplier_id: supplier._id,

@@ -141,6 +141,8 @@ module.exports = fp((instance, _, next) => {
     return product_suppliers
   }
 
+  // bu hozircha ishlatilmayabti!!!
+
   /**
   * sotuv bo'lganda partiyadan sotish
   * @param goods - sotilgan tovarlar
