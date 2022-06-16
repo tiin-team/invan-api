@@ -190,12 +190,11 @@ module.exports = fp((instance, _, next) => {
         goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
           ? goods_obj[good.product_id].queue
           : 1
-        console.log(good.partiation_id, 'good.partiation_id');
+
         if (good.partiation_id) {
           const partiation = queues.find(el =>
             el._id + '' === good.partiation_id + ''
           )
-          console.log(partiation, 'partiation');
 
           goods_obj[good.product_id].queue = partiation && partiation.queue
             ? partiation.queue
@@ -207,7 +206,7 @@ module.exports = fp((instance, _, next) => {
           queu_index = 0
           goods_obj[good.product_id].queue = queues[queu_index].queue;
         }
-        console.log(goods_obj[good.product_id].queue, 'goods_obj[good.product_id].queue');
+
         if (good && goods_obj[good.product_id]) {
           const suppliers = Array.isArray(goods_obj[good.product_id].suppliers)
             ? goods_obj[good.product_id].suppliers
