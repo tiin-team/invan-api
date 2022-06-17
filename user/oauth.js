@@ -46,7 +46,7 @@ module.exports = fp((instance, _, next) => {
                      return {
                         service: serv._id,
                         service_name: serv.name,
-                        available: true, service: serv._id,
+                        available: true,
                      }
                   })
                   // .map(serv => {
