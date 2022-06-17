@@ -224,6 +224,12 @@ module.exports = fp((instance, options, next) => {
       //   }
       // }
 
+      for (const [index, good] of goods.entries()) {
+        goods[index].nds_value = isNaN(parseFloat(good.nds_value))
+          ? 15
+          : parseFloat(good.nds_value);
+      }
+
       reply.ok({
         total: items_count,
         page: Math.ceil(items_count / limit),
