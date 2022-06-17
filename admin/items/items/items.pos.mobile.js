@@ -9,14 +9,13 @@ module.exports = fp((instance, options, next) => {
       ...version,
       schema: {
         params: {
-          params: {
-            type: 'object',
-            required: ['min', 'max'],
-            properties: {
-              min: { type: 'number', minimum: 1514764800000 },
-              max: { type: 'number', maximum: 2000000800000 },
-            },
+          type: 'object',
+          required: ['min', 'max'],
+          properties: {
+            min: { type: 'number', minimum: 1514764800000 },
+            max: { type: 'number', maximum: 2000000800000 },
           },
+
         },
         querystring: {
           service: { type: 'string', maxLength: 24, minLength: 24 },
@@ -74,7 +73,7 @@ module.exports = fp((instance, options, next) => {
           $filter: {
             input: "$services",
             as: "service",
-            cond: () => service
+            cond: (() => service
               ? ({
                 $or: [
                   {
@@ -90,7 +89,7 @@ module.exports = fp((instance, options, next) => {
                   {
                     $in: [
                       '$$service.service',
-                      request.user.services.map(elem => elem.service),
+                      user_available_services,
                     ],
                   },
                   {
@@ -100,14 +99,14 @@ module.exports = fp((instance, options, next) => {
                     ],
                   },
                 ]
-              })
+              }))()
           }
         }
 
         const $project = {
           $project: {
             organization: 1,
-            queue: 1,
+            // queue: 1,
             services: $project_filter,
             stopped_item: 1,
             created_time: 1,
@@ -115,33 +114,33 @@ module.exports = fp((instance, options, next) => {
             last_stock_updated: 1,
             last_price_change: 1,
             name: 1,
-            category: 1,
+            // category: 1,
             category_id: 1,
             category_name: 1,
             sale_is_avialable: 1,
             sold_by: 1,
             count_by_type: 1,
             barcode_by_type: 1,
-            expire_date: 1,
-            reminder: 1,
-            has_discount: 1,
-            old_price: 1,
-            price: 1,
-            prices: 1,
-            price_auto_fill: 1,
+            // expire_date: 1,
+            // reminder: 1,
+            // has_discount: 1,
+            // old_price: 1,
+            // price: 1,
+            // prices: 1,
+            // price_auto_fill: 1,
             price_currency: 1,
             cost: 1,
             cost_currency: 1,
-            max_cost: 1,
+            // max_cost: 1,
             sku: 1,
             hot_key: 1,
             barcode: 1,
             composite_item: 1,
             is_composite_item: 1,
             composite_items: 1,
-            use_production: 1,
-            use_sub_production: 1,
-            is_track_stock: 1,
+            // use_production: 1,
+            // use_sub_production: 1,
+            // is_track_stock: 1,
             in_stock: 1,
             low_stock: 1,
             optimal_stock: 1,
@@ -152,21 +151,21 @@ module.exports = fp((instance, options, next) => {
             representation_type: 1,
             shape: 1,
             representation: 1,
-            taxes: 1,
+            // taxes: 1,
             stock_status: 1,
-            item_type: 1,
+            // item_type: 1,
             parent_item: 1,
             parent_name: 1,
             has_variants: 1,
-            variant_options: 1,
-            variant_of: 1,
-            variant_items: 1,
-            modifiers: 1,
+            // variant_options: 1,
+            // variant_of: 1,
+            // variant_items: 1,
+            // modifiers: 1,
             show_on_bot: 1,
-            dimentions: 1,
-            weight: 1,
-            brand: 1,
-            description: 1,
+            // dimentions: 1,
+            // weight: 1,
+            // brand: 1,
+            // description: 1,
             mxik: 1,
             nds_value: 1,
           },
