@@ -4,38 +4,6 @@ const fs = require('fs');
 module.exports = fp((instance, options, next) => {
   const version = { version: '2.0.0' };
 
-  // stream bilan fileni save qilish
-  async function test() {
-    const writer = fs.createWriteStream('out.json', { encoding: 'utf8' });
-    const query = { organization: '5f5641e8dce4e706c062837a' }
-    const mongoStream = await instance.goodsSales
-      .find(query)
-      .lean()
-      .stream();
-
-    let count = 0
-    let comma = ''
-    writer.write('[')
-    await new Promise(resolve => {
-      mongoStream
-        .on('data', (doc) => {
-          writer.write(comma + JSON.stringify(doc))
-          comma = ','
-          return count++
-        })
-        .on('end', () => {
-          writer.write(']')
-          console.log('stream end');
-          resolve()
-        })
-        .on('error', function (error) {
-          // throw error; // error
-        });
-    })
-
-    console.log(count,);
-  }
-
   /**
    * 
     @param {
@@ -57,7 +25,7 @@ module.exports = fp((instance, options, next) => {
     }} admin 
    @return {import('fastify').FastifyInstance<Server, IncomingMessage, ServerResponse>}
   */
-  async function getPosItems(request, reply, admin) {
+  async function getPosCats(request, reply, admin) {
     const { min, max } = request.params;
     const { service, limit, page } = request.query;
 
@@ -73,16 +41,14 @@ module.exports = fp((instance, options, next) => {
     const query = {
       organization: admin.organization,
       $or: [
-        { last_updated: { $gte: min, $lte: max } },
-        { last_price_change: { $gte: min, $lte: max } },
-        { last_stock_updated: { $gte: min, $lte: max } },
-        // { updatedAt: { $gte: from_time, $lte: to_time } },
+        { created_time: { $gte: min, $lte: max } },
+        { updatedAt: { $gte: from_time, $lte: to_time } },
         { createdAt: { $gte: from_time, $lte: to_time } },
       ],
     };
 
 
-    const items_count = await instance.goodsSales.countDocuments(query);
+    const items_count = await instance.goodsCategory.countDocuments(query);
 
     const _page = isNaN(parseInt(page))
       ? 1
@@ -130,68 +96,24 @@ module.exports = fp((instance, options, next) => {
     const $project = {
       $project: {
         organization: 1,
-        // queue: 1,
         services: $project_filter,
-        stopped_item: 1,
-        created_time: 1,
-        last_updated: 1,
-        last_stock_updated: 1,
-        last_price_change: 1,
+        type: 1,
         name: 1,
-        // category: 1,
-        category_id: 1,
-        category_name: 1,
-        sale_is_avialable: 1,
-        sold_by: 1,
-        count_by_type: 1,
-        barcode_by_type: 1,
-        // expire_date: 1,
-        // reminder: 1,
-        // has_discount: 1,
-        // old_price: 1,
-        // price: 1,
-        // prices: 1,
-        // price_auto_fill: 1,
-        price_currency: 1,
-        cost: 1,
-        cost_currency: 1,
-        // max_cost: 1,
-        sku: 1,
-        hot_key: 1,
-        barcode: 1,
-        composite_item: 1,
-        is_composite_item: 1,
-        composite_items: 1,
-        // use_production: 1,
-        // use_sub_production: 1,
-        // is_track_stock: 1,
-        in_stock: 1,
-        low_stock: 1,
-        optimal_stock: 1,
-        primary_supplier_id: 1,
-        primary_supplier_name: 1,
-        default_purchase_cost: 1,
-        purchase_cost_currency: 1,
-        representation_type: 1,
-        shape: 1,
-        representation: 1,
-        // taxes: 1,
-        stock_status: 1,
-        // item_type: 1,
-        parent_item: 1,
-        parent_name: 1,
-        has_variants: 1,
-        // variant_options: 1,
-        // variant_of: 1,
-        // variant_items: 1,
-        // modifiers: 1,
+        color: 1,
+        count: 1,
+        image: 1,
+        service: 1,
+        section: 1,
+        position: 1,
+        is_other: 1,
+        services: 1,
+        item_tree: 1,
+        section_id: 1,
         show_on_bot: 1,
-        // dimentions: 1,
-        // weight: 1,
-        // brand: 1,
-        // description: 1,
-        mxik: 1,
-        nds_value: { $toDouble: '$nds_value' },
+        present_type: 1,
+        created_time: 1,
+        parent_categories: 1,
+        draggable_position: 1,
       },
     };
 
@@ -204,7 +126,7 @@ module.exports = fp((instance, options, next) => {
     ];
 
     try {
-      const goods = await instance.goodsSales
+      const goods = await instance.goodsCategory
         .aggregate(pipeline)
         .allowDiskUse(true)
         .exec();
@@ -238,7 +160,7 @@ module.exports = fp((instance, options, next) => {
   }
 
   instance.get(
-    '/items/pos/:min/:max',
+    '/categories/pos/:min/:max',
     {
       ...version,
       schema: {
@@ -268,7 +190,7 @@ module.exports = fp((instance, options, next) => {
     },
     (request, reply) => {
       instance.authorization(request, reply, async (admin) => {
-        getPosItems(request, reply, admin)
+        getPosCats(request, reply, admin)
       });
     }
   );
