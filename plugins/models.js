@@ -2564,6 +2564,12 @@ module.exports = fp((instance, _, next) => {
     p_order: String,
     employee_id: mongoose.Types.ObjectId,
     employee_name: String,
+    accept_by_id: mongoose.Types.ObjectId,
+    accept_by_name: String,
+    status: {
+      type: String,
+      enum: ['pending', 'accept'],
+    },
     date: Number,
     sector_name: String,
     items: [{
