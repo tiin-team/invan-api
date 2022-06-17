@@ -11,7 +11,7 @@ module.exports = fp((instance, options, next) => {
         params: {
           params: {
             type: 'object',
-            required: ['organization'],
+            required: ['min', 'max'],
             properties: {
               min: { type: 'number', minimum: 1514764800000 },
               max: { type: 'number', maximum: 2000000800000 },
@@ -20,7 +20,6 @@ module.exports = fp((instance, options, next) => {
         },
         querystring: {
           service: { type: 'string', maxLength: 24, minLength: 24 },
-          limit: { type: 'number', minimum: 5 },
           limit: {
             oneOf: [
               { type: 'number', minimum: 5 },
