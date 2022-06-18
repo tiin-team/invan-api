@@ -59,7 +59,7 @@ function send_to_slack(method, model, er_or_suc) {
   //   text: `on ${method}    ${model}  ${er_or_suc} `
   // }), {headers: my_headers}).then(response => {}).catch((error) =>{console.log('Error on ')})
   if (er_or_suc != "Success")
-    axios.post(`https://api.telegram.org/bot769464007:AAFjO5cpIsqUMbhG0rTLkQ4dex63fjs1nUM/sendMessage?chat_id=-1001434635647&parse_mode=html&text=${er_or_suc}  On ${method} method   ${model}`)
+    axios.post(`https://api.telegram.org/bot769464007:AAFjO5cpIsqUMbhG0rTLkQ4dex63fjs1nUM/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=${er_or_suc}  On ${method} method   ${model}`)
       .then(function (response) { }).catch(function (err) { }).then(function () { })
 }
 

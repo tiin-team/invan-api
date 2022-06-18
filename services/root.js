@@ -25,12 +25,12 @@ function send_to_slack(method, model, er_or_suc) {
   //   text: `on ${method}    ${model}  ${er_or_suc} `
   // }), {headers: my_headers}).then(response => {}).catch((error) =>{})
   if (er_or_suc != 'Success')
-    axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=-1001434635647&parse_mode=html&text=<strong>${er_or_suc}</strong>  On <b>${method}</b> method   <i>${model}</i>`)
+    axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=<strong>${er_or_suc}</strong>  On <b>${method}</b> method   <i>${model}</i>`)
       .then(function (response) { }).catch(function (err) { }).then(function () { })
 }
 
 function send_Error(url, error) {
-  axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=-1001434635647&parse_mode=html&text=<strong>Error</strong> On <b>${url}</b> url :  \n${error}`)
+  axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=<strong>Error</strong> On <b>${url}</b> url :  \n${error}`)
     .then(function (response) { }).catch(function (err) { }).then(function () { })
 }
 module.exports = (instance, _, next) => {
@@ -421,7 +421,7 @@ module.exports = (instance, _, next) => {
   })
 
   instance.post('/send_error', { version: '1.0.0' }, (request, reply) => {
-    axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=-1001193199441&parse_mode=html&text=${JSON.stringify(request.body)}`).then(() => { }).catch(() => { }).then(() => { })
+    axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.SEND_ERROR_GROUP}&parse_mode=html&text=${JSON.stringify(request.body)}`).then(() => { }).catch(() => { }).then(() => { })
     reply.ok()
   })
 
@@ -835,9 +835,10 @@ module.exports = (instance, _, next) => {
                           is_boss: true,
                           role: 'boss'
                         },
-                        { $set: { '$services.$[].available': true, } },
+                        { $set: { '$services.$[].available': true } },
                         { lean: true },
                       )
+
                       instance.goodsCategory.updateMany({
                         organization: organization._id
                       }, {
