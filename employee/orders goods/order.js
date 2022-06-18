@@ -114,7 +114,7 @@ module.exports = fp((instance, options, next) => {
         const user_available_services = user.services.map(serv => serv.service)
 
         const query = {
-          organization: instance.ObjectId(user.organization),
+          organization_id: instance.ObjectId(user.organization),
         }
 
         if (search)
