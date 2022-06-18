@@ -106,10 +106,42 @@ module.exports = fp((instance, options, next) => {
     })
   })
 
-  instance.post('/employee/orders/get', version, (request, reply) => {
+  const getBodySchema = {
+    schema: {
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'limit', 'page', 'date',
+        ],
+        properties: {
+          limit: { type: 'number', minimum: 5 },
+          page: { type: 'number', minimum: 1 },
+          service: {
+            OneOf: [
+              { type: 'string', maxLength: 24, minLength: 24 },
+              { type: 'string', maxLength: 0, minLength: 0 },
+            ]
+          },
+          employee_id: {
+            OneOf: [
+              { type: 'string', maxLength: 24, minLength: 24 },
+              { type: 'string', maxLength: 0, minLength: 0 },
+            ]
+          },
+          search: { type: 'string', default: '' },
+          status: { type: 'string', enum: ['pending', 'accept', ''] },
+          min: { type: 'number' },
+          max: { type: 'number' },
+        },
+      },
+    }
+  }
+
+  instance.post('/employee/orders/get', { ...version, ...getBodySchema }, (request, reply) => {
     instance.authorization(request, reply, async (user) => {
       try {
-        const { limit, page, search, service, status, employee_id } = request.body
+        const { limit, page, search, service, status, employee_id, min, max } = request.body
 
         const user_available_services = user.services.map(serv => serv.service)
 
@@ -135,6 +167,13 @@ module.exports = fp((instance, options, next) => {
               sector_name: { $regex: search, $options: 'i' },
             },
           ]
+
+        if (min && max) {
+          query.date = {
+            $gte: min,
+            $lte: max,
+          }
+        }
 
         if (service) {
           if (!user_available_services.find(serv => serv + '' === service))
