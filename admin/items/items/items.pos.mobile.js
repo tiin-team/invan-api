@@ -191,7 +191,16 @@ module.exports = fp((instance, options, next) => {
         // brand: 1,
         // description: 1,
         mxik: 1,
-        nds_value: { $toDouble: '$nds_value' },
+        nds_value: 1,
+        // {
+        //   $cond: [
+        //     {
+        //       $eq: [{ $size: '$nds_value' }, 0]
+        //     },
+        //     15,
+        //     { $toDouble: '$nds_value' },
+        //   ]
+        // },
       },
     };
 
