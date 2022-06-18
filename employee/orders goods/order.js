@@ -152,5 +152,37 @@ module.exports = fp((instance, options, next) => {
     })
   })
 
+  instance.put('/employee/order/:_id', { ...version }, (request, reply) => {
+    instance.authorization(request, reply, async (employee) => {
+      try {
+        const id = request.params._id
+        const order = await instance.employeesOrder.findById(id).lean()
+
+        const user_available_services = employee.services.map(serv => serv.service)
+
+        if (employee.organization !== order.organization_id + '')
+          return reply.code(403).send("Forbidden Organization")
+
+        if (!user_available_services.find(serv => serv + '' === order.service_id + ''))
+          return reply.code(403).send('Forbidden service')
+
+        order.status = 'accept';
+        order.accept_by_id = employee._id;
+        order.accept_by_name = employee.name;
+
+        const res = await instance.employeesOrder.findByIdAndUpdate(
+          id,
+          order,
+          { new: true, lean: true },
+        );
+
+        return reply.ok(res);
+      }
+      catch (error) {
+        reply.error(error.message)
+      }
+    })
+  })
+
   next()
 })
