@@ -107,48 +107,66 @@ module.exports = fp((instance, options, next) => {
   })
 
   instance.post('/employee/orders/get', version, (request, reply) => {
-    instance.authorization(request, reply, async (employee) => {
-      const { limit, page, search } = request.body
+    instance.authorization(request, reply, async (user) => {
+      try {
+        const { limit, page, search, service, status, employee_id } = request.body
 
-      const user_available_services = request.user.services.map(serv => serv.service)
+        const user_available_services = user.services.map(serv => serv.service)
 
-      const query = {
-        service_id: { $in: user_available_services },
+        const query = {
+          organization: instance.ObjectId(user.organization),
+        }
+
+        if (search)
+          query.$or = [
+            {
+              p_order: { $regex: search, $options: 'i' },
+            },
+            {
+              organization_name: { $regex: search, $options: 'i' },
+            },
+            {
+              service_name: { $regex: search, $options: 'i' },
+            },
+            {
+              employee_name: { $regex: search, $options: 'i' },
+            },
+            {
+              sector_name: { $regex: search, $options: 'i' },
+            },
+          ]
+
+        if (service) {
+          if (!user_available_services.find(serv => serv + '' === service))
+            return reply.code(403).send('Forbidden service')
+          query.service_id = instance.ObjectId(service);
+        } else {
+          query.service_id = { $in: user_available_services }
+        }
+
+        if (status) query.status = status;
+        if (employee_id) query.employee_id = instance.ObjectId(employee_id);
+
+        const $match = { $match: query };
+        const $limit = { $limit: limit };
+        const $skip = { $skip: (page - 1) * limit };
+
+        const data = await instance.employeesOrder
+          .aggregate([$match, $limit, $skip])
+          .exec();
+
+        const total = await instance.employeesOrder.countDocuments(query);
+
+        return reply.ok({
+          total: total,
+          limit: limit,
+          page: Math.ceil(total / limit),
+          current_page: page,
+          data: data,
+        })
+      } catch (error) {
+        reply.error(error.message)
       }
-
-      if (search)
-        query.$or = [
-          {
-            organization_name: { $regex: search, $options: 'i' },
-          },
-          {
-            service_name: { $regex: search, $options: 'i' },
-          },
-          {
-            employee_name: { $regex: search, $options: 'i' },
-          },
-          {
-            sector_name: { $regex: search, $options: 'i' },
-          },
-        ]
-
-      const $match = { $match: query };
-      const $limit = { $limit: limit };
-      const $skip = { $skip: (page - 1) * limit };
-
-      const data = await instance.employeesOrder
-        .aggregate([$match, $limit, $skip])
-        .exec();
-
-      const total = await instance.employeesOrder.countDocuments(query);
-
-      return reply.ok({
-        total: total,
-        limit: limit,
-        page: Math.ceil(total / limit),
-        current_page: page,
-        data: data,
-      })
     })
   })
 
