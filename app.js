@@ -151,6 +151,11 @@ module.exports = function (fastify, opts, next) {
   })
 
   fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'employee/orders goods'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'employee/receipts'),
     options: Object.assign(options, opts)
   })

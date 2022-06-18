@@ -65,7 +65,7 @@ module.exports = fp((instance, options, next) => {
     }
   }
   instance.post('/employee/order/create', { ...version, ...employeeOrderBody }, (request, reply) => {
-    instance.authorization(request, reply, (employee) => {
+    instance.authorization(request, reply, async (employee) => {
       const data = request.body;
 
       const organization = await instance.organizations
@@ -103,7 +103,7 @@ module.exports = fp((instance, options, next) => {
   })
 
   instance.post('/employee/orders/get', version, (request, reply) => {
-    instance.authorization(request, reply, (employee) => {
+    instance.authorization(request, reply, async (employee) => {
       const { limit, page, search } = request.body
 
       const user_available_services = request.user.services.map(serv => serv.service)
