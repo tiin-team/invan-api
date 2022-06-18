@@ -9,7 +9,7 @@ module.exports = fp((instance, options, next) => {
         type: 'object',
         additionalProperties: false,
         required: [
-          'organization_id', 'service_id', 'employee_id',
+          'organization_id', 'service_id',
           'status', 'date',
         ],
         properties: {
@@ -20,8 +20,6 @@ module.exports = fp((instance, options, next) => {
           p_order: { type: 'string' },
           employee_id: { type: 'string', maxLength: 24, minLength: 24 },
           employee_name: { type: 'string' },
-          accept_by_id: { type: 'string', maxLength: 24, minLength: 24 },
-          accept_by_name: { type: 'string' },
           status: {
             type: 'string',
             enum: ['pending', 'accept'],
@@ -36,7 +34,7 @@ module.exports = fp((instance, options, next) => {
               additionalProperties: false,
               required: [
                 'product_id', 'product_name', 'product_sku',
-                'first_stock', 'barcode', 'order_quality', //'sector_name'
+                'in_stock', 'barcode', 'order_quantity', //'sector_name'
               ],
               properties: {
                 product_id: { type: 'string', maxLength: 24, minLength: 24 },
@@ -44,7 +42,12 @@ module.exports = fp((instance, options, next) => {
                 product_sku: { type: 'number' },
                 supplier_id: { type: 'string', maxLength: 24, minLength: 24 },
                 sector_name: { type: 'string' },
-                first_stock: {
+                in_stock: {
+                  type: 'number',
+                  default: 0
+                },
+                date: { type: 'number' },
+                real_stock: {
                   type: 'number',
                   default: 0
                 },
@@ -55,7 +58,7 @@ module.exports = fp((instance, options, next) => {
                   },
                   default: [],
                 },
-                order_quality: { type: 'number' },
+                order_quantity: { type: 'number' },
                 note: { type: 'string', default: '' },
               },
             },
@@ -66,39 +69,50 @@ module.exports = fp((instance, options, next) => {
   }
   instance.post('/employee/order/create', { ...version, ...employeeOrderBody }, (request, reply) => {
     instance.authorization(request, reply, async (employee) => {
-      const data = request.body;
+      try {
+        const data = request.body;
 
-      const organization = await instance.organizations
-        .findOne({ _id: body.organization_id }, { name: 1 })
-        .lean()
-      if (!organization)
-        return reply.fourorfour('Organization not found')
+        if (employee.organization !== data.organization_id)
+          return reply.code(403).send("Forbidden Organization")
 
-      const service = await instance.services
-        .findOne({ _id: body.service_id }, { name: 1 })
-        .lean()
+        const organization = await instance.organizations
+          .findOne({ _id: data.organization_id }, { name: 1 })
+          .lean()
+        if (!organization)
+          return reply.fourorfour('Organization not found')
 
-      if (!service)
-        return reply.fourorfour('Service not found')
+        const service = await instance.services
+          .findOne(
+            { _id: data.service_id, organization: data.organization_id },
+            { name: 1 },
+          )
+          .lean()
 
-      data.organization_id = organization._id;
-      data.organization_name = organization.name;
-      data.service_id = service._id;
-      data.service_name = service.name;
+        if (!service)
+          return reply.fourorfour('Service not found')
 
-      data.employee_id = employee.employee_id;
-      data.employee_name = employee.employee_name;
+        data.organization_id = organization._id;
+        data.organization_name = organization.name;
+        data.service_id = service._id;
+        data.service_name = service.name;
+
+        data.employee_id = employee._id;
+        data.employee_name = employee.name;
 
 
-      const ordersCount = await instance.employeesOrder
-        .countDocuments({ organization: user.organization })
-        .exec();
+        const ordersCount = await instance.employeesOrder
+          .countDocuments({ organization: employee.organization })
+          .exec();
 
-      data.p_order = 'EP' + ('0000' + (ordersCount + 1001)).slice(-6);
+        data.p_order = 'EP' + ('0000' + (ordersCount + 1001)).slice(-6);
+        console.log(data);
+        res = await instance.employeesOrder.create(data);
 
-      res = await instance.employeesOrder.save(request.body)
-
-      return reply.ok(res);
+        return reply.ok(res);
+      }
+      catch (error) {
+        reply.error(error.message)
+      }
     })
   })
 

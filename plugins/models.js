@@ -2578,18 +2578,21 @@ module.exports = fp((instance, _, next) => {
       product_sku: Number,
       supplier_id: mongoose.Types.ObjectId,
       sector_name: String,
-      first_stock: {
+      date: Number,
+      in_stock: {
         type: Number,
         default: 0
       },
+      real_stock: Number,
       barcode: {
         type: Array,
         default: []
       },
-      order_quality: Number,
+      order_quantity: Number,
       note: String,
     }]
   });
   instance.decorate('employeesOrder', employeesOrdersSchema);
+
   next()
 })
