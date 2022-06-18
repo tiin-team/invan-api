@@ -9,22 +9,12 @@ module.exports = fp((instance, options, next) => {
         type: 'object',
         additionalProperties: false,
         required: [
-          'organization_id', 'service_id',
-          'status', 'date',
+          'organization_id', 'service_id', 'date',
         ],
         properties: {
           organization_id: { type: 'string', maxLength: 24, minLength: 24 },
-          organization_name: { type: 'string' },
           service_id: { type: 'string', maxLength: 24, minLength: 24 },
-          service_name: { type: 'string' },
-          p_order: { type: 'string' },
           employee_id: { type: 'string', maxLength: 24, minLength: 24 },
-          employee_name: { type: 'string' },
-          status: {
-            type: 'string',
-            enum: ['pending', 'accept'],
-            default: 'pending',
-          },
           date: { type: 'number', minimum: new Date().getTime() - 216000000 },
           sector_name: { type: 'string' },
           items: {
@@ -95,18 +85,18 @@ module.exports = fp((instance, options, next) => {
         data.organization_name = organization.name;
         data.service_id = service._id;
         data.service_name = service.name;
-
+        data.status = 'pending';
         data.employee_id = employee._id;
         data.employee_name = employee.name;
 
 
         const ordersCount = await instance.employeesOrder
-          .countDocuments({ organization: employee.organization })
+          .countDocuments({ organization_id: organization._id })
           .exec();
 
         data.p_order = 'EP' + ('0000' + (ordersCount + 1001)).slice(-6);
-        console.log(data);
-        res = await instance.employeesOrder.create(data);
+
+        const res = await instance.employeesOrder.create(data);
 
         return reply.ok(res);
       }
