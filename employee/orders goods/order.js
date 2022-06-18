@@ -112,7 +112,7 @@ module.exports = fp((instance, options, next) => {
         type: 'object',
         additionalProperties: false,
         required: [
-          'limit', 'page', 'date',
+          'limit', 'page',
         ],
         properties: {
           limit: { type: 'number', minimum: 5 },
