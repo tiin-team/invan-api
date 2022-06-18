@@ -731,7 +731,7 @@ module.exports = (instance, _, next) => {
     })
   })
 
-  var create_service = (request, reply, user) => {
+  const create_service = (request, reply, user) => {
     instance.organizations.findOne({ _id: user.organization }, (error, organization) => {
       if (error) {
         send_Error(request.raw.url, JSON.stringify(error))
@@ -793,40 +793,7 @@ module.exports = (instance, _, next) => {
                           }
                         }
                       }, () => { })
-                      // instance.goodsSales.find({
-                      //   organization: organization._id,
-                      // }, (err, goods) => {
-                      //   if(err || goods == null) {
-                      //     goods = []
-                      //   }
-                      //   for(var g of goods) {
-                      //     var show = true
-                      //     var price = 0.0
-                      //     for(var s of g.services) {
-                      //       show = show && s.available
-                      //       price = s.price
-                      //     }
-                      //     g.services.push({
-                      //       available: show,
-                      //       service: service._id,
-                      //       service_name: service.name,
-                      //       price: price,
-                      //       in_stock: 0,
-                      //       low_stock: 0,
-                      //       optimal_stock: 0
-                      //     })
 
-                      //     instance.goodsSales.updateOne({
-                      //       _id: g._id
-                      //     }, {
-                      //       $set: g
-                      //     }, (err, _) => {
-                      //       if(err) {
-                      //         instance.send_Error('adding service to goods', JSON.stringify(err))
-                      //       }
-                      //     })
-                      //   }
-                      // })
                       instance.goodsDiscount.updateMany({
                         organization: organization._id
                       }, {
@@ -838,29 +805,7 @@ module.exports = (instance, _, next) => {
                           }
                         }
                       }, () => { })
-                      // instance.goodsDiscount.find({
-                      //   organization: organization._id
-                      // }, (_, discs) => {
-                      //   if(discs == null) {
-                      //     discs = []
-                      //   }
-                      //   for(var d of discs) {
-                      //     var show = true
-                      //     for(var s of d.services) {
-                      //       show = show && s.available
-                      //     }
-                      //     d.services.push({
-                      //       service: service._id,
-                      //       service_name: service.name,
-                      //       available: show
-                      //     })
-                      //     instance.goodsDiscount.updateOne({_id: d._id}, {$set: d}, (err, _) => {
-                      //       if(err) {
-                      //         instance.send_Error('adding service to discouns', JSON.stringify(err))
-                      //       }
-                      //     })
-                      //   }
-                      // })
+
                       instance.settingsTaxes.updateMany({
                         organization: organization._id
                       }, {
@@ -872,33 +817,7 @@ module.exports = (instance, _, next) => {
                           }
                         }
                       }, () => { })
-                      // instance.settingsTaxes.find({
-                      //   organization: organization._id
-                      // }, (_, taxes) => {
-                      //   if (taxes == null) {
-                      //     taxes = []
-                      //   }
-                      //   for (var t of taxes) {
-                      //     var show = true
-                      //     for (var s of t.services) {
-                      //       show = show && s.available
-                      //     }
-                      //     t.services.push({
-                      //       service: service._id,
-                      //       service_name: service.name,
-                      //       available: show
-                      //     })
-                      //     instance.settingsTaxes.updateOne({
-                      //       _id: t._id
-                      //     }, {
-                      //       $set: t
-                      //     }, (err, _) => {
-                      //       if (err) {
-                      //         instance.send_Error('adding service to taxes', JSON.stringify(err))
-                      //       }
-                      //     })
-                      //   }
-                      // })
+
                       instance.User.updateMany({
                         organization: organization._id
                       }, {
@@ -910,30 +829,15 @@ module.exports = (instance, _, next) => {
                           }
                         }
                       }, () => { })
-                      // instance.User.find({
-                      //   organization: organization._id,
-                      //   role: 'admin'
-                      // }, (_, users) => {
-                      //   if (users == null) {
-                      //     users = []
-                      //   }
-                      //   for (var u of users) {
-                      //     u.services.push({
-                      //       service: instance.ObjectId(service._id),
-                      //       service_name: service.name,
-                      //       available: true
-                      //     })
-                      //     instance.User.updateOne({
-                      //       _id: u._id
-                      //     }, {
-                      //       $set: u
-                      //     }, (err) => {
-                      //       if (err) {
-                      //         instance.send_Error('adding service to users', JSON.stringify(err))
-                      //       }
-                      //     })
-                      //   }
-                      // })
+                      instance.User.findOneAndUpdate(
+                        {
+                          organization: organization._id,
+                          is_boss: true,
+                          role: 'boss'
+                        },
+                        { $set: { '$services.$[].available': true, } },
+                        { lean: true },
+                      )
                       instance.goodsCategory.updateMany({
                         organization: organization._id
                       }, {
@@ -954,12 +858,14 @@ module.exports = (instance, _, next) => {
               instance.aldy_exs(reply)
             }
           })
+            .lean()
         }
         else {
           reply.error('Organization does not exist')
         }
       }
     })
+      .lean()
   }
 
   instance.post('/organizations/service/:id/create', { version: '1.0.0' }, (request, reply) => {
