@@ -260,7 +260,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   };
 
   if (search) {
-    query['$or'] = [
+    query.$match['$or'] = [
       {
         supplier_name: {
           $regex: search,
@@ -985,7 +985,7 @@ module.exports = fp((instance, options, next) => {
 
           const user = request.user;
           const user_available_services = user.services.map(serv => serv.service + '')
-          if (service && !user_available_services.find(serv => serv.service + '' === service + '')) {
+          if (service && !user_available_services.find(serv => serv === service)) {
             return reply.code(403).send('Acces denied')
           }
           const result = await inventoryValuationResultByPrimarySupplier({
