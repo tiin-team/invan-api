@@ -9,13 +9,14 @@ module.exports = fp((instance, options, next) => {
         type: 'object',
         additionalProperties: false,
         required: [
-          'organization_id', 'service_id', 'date',
+          'organization_id', 'service_id', 'date', 'required_date',
         ],
         properties: {
           organization_id: { type: 'string', maxLength: 24, minLength: 24 },
           service_id: { type: 'string', maxLength: 24, minLength: 24 },
           employee_id: { type: 'string', maxLength: 24, minLength: 24 },
           date: { type: 'number', minimum: new Date().getTime() - 216000000 },
+          required_date: { type: 'number', minimum: new Date().getTime() - 216000000 },
           sector_name: { type: 'string' },
           items: {
             type: 'array',
