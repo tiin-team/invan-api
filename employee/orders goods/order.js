@@ -243,6 +243,7 @@ module.exports = fp((instance, options, next) => {
         order.status = 'accept';
         order.accept_by_id = employee._id;
         order.accept_by_name = employee.name;
+        order.accept_date = new Date().getTime();
 
         const res = await instance.employeesOrder.findByIdAndUpdate(
           id,

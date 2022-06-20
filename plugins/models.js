@@ -2571,6 +2571,7 @@ module.exports = fp((instance, _, next) => {
       enum: ['pending', 'accept'],
     },
     date: Number,
+    accept_date: Number,
     sector_name: String,
     items: [{
       product_id: mongoose.Schema.Types.ObjectId,

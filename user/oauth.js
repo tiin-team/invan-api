@@ -42,17 +42,13 @@ module.exports = fp((instance, _, next) => {
                      .find({ organization: user.organization })
                      .lean();
 
-                  user.services = services.map(serv => {
-                     return {
-                        service: serv._id,
-                        service_name: serv.name,
-                        available: true,
-                     }
+                  user.services = services.map(serv =>
+                  ({
+                     service: serv._id,
+                     service_name: serv.name,
+                     available: true,
                   })
-                  // .map(serv => {
-                  //    serv.available = true
-                  //    return serv
-                  // })
+                  )
                }
                else
                   user.services = user.services.filter(serv => serv.available)

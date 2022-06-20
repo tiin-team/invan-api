@@ -248,7 +248,7 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
     data: items,
   }
 }
-async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, service }, instance, services) {
+async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, search }, instance, services) {
 
   const query = {
     $match: {
@@ -258,6 +258,17 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       // primary_supplier_id: { $ne: '' },
     }
   };
+
+  if (search) {
+    query['$or'] = [
+      {
+        supplier_name: {
+          $regex: search,
+          $options: 'i'
+        }
+      }
+    ]
+  }
 
   // const $pojectOne = {
   //   $project: {
@@ -964,7 +975,7 @@ module.exports = fp((instance, options, next) => {
     async (request, reply) => {
       instance.authorization(request, reply, async () => {
         try {
-          const { service } = request.query;
+          const { service, search } = request.query;
           const limit = !isNaN(parseInt(request.query.limit))
             ? parseInt(request.query.limit)
             : 10
@@ -974,12 +985,13 @@ module.exports = fp((instance, options, next) => {
 
           const user = request.user;
           const user_available_services = user.services.map(serv => serv.service + '')
-          if (service && !user_available_services.find(serv => serv.service + '' == service)) {
-            return reply.error('Acces denied')
+          if (service && !user_available_services.find(serv => serv.service + '' === service + '')) {
+            return reply.code(403).send('Acces denied')
           }
           const result = await inventoryValuationResultByPrimarySupplier({
             limit, page,
             organization: user.organization,
+            search,
           },
             instance,
             service ? [service] : user_available_services,
