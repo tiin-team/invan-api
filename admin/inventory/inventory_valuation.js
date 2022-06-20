@@ -251,16 +251,14 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
 async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, search, service }, instance, services) {
 
   const query = {
-    $match: {
-      organization: organization,
-      // primary_supplier_id: { $exists: true },
-      // primary_supplier_id: { $ne: null },
-      // primary_supplier_id: { $ne: '' },
-    }
+    organization: organization,
+    // primary_supplier_id: { $exists: true },
+    // primary_supplier_id: { $ne: null },
+    // primary_supplier_id: { $ne: '' },
   };
 
   if (search) {
-    query.$match.supplier_name = {
+    query.supplier_name = {
       $regex: search,
       $options: 'i'
     }
@@ -344,7 +342,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   }
 
   const suppliers = await instance.adjustmentSupplier.aggregate([
-    query,
+    { $match: query },
     { $skip: (page - 1) * limit },
     { $limit: limit },
     {
@@ -383,7 +381,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
 
   let total = await instance.goodsSales
     .aggregate([
-      query,
+      // { $match: query },
       { $match: filter_goods },
       unwindServices,
       projectPrimaryFields,
@@ -405,7 +403,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   const total_suppliers = await instance.adjustmentSupplier
     .countDocuments({
       // organization: organization,
-      ...query.$match,
+      ...query,
       is_deleted: { $ne: true },
     })
   return {
