@@ -377,7 +377,9 @@ module.exports = fp((instance, options, next) => {
       goods[index].prices = serv && serv.prices ? serv.prices : good.prices;
       goods[index].price = serv && serv.price ? serv.price : good.price;
       // goods[index].mxik = good.mxik ? good.mxik : randimMxik();
-      goods[index].nds_value = good.nds_value ? good.nds_value : 15;
+      goods[index].nds_value = good.nds_value && !isNaN(parseInt(good.nds_value))
+        ? parseFloat(parseFloat(good.nds_value).toFixed(2))
+        : 15;
       delete goods[index].services;
 
       goods[index].image = goods[index].representation
