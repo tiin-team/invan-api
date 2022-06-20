@@ -326,7 +326,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       },
     },
   };
-  // console.log(organization);
+
   const filter_goods = {
     $expr: {
       $and: [
@@ -379,16 +379,25 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     }
   ])
 
+  const supplier_ids = suppliers.map(s => s._id)
+  const query_goods = {
+    organization: organization,
+    primary_supplier_id: { $in: supplier_ids },
+  }
+  if (service)
+    query_goods.service = service
+
   let total = await instance.goodsSales
     .aggregate([
       // { $match: query },
-      { $match: filter_goods },
+      { $match: query_goods },
       unwindServices,
       projectPrimaryFields,
       calculateTotal,
     ])
     .allowDiskUse(true)
     .exec();
+
   if (!(total instanceof Array) || total.length == 0) {
     total = [{
       inventory: 0,
@@ -399,13 +408,13 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     }];
   }
 
-
   const total_suppliers = await instance.adjustmentSupplier
     .countDocuments({
       // organization: organization,
       ...query,
       is_deleted: { $ne: true },
     })
+
   return {
     ...total[0],
     total: total_suppliers,
