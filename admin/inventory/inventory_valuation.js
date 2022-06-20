@@ -248,7 +248,7 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
     data: items,
   }
 }
-async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, search }, instance, services) {
+async function inventoryValuationResultByPrimarySupplier({ limit, page, organization, search, service }, instance, services) {
 
   const query = {
     $match: {
@@ -260,14 +260,10 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   };
 
   if (search) {
-    query.$match['$or'] = [
-      {
-        supplier_name: {
-          $regex: search,
-          $options: 'i'
-        }
-      }
-    ]
+    query.$match.supplier_name = {
+      $regex: search,
+      $options: 'i'
+    }
   }
 
   // const $pojectOne = {
@@ -402,6 +398,17 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     },
   };
   // console.log(organization);
+  const filter_goods = {
+    $expr: {
+      $and: [
+        { $eq: ['$primary_supplier_id', '$$supplier_id'] },
+        { $eq: ['$organization', '$$organization'] },
+      ],
+    },
+  }
+  if (service)
+    filter_goods.$expr.$and.push({ $eq: ['$service', service] })
+
   const suppliers = await instance.adjustmentSupplier.aggregate([
     {
       $match: { organization: organization },
@@ -414,14 +421,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
         let: { supplier_id: '$_id', organization: organization },
         pipeline: [
           {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ['$primary_supplier_id', '$$supplier_id'] },
-                  { $eq: ['$organization', '$$organization'] },
-                ],
-              },
-            },
+            $match: filter_goods,
           },
           unwindServices,
           projectPrimaryFields,
@@ -991,7 +991,7 @@ module.exports = fp((instance, options, next) => {
           const result = await inventoryValuationResultByPrimarySupplier({
             limit, page,
             organization: user.organization,
-            search,
+            search, service,
           },
             instance,
             service ? [service] : user_available_services,
