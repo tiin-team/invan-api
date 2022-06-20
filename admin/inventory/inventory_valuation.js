@@ -340,9 +340,9 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     ? ({
       $expr: {
         $or: [
-          { $eq: ['$service', service] },
+          { $eq: ['$services.service', service] },
           {
-            $eq: ['$service', instance.ObjectId(service)],
+            $eq: ['$services.service', instance.ObjectId(service)],
           },
         ],
       },
@@ -350,8 +350,8 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
     : ({
       $expr: {
         $or: [
-          { $in: ['$service', services.map(s => s + '')] },
-          { $in: ['$service', services] },
+          { $in: ['$services.service', services.map(s => s + '')] },
+          { $in: ['$services.service', services] },
         ],
       },
     })
