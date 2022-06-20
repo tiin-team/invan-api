@@ -226,7 +226,7 @@ module.exports = fp((instance, options, next) => {
     })
   })
 
-  instance.put('/employee/order/:_id', { ...version }, (request, reply) => {
+  instance.put('/employee/orders/:_id', { ...version }, (request, reply) => {
     instance.authorization(request, reply, async (employee) => {
       try {
         const id = request.params._id
