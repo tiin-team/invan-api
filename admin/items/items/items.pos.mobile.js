@@ -259,6 +259,148 @@ module.exports = fp((instance, options, next) => {
     }
     return reply;
   }
+  async function getPosItemsOrganizationService(request, reply, admin) {
+    const service_id = request.params.service;
+    const organization_id = request.params.organization;
+    const limit = !isNaN(parseInt(request.query.limit))
+      ? parseInt(request.query.limit)
+      : 10;
+    const page = !isNaN(parseInt(request.query.page))
+      ? parseInt(request.query.page)
+      : 1;
+    const { min, max } = request.params;
+
+    const date = new Date();
+    const from_time = min ? new Date(parseInt(min)) : date;
+    date.setDate(date.getDate() + 1);
+    const to_time = max ? new Date(parseInt(max)) : date;
+
+    const $match = {
+      $match: {
+        organization: organization_id,
+        $or: [
+          { last_updated: { $gte: min, $lte: max } },
+          { last_price_change: { $gte: min, $lte: max } },
+          { last_stock_updated: { $gte: min, $lte: max } },
+          // { updatedAt: { $gte: from_time, $lte: to_time } },
+          { createdAt: { $gte: from_time, $lte: to_time } },
+        ],
+      },
+    };
+
+
+    const $project_filter = {
+      $filter: {
+        input: "$services",
+        as: "service",
+        cond: {
+          $or: [
+            {
+              $eq: ["$$service.service", service_id + ''],
+            },
+            {
+              $eq: ["$$service.service", instance.ObjectId(service_id)],
+            }
+          ]
+        }
+      }
+    }
+    const $project = {
+      $project: {
+        organization: 1,
+        services: $project_filter,
+        stopped_item: 1,
+        created_time: 1,
+        last_updated: 1,
+        last_stock_updated: 1,
+        last_price_change: 1,
+        name: 1,
+        category: 1,
+        category_id: 1,
+        category_name: 1,
+        sale_is_avialable: 1,
+        sold_by: 1,
+        count_by_type: 1,
+        barcode_by_type: 1,
+        price_currency: 1,
+        cost: 1,
+        cost_currency: 1,
+        sku: 1,
+        hot_key: 1,
+        barcode: 1,
+        composite_item: 1,
+        is_composite_item: 1,
+        composite_items: {
+          $filter: {
+            input: "$composite_items",
+            as: "composite_item",
+            cond: {
+              $eq: [{ $type: "$$composite_item" }, "object"]
+            }
+          }
+        },
+        in_stock: 1,
+        low_stock: 1,
+        optimal_stock: 1,
+        primary_supplier_id: 1,
+        primary_supplier_name: 1,
+        default_purchase_cost: 1,
+        purchase_cost_currency: 1,
+        representation_type: 1,
+        shape: 1,
+        representation: 1,
+        stock_status: 1,
+        parent_item: 1,
+        parent_name: 1,
+        has_variants: 1,
+        show_on_bot: 1,
+        mxik: 1,
+        nds_value: 1,
+      },
+    };
+
+    const goods = await instance.goodsSales
+      .aggregate([
+        $match,
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        $project,
+      ])
+      .exec();
+
+    const total = await instance.goodsSales.countDocuments($match.$match);
+
+    for (const [index, good] of goods.entries()) {
+      const serv = good.services.find(
+        (serv) => serv.service + '' == service_id
+      );
+      goods[index].prices = serv && serv.prices ? serv.prices : good.prices;
+      goods[index].price = serv && serv.price ? serv.price : good.price;
+      // goods[index].mxik = good.mxik ? good.mxik : randimMxik();
+      goods[index].nds_value = good.nds_value ? good.nds_value : 15;
+      delete goods[index].services;
+
+      goods[index].image = goods[index].representation
+        .replace('http://api.invan.uz/static/', '')
+        .replace('https://api.invan.uz/static/', '')
+        .replace('http://pos.in1.uz/api/static/', '')
+        .replace('https://pos.in1.uz/api/static/', '')
+        .replace('http://pos.inone.uz/api/static/', '')
+        .replace('https://pos.inone.uz/api/static/', '');
+      goods[index].representation =
+        'https://pos.in1.uz/api/static/' + goods[index].image;
+    }
+
+    reply.send({
+      statusCode: 200,
+      error: "Ok",
+      message: "Success",
+      limit: limit,
+      page: page,
+      total: total,
+      data: goods,
+    });
+  };
 
   instance.get(
     '/items/pos/:min/:max',
@@ -292,6 +434,41 @@ module.exports = fp((instance, options, next) => {
     (request, reply) => {
       instance.authorization(request, reply, async (admin) => {
         getPosItems(request, reply, admin)
+      });
+    }
+  );
+  instance.get(
+    '/items/pos/:organization/:service/:min/:max',
+    {
+      ...version,
+      schema: {
+        params: {
+          type: 'object',
+          required: ['min', 'max'],
+          properties: {
+            organization: { type: 'string', maxLength: 24, minLength: 24 },
+            service: { type: 'string', maxLength: 24, minLength: 24 },
+            min: { type: 'number', minimum: 1514764800000 },
+            max: { type: 'number', maximum: 2000000800000 },
+          },
+        },
+        querystring: {
+          limit: {
+            oneOf: [
+              { type: 'number', minimum: 5 },
+              {
+                type: 'string',
+                enum: ['all'],
+              }
+            ]
+          },
+          page: { type: 'number', minimum: 1 },
+        }
+      },
+    },
+    (request, reply) => {
+      instance.authorization(request, reply, async (admin) => {
+        getPosItemsOrganizationService(request, reply, admin)
       });
     }
   );
