@@ -335,11 +335,26 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       ],
     },
   }
-  if (service)
-    filter_goods.$expr.$and.push({ $eq: ['$service', service] })
-  else {
-    filter_goods.$expr.$and.push({ $in: ['$service', services] })
-  }
+
+  const filter_goods_service = service
+    ? ({
+      $expr: {
+        $or: [
+          { $eq: ['$service', service] },
+          {
+            $eq: ['$service', instance.ObjectId(service)],
+          },
+        ],
+      },
+    })
+    : ({
+      $expr: {
+        $or: [
+          { $in: ['$service', services.map(s => s + '')] },
+          { $in: ['$service', services] },
+        ],
+      },
+    })
 
   const suppliers = await instance.adjustmentSupplier.aggregate([
     { $match: query },
@@ -354,6 +369,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
             $match: filter_goods,
           },
           unwindServices,
+          { $match: filter_goods_service },
           projectPrimaryFields,
           calculateTotal,
         ],
@@ -916,8 +932,8 @@ module.exports = fp((instance, options, next) => {
             : 1
 
           const user = request.user;
-          const user_available_services = user.services.map(serv => serv.service + '')
-          if (service && !user_available_services.find(serv => serv === service)) {
+          const user_available_services = user.services.map(serv => serv.service)
+          if (service && !user_available_services.find(serv => serv + '' === service)) {
             return reply.code(403).send('Acces denied')
           }
           const result = await inventoryValuationResultByPrimarySupplier({
