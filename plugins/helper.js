@@ -509,6 +509,7 @@ module.exports = fp((instance, _, next) => {
             })
           }
         })
+          .lean()
       }
     })
       .lean()

@@ -138,6 +138,23 @@ module.exports = fp((instance, options, next) => {
     }
   }
 
+  instance.get('/employee/orders/:id', version, (request, reply) => {
+    instance.authorization(request, reply, async (user) => {
+      try {
+        const order = await instance.employeesOrder
+          .findOne({
+            _id: instance.ObjectId(request.params.id),
+            service_id: { $in: user.services.map(serv => serv.service) },
+          })
+          .lean()
+
+        return reply.ok(order)
+      } catch (error) {
+        reply.error(error.message)
+      }
+    })
+  })
+
   instance.post('/employee/orders/get', { ...version, ...getBodySchema }, (request, reply) => {
     instance.authorization(request, reply, async (user) => {
       try {
