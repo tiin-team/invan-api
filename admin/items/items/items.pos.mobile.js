@@ -161,7 +161,15 @@ module.exports = fp((instance, options, next) => {
         barcode: 1,
         composite_item: 1,
         is_composite_item: 1,
-        composite_items: 1,
+        composite_items: {
+          $filter: {
+            input: "$composite_items",
+            as: "composite_item",
+            cond: {
+              $eq: [{ $type: "$$composite_item" }, "object"]
+            }
+          }
+        },
         // use_production: 1,
         // use_sub_production: 1,
         // is_track_stock: 1,
