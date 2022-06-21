@@ -172,7 +172,7 @@ module.exports = fp((instance, _, next) => {
     try {
       return await instance.clientsDatabase
         .findOne({
-          phone_number: { $regex: phone, $options: 'i' },
+          phone_number: `+${phone.replace('+', '')}`,
           organization: organizationId,
         })
         .lean();
@@ -180,7 +180,7 @@ module.exports = fp((instance, _, next) => {
       return null
     }
   }
-  instance.get("/cash-back/client", { version: "1.1.0" }, (request, reply) => {
+  instance.get("/cash-back/client", { version: "2.0.0" }, (request, reply) => {
     instance.authorization(request, reply, async (admin) => {
       if (admin) {
         if (!request.query.phone)
@@ -189,7 +189,8 @@ module.exports = fp((instance, _, next) => {
         const organization = admin.organization;
 
         return reply.ok(await get_client(request.query.phone, organization))
-      } else return reply.unauthorized()
+      } else
+        return reply.unauthorized()
     })
   });
   instance.get("/cash-back/client/", { version: "1.0.0" }, async (request, reply) => {

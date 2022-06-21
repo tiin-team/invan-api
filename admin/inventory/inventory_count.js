@@ -311,9 +311,9 @@ module.exports = (instance, options, next) => {
         total_difference: invcount.total_difference,
         total_cost_difference: invcount.total_cost_difference,
       }
-      var delete_ids = []
-      var deleting_ids = []
-      var old_items = {}
+      const delete_ids = []
+      const deleting_ids = []
+      const old_items = {}
       for (const it of invitems) {
         if (!new_items[it.product_id + ""]) {
           if (it.difference) {
@@ -328,8 +328,6 @@ module.exports = (instance, options, next) => {
       }
       const save = []
       const item_ids = []
-      console.log(new_items, 'new_items')
-      console.log(old_items, 'old_items');
 
       for (const it of request.body.items) {
         if (!old_items[it.product_id + ''] && it.product_id != '' && it.product_id != null) {
@@ -340,7 +338,7 @@ module.exports = (instance, options, next) => {
           item_ids.push(it.product_id)
         }
       }
-      console.log(save);
+
       await instance.inventoryCountItem.deleteMany({
         _id: {
           $in: delete_ids
