@@ -381,6 +381,7 @@ module.exports = fp((instance, options, next) => {
         ? parseFloat(parseFloat(good.nds_value).toFixed(2))
         : 15;
       delete goods[index].services;
+      goods[index].in_stock = serv && serv.in_stock ? serv.in_stock : good.in_stock;
 
       goods[index].image = goods[index].representation
         .replace('http://api.invan.uz/static/', '')

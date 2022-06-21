@@ -203,7 +203,7 @@ module.exports = fp((instance, _, next) => {
 
         let queu_index = queues.findIndex(el =>
           el.queue === goods_obj[good.product_id].queue
-          && el.product_id + '' === good.product_id
+          && el.good_id + '' === good.product_id
         )
         if (queu_index === -1) {
           queu_index = 0
