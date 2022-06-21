@@ -96,7 +96,7 @@ module.exports = fp((instance, options, next) => {
           .countDocuments({ organization_id: organization._id })
           .exec();
 
-        data.p_order = 'EP' + ('0000' + (ordersCount + 1001)).slice(-6);
+        data.p_order = 'IO' + ('0000' + (ordersCount + 1001)).slice(-6);
 
         const res = await instance.employeesOrder.create(data);
 

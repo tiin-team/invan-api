@@ -678,9 +678,9 @@ module.exports = (instance, options, next) => {
       //   count = count.toObject();
       // } catch (error) { }
 
-      let countitems = await instance.inventoryCountItem.find({
-        count_id: count._id
-      });
+      let countitems = await instance.inventoryCountItem
+        .find({ count_id: count._id })
+        .lean();
       var ids = []
       for (var c of countitems) {
         ids.push(c.product_id)

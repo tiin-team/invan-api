@@ -362,7 +362,7 @@ module.exports = fp((instance, options, next) => {
     const goods = await instance.goodsSales
       .aggregate([
         $match,
-        { $sort: { _id: -1 } },
+        { $sort: { _id: 1 } },
         { $skip: (page - 1) * limit },
         { $limit: limit },
         $project,
