@@ -18,6 +18,7 @@ module.exports = fp((instance, options, next) => {
           date: { type: 'number', minimum: new Date().getTime() - 216000000 },
           required_date: { type: 'number', minimum: new Date().getTime() - 216000000 },
           sector_name: { type: 'string' },
+          note: { type: 'string' },
           items: {
             type: 'array',
             items: {

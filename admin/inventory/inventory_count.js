@@ -401,6 +401,7 @@ module.exports = (instance, options, next) => {
       if (!admin) {
         return reply.error('Access')
       }
+      console.log('update_inventory_count');
       update_inventory_count(request, reply, admin)
     })
   })

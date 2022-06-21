@@ -2586,6 +2586,7 @@ module.exports = fp((instance, _, next) => {
     employee_name: String,
     accept_by_id: mongoose.Types.ObjectId,
     accept_by_name: String,
+    note: String,
     status: {
       type: String,
       enum: ['pending', 'accept'],
