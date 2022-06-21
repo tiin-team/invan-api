@@ -171,24 +171,37 @@ module.exports = fp((instance, _, next) => {
   async function get_client(phone, organizationId) {
     try {
       return await instance.clientsDatabase
-        .findOne({
-          phone_number: `+${phone.replace('+', '')}`,
-          organization: organizationId,
-        })
+        .findOne(
+          {
+            phone_number: `+${phone.replace('+', '')}`,
+            organization: organizationId,
+          },
+          {
+            first_name: 1,
+            last_name: 1,
+            point_balance: 1,
+            phone_number: 1,
+            organization: 1,
+            status: 1,
+          },
+        )
         .lean();
     } catch (error) {
       return null
     }
   }
-  instance.get("/cash-back/client", { version: "2.0.0" }, (request, reply) => {
+  instance.get("/cash-back/client", { version: "1.1.0" }, (request, reply) => {
     instance.authorization(request, reply, async (admin) => {
       if (admin) {
         if (!request.query.phone)
           return reply.fourorfour('client')
 
         const organization = admin.organization;
+        const client = await get_client(request.query.phone, organization)
+        if (!client)
+          return reply.fourorfour('client')
 
-        return reply.ok(await get_client(request.query.phone, organization))
+        return reply.ok(client)
       } else
         return reply.unauthorized()
     })
