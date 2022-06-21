@@ -183,11 +183,13 @@ module.exports = (instance, options, next) => {
       invcount.created_time = new Date().getTime();
       delete invcount._id;
       invcount.service = instance.ObjectId(invcount.service);
-      let service = await instance.services.findOne({ _id: invcount.service });
+      let service = await instance.services
+        .findOne({ _id: invcount.service })
+        .lean();
       if (!service) {
         return reply.fourorfour('Service')
       }
-      let count_length = await instance.inventoryCount.countDocuments({ organization: admin.organization });
+      const count_length = await instance.inventoryCount.countDocuments({ organization: admin.organization });
       let p_order = 'IC' + (1001 + count_length)
       invcount.p_order = p_order;
       invcount.service_name = service.name;
@@ -201,7 +203,7 @@ module.exports = (instance, options, next) => {
         total_cost_difference: 0
       }
 
-      for (var it of invcount.items) {
+      for (const it of invcount.items) {
         if (it.product_id != '' && it.product_id != null) {
           ids.push(it.product_id)
         }
@@ -227,7 +229,7 @@ module.exports = (instance, options, next) => {
           ]
         }
       }
-      let goods = await instance.goodsSales.find(query);
+      let goods = await instance.goodsSales.find(query).lean();
 
       let gObj = {}
       for (let g of goods) {
@@ -287,18 +289,18 @@ module.exports = (instance, options, next) => {
       if (!request.body || !(request.body.items instanceof Array) || request.body.items.length == 0) {
         return reply.validation('body is not in format')
       }
-      let invcount = await instance.inventoryCount.findOne({ _id: id });
+      let invcount = await instance.inventoryCount.findOne({ _id: id }).lean();
       if (!invcount) {
         return reply.fourorfour('invcount')
       }
-      let service = await instance.services.findOne({ _id: invcount.service });
+      let service = await instance.services.findOne({ _id: invcount.service }).lean();
       if (!service) {
         return reply.fourorfour('service')
       }
       invcount.service_name = service.name;
-      let invitems = await instance.inventoryCountItem.find({
-        count_id: invcount._id
-      });
+      let invitems = await instance.inventoryCountItem
+        .find({ count_id: invcount._id })
+        .lean();
       var new_items = {}
       for (var it of request.body.items) {
         if (it.product_id != undefined && it.product_id != "") {
@@ -312,7 +314,7 @@ module.exports = (instance, options, next) => {
       var delete_ids = []
       var deleting_ids = []
       var old_items = {}
-      for (var it of invitems) {
+      for (const it of invitems) {
         if (!new_items[it.product_id + ""]) {
           if (it.difference) {
             total.total_difference -= it.difference
@@ -326,7 +328,7 @@ module.exports = (instance, options, next) => {
       }
       var save = []
       var item_ids = []
-      for (var it of request.body.items) {
+      for (const it of request.body.items) {
         if (!old_items[it.product_id + ''] && it.product_id != '' && it.product_id != null) {
           it.count_id = instance.ObjectId(invcount._id)
           it.product_id = instance.ObjectId(it.product_id)
@@ -356,9 +358,11 @@ module.exports = (instance, options, next) => {
         }
       });
 
-      let goods = await instance.goodsSales.find({ _id: { $in: item_ids } });
+      let goods = await instance.goodsSales
+        .find({ _id: { $in: item_ids } })
+        .lean();
       let gObj = {}
-      for (var g of goods) {
+      for (const g of goods) {
         gObj[g._id + ''] = g
         let in_stock = 0;
         if (typeof g.services == typeof []) {
@@ -800,14 +804,16 @@ module.exports = (instance, options, next) => {
 
   async function update_inv_count(history, goodObj, reply) {
     try {
-      let items = await instance.inventoryCountItem.find({
-        count_id: history.count_id,
-        product_id: history.product_id
-      });
+      let items = await instance.inventoryCountItem
+        .find({
+          count_id: history.count_id,
+          product_id: history.product_id
+        })
+        .lean();
       let item = null;
       history.value = parseFloat(history.value);
 
-      for (var it of items) {
+      for (const it of items) {
         if (it.product_id + '' == history.product_id + '') {
           if (it.counted) {
             history.value += it.counted
@@ -820,8 +826,7 @@ module.exports = (instance, options, next) => {
             _id: it._id,
             count_id: it.count_id,
             product_id: it.product_id,
-            // counted: history.value,
-            counted: it.counted,
+            counted: history.value,
             cost: goodObj.cost,
             cost_currency: goodObj.cost_currency,
             difference: 0,
@@ -830,10 +835,12 @@ module.exports = (instance, options, next) => {
         }
       }
       if (item) {
-        let bor = await instance.inventoryCountHistory.findOne({
-          product_id: item.product_id,
-          count_id: item.count_id
-        });
+        let bor = await instance.inventoryCountHistory
+          .findOne({
+            product_id: item.product_id,
+            count_id: item.count_id
+          })
+          .lean();
         if (!bor) {
           item.counted = undefined
           item.difference = undefined
@@ -843,27 +850,27 @@ module.exports = (instance, options, next) => {
         item.exp_in_stock = goodObj.in_stock ? goodObj.in_stock : 0
         item.difference = (item.counted - goodObj.in_stock) ? (item.counted - goodObj.in_stock) : 0
         item.cost_difference = item.difference * item.cost
-        await instance.inventoryCountItem.updateOne({
-          _id: item._id
-        }, {
-          $set: item
-        });
+        await instance.inventoryCountItem.updateOne(
+          { _id: item._id },
+          { $set: item },
+          { lean: true },
+        );
         reply.ok();
       }
       else {
-        let inv = await instance.inventoryCount.findOne({
-          _id: history.count_id
-        });
+        const inv = await instance.inventoryCount
+          .findOne({ _id: history.count_id })
+          .lean();
         if (!inv) {
           return reply.fourorfour('inv')
         }
-        let good = await instance.goodsSales.findOne({
-          _id: history.product_id
-        });
+        const good = await instance.goodsSales
+          .findOne({ _id: history.product_id })
+          .lean();
         if (!good) {
           return reply.fourorfour('good')
         }
-        let myvar = {
+        const myvar = {
           product_id: instance.ObjectId(good._id),
           product_name: good.name,
           product_sku: good.sku,
@@ -895,24 +902,31 @@ module.exports = (instance, options, next) => {
 
   instance.post('/inventory/count/history/create', options.version, async (request, reply) => {
     try {
-      let count = await instance.inventoryCount.findOne({ _id: request.body.count_id });
+      let count = await instance.inventoryCount
+        .findOne({ _id: request.body.count_id })
+        .lean();
+
       if (!count) {
         return reply.fourorfour('Count not found')
       }
-      let pro = await instance.goodsSales.findOne({
-        _id: request.body.product_id
-      });
+      let pro = await instance.goodsSales
+        .findOne({ _id: request.body.product_id })
+        .lean();
+
       if (!pro) {
         return reply.fourorfour('Item')
       }
       if (pro.item_type == 'variant') {
-        const parent = await instance.goodsSales.findOne({
-          variant_items: {
-            $elemMatch: {
-              $eq: pro._id
+        const parent = await instance.goodsSales
+          .findOne({
+            variant_items: {
+              $elemMatch: {
+                $eq: pro._id
+              }
             }
-          }
-        })
+          })
+          .lean()
+
         if (parent) {
           pro.name = `${parent.name} ( ${pro.name} )`
         }
@@ -933,10 +947,12 @@ module.exports = (instance, options, next) => {
 
       goodObj.in_stock = in_stock
       if (request.body.input_changed) {
-        let countitem = await instance.inventoryCountItem.findOne({
-          count_id: request.body.count_id,
-          product_id: request.body.product_id,
-        });
+        let countitem = await instance.inventoryCountItem
+          .findOne({
+            count_id: request.body.count_id,
+            product_id: request.body.product_id,
+          })
+          .lean();
         if (!countitem) {
           return reply.fourorfour('countitem')
         }
@@ -947,8 +963,8 @@ module.exports = (instance, options, next) => {
         if (request.body.value == 0) {
           return reply.error('Not changed')
         }
-        let history = await new instance.inventoryCountHistory(Object.assign({ product_name: pro.name }, request.body)).save();
-        return await update_inv_count(history, goodObj, reply);
+        // let history = await new instance.inventoryCountHistory(Object.assign({ product_name: pro.name }, request.body)).save();
+        // return await update_inv_count(history, goodObj, reply);
       }
       let history = await new instance.inventoryCountHistory(Object.assign({ product_name: pro.name }, request.body)).save();
       return await update_inv_count(history, goodObj, reply)
