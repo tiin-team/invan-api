@@ -201,7 +201,10 @@ module.exports = fp((instance, _, next) => {
             : goods_obj[good.product_id].queue
         }
 
-        let queu_index = queues.findIndex(el => el.queue === goods_obj[good.product_id].queue)
+        let queu_index = queues.findIndex(el =>
+          el.queue === goods_obj[good.product_id].queue
+          && el.product_id + '' === good.product_id
+        )
         if (queu_index === -1) {
           queu_index = 0
           goods_obj[good.product_id].queue = queues[queu_index].queue;
