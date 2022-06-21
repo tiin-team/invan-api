@@ -681,6 +681,26 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('goodsSaleQueue', goodsSaleQueue)
 
+  const inventoryPartiationSaleHistory = instance.model('inventoryPartiationSaleHistory', {
+    organization: String,
+    date: Number,
+    unique: String,
+    category_id: String,
+    category_name: String,
+    product_id: mongoose.Types.ObjectId,
+    product_name: String,
+    service: mongoose.Types.ObjectId,
+    service_name: String,
+    employee_id: mongoose.Types.ObjectId,
+    employee_name: String,
+    reason: {
+      type: String,
+      enum: ['sold'],
+    },
+    stock_after: Number
+  })
+  instance.decorate('inventoryPartiationSaleHistory', inventoryPartiationSaleHistory)
+
   const goodsSales = instance.model('goodsSales', {
     organization: String,
     service: String,

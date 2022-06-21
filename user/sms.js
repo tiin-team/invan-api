@@ -57,7 +57,9 @@ module.exports = fp((instance, _, next) => {
         sms_code: sms_code,
         organization_name: organization.name ? organization.name : '',
       })
-        .catch(err => { })
+        .catch(err => {
+          instance.send_Error('sending error confirmation bot', JSON.stringify(err))
+        })
     }
     catch (error) {
       console.log(error)

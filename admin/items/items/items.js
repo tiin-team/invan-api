@@ -2858,7 +2858,7 @@ module.exports = (instance, options, next) => {
             }*/
               }
               const CSVString = my_array.join('\n');
-              const file = 'asdfbjasf' + '_ITEMS.csv';
+              const file = new Date().getTime() + '_ITEMS.csv';
               // var file = org.name + '_ITEMS.csv'
               fs.writeFile('./static/' + file, CSVString, (err) => {
                 if (err) {
