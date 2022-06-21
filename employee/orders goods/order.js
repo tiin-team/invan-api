@@ -18,7 +18,7 @@ module.exports = fp((instance, options, next) => {
           date: { type: 'number', minimum: new Date().getTime() - 216000000 },
           required_date: { type: 'number', minimum: new Date().getTime() - 216000000 },
           sector_name: { type: 'string' },
-          note: { type: 'string' },
+          note: { type: 'string', default: '' },
           items: {
             type: 'array',
             items: {
@@ -51,7 +51,7 @@ module.exports = fp((instance, options, next) => {
                   default: [],
                 },
                 order_quantity: { type: 'number' },
-                note: { type: 'string', default: '' },
+                note: { type: 'string' },
               },
             },
           },
