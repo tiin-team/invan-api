@@ -285,7 +285,7 @@ module.exports = (instance, options, next) => {
 
   const update_inventory_count = async (request, reply, admin) => {
     try {
-      let id = request.params.id;
+      const id = request.params.id;
       if (!request.body || !(request.body.items instanceof Array) || request.body.items.length == 0) {
         return reply.validation('body is not in format')
       }
@@ -298,18 +298,18 @@ module.exports = (instance, options, next) => {
         return reply.fourorfour('service')
       }
       invcount.service_name = service.name;
-      let invitems = await instance.inventoryCountItem
+      const invitems = await instance.inventoryCountItem
         .find({ count_id: invcount._id })
         .lean();
-      var new_items = {}
-      for (var it of request.body.items) {
+      const new_items = {}
+      for (const it of request.body.items) {
         if (it.product_id != undefined && it.product_id != "") {
           new_items[it.product_id + ""] = true
         }
       }
       var total = {
         total_difference: invcount.total_difference,
-        total_cost_difference: invcount.total_cost_difference
+        total_cost_difference: invcount.total_cost_difference,
       }
       var delete_ids = []
       var deleting_ids = []
@@ -326,8 +326,11 @@ module.exports = (instance, options, next) => {
           old_items[it.product_id + ''] = true
         }
       }
-      var save = []
-      var item_ids = []
+      const save = []
+      const item_ids = []
+      console.log(new_items, 'new_items')
+      console.log(old_items, 'old_items');
+
       for (const it of request.body.items) {
         if (!old_items[it.product_id + ''] && it.product_id != '' && it.product_id != null) {
           it.count_id = instance.ObjectId(invcount._id)
@@ -337,6 +340,7 @@ module.exports = (instance, options, next) => {
           item_ids.push(it.product_id)
         }
       }
+      console.log(save);
       await instance.inventoryCountItem.deleteMany({
         _id: {
           $in: delete_ids
