@@ -339,6 +339,7 @@ module.exports = fp((instance, options, next) => {
 
         const query = {
           organization_id: instance.ObjectId(user.organization),
+          good_id: instance.ObjectId(product_id),
           service_id: { $in: user_available_services },
         }
         if (service_id)
@@ -367,7 +368,7 @@ module.exports = fp((instance, options, next) => {
 
         reply.ok({
           // limit: limit,
-          total: total.length,
+          total: result.length,
           // page: Math.ceil(total / limit),
           // current_page: page,
           data: result,

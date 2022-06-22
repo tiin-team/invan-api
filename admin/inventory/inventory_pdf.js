@@ -820,9 +820,10 @@ module.exports = ((instance, _, next) => {
                 worksheet.getCell('B2').value = `Stock adjustment ${stock.p_order}`;
                 // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
                 worksheet.getCell('B2').font = { name: 'times new roman', size: 16, bold: true };
-                worksheet.getCell('B3').value = `Reason:      ${stock.reason}`
-                worksheet.getCell('B4').value = `Adjusted by:     ${stock.adjusted_by}`
-                worksheet.getCell('B5').value = `Store::        ${stock.service_name}`
+                worksheet.getCell('B4').value = `Date:     ${moment(stock.date).format("DD.MM.YYYY")}`
+                worksheet.getCell('B4').value = `Reason:      ${stock.reason}`
+                worksheet.getCell('B5').value = `Adjusted by:     ${stock.adjusted_by}`
+                worksheet.getCell('B6').value = `Store::        ${stock.service_name}`
 
                 // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
                 // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
@@ -1012,6 +1013,7 @@ module.exports = ((instance, _, next) => {
     const getCountPdf = async (request, reply) => {
         try {
             const id = request.params.id
+            const { type } = request.query
             const count = await instance.inventoryCount.findById(id).lean()
             if (!count) {
                 return reply.send('Inventory count not found')
@@ -1036,104 +1038,233 @@ module.exports = ((instance, _, next) => {
 
             const items = await instance.inventoryCountItem.find({ count_id: count._id }).lean()
             const pdfItems = []
-            for (const it of items) {
-                let cost_difference = ''
-                if (it.cost_currency == 'usd' && it.cost_difference) {
-                    cost_difference = (Math.round(it.cost_difference * 100) / 100).toLocaleString() + ' $'
-                }
-                else if (it.cost_difference) {
-                    cost_difference = (Math.round(it.cost_difference * 100) / 100).toLocaleString() + ''
-                }
-                try {
-                    const good = await instance.goodsSales.findById(it.product_id)
-                    if (good) {
-                        it.product_name = good.name
-                        if (good.item_type == 'variant') {
-                            it.product_name = `${good.parent_name} (${good.name})`
+            const exelItems = []
+            index = 1
+            totalAmount = 0
+
+            if (type == 'exel') {
+                for (const it of items) {
+                    // let amount = it.quality * it.purchase_cost
+                    try {
+                        const good = await instance.goodsSales
+                            .findById(it.product_id, { name: 1, sold_by: 1, barcode: 1, parent_name: 1, })
+                            .lean()
+
+                        if (good) {
+                            // it.sold_by = good.sold_by
+                            // it.barcode = good.barcode
+                            it.product_name = good.name
+                            if (good.item_type == 'variant') {
+                                it.product_name = `${good.parent_name} (${good.name})`
+                            }
                         }
+                    } catch (error) { }
+                    // barcode = ''
+                    // for (const bar of it.barcode) {
+                    //     barcode += bar + ', '
+                    // }
+                    // price = it.purchase_cost ? it.purchase_cost : 0
+                    // totalAmount += amount
+                    // amount = (amount ? (Math.round(amount * 100) / 100).toLocaleString() : (amount + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : '')
+                    // amount ? amount : 0
+                    exelItems.push([
+                        index,
+                        it.product_name + '',
+                        it.exp_in_stock ? it.exp_in_stock : 0,
+                        it.counted ? it.counted : 0,
+                        it.difference ? it.difference : 0,
+                    ])
+                    // barcode,
+                    // price,
+                    // amount
+                    index++
+                }
+            } else {
+                for (const it of items) {
+                    let cost_difference = ''
+                    if (it.cost_currency == 'usd' && it.cost_difference) {
+                        cost_difference = (Math.round(it.cost_difference * 100) / 100).toLocaleString() + ' $'
                     }
-                } catch (error) { }
-                pdfItems.push({
-                    product_name: it.product_name + '',
-                    exp_in_stock: it.exp_in_stock ? Math.round(it.exp_in_stock * 100) / 100 + '' : '',
-                    counted: it.counted ? Math.round(it.counted * 100) / 100 + '' : '',
-                    difference: it.difference ? (Math.round(it.difference * 100) / 100 + '') : '',
-                    cost_difference: cost_difference
-                })
-            }
-
-            const doc = new PDFDocument;
-            doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
-            doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
-
-            const time = new Date().getTime()
-            try {
-                const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`));
-                // building pdf
-                const title = `Inventory count ${count.p_order}`
-                const data = {
-                    title: title,
-                    inv_type: 'count',
-                    notes: count.notes ? count.notes + '' : '',
-                    created_time: typeof count.created_time == typeof 5 ? instance.date_ddmmyy(count.created_time) : '',
-                    created_by: typeof count.created_by == typeof 'invan' ? count.created_by : '',
-                    service_name: typeof count.service_name == typeof 'invan' ? count.service_name : '',
-                    total_difference: typeof count.total_difference == typeof 5 ? count.total_difference : '',
-                    total_cost_difference: typeof count.total_cost_difference == typeof 5 ? Math.round(count.total_cost_difference * 100) / 100 : '',
-                    headers: [
-                        {
-                            header: 'Item',
-                            id: 'product_name',
-                            width: 230,
-                            align: 'left',
-                            renderer: function (tb, data) {
-                                doc.font('NotoSansRegular')
-                                doc.fontSize(12)
-                                return data.product_name;
+                    else if (it.cost_difference) {
+                        cost_difference = (Math.round(it.cost_difference * 100) / 100).toLocaleString() + ''
+                    }
+                    try {
+                        const good = await instance.goodsSales.findById(it.product_id)
+                        if (good) {
+                            it.product_name = good.name
+                            if (good.item_type == 'variant') {
+                                it.product_name = `${good.parent_name} (${good.name})`
                             }
-                        },
-                        {
-                            header: 'Expected stock',
-                            id: 'exp_in_stock',
-                            width: 70,
-                            align: 'right'
-                        },
-                        {
-                            header: 'Counted',
-                            id: 'counted',
-                            width: 70,
-                            align: 'right'
-                        },
-                        {
-                            header: 'Difference',
-                            id: 'difference',
-                            width: 70,
-                            align: 'right'
-                        },
-                        {
-                            header: 'Cost difference',
-                            id: 'cost_difference',
-                            width: 70,
-                            align: 'right'
                         }
-                    ],
-                    items: pdfItems
+                    } catch (error) { }
+                    pdfItems.push({
+                        product_name: it.product_name + '',
+                        exp_in_stock: it.exp_in_stock ? Math.round(it.exp_in_stock * 100) / 100 + '' : '',
+                        counted: it.counted ? Math.round(it.counted * 100) / 100 + '' : '',
+                        difference: it.difference ? (Math.round(it.difference * 100) / 100 + '') : '',
+                        cost_difference: cost_difference
+                    })
                 }
-                instance.inventoryPdf(doc, data)
-                doc.end();
-                stream.on('finish', async function () {
-                    reply.sendFile(`/${time}.pdf`)
-                    setTimeout(() => {
-                        fs.unlink(`./static/${time}.pdf`, (err) => {
-                            if (err) {
-                                instance.send_Error('exported items file', JSON.stringify(err))
-                            }
-                        })
-                    }, 2000)
-                })
             }
-            catch (error) {
-                return reply.send(error.message)
+            const time = new Date().getTime()
+            const title = `Inventory count ${count.p_order}`
+            if (type == 'exel') {
+                const headers = [
+                    { name: '№', key: 'id', width: 10 },
+                    { name: 'ITEM NAME', key: 'id', width: 300 },
+                    { name: 'Expected stock', key: 'exp_stock', width: 100 },
+                    { name: 'Counted', key: 'counted', width: 100 },
+                    { name: 'Difference', key: 'difference', width: 100 },
+                    // { name: 'STOCK AFTER', key: 'stock_after', width: 100 },
+                    // { name: 'Сумма', key: 'Amount', filterButton: false, width: 100 },
+                    // { name: 'Amount', totalsRowFunction: 'sum', filterButton: false },
+                ]
+                const workbook = new ExcelJs.Workbook();
+                const worksheet = workbook.addWorksheet('MyExcel', {
+                    pageSetup: { paperSize: 9, orientation: 'landscape' }
+                });
+                worksheet.properties.defaultColWidth = 200;
+                worksheet.getCell('B2').value = `${count.p_order}`;
+                // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
+                worksheet.getCell('B2').font = { name: 'times new roman', size: 16, bold: true };
+                worksheet.getCell('B3').value = `Date:     ${moment(count.created_time).format("DD.MM.YYYY")}`
+                worksheet.getCell('B4').value = `${count.status}`
+                worksheet.getCell('B5').value = `Created by:     ${count.created_by}`
+                worksheet.getCell('B6').value = `Store:        ${count.service_name}`
+
+                // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
+                // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
+                // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
+                // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
+
+                multiMergeCells(worksheet, ['B2:E2', 'B3:E3', 'B4:E4', 'B5:E5', 'B6:E6',])
+                multiSetAlign(worksheet, [
+                    { col: 'B', rows: [10, 10 + exelItems.length], },
+                    // { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                ])
+                removeBorders(worksheet, [
+                    { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
+                    { cell: `D2` }, { cell: `D3` }, { cell: `D4` }, { cell: `D5` }, { cell: `D6` },
+                    { cell: `B7`, bottom: 'A9A9A9' }, { cell: `C7`, bottom: 'A9A9A9' },
+                    { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
+                    // { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
+                    // { cell: `H7`, bottom: 'A9A9A9' },
+                    // { cell: `B${exelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${exelItems.length + 10}` },
+                    // { cell: `C${exelItems.length + 10}` },
+                    // { cell: `D${exelItems.length + 10}` },
+                    // { cell: `F${exelItems.length + 10}` },
+                    // { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
+                    // { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${exelItems.length + 11}` },
+                    // { cell: `F${exelItems.length + 11}` },
+                    // { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                ])
+
+                try {
+                    worksheet.addTable({
+                        name: 'ItemsTable',
+                        ref: 'B8',
+                        headerRow: true,
+                        // totalsRow: true,
+                        columns: headers,
+                        rows: exelItems
+                    })
+                } catch (error) { }
+
+                const file = `${time}.xlsx`;
+                const file_dir = path.join(__dirname, '..', '..', '/static/', file)
+
+                await workbook.xlsx.writeFile(file_dir);
+
+                reply.sendFile(`./${time}.xlsx`)
+                setTimeout(() => {
+                    fs.unlink(`./static/${time}.xlsx`, (err) => {
+                        if (err) {
+                            instance.send_Error('exported ' + time + ' file', JSON.stringify(err))
+                        }
+                    })
+                }, 2000);
+            } else {
+                const doc = new PDFDocument;
+                doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
+                doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
+
+                try {
+                    const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`));
+                    // building pdf
+                    const data = {
+                        title: title,
+                        inv_type: 'count',
+                        notes: count.notes ? count.notes + '' : '',
+                        created_time: typeof count.created_time == typeof 5 ? instance.date_ddmmyy(count.created_time) : '',
+                        created_by: typeof count.created_by == typeof 'invan' ? count.created_by : '',
+                        service_name: typeof count.service_name == typeof 'invan' ? count.service_name : '',
+                        total_difference: typeof count.total_difference == typeof 5 ? count.total_difference : '',
+                        total_cost_difference: typeof count.total_cost_difference == typeof 5 ? Math.round(count.total_cost_difference * 100) / 100 : '',
+                        headers: [
+                            {
+                                header: 'Item',
+                                id: 'product_name',
+                                width: 230,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(12)
+                                    return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'Expected stock',
+                                id: 'exp_in_stock',
+                                width: 70,
+                                align: 'right'
+                            },
+                            {
+                                header: 'Counted',
+                                id: 'counted',
+                                width: 70,
+                                align: 'right'
+                            },
+                            {
+                                header: 'Difference',
+                                id: 'difference',
+                                width: 70,
+                                align: 'right'
+                            },
+                            {
+                                header: 'Cost difference',
+                                id: 'cost_difference',
+                                width: 70,
+                                align: 'right'
+                            }
+                        ],
+                        items: pdfItems
+                    }
+                    instance.inventoryPdf(doc, data)
+                    doc.end();
+                    stream.on('finish', async function () {
+                        reply.sendFile(`/${time}.pdf`)
+                        setTimeout(() => {
+                            fs.unlink(`./static/${time}.pdf`, (err) => {
+                                if (err) {
+                                    instance.send_Error('exported items file', JSON.stringify(err))
+                                }
+                            })
+                        }, 2000)
+                    })
+                }
+                catch (error) {
+                    return reply.send(error.message)
+                }
             }
         } catch (error) {
             reply.send(error.message)

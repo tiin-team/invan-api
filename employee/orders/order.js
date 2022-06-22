@@ -208,9 +208,10 @@ module.exports = fp((instance, options, next) => {
         const $match = { $match: query };
         const $limit = { $limit: limit };
         const $skip = { $skip: (page - 1) * limit };
+        const $sort = { $sort: { _id: -1 } };
 
         const data = await instance.employeesOrder
-          .aggregate([$match, $limit, $skip])
+          .aggregate([$match, $limit, $skip, $sort])
           .exec();
 
         const total = await instance.employeesOrder.countDocuments(query);
