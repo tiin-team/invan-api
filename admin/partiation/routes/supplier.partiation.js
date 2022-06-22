@@ -36,7 +36,7 @@ module.exports = fp((instance, options, next) => {
     };
 
     if (search)
-      $match.$match.name = {
+      $match.$match.supplier_name = {
         $regex: search,
         $options: "i",
       }
