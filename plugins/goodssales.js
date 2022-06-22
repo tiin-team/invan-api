@@ -492,10 +492,11 @@ module.exports = fp((instance, _, next) => {
     try {
       const organization = await instance.organizations.findById(admin.organization, { nds_value: 1, name: 1 }).lean();
       const item = await instance.goodsSales.findById(id).lean();
-      item.nds_value = item.nds_value >= 0 ? item.nds_value : organization.nds_value;
       if (!item) {
         return reply.fourorfour('Item')
       }
+      item.mxik = item.mxik ? item.mxik : ''
+      item.nds_value = item.nds_value >= 0 ? item.nds_value : organization.nds_value;
 
       // get Category
       try {

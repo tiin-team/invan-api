@@ -452,7 +452,8 @@ module.exports = ((instance, _, next) => {
     const getTransferPdf = async (request, reply) => {
         try {
             const id = request.params.id
-            const transfer = await instance.Transfer.findById(id)
+            const { type } = request.query
+            const transfer = await instance.Transfer.findById(id).lean()
             if (!transfer) {
                 return reply.send('Transfer not found')
             }
@@ -462,103 +463,234 @@ module.exports = ((instance, _, next) => {
             }
 
             try {
-                const first_service = await instance.services.findById(transfer.first_service)
+                const first_service = await instance.services.findById(transfer.first_service).lean()
                 if (first_service) {
                     transfer.first_service_name = first_service.name
                 }
             } catch (error) { }
 
             try {
-                const second_service = await instance.services.findById(transfer.second_service)
+                const second_service = await instance.services.findById(transfer.second_service).lean()
                 if (second_service) {
                     transfer.second_service_name = second_service.name
                 }
             } catch (error) { }
 
             try {
-                const orderer = await instance.User.findById(ordered_by_id)
+                const orderer = await instance.User.findById(ordered_by_id).lean()
                 if (orderer) {
                     transfer.ordered_by_name = orderer.name
                 }
             } catch (error) { }
 
             const pdfItems = []
-            for (const it of transfer.items) {
-                try {
-                    const good = await instance.goodsSales.findById(it.product_id)
-                    if (good) {
-                        it.product_name = good.name
-                        if (good.item_type == 'variant') {
-                            it.product_name = `${good.parent_name} (${good.name})`
+            const exelItems = []
+            index = 1
+            totalAmount = 0
+            if (type == 'exel') {
+                for (const it of transfer.items) {
+                    let amount = it.quality * it.price
+                    try {
+                        const good = await instance.goodsSales
+                            .findById(it.product_id, { name: 1, barcode: 1, item_type: 1, parent_name: 1 })
+                            .lean()
+
+                        if (good) {
+                            it.barcode = good.barcode
+                            it.product_name = good.name
+                            if (good.item_type == 'variant') {
+                                it.product_name = `${good.parent_name} (${good.name})`
+                            }
                         }
+                    } catch (error) { }
+                    barcode = ''
+                    for (const bar of it.barcode) {
+                        barcode += bar + ', '
                     }
-                } catch (error) { }
-                pdfItems.push({
-                    product_name: it.product_name + '',
-                    quality: it.quality + '',
-                    price: it.price ? it.price.toLocaleString() : ''
-                })
+                    price = it.price ? it.price : 0
+                    totalAmount += amount
+                    amount = (
+                        amount
+                            ? (Math.round(amount * 100) / 100).toLocaleString()
+                            : (amount + '')) + (it.price == 'usd' ? ' $' : ''
+                        )
+
+                    exelItems.push([
+                        index,
+                        it.product_name + '',
+                        barcode,
+                        it.quality,
+                        it.price ? it.price.toLocaleString() : '',
+                        amount
+                    ])
+                    index++
+                }
+            } else {
+                for (const it of transfer.items) {
+                    try {
+                        const good = await instance.goodsSales.findById(it.product_id).lean()
+                        if (good) {
+                            it.product_name = good.name
+                            if (good.item_type == 'variant') {
+                                it.product_name = `${good.parent_name} (${good.name})`
+                            }
+                        }
+                    } catch (error) { }
+                    pdfItems.push({
+                        product_name: it.product_name + '',
+                        quality: it.quality + '',
+                        price: it.price ? it.price.toLocaleString() : ''
+                    })
+                }
             }
-            const doc = new PDFDocument;
-            doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
-            doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
 
             const time = new Date().getTime()
-            try {
-                const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`));
-                // building pdf
-                const title = `Transfer order ${transfer.p_order}`
-                const data = {
-                    title: title,
-                    inv_type: 'transfer',
-                    notes: transfer.notes ? transfer.notes + '' : '',
-                    date: typeof transfer.date == typeof 5 ? instance.date_ddmmyy(transfer.date) : '',
-                    ordered_by_name: typeof transfer.ordered_by_name == typeof 'invan' ? transfer.ordered_by_name : '',
-                    first_service_name: typeof transfer.first_service_name == typeof 'invan' ? transfer.first_service_name : '',
-                    second_service_name: typeof transfer.second_service_name == typeof 'invan' ? transfer.second_service_name : '',
-                    total: total.toLocaleString(),
-                    headers: [
-                        {
-                            header: 'ITEM NAME',
-                            id: 'product_name',
-                            width: 370,
-                            align: 'left',
-                            renderer: function (tb, data) {
-                                doc.font('NotoSansRegular')
-                                doc.fontSize(12)
-                                return data.product_name;
-                            }
-                        },
-                        {
-                            header: 'QUANTITY',
-                            id: 'quality',
-                            width: 70,
-                            align: 'right'
-                        },
-                        {
-                            header: 'PRICE',
-                            id: 'price',
-                            width: 70,
-                            align: 'right'
-                        },
-                    ],
-                    items: pdfItems
+            const title = `Transfer order ${transfer.p_order}`
+            if (type == 'exel') {
+                const headers = [
+                    { name: ' № п.п.', key: 'id', width: 10 },
+                    { name: 'Наименование', key: 'id', width: 300 },
+                    { name: 'Штрих код', key: 'barcode', width: 5000 },
+                    { name: 'Кол-во', key: 'quantity', width: 100 },
+                    { name: 'Цена', key: 'price', width: 100 },
+                    { name: 'Сумма', key: 'Amount', filterButton: false, width: 100 },
+                    // { name: 'Amount', totalsRowFunction: 'sum', filterButton: false },
+                ]
+                const workbook = new ExcelJs.Workbook();
+                const worksheet = workbook.addWorksheet('MyExcel', {
+                    pageSetup: { paperSize: 9, orientation: 'landscape' }
+                });
+                worksheet.properties.defaultColWidth = 200;
+                worksheet.getCell('B2').value = `Transfer order ${transfer.p_order}`;
+                // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
+                worksheet.getCell('B2').font = { name: 'times new roman', size: 16, bold: true };
+                // worksheet.getCell('B3').value = `Поставщик:      ${purchase.supplier_name}`
+                worksheet.getCell('B4').value = `Date:     ${moment(transfer.date).format("DD.MM.YYYY")}`
+                worksheet.getCell('B5').value = `Created by:        ${transfer.ordered_by_name}`
+                worksheet.getCell('B6').value = `Source store:        ${transfer.first_service_name}`
+                worksheet.getCell('B6').value = `Destination store:        ${transfer.second_service_name}`
+
+                // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
+                // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
+                // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
+                // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
+
+                multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6',])
+                multiSetAlign(worksheet, [
+                    { col: 'B', rows: [10, 10 + exelItems.length], },
+                    { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                ])
+                removeBorders(worksheet, [
+                    { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
+                    { cell: `D2` }, { cell: `D3` }, { cell: `D4` }, { cell: `D5` }, { cell: `D6` },
+                    { cell: `B7`, bottom: 'A9A9A9' }, { cell: `C7`, bottom: 'A9A9A9' },
+                    { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
+                    { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
+                    { cell: `H7`, bottom: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 10}` },
+                    { cell: `C${exelItems.length + 10}` },
+                    { cell: `D${exelItems.length + 10}` },
+                    { cell: `F${exelItems.length + 10}` },
+                    { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
+                    { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 11}` },
+                    { cell: `F${exelItems.length + 11}` },
+                    { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                ])
+
+                try {
+                    worksheet.addTable({
+                        name: 'ItemsTable',
+                        ref: 'B8',
+                        headerRow: true,
+                        // totalsRow: true,
+                        columns: headers,
+                        rows: exelItems
+                    })
+                } catch (error) { }
+
+                const file = `${time}.xlsx`;
+                const file_dir = path.join(__dirname, '..', '..', '/static/', file)
+
+                await workbook.xlsx.writeFile(file_dir);
+
+                reply.sendFile(`./${time}.xlsx`)
+                setTimeout(() => {
+                    fs.unlink(`./static/${time}.xlsx`, (err) => {
+                        if (err) {
+                            instance.send_Error('exported ' + time + ' file', JSON.stringify(err))
+                        }
+                    })
+                }, 2000);
+            } else {
+                const doc = new PDFDocument;
+                doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
+                doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
+
+                try {
+                    const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`));
+                    // building pdf
+                    const data = {
+                        title: title,
+                        inv_type: 'transfer',
+                        notes: transfer.notes ? transfer.notes + '' : '',
+                        date: typeof transfer.date == typeof 5 ? instance.date_ddmmyy(transfer.date) : '',
+                        ordered_by_name: typeof transfer.ordered_by_name == typeof 'invan' ? transfer.ordered_by_name : '',
+                        first_service_name: typeof transfer.first_service_name == typeof 'invan' ? transfer.first_service_name : '',
+                        second_service_name: typeof transfer.second_service_name == typeof 'invan' ? transfer.second_service_name : '',
+                        total: total.toLocaleString(),
+                        headers: [
+                            {
+                                header: 'ITEM NAME',
+                                id: 'product_name',
+                                width: 370,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(12)
+                                    return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'QUANTITY',
+                                id: 'quality',
+                                width: 70,
+                                align: 'right'
+                            },
+                            {
+                                header: 'PRICE',
+                                id: 'price',
+                                width: 70,
+                                align: 'right'
+                            },
+                        ],
+                        items: pdfItems
+                    }
+                    instance.inventoryPdf(doc, data)
+                    doc.end();
+                    stream.on('finish', async function () {
+                        reply.sendFile(`/${time}.pdf`)
+                        setTimeout(() => {
+                            fs.unlink(`./static/${time}.pdf`, (err) => {
+                                if (err) {
+                                    instance.send_Error('exported items file', JSON.stringify(err))
+                                }
+                            })
+                        }, 2000)
+                    })
                 }
-                instance.inventoryPdf(doc, data)
-                doc.end();
-                stream.on('finish', async function () {
-                    reply.sendFile(`/${time}.pdf`)
-                    setTimeout(() => {
-                        fs.unlink(`./static/${time}.pdf`, (err) => {
-                            if (err) {
-                                instance.send_Error('exported items file', JSON.stringify(err))
-                            }
-                        })
-                    }, 2000)
-                })
-            }
-            catch (error) {
-                return reply.send(error.message)
+                catch (error) {
+                    return reply.send(error.message)
+                }
             }
         } catch (error) {
             return reply.send(error.message)
@@ -750,20 +882,20 @@ module.exports = ((instance, _, next) => {
     const getCountPdf = async (request, reply) => {
         try {
             const id = request.params.id
-            const count = await instance.inventoryCount.findById(id)
+            const count = await instance.inventoryCount.findById(id).lean()
             if (!count) {
                 return reply.send('Inventory count not found')
             }
 
             try {
-                const service = await instance.services.findById(count.service)
+                const service = await instance.services.findById(count.service).lean()
                 if (service) {
                     count.service_name = service.name
                 }
             } catch (error) { }
 
             try {
-                const created_by = await instance.User.findById(count.created_by_id)
+                const created_by = await instance.User.findById(count.created_by_id).lean()
                 if (created_by) {
                     count.created_by = created_by.name
                 }
@@ -772,7 +904,7 @@ module.exports = ((instance, _, next) => {
             let total_cost_difference = 0
             let total_difference = 0
 
-            const items = await instance.inventoryCountItem.find({ count_id: count._id })
+            const items = await instance.inventoryCountItem.find({ count_id: count._id }).lean()
             const pdfItems = []
             for (const it of items) {
                 let cost_difference = ''
