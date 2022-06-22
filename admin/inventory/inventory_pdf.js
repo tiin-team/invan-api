@@ -16,7 +16,7 @@ const removeBorders = (worksheet, list) => {
 }
 const multiSetAlign = (worksheet, list) => {
     for (const cell of list) {
-        console.log(cell);
+        // console.log(cell);
         for (const row of cell.rows) {
             worksheet.getCell(`${cell.col}${row}`).alignment = {
                 vertical: cell.vertical ? cell.vertical : 'middle',
@@ -762,8 +762,10 @@ module.exports = ((instance, _, next) => {
                     exelItems.push([
                         index,
                         it.product_name + '',
-                        it.reason,
-                        it.quality,
+                        stock.reason,
+                        it.in_stock,
+                        it.changed,
+                        it.stock_after,
                     ])
                     // barcode,
                     // price,
@@ -804,7 +806,9 @@ module.exports = ((instance, _, next) => {
                     { name: '№', key: 'id', width: 10 },
                     { name: 'ITEM NAME', key: 'id', width: 300 },
                     { name: 'REASON', key: 'reason', width: 100 },
-                    { name: 'COUNT', key: 'quantity', width: 100 },
+                    { name: 'IN STOCK', key: 'in_stock', width: 100 },
+                    { name: 'REMOVE STOCK', key: 'rm_stock', width: 100 },
+                    { name: 'STOCK AFTER', key: 'stock_after', width: 100 },
                     // { name: 'Сумма', key: 'Amount', filterButton: false, width: 100 },
                     // { name: 'Amount', totalsRowFunction: 'sum', filterButton: false },
                 ]
@@ -856,8 +860,7 @@ module.exports = ((instance, _, next) => {
                     // { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
                     // { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
-                console.log(exelItems, 'exelItems');
-                console.log(headers, 'headers');
+
                 try {
                     worksheet.addTable({
                         name: 'ItemsTable',
