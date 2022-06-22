@@ -119,7 +119,7 @@ module.exports = fp((instance, options, next) => {
     const $sort = { $sort: {} }
 
     if (sort_by)
-      $sort.$sort[sort_by] = sort_type
+      $sort.$sort[sort_by] = sort_type ? sort_type : 1
     else
       $sort.$sort._id = 1
 
@@ -159,7 +159,7 @@ module.exports = fp((instance, options, next) => {
           search: { type: 'string', default: '' },
           sort_by: {
             type: 'string',
-            enum: ['_id', 'name', 'quantity', 'quantity_left']
+            enum: ['_id', 'name', 'quantity', 'quantity_left', 'total_cost', '']
           },
           sort_type: {
             type: 'number', enum: [1, -1]

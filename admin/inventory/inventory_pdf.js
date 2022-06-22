@@ -796,9 +796,6 @@ module.exports = ((instance, _, next) => {
                     })
                 }
             }
-            const doc = new PDFDocument;
-            doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
-            doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
 
             const time = new Date().getTime()
             const title = `Stock adjustment ${stock.p_order}`
@@ -828,36 +825,36 @@ module.exports = ((instance, _, next) => {
                 // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
                 // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
 
-                multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6',])
+                multiMergeCells(worksheet, ['B2:E2', 'B3:E3', 'B4:E4', 'B5:E5', 'B6:E6',])
                 multiSetAlign(worksheet, [
                     { col: 'B', rows: [10, 10 + exelItems.length], },
-                    { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                    // { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
                 ])
                 removeBorders(worksheet, [
                     { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
                     { cell: `D2` }, { cell: `D3` }, { cell: `D4` }, { cell: `D5` }, { cell: `D6` },
                     { cell: `B7`, bottom: 'A9A9A9' }, { cell: `C7`, bottom: 'A9A9A9' },
                     { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
-                    { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
-                    { cell: `H7`, bottom: 'A9A9A9' },
+                    // { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
+                    // { cell: `H7`, bottom: 'A9A9A9' },
                     { cell: `B${exelItems.length + 9}`, top: 'A9A9A9' },
                     { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
                     { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
                     { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
                     { cell: `B${exelItems.length + 10}` },
                     { cell: `C${exelItems.length + 10}` },
                     { cell: `D${exelItems.length + 10}` },
-                    { cell: `F${exelItems.length + 10}` },
-                    { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
-                    { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `F${exelItems.length + 10}` },
+                    // { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
+                    // { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
                     { cell: `B${exelItems.length + 11}` },
-                    { cell: `F${exelItems.length + 11}` },
+                    // { cell: `F${exelItems.length + 11}` },
                     { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
                     { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
                     { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
 
                 try {
@@ -885,6 +882,10 @@ module.exports = ((instance, _, next) => {
                     })
                 }, 2000);
             } else {
+                const doc = new PDFDocument;
+                doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
+                doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
+
                 let headers = []
                 switch (stock.reason) {
                     case 'receive': {
