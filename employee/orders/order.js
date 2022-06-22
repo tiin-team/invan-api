@@ -211,7 +211,7 @@ module.exports = fp((instance, options, next) => {
         const $sort = { $sort: { _id: -1 } };
         console.log($skip, $limit, query);
         const data = await instance.employeesOrder
-          .aggregate([$match, $sort, $limit, $skip])
+          .aggregate([$match, $sort, $skip, $limit])
           .exec();
 
         const total = await instance.employeesOrder.countDocuments(query);
