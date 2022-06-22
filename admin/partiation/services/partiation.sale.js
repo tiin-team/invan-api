@@ -187,12 +187,14 @@ module.exports = fp((instance, _, next) => {
         )
       }
       for (const good of goods) {
+        let filter_queues = queues.filter(elem => elem.good_id + '' === good.product_id + '')
+
         goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
           ? goods_obj[good.product_id].queue
           : 1
 
         if (good.partiation_id) {
-          const partiation = queues.find(el =>
+          const partiation = filter_queues.find(el =>
             el._id + '' === good.partiation_id + ''
           )
 
@@ -201,21 +203,21 @@ module.exports = fp((instance, _, next) => {
             : goods_obj[good.product_id].queue
         }
 
-        let queu_index = queues.findIndex(el =>
+        let queu_index = filter_queues.findIndex(el =>
           el.queue === goods_obj[good.product_id].queue
-          && el.good_id + '' === good.product_id
+          // && el.good_id + '' === good.product_id
         )
         if (queu_index === -1) {
           queu_index = 0
-          goods_obj[good.product_id].queue = queues[queu_index].queue;
+          goods_obj[good.product_id].queue = filter_queues[queu_index].queue;
         }
 
         if (good && goods_obj[good.product_id]) {
           const suppliers = Array.isArray(goods_obj[good.product_id].suppliers)
             ? goods_obj[good.product_id].suppliers
             : [{
-              supplier_id: queues[queu_index].supplier_id,
-              supplier_name: queues[queu_index].supplier_name,
+              supplier_id: filter_queues[queu_index].supplier_id,
+              supplier_name: filter_queues[queu_index].supplier_name,
               service_id: service._id,
               service_name: service.name,
               stock: 0,
@@ -224,22 +226,22 @@ module.exports = fp((instance, _, next) => {
           let supp_cur_serv_index = suppliers
             .findIndex(elem =>
               elem.service_id + '' == service._id + ''
-              && elem.supplier_id + '' == queues[queu_index].supplier_id + ''
+              && elem.supplier_id + '' == filter_queues[queu_index].supplier_id + ''
             )
           if (supp_cur_serv_index == -1) {
             supp_cur_serv_index = suppliers.length
             suppliers.push({
-              supplier_id: queues[queu_index].supplier_id,
-              supplier_name: queues[queu_index].supplier_name,
+              supplier_id: filter_queues[queu_index].supplier_id,
+              supplier_name: filter_queues[queu_index].supplier_name,
               service_id: service._id,
               service_name: service.name,
               stock: 0,
             })
           }
 
-          if (queues[queu_index].quantity_left <= good.value) {
+          if (filter_queues[queu_index].quantity_left <= good.value) {
             const res = await recursiveUpdateGoodSaleQueueDec(
-              queues,
+              filter_queues,
               queu_index,
               good,
               0,
@@ -264,13 +266,13 @@ module.exports = fp((instance, _, next) => {
             else
               await updateGoodsSalesQueueOfSuppliers(
                 good.product_id,
-                queues[queu_index].queue,
+                filter_queues[queu_index].queue,
                 suppliers,
               )
 
             await updateGoodsSaleQueueQunatityLeft(
-              queues[queu_index]._id,
-              parseFloat(queues[queu_index].quantity_left) - parseFloat(good.value)
+              filter_queues[queu_index]._id,
+              parseFloat(filter_queues[queu_index].quantity_left) - parseFloat(good.value)
             )
           }
         }
