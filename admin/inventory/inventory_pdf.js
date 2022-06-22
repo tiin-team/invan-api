@@ -762,12 +762,12 @@ module.exports = ((instance, _, next) => {
                     exelItems.push([
                         index,
                         it.product_name + '',
-                        // barcode,
                         it.reason,
                         it.quality,
-                        // price,
-                        // amount
                     ])
+                    // barcode,
+                    // price,
+                    // amount
                     index++
                 }
             } else {
@@ -856,7 +856,8 @@ module.exports = ((instance, _, next) => {
                     // { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
                     // { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
-
+                console.log(exelItems, 'exelItems');
+                console.log(headers, 'headers');
                 try {
                     worksheet.addTable({
                         name: 'ItemsTable',
