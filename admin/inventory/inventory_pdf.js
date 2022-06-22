@@ -548,8 +548,8 @@ module.exports = ((instance, _, next) => {
             const title = `Transfer order ${transfer.p_order}`
             if (type == 'exel') {
                 const headers = [
-                    { name: ' № п.п.', key: 'id', width: 10 },
-                    { name: 'Наименование', key: 'id', width: 300 },
+                    { name: '№ п.п.', key: 'id', width: 10 }, // width berish beforyda ishlamaydi
+                    { name: 'ITEM NAME', key: 'id', width: 300 },
                     { name: 'Штрих код', key: 'barcode', width: 5000 },
                     { name: 'Кол-во', key: 'quantity', width: 100 },
                     { name: 'Цена', key: 'price', width: 100 },
@@ -568,7 +568,7 @@ module.exports = ((instance, _, next) => {
                 worksheet.getCell('B4').value = `Date:     ${moment(transfer.date).format("DD.MM.YYYY")}`
                 worksheet.getCell('B5').value = `Created by:        ${transfer.ordered_by_name}`
                 worksheet.getCell('B6').value = `Source store:        ${transfer.first_service_name}`
-                worksheet.getCell('B6').value = `Destination store:        ${transfer.second_service_name}`
+                worksheet.getCell('B7').value = `Destination store:        ${transfer.second_service_name}`
 
                 // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
                 // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
