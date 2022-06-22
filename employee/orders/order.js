@@ -209,7 +209,7 @@ module.exports = fp((instance, options, next) => {
         const $limit = { $limit: limit };
         const $skip = { $skip: (page - 1) * limit };
         const $sort = { $sort: { _id: -1 } };
-        console.log($skip, $limit);
+        console.log($skip, $limit, query);
         const data = await instance.employeesOrder
           .aggregate([$match, $sort, $limit, $skip])
           .exec();
