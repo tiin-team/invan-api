@@ -669,7 +669,7 @@ module.exports = (instance, options, next) => {
 
   const getcount = async (request, reply, admin) => {
     try {
-      const { barcode } = request.query
+      const { search } = request.query
       let count = await instance.inventoryCount
         .findOne({ _id: request.params.id })
         .lean();
@@ -682,12 +682,32 @@ module.exports = (instance, options, next) => {
       // } catch (error) { }
       const count_item_query = { count_id: count._id }
 
-      if (barcode) count_item_query.barcode = {
-        $elemMatch: {
-          $regex: barcode,
-          $options: "i",
+      if (search) count_item_query['$or'] = [
+        {
+          barcode: {
+            $elemMatch: {
+              $regex: search,
+              $options: "i",
+            },
+          }
         },
-      }
+        {
+          product_name: {
+            $elemMatch: {
+              $regex: search,
+              $options: "i",
+            },
+          }
+        },
+        {
+          sku: {
+            $elemMatch: {
+              $regex: search,
+              $options: "i",
+            },
+          }
+        },
+      ]
 
       let countitems = await instance.inventoryCountItem
         .find(count_item_query)
