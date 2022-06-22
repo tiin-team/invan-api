@@ -162,7 +162,9 @@ module.exports = fp((instance, options, next) => {
             enum: ['_id', 'supplier_name', 'quantity', 'quantity_left', 'total_cost', '']
           },
           sort_type: {
-            type: 'number', enum: [1, -1]
+            type: 'number',
+            enum: [1, -1, ''],
+            default: -1,
           },
 
         },
