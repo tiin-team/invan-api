@@ -256,6 +256,7 @@ module.exports = (instance, options, next) => {
           invcount.items[i].cost = gObj[invcount.items[i].product_id].cost
           invcount.items[i].cost_currency = gObj[invcount.items[i].product_id].cost_currency
           invcount.items[i].count_id = instance.ObjectId(invCount._id)
+          invcount.items[i].barcode = gObj[invcount.items[i].product_id].barcode
           items.push(invcount.items[i])
         }
       }
@@ -384,6 +385,7 @@ module.exports = (instance, options, next) => {
         save[i].product_sku = gObj[save[i].product_id].sku
         save[i].cost = gObj[save[i].product_id].cost
         save[i].exp_in_stock = gObj[save[i].product_id].in_stock
+        save[i].barcode = gObj[save[i].product_id].barcode
       }
 
       await instance.inventoryCountItem.insertMany(save);
@@ -667,6 +669,7 @@ module.exports = (instance, options, next) => {
 
   const getcount = async (request, reply, admin) => {
     try {
+      const { barcode } = request.query
       let count = await instance.inventoryCount
         .findOne({ _id: request.params.id })
         .lean();
@@ -677,9 +680,17 @@ module.exports = (instance, options, next) => {
       // try {
       //   count = count.toObject();
       // } catch (error) { }
+      const count_item_query = { count_id: count._id }
+
+      if (barcode) count_item_query.barcode = {
+        $elemMatch: {
+          $regex: barcode,
+          $options: "i",
+        },
+      }
 
       let countitems = await instance.inventoryCountItem
-        .find({ count_id: count._id })
+        .find(count_item_query)
         .lean();
       var ids = []
       for (var c of countitems) {
@@ -877,7 +888,8 @@ module.exports = (instance, options, next) => {
           product_id: instance.ObjectId(good._id),
           product_name: good.name,
           product_sku: good.sku,
-          count_id: history.count_id
+          count_id: history.count_id,
+          barcode: good.barcode,
         }
         let in_stock = 0
         for (var s of good.services) {
