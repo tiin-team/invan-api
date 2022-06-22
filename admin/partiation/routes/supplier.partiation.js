@@ -159,7 +159,7 @@ module.exports = fp((instance, options, next) => {
           search: { type: 'string', default: '' },
           sort_by: {
             type: 'string',
-            enum: ['_id', 'name', 'quantity', 'quantity_left', 'total_cost', '']
+            enum: ['_id', 'supplier_name', 'quantity', 'quantity_left', 'total_cost', '']
           },
           sort_type: {
             type: 'number', enum: [1, -1]
