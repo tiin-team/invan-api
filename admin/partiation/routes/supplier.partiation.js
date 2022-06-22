@@ -349,7 +349,7 @@ module.exports = fp((instance, options, next) => {
 
         const $group = {
           $group: {
-            _id: 'supplier_id',
+            _id: '$supplier_id',
             supplier_name: { $first: '$supplier_name' },
             // quantity: { $sum: '$quantity' },
             // quantity_left: { $sum: '$quantity_left' },
