@@ -15,7 +15,7 @@ module.exports = fp((instance, options, next) => {
    * @returns {import('fastify').FastifyReply<ServerResponse>}
   */
   async function getSuppliers(request, reply, user) {
-    const { service_id } = request.body;
+    const { service_id, search, sort_by, sort_type } = request.body;
     const limit = !isNaN(parseInt(request.body.limit))
       ? parseInt(request.body.limit)
       : 10
@@ -34,10 +34,17 @@ module.exports = fp((instance, options, next) => {
         // service: { $in: user_available_services },
       }
     };
+
+    if (search)
+      $match.$match.name = {
+        $regex: search,
+        $options: "i",
+      }
+
     const queue_query = {
       $and: [
         { $eq: ['$supplier_id', '$$supplier_id'] },
-        // { $ne: ['$quantity_left', 0] },
+        { $ne: ['$quantity_left', 0] },
       ],
     }
     if (service_id)
@@ -55,7 +62,7 @@ module.exports = fp((instance, options, next) => {
           },
           {
             $project: {
-              // cost: 1,
+              cost: 1,
               quantity: 1,
               quantity_left: 1,
             },
@@ -73,6 +80,11 @@ module.exports = fp((instance, options, next) => {
               // },
               quantity: { $sum: '$quantity' },
               quantity_left: { $sum: '$quantity_left' },
+              total_cost: {
+                $sum: {
+                  $multiply: ['$quantity_left', '$cost']
+                }
+              },
             }
           }
         ],
@@ -98,11 +110,22 @@ module.exports = fp((instance, options, next) => {
         quantity_left: {
           $max: [{ $first: '$partiations.quantity_left' }, 0],
         },
+        total_cost: {
+          $max: [{ $first: '$partiations.total_cost' }, 0],
+        },
       }
     }
 
+    const $sort = { $sort: {} }
+
+    if (sort_by)
+      $sort.$sort[sort_by] = sort_type
+    else
+      $sort.$sort._id = 1
+
     const result = await instance.adjustmentSupplier.aggregate([
-      $match, $skip, $limit, $lookup, $project
+      $match, $lookup, $project,
+      $sort, $skip, $limit,
     ]);
 
     const total = await instance.adjustmentSupplier.countDocuments($match.$match)
@@ -116,15 +139,48 @@ module.exports = fp((instance, options, next) => {
     })
   }
 
-  instance.post("/inventory/partiation/valuation", { ...version }, (request, reply) => {
-    instance.authorization(request, reply, async (user) => {
-      try {
-        return getSuppliers(request, reply, user)
-      } catch (error) {
-        return reply.error(error.message)
-      }
+  const partiationSupplierValuationBody = {
+    schema: {
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'limit', 'page',
+        ],
+        properties: {
+          limit: { type: 'number', minimum: 5 },
+          page: { type: 'number', minimum: 1 },
+          service_id: {
+            OneOf: [
+              { type: 'string', maxLength: 24, minLength: 24 },
+              { type: 'string', maxLength: 0, minLength: 0 },
+            ]
+          },
+          search: { type: 'string', default: '' },
+          sort_by: {
+            type: 'string',
+            enum: ['_id', 'name', 'quantity', 'quantity_left']
+          },
+          sort_type: {
+            type: 'number', enum: [1, -1]
+          },
+
+        },
+      },
+    }
+  }
+
+  instance.post("/inventory/partiation/valuation",
+    { ...version, ...partiationSupplierValuationBody },
+    (request, reply) => {
+      instance.authorization(request, reply, async (user) => {
+        try {
+          return getSuppliers(request, reply, user)
+        } catch (error) {
+          return reply.error(error.message)
+        }
+      })
     })
-  })
 
   const bodySchema = {
     body: {
