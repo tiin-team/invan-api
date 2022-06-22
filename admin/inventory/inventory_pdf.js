@@ -573,27 +573,30 @@ module.exports = ((instance, _, next) => {
     const getStockPdf = async (request, reply) => {
         try {
             const id = request.params.id
-            const stock = await instance.stockAdjustment.findById(id)
+            const stock = await instance.stockAdjustment.findById(id).lean()
 
             if (!stock) {
                 return reply.send('Stock not found')
             }
 
             try {
-                const service = await instance.services.findById(stock.service)
+                const service = await instance.services.findById(stock.service).lean()
                 if (service) {
                     stock.service_name = service.name
                 }
             } catch (error) { }
 
             try {
-                const adjusted = await instance.User.findById(stock.adjusted_by_id)
+                const adjusted = await instance.User.findById(stock.adjusted_by_id).lean()
                 if (adjusted) {
                     stock.adjusted_by = adjusted.name
                 }
             } catch (error) { }
 
-            const items = await instance.stockAdjustmentItems.find({ stock_adjustment_id: stock._id })
+            const items = await instance.stockAdjustmentItems
+                .find({ stock_adjustment_id: stock._id })
+                .lean()
+
             const pdfItems = []
             for (const it of items) {
                 if (it.cost_currency != 'usd' && typeof it.cost == typeof 5) {
@@ -603,7 +606,9 @@ module.exports = ((instance, _, next) => {
                     it.cost = Math.round(it.cost * 100) / 100
                 }
                 try {
-                    const good = await instance.goodsSales.findById(it.product_id)
+                    const good = await instance.goodsSales
+                        .findById(it.product_id, { name: 1, item_type: 1, parent_name: 1 })
+                        .lean()
                     if (good) {
                         it.product_name = good.name
                         if (good.item_type == 'variant') {
@@ -702,7 +707,7 @@ module.exports = ((instance, _, next) => {
             }
 
             try {
-                const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`));
+                const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`, { encoding: 'utf8' }));
                 // building pdf
                 const title = `Stock adjustment ${stock.p_order}`
                 const data = {
