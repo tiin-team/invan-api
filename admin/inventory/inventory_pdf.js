@@ -575,7 +575,7 @@ module.exports = ((instance, _, next) => {
                 // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
                 // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
 
-                multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6',])
+                multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6', 'B7:H7',])
                 multiSetAlign(worksheet, [
                     { col: 'B', rows: [10, 10 + exelItems.length], },
                     { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
@@ -705,6 +705,7 @@ module.exports = ((instance, _, next) => {
     const getStockPdf = async (request, reply) => {
         try {
             const id = request.params.id
+            const { type } = request.query
             const stock = await instance.stockAdjustment.findById(id).lean()
 
             if (!stock) {
@@ -730,144 +731,268 @@ module.exports = ((instance, _, next) => {
                 .lean()
 
             const pdfItems = []
-            for (const it of items) {
-                if (it.cost_currency != 'usd' && typeof it.cost == typeof 5) {
-                    it.cost = Math.round(it.cost)
-                }
-                else if (typeof it.cost == typeof 5) {
-                    it.cost = Math.round(it.cost * 100) / 100
-                }
-                try {
-                    const good = await instance.goodsSales
-                        .findById(it.product_id, { name: 1, item_type: 1, parent_name: 1 })
-                        .lean()
-                    if (good) {
-                        it.product_name = good.name
-                        if (good.item_type == 'variant') {
-                            it.product_name = `${good.parent_name} (${good.name})`
-                        }
-                    }
-                } catch (error) { }
-                pdfItems.push({
-                    product_name: it.product_name + '',
-                    changed: it.changed + '',
-                    cost: (it.cost ? it.cost.toLocaleString() : it.cost + '') + (it.cost_currency == 'usd' ? ' $' : '')
-                })
-            }
+            const exelItems = []
+            index = 1
+            totalAmount = 0
+            if (type == 'exel') {
+                for (const it of items) {
+                    // let amount = it.quality * it.purchase_cost
+                    try {
+                        const good = await instance.goodsSales
+                            .findById(it.product_id, { name: 1, sold_by: 1, barcode: 1, parent_name: 1, })
+                            .lean()
 
+                        if (good) {
+                            // it.sold_by = good.sold_by
+                            // it.barcode = good.barcode
+                            it.product_name = good.name
+                            if (good.item_type == 'variant') {
+                                it.product_name = `${good.parent_name} (${good.name})`
+                            }
+                        }
+                    } catch (error) { }
+                    // barcode = ''
+                    // for (const bar of it.barcode) {
+                    //     barcode += bar + ', '
+                    // }
+                    price = it.purchase_cost ? it.purchase_cost : 0
+                    // totalAmount += amount
+                    // amount = (amount ? (Math.round(amount * 100) / 100).toLocaleString() : (amount + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : '')
+                    // amount ? amount : 0
+                    exelItems.push([
+                        index,
+                        it.product_name + '',
+                        // barcode,
+                        it.reason,
+                        it.quality,
+                        // price,
+                        // amount
+                    ])
+                    index++
+                }
+            } else {
+                for (const it of items) {
+                    if (it.cost_currency != 'usd' && typeof it.cost == typeof 5) {
+                        it.cost = Math.round(it.cost)
+                    }
+                    else if (typeof it.cost == typeof 5) {
+                        it.cost = Math.round(it.cost * 100) / 100
+                    }
+                    try {
+                        const good = await instance.goodsSales
+                            .findById(it.product_id, { name: 1, item_type: 1, parent_name: 1 })
+                            .lean()
+                        if (good) {
+                            it.product_name = good.name
+                            if (good.item_type == 'variant') {
+                                it.product_name = `${good.parent_name} (${good.name})`
+                            }
+                        }
+                    } catch (error) { }
+                    pdfItems.push({
+                        product_name: it.product_name + '',
+                        changed: it.changed + '',
+                        cost: (it.cost ? it.cost.toLocaleString() : it.cost + '') + (it.cost_currency == 'usd' ? ' $' : '')
+                    })
+                }
+            }
             const doc = new PDFDocument;
             doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
             doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
 
             const time = new Date().getTime()
-            let headers = []
-            switch (stock.reason) {
-                case 'receive': {
-                    headers = [
-                        {
-                            header: 'ITEM NAME',
-                            id: 'product_name',
-                            width: 370,
-                            align: 'left',
-                            renderer: function (tb, data) {
-                                doc.font('NotoSansRegular')
-                                doc.fontSize(12)
-                                return data.product_name;
-                            }
-                        },
-                        {
-                            header: 'ADD STOCK',
-                            id: 'changed',
-                            width: 70,
-                            align: 'right'
-                        },
-                        {
-                            header: 'COST',
-                            id: 'cost',
-                            width: 70,
-                            align: 'right'
-                        }
-                    ]
-                    break
-                }
-                case 'recount': {
-                    headers = [
-                        {
-                            header: 'ITEM NAME',
-                            id: 'product_name',
-                            width: 360,
-                            align: 'left',
-                            renderer: function (tb, data) {
-                                doc.font('NotoSansRegular')
-                                doc.fontSize(12)
-                                return data.product_name;
-                            }
-                        },
-                        {
-                            header: 'COUNTED STOCK',
-                            id: 'changed',
-                            width: 150,
-                            align: 'right'
-                        }
-                    ]
-                    break
-                }
-                case 'loss':
-                case 'damage':
-                case 'fee': {
-                    headers = [
-                        {
-                            header: 'ITEM NAME',
-                            id: 'product_name',
-                            width: 360,
-                            align: 'left',
-                            renderer: function (tb, data) {
-                                doc.font('NotoSansRegular')
-                                doc.fontSize(12)
-                                return data.product_name;
-                            }
-                        },
-                        {
-                            header: 'REMOVE STOCK',
-                            id: 'changed',
-                            width: 150,
-                            align: 'right'
-                        }
-                    ]
-                    break
-                }
-            }
+            const title = `Stock adjustment ${stock.p_order}`
+            if (type == 'exel') {
+                const headers = [
+                    { name: '№', key: 'id', width: 10 },
+                    { name: 'ITEM NAME', key: 'id', width: 300 },
+                    { name: 'REASON', key: 'reason', width: 100 },
+                    { name: 'COUNT', key: 'quantity', width: 100 },
+                    // { name: 'Сумма', key: 'Amount', filterButton: false, width: 100 },
+                    // { name: 'Amount', totalsRowFunction: 'sum', filterButton: false },
+                ]
+                const workbook = new ExcelJs.Workbook();
+                const worksheet = workbook.addWorksheet('MyExcel', {
+                    pageSetup: { paperSize: 9, orientation: 'landscape' }
+                });
+                worksheet.properties.defaultColWidth = 200;
+                worksheet.getCell('B2').value = `Stock adjustment ${stock.p_order}`;
+                // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
+                worksheet.getCell('B2').font = { name: 'times new roman', size: 16, bold: true };
+                worksheet.getCell('B3').value = `Reason:      ${stock.reason}`
+                worksheet.getCell('B4').value = `Adjusted by:     ${stock.adjusted_by}`
+                worksheet.getCell('B5').value = `Store::        ${stock.service_name}`
 
-            try {
-                const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`, { encoding: 'utf8' }));
-                // building pdf
-                const title = `Stock adjustment ${stock.p_order}`
-                const data = {
-                    title: title,
-                    inv_type: 'stock',
-                    notes: stock.notes ? stock.notes + '' : '',
-                    date: typeof stock.date == typeof 5 ? instance.date_ddmmyy(stock.date) : '',
-                    reason: stock.reason + '',
-                    adjusted_by: typeof stock.adjusted_by == typeof 'invan' ? stock.adjusted_by : '',
-                    service_name: typeof stock.service_name == typeof 'invan' ? stock.service_name : '',
-                    headers: headers,
-                    items: pdfItems
-                }
-                instance.inventoryPdf(doc, data)
-                doc.end();
-                stream.on('finish', async function () {
-                    reply.sendFile(`/${time}.pdf`)
-                    setTimeout(() => {
-                        fs.unlink(`./static/${time}.pdf`, (err) => {
-                            if (err) {
-                                instance.send_Error('exported items file', JSON.stringify(err))
+                // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
+                // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
+                // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
+                // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
+
+                multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6',])
+                multiSetAlign(worksheet, [
+                    { col: 'B', rows: [10, 10 + exelItems.length], },
+                    { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                ])
+                removeBorders(worksheet, [
+                    { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
+                    { cell: `D2` }, { cell: `D3` }, { cell: `D4` }, { cell: `D5` }, { cell: `D6` },
+                    { cell: `B7`, bottom: 'A9A9A9' }, { cell: `C7`, bottom: 'A9A9A9' },
+                    { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
+                    { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
+                    { cell: `H7`, bottom: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 10}` },
+                    { cell: `C${exelItems.length + 10}` },
+                    { cell: `D${exelItems.length + 10}` },
+                    { cell: `F${exelItems.length + 10}` },
+                    { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
+                    { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 11}` },
+                    { cell: `F${exelItems.length + 11}` },
+                    { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                ])
+
+                try {
+                    worksheet.addTable({
+                        name: 'ItemsTable',
+                        ref: 'B8',
+                        headerRow: true,
+                        // totalsRow: true,
+                        columns: headers,
+                        rows: exelItems
+                    })
+                } catch (error) { }
+
+                const file = `${time}.xlsx`;
+                const file_dir = path.join(__dirname, '..', '..', '/static/', file)
+
+                await workbook.xlsx.writeFile(file_dir);
+
+                reply.sendFile(`./${time}.xlsx`)
+                setTimeout(() => {
+                    fs.unlink(`./static/${time}.xlsx`, (err) => {
+                        if (err) {
+                            instance.send_Error('exported ' + time + ' file', JSON.stringify(err))
+                        }
+                    })
+                }, 2000);
+            } else {
+                let headers = []
+                switch (stock.reason) {
+                    case 'receive': {
+                        headers = [
+                            {
+                                header: 'ITEM NAME',
+                                id: 'product_name',
+                                width: 370,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(12)
+                                    return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'ADD STOCK',
+                                id: 'changed',
+                                width: 70,
+                                align: 'right'
+                            },
+                            {
+                                header: 'COST',
+                                id: 'cost',
+                                width: 70,
+                                align: 'right'
                             }
-                        })
-                    }, 2000)
-                })
-            }
-            catch (error) {
-                return reply.send(error.message)
+                        ]
+                        break
+                    }
+                    case 'recount': {
+                        headers = [
+                            {
+                                header: 'ITEM NAME',
+                                id: 'product_name',
+                                width: 360,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(12)
+                                    return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'COUNTED STOCK',
+                                id: 'changed',
+                                width: 150,
+                                align: 'right'
+                            }
+                        ]
+                        break
+                    }
+                    case 'loss':
+                    case 'damage':
+                    case 'fee': {
+                        headers = [
+                            {
+                                header: 'ITEM NAME',
+                                id: 'product_name',
+                                width: 360,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(12)
+                                    return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'REMOVE STOCK',
+                                id: 'changed',
+                                width: 150,
+                                align: 'right'
+                            }
+                        ]
+                        break
+                    }
+                }
+
+                try {
+                    const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`, { encoding: 'utf8' }));
+                    // building pdf
+                    const data = {
+                        title: title,
+                        inv_type: 'stock',
+                        notes: stock.notes ? stock.notes + '' : '',
+                        date: typeof stock.date == typeof 5 ? instance.date_ddmmyy(stock.date) : '',
+                        reason: stock.reason + '',
+                        adjusted_by: typeof stock.adjusted_by == typeof 'invan' ? stock.adjusted_by : '',
+                        service_name: typeof stock.service_name == typeof 'invan' ? stock.service_name : '',
+                        headers: headers,
+                        items: pdfItems
+                    }
+                    instance.inventoryPdf(doc, data)
+                    doc.end();
+                    stream.on('finish', async function () {
+                        reply.sendFile(`/${time}.pdf`)
+                        setTimeout(() => {
+                            fs.unlink(`./static/${time}.pdf`, (err) => {
+                                if (err) {
+                                    instance.send_Error('exported items file', JSON.stringify(err))
+                                }
+                            })
+                        }, 2000)
+                    })
+                }
+                catch (error) {
+                    return reply.send(error.message)
+                }
             }
         } catch (error) {
             return reply.send(error.message)

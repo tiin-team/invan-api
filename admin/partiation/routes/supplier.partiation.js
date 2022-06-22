@@ -327,5 +327,58 @@ module.exports = fp((instance, options, next) => {
     }
   );
 
+  instance.post("/inventory/partiation/item/suppliers/:service_id/:product_id", version, (request, reply) => {
+    instance.authorization(request, reply, async (user) => {
+      try {
+        const { product_id, service_id } = request.params;
+
+        const user_available_services = request.user.services.map(serv => serv.service);
+
+        if (service_id && !user_available_services.find(serv => serv + '' == service_id))
+          return reply.code(403).send('Forbidden service')
+
+        const query = {
+          organization_id: instance.ObjectId(user.organization),
+          service_id: { $in: user_available_services },
+        }
+        if (service_id)
+          query.service_id = instance.ObjectId(service_id);
+
+        const $match = { $match: query };
+
+        const $group = {
+          $group: {
+            _id: 'supplier_id',
+            supplier_name: { $first: '$supplier_name' },
+            // quantity: { $sum: '$quantity' },
+            // quantity_left: { $sum: '$quantity_left' },
+          }
+        }
+
+
+        const result = await instance.goodsSaleQueue.aggregate([
+          $match,
+          $group,
+        ])
+          // .allowDiskUse(true)
+          .exec();
+
+        // const total = await instance.goodsSaleQueue.countDocuments(query);
+
+        reply.ok({
+          // limit: limit,
+          total: total.length,
+          // page: Math.ceil(total / limit),
+          // current_page: page,
+          data: result,
+        });
+      } catch (error) {
+        return reply.error(error.message)
+      }
+      return reply;
+    })
+    return reply;
+  })
+
   next();
 });
