@@ -844,7 +844,8 @@ module.exports = (instance, options, next) => {
             cost: goodObj.cost,
             cost_currency: goodObj.cost_currency,
             difference: 0,
-            cost_difference: 0
+            cost_difference: 0,
+            barcode: it.barcode,
           }
         }
       }
@@ -950,7 +951,8 @@ module.exports = (instance, options, next) => {
       let in_stock = 0;
       let goodObj = {
         cost: pro.cost,
-        cost_currency: pro.cost_currency
+        cost_currency: pro.cost_currency,
+        barcode: pro.barcode,
       }
       if (typeof pro.services == typeof []) {
         for (const s of pro.services) {
