@@ -2597,6 +2597,7 @@ module.exports = fp((instance, _, next) => {
       },
       order_quantity: Number,
       note: String,
+      is_accept: { type: Boolean, default: false },
     }]
   });
   instance.decorate('employeesOrder', employeesOrdersSchema);

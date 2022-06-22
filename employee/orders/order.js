@@ -228,8 +228,34 @@ module.exports = fp((instance, options, next) => {
       }
     })
   })
-
-  instance.put('/employee/orders/:_id', { ...version }, (request, reply) => {
+  const employeeOrderUpdateBody = {
+    schema: {
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          // 'organization_id', 'service_id', 'date', 'required_date',
+        ],
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: [
+                'product_id', 'is_accept'
+              ],
+              properties: {
+                product_id: { type: 'string', maxLength: 24, minLength: 24 },
+                is_accept: { type: 'boolean', },
+              },
+            },
+          },
+        },
+      },
+    }
+  }
+  instance.put('/employee/orders/:_id', { ...version, ...employeeOrderUpdateBody }, (request, reply) => {
     instance.authorization(request, reply, async (employee) => {
       try {
         const id = request.params._id
@@ -247,7 +273,11 @@ module.exports = fp((instance, options, next) => {
         order.accept_by_id = employee._id;
         order.accept_by_name = employee.name;
         order.accept_date = new Date().getTime();
-
+        for (const reqItem of request.body.items) {
+          order.items.find(e => e.product_id + '' === reqItem.product_id + '').is_accept = reqItem.is_accept
+            ? true
+            : false
+        }
         const res = await instance.employeesOrder.findByIdAndUpdate(
           id,
           order,
