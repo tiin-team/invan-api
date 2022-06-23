@@ -83,6 +83,7 @@ module.exports = fp((instance, _, next) => {
     va partiyadan vozvrat qilib, queue ni qaytaradi
    */
   async function updateSupplierPartiationQueueRefund(all_queue, refund_count) {
+    if (all_queue.length === 0) return
     let dec_sum = 0
     const nullable_qunatity_left_queue_ids = []
 

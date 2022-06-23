@@ -390,7 +390,10 @@ module.exports = fp((instance, options, next) => {
         .replace('http://pos.in1.uz/api/static/', '')
         .replace('https://pos.in1.uz/api/static/', '')
         .replace('http://pos.inone.uz/api/static/', '')
-        .replace('https://pos.inone.uz/api/static/', '');
+        .replace('https://pos.inone.uz/api/static/', '')
+        .replace('http://dev.in1.uz/api/static/', '')
+        .replace('https://dev.in1.uz/api/static/', '')
+
       goods[index].representation =
         'https://pos.in1.uz/api/static/' + goods[index].image;
     }
