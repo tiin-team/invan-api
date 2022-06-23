@@ -235,6 +235,8 @@ module.exports = fp((instance, options, next) => {
             accept_date: 1,
             sector_name: 1,
             items: 1,
+            createdAt: 1,
+            updatedAt: 1,
             items_count: { $size: '$items' },
             accept_items_count: {
               $reduce: {
