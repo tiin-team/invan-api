@@ -149,6 +149,14 @@ module.exports = fp((instance, options, next) => {
             service_id: { $in: user.services.map(serv => serv.service) },
           })
           .lean()
+        i = 0
+        for (const item of order.items) {
+          if (item.is_accept === true) {
+            i++
+          } else item.is_accept = false
+        }
+        order.accept_items_count = i
+        order.items_count = order && order.items ? order.items.length : 0
 
         return reply.ok(order)
       } catch (error) {
@@ -209,9 +217,40 @@ module.exports = fp((instance, options, next) => {
         const $limit = { $limit: limit };
         const $skip = { $skip: (page - 1) * limit };
         const $sort = { $sort: { _id: -1 } };
+        const $project = {
+          $project: {
+            organization_id: 1,
+            organization_name: 1,
+            service_id: 1,
+            service_name: 1,
+            p_order: 1,
+            employee_id: 1,
+            employee_name: 1,
+            accept_by_id: 1,
+            accept_by_name: 1,
+            note: 1,
+            status: 1,
+            date: 1,
+            required_date: 1,
+            accept_date: 1,
+            sector_name: 1,
+            'items.product_id': 1,
+            'items.product_name': 1,
+            'items.product_sku': 1,
+            'items.supplier_id': 1,
+            'items.sector_name': 1,
+            'items.date': 1,
+            'items.in_stock': 1,
+            'items.real_stock': 1,
+            'items.barcode': 1,
+            'items.order_quantity': 1,
+            'items.note': 1,
+            'items.is_accept': { $ifNull: ['$items.is_accept', false] },
+          }
+        }
 
         const data = await instance.employeesOrder
-          .aggregate([$match, $sort, $skip, $limit])
+          .aggregate([$match, $sort, $skip, $limit, $project])
           .exec();
 
         const total = await instance.employeesOrder.countDocuments(query);

@@ -394,8 +394,9 @@ module.exports = fp((instance, options, next) => {
         .replace('http://dev.in1.uz/api/static/', '')
         .replace('https://dev.in1.uz/api/static/', '')
 
-      goods[index].representation =
-        'https://pos.in1.uz/api/static/' + goods[index].image;
+      goods[index].representation = goods[index].image
+        ? 'https://pos.in1.uz/api/static/' + goods[index].image
+        : '';
     }
 
     reply.send({
