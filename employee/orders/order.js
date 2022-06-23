@@ -245,7 +245,25 @@ module.exports = fp((instance, options, next) => {
             'items.barcode': 1,
             'items.order_quantity': 1,
             'items.note': 1,
-            'items.is_accept': { $ifNull: ['$items.is_accept', false] },
+            'items.is_accept': { $ifNull: ['$items.$.is_accept', false] },
+            accept_items_count: {
+              $reduce: {
+                input: "$items",
+                initialValue: 0,
+                in: {
+                  $sum: [
+                    {
+                      $cond: [
+                        { $eq: ["$$this.is_accept", true] },
+                        1,
+                        0
+                      ]
+                    },
+                    "$$value"
+                  ]
+                }
+              }
+            }
           }
         }
 
