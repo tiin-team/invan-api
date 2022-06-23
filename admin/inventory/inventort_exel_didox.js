@@ -15,18 +15,7 @@ const removeBorders = (worksheet, list) => {
         }
     }
 }
-const multiSetAlign = (worksheet, list) => {
-    for (const cell of list) {
-        // console.log(cell);
-        for (const row of cell.rows) {
-            worksheet.getCell(`${cell.col}${row}`).alignment = {
-                vertical: cell.vertical ? cell.vertical : 'middle',
-                horizontal: cell.horizontal ? cell.horizontal : 'center',
-                shrinkToFit: true
-            };
-        }
-    }
-}
+
 const multiMergeCells = (worksheet, list) => {
     for (const cell of list) {
         worksheet.mergeCells(cell)
@@ -34,10 +23,14 @@ const multiMergeCells = (worksheet, list) => {
 }
 /**
  * @param { ExcelJs.Worksheet} worksheet
- * @param {[{cell: string, fColor: string}]} list
+ * @param {[{cell: string, fColor: string, value: string}]} list
+ * 
 */
 const multiFillCells = (worksheet, list) => {
     for (const cell of list) {
+        // worksheet.getCell(cell.cell).fullAddress = { col: { width: 300, }, row: { height: 500 } }
+        // console.log(worksheet.properties);
+        worksheet.getCell(cell.cell).value = cell.value
         worksheet.getCell(cell.cell).style = {
             font: { name: 'Calibri', size: 12, bold: true },
             border: {
@@ -45,10 +38,13 @@ const multiFillCells = (worksheet, list) => {
                 right: { color: { argb: '000000' }, style: 'thin' },
                 bottom: { color: { argb: '000000' }, style: 'thin' },
                 left: { color: { argb: '000000' }, style: 'thin' },
+                diagonal: { color: { argb: '000000' }, style: 'thin' },
             },
             alignment: {
                 horizontal: "center",
                 vertical: "middle",
+                shrinkToFit: true
+
             },
             fill: {
                 type: 'pattern',
@@ -56,9 +52,7 @@ const multiFillCells = (worksheet, list) => {
                 fgColor: { argb: cell.fColor },
             },
             protection: { locked: false }
-        };
-        worksheet.getCell(cell.cell).fullAddress = { col: { width: 300, }, row: { height: 500 } }
-        // worksheet.getCell(cell.cell).note = { col: { width: 300 } }
+        }
     }
 }
 
@@ -172,32 +166,31 @@ module.exports = fp((instance, _, next) => {
                     'O7:O8', 'P7:P8', 'Q7:Q8', 'R7:R8', 'U7:U8', 'V7:V8',
                     'K6:V6', 'S7:T7',
                 ])
-                worksheet.getCell('A6').value = `п.п.`
 
                 multiFillCells(worksheet, [
                     //qizil
-                    { cell: 'A6', fColor: 'FF0000' },
-                    { cell: 'B6', fColor: 'FF0000' },
-                    { cell: 'C6', fColor: 'FF0000' },
-                    { cell: 'C7', fColor: 'FF0000' },
-                    { cell: 'D7', fColor: 'FF0000' },
-                    { cell: 'E6', fColor: 'FF0000' },
-                    { cell: 'E7', fColor: 'FF0000' },
-                    { cell: 'F7', fColor: 'FF0000' },
-                    { cell: 'G7', fColor: 'FF0000' },
-                    { cell: 'H7', fColor: 'FF0000' },
-                    { cell: 'I7', fColor: 'FF0000' },
-                    { cell: 'J7', fColor: 'FF0000' },
-                    { cell: 'K7', fColor: 'FF0000' },
-                    { cell: 'L7', fColor: 'FF0000' },
-                    { cell: 'M7', fColor: 'FF0000' },
-                    { cell: 'O7', fColor: 'FF0000' },
-                    { cell: 'R7', fColor: 'FF0000' },
-                    { cell: 'S7', fColor: 'FF0000' },
-                    { cell: 'S8', fColor: 'FF0000' },
-                    { cell: 'T8', fColor: 'FF0000' },
-                    { cell: 'U7', fColor: 'FF0000' },
-                    { cell: 'V7', fColor: 'FF0000' },
+                    { cell: 'A6', fColor: 'FF0000', value: 'п.п.' },
+                    { cell: 'B6', fColor: 'FF0000', value: `Тип счета-фактуры` },
+                    { cell: 'C6', fColor: 'FF0000', value: `Счет-фактура` },
+                    { cell: 'C7', fColor: 'FF0000', value: `№` },
+                    { cell: 'D7', fColor: 'FF0000', value: `Дата` },
+                    { cell: 'E6', fColor: 'FF0000', value: `Договор` },
+                    { cell: 'E7', fColor: 'FF0000', value: `№` },
+                    { cell: 'F7', fColor: 'FF0000', value: `Дата` },
+                    { cell: 'G7', fColor: 'FF0000', value: `ИНН` },
+                    { cell: 'H7', fColor: 'FF0000', value: `Директор` },
+                    { cell: 'I7', fColor: 'FF0000', value: `Гл.бухгалтер` },
+                    { cell: 'J7', fColor: 'FF0000', value: `ИНН` },
+                    { cell: 'K7', fColor: 'FF0000', value: `п.п.` },
+                    { cell: 'L7', fColor: 'FF0000', value: `Наименование` },
+                    { cell: 'M7', fColor: 'FF0000', value: `Идентификационный код и название по Единому электронному национальному каталогу товаров (услуг)` },
+                    { cell: 'O7', fColor: 'FF0000', value: `Ед. изм. (код)` },
+                    { cell: 'R7', fColor: 'FF0000', value: `Стоимость поставки` },
+                    { cell: 'S7', fColor: 'FF0000', value: `НДС` },
+                    { cell: 'S8', fColor: 'FF0000', value: `Ставка` },
+                    { cell: 'T8', fColor: 'FF0000', value: `Сумма` },
+                    { cell: 'U7', fColor: 'FF0000', value: `Стоимость поставки с учетом НДС` },
+                    { cell: 'V7', fColor: 'FF0000', value: `Код Льготы` },
                     // yashil ranglar
                     { cell: 'G6', fColor: '6FCD27' },
                     { cell: 'G9', fColor: '6FCD27' },
@@ -210,10 +203,10 @@ module.exports = fp((instance, _, next) => {
                     { cell: 'D9', fColor: 'FFFF00' },
                     { cell: 'E9', fColor: 'FFFF00' },
                     { cell: 'F9', fColor: 'FFFF00' },
-                    { cell: 'P7', fColor: 'FFFF00' },
-                    { cell: 'Q7', fColor: 'FFFF00' },
+                    { cell: 'P7', fColor: 'FFFF00', value: `Кол-во` },
+                    { cell: 'Q7', fColor: 'FFFF00', value: `Цена` },
                     //och chigar rang
-                    { cell: 'K6', fColor: 'FFB000' },
+                    { cell: 'K6', fColor: 'FFB000', value: `Товары (услуги)` },
                     { cell: 'K9', fColor: 'FFB000' },
                     { cell: 'L9', fColor: 'FFB000' },
                     { cell: 'M9', fColor: 'FFB000' },
@@ -230,43 +223,13 @@ module.exports = fp((instance, _, next) => {
                     //ko'k ranglar
                     { cell: 'J6', fColor: '00A3F4' },
                     { cell: 'J9', fColor: '00A3F4' },
-                    { cell: 'N7', fColor: '306DB5' },
+                    { cell: 'N7', fColor: '306DB5', value: `Штрих код товара/услуги` },
                 ])
-
-                worksheet.getCell('B6').value = `Тип \nсчета-\nфактуры`
-                worksheet.getCell('C6').value = `Счет-фактура`
-                worksheet.getCell('C7').value = `№`
-                worksheet.getCell('D7').value = `Дата`
-                worksheet.getCell('E6').value = `Договор`
-                worksheet.getCell('E7').value = `№`
-                worksheet.getCell('F7').value = `Дата`
-                worksheet.getCell('G7').value = `ИНН`
-                worksheet.getCell('K7').value = `п.п.`
-                worksheet.getCell('H7').value = `Директор`
-                worksheet.getCell('K6').value = `Товары (услуги)`
-                worksheet.getCell('L7').value = `Наименование`
-                worksheet.getCell('M7').value = `Идентификационный код и название по Единому электронному национальному каталогу товаров (услуг)`
-                worksheet.getCell('N7').value = `Штрих код товара/услуги`
-                worksheet.getCell('O7').value = `Ед. изм. (код)`
-                worksheet.getCell('P7').value = `Кол-во`
-                worksheet.getCell('Q7').value = `Цена`
-                worksheet.getCell('R7').value = `Стоимость поставки`
-                worksheet.getCell('S7').value = `НДС`
-                worksheet.getCell('S8').value = `Ставка`
-                worksheet.getCell('T8').value = `Сумма`
-                worksheet.getCell('U7').value = `Стоимость поставки с учетом НДС`
-                worksheet.getCell('V7').value = `Код Льготы`
 
                 // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
                 // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
                 // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
                 // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
-
-                // multiSetAlign(worksheet, [
-                //     { col: 'B', rows: [10, 10 + exelItems.length], },
-                //     { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
-                // ])
-
 
                 try {
                     worksheet.addTable({
