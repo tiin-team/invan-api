@@ -41,8 +41,8 @@ module.exports = fp((instance, _, next) => {
     bitta tovarni partiya boyicha sotish
   */
   async function recursiveUpdateGoodSaleQueueDec(queues, index_queue, good, dec_count, { product_id, service_id }) {
-    if (queues.length === 0) return
-    num_queue = queues[index_queue].queue
+    if (queues.length === 0 || !queues[index_queue]) return
+    let num_queue = queues[index_queue].queue
 
     const suppliers = []
 
@@ -188,7 +188,7 @@ module.exports = fp((instance, _, next) => {
         )
       }
       for (const good of goods) {
-        filter_queues = queues.filter(elem => elem.good_id + '' === good.product_id + '')
+        const filter_queues = queues.filter(elem => elem.good_id + '' === good.product_id + '')
         if (filter_queues.length == 0 || !goods_obj[good.product_id]) continue
 
         goods_obj[good.product_id].queue = goods_obj[good.product_id].queue
@@ -282,7 +282,8 @@ module.exports = fp((instance, _, next) => {
     } catch (err) {
       instance.send_Error(
         `goods_partiation_sale
-        \nservice_id: ${service_id}`,
+        \nservice_id: ${service_id}
+        \ngoods[0]: ${goods[0]}`,
         err,
       )
     }

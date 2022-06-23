@@ -99,6 +99,8 @@ module.exports = fp((instance, options, next) => {
         data.p_order = 'IO' + ('0000' + (ordersCount + 1001)).slice(-6);
 
         const res = await instance.employeesOrder.create(data);
+        res.items_count = res.items.length
+        res.accept_items_count = 0;
 
         return reply.ok(res);
       }
