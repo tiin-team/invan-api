@@ -1038,6 +1038,7 @@ module.exports = (instance, _, next) => {
               ],
             },
           },
+          recepts_count: { $sum: 1 },
         },
       };
 
