@@ -255,7 +255,7 @@ module.exports = fp((instance, _, next) => {
 
             res.suppliers = getGoodOfSuppliers(suppliers, res.suppliers)
 
-            return await updateGoodsSalesQueueOfSuppliers(good.product_id, res.num_queue, res.suppliers)
+            await updateGoodsSalesQueueOfSuppliers(good.product_id, res.num_queue, res.suppliers)
           } else {
             suppliers[supp_cur_serv_index].stock -= good.value;
 

@@ -27,10 +27,14 @@ module.exports = ((instance, _, next) => {
             try {
                 const user = request.user;
                 const { used_skus } = request.body;
-                const available_sku = 9999;
+                // const available_sku = 9999; // asli
+                const available_sku = 1;
                 const items = await instance.goodsSales.find(
                     { organization: user.organization, sku: { $lt: 10000, $nin: used_skus } },
-                    { _id: 0, sku: 1 }).sort({ sku: -1 }).lean();
+                    { _id: 0, sku: 1 },
+                )
+                    .sort({ sku: 1 })
+                    .lean();
 
                 // if (!items || items[0].sku != available_sku) {
                 //     return reply.ok({ sku: available_sku })
@@ -42,11 +46,14 @@ module.exports = ((instance, _, next) => {
                     if (items.length == 1)
                         return reply.ok({ sku: items[0].sku + 1 })
                     for (let i = 0; i < items.length - 2; i++) {
-                        if (items[i].sku - items[i + 1].sku > 1) {
-                            return reply.ok({ sku: items[i].sku - 1 })
+                        // if (items[i].sku - items[i + 1].sku > 1) { //asli
+                        if (items[i + 1].sku - items[i].sku > 1) {
+                            // return reply.ok({ sku: items[i].sku - 1 }) //asli
+                            return reply.ok({ sku: items[i].sku + 1 })
                         }
                     }
-                    return reply.ok({ sku: items[items.length - 1].sku - 1 })
+                    // return reply.ok({ sku: items[items.length - 1].sku - 1 }) //asli
+                    return reply.ok({ sku: items[items.length - 1].sku + 1 })
                 } else
                     return reply.ok({ sku: available_sku })
 

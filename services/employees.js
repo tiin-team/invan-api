@@ -776,11 +776,11 @@ module.exports = (instance, _, next) => {
             change_settings: accessObj[employees[i].role].change_settings,
             show_stock: accessObj[employees[i].role].show_stock,
             edit_items: accessObj[employees[i].role].edit_items,
-            edit_ticket: accessObj[employees[i].role].edit_ticket,
-            split_ticket: accessObj[employees[i].role].split_ticket,
-            change_waiter: accessObj[employees[i].role].change_waiter,
-            delete_ticket: accessObj[employees[i].role].delete_ticket,
-            show_all_tickets: accessObj[employees[i].role].show_all_tickets,
+            // edit_ticket: accessObj[employees[i].role].edit_ticket,
+            // split_ticket: accessObj[employees[i].role].split_ticket,
+            // change_waiter: accessObj[employees[i].role].change_waiter,
+            // delete_ticket: accessObj[employees[i].role].delete_ticket,
+            // show_all_tickets: accessObj[employees[i].role].show_all_tickets,
             can_access_to_shift: accessObj[employees[i].role].can_access_to_shift,
           }
           if (employees[i].role != 'waiter') {

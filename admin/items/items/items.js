@@ -1469,7 +1469,7 @@ module.exports = (instance, options, next) => {
           request,
           admin.organization,
           (result) => {
-            console.log(result);
+            // console.log(result);
             if (result.success) {
               create_item(result.data, admin, reply);
             } else {
