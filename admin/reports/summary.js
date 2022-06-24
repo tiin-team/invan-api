@@ -1261,6 +1261,7 @@ module.exports = (instance, _, next) => {
                 },
               ],
             },
+            recepts_count: 1,
           },
         };
 
