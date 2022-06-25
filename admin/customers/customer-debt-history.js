@@ -11,42 +11,42 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
             return reply.fourorfour('customer')
         }
 
-        const matchCustomer = {
-            $match: {
-                _id: customer._id
-            }
-        }
-        const unwindDebtHistory = {
-            $unwind: {
-                path: '$debt_pay_history'
-            }
-        }
-        const filterDebtHistory = {
-            $match: {
-                'debt_pay_history.date': {
-                    $gte: from_time,
-                    $lte: to_time
-                }
-            }
-        }
-        const projectDebtHistory = {
-            $project: {
-                amount_type: '$debt_pay_history.amount_type',
-                by_id: '$debt_pay_history.by_id',
-                by_name: '$debt_pay_history.by_name',
-                comment: '$debt_pay_history.comment',
-                currency: '$debt_pay_history.currency',
-                currency_value: '$debt_pay_history.currency_value',
-                date: '$debt_pay_history.date',
-                paid: '$debt_pay_history.paid',
-            }
-        }
-        const debt_pay_history = await instance.clientsDatabase.aggregate([
-            matchCustomer,
-            unwindDebtHistory,
-            filterDebtHistory,
-            projectDebtHistory
-        ]).allowDiskUse(true).exec();
+        // const matchCustomer = {
+        //     $match: {
+        //         _id: customer._id
+        //     }
+        // }
+        // const unwindDebtHistory = {
+        //     $unwind: {
+        //         path: '$debt_pay_history'
+        //     }
+        // }
+        // const filterDebtHistory = {
+        //     $match: {
+        //         'debt_pay_history.date': {
+        //             $gte: from_time,
+        //             $lte: to_time
+        //         }
+        //     }
+        // }
+        // const projectDebtHistory = {
+        //     $project: {
+        //         amount_type: '$debt_pay_history.amount_type',
+        //         by_id: '$debt_pay_history.by_id',
+        //         by_name: '$debt_pay_history.by_name',
+        //         comment: '$debt_pay_history.comment',
+        //         currency: '$debt_pay_history.currency',
+        //         currency_value: '$debt_pay_history.currency_value',
+        //         date: '$debt_pay_history.date',
+        //         paid: '$debt_pay_history.paid',
+        //     }
+        // }
+        // const debt_pay_history = await instance.clientsDatabase.aggregate([
+        //     matchCustomer,
+        //     unwindDebtHistory,
+        //     filterDebtHistory,
+        //     projectDebtHistory
+        // ]).allowDiskUse(true).exec();
 
         customer.debt_pay_history = debt_pay_history;
 
@@ -80,6 +80,7 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
                 receipt_id: "$_id",
                 product_id: "$sold_item_list.product_id",
                 sold_id: "$sold_item_list._id",
+                comment: '$comment',
             }
         }
         const sortReceipts = {
@@ -107,7 +108,8 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
         if (!(customer.debt_pay_history instanceof Array)) {
             customer.debt_pay_history = []
         }
-        const history = customer.debt_pay_history.concat(receiptsResult);
+        // const history = customer.debt_pay_history.concat(receiptsResult);
+        const history = receiptsResult;
         history.sort((a, b) => (a.date > b.date) ? 1 : ((b.date > a.date) ? -1 : 0));
         return reply.ok(history);
     } catch (error) {
