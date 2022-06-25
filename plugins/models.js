@@ -1291,7 +1291,7 @@ module.exports = fp((instance, _, next) => {
   const clients = instance.model('clientsDatabase', {
     user_id: {
       type: String,
-      default: '10000'
+      default: ''
     },
     organization: String,
     first_name: {
