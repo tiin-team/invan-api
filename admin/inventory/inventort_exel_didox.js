@@ -198,8 +198,10 @@ module.exports = fp((instance, _, next) => {
       const receipt = await instance.Receipts.findById(id).lean();
       if (!receipt) return reply.fourorfour('receipt')
 
-      const service = instance.services.findById(receipt.service).lean()
-      if (!service) return reply.fourorfour('service')
+      // const service = instance.services.findById(receipt.service).lean()
+      // if (!service) return reply.fourorfour('service')
+      const organization = await instance.organizations.findById(receipt.organization).lean()
+      if (!organization) return reply.fourorfour('organization')
 
       const exelItems = []
       index = 1
@@ -239,8 +241,8 @@ module.exports = fp((instance, _, next) => {
           '',
           '',
           'sip_inn',
-          'direktor',
-          'bug',
+          organization.director_name ? organization.director_name : '',
+          organization.accaunter ? organization.accaunter : '',
           'z.inn',
           'p.p',
           it.product_name,
