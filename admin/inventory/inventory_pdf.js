@@ -1657,21 +1657,25 @@ module.exports = fp((instance, _, next) => {
                 for (const it of items) {
                     try {
                         const good = await instance.goodsSales
-                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1 })
+                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1, sku: 1 })
                             .lean()
                         if (good) {
                             it.product_name = good.name
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
                             }
+                            it.sku = good.sku
                         }
                     } catch (error) { }
                     pdfItems.push({
+                        index,
                         product_name: it.product_name + '',
+                        sku: it.sku,
                         real_stock: it.real_stock,
                         in_stock: it.in_stock,
                         order_quantity: it.order_quantity,
                     })
+                    index++
                 }
             }
 
@@ -1763,15 +1767,27 @@ module.exports = fp((instance, _, next) => {
                         service_name: typeof iOrder.service_name == typeof 'invan' ? iOrder.service_name : '',
                         headers: [
                             {
+                                header: ' № п.п.',
+                                id: 'index',
+                                width: 20,
+                                align: 'left',
+                            },
+                            {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 300,
+                                width: 280,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
                                     doc.fontSize(11)
                                     return data.product_name;
                                 }
+                            },
+                            {
+                                header: 'SKU',
+                                id: 'sku',
+                                width: 40,
+                                align: 'right',
                             },
                             {
                                 header: 'REAL STOCK',
