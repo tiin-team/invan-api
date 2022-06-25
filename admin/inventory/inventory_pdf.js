@@ -1691,7 +1691,7 @@ module.exports = fp((instance, _, next) => {
                     pageSetup: { paperSize: 9, orientation: 'portrait' }
                 });
                 worksheet.properties.defaultColWidth = 200;
-                worksheet.getCell('B2').value = iOrder.p_order;
+                worksheet.getCell('B2').value = title;
                 // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
                 worksheet.getCell('B2').font = { name: 'times new roman', size: 16, bold: true };
                 worksheet.getCell('B3').value = iOrder.status

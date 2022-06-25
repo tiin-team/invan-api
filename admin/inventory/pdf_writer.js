@@ -19,13 +19,23 @@ module.exports = fp((instance, _, next) => {
         }
         // title
         if (data.inv_type != 'receipt') {
-            doc
-                .font('NotoSansBold')
-                .fontSize(30)
-                .text(data.title, col1LeftPos, colTop, {
-                    lineGap: 30
-                })
-            colTop += 60
+            if (data.inv_type == 'internal_order') {
+                doc
+                    .font('NotoSansBold')
+                    .fontSize(30)
+                    .text(data.title, col1LeftPos, colTop, {
+                        lineGap: 30
+                    })
+                colTop += 35
+            } else {
+                doc
+                    .font('NotoSansBold')
+                    .fontSize(30)
+                    .text(data.title, col1LeftPos, colTop, {
+                        lineGap: 30
+                    })
+                colTop += 60
+            }
         }
         else {
             doc
@@ -347,6 +357,9 @@ module.exports = fp((instance, _, next) => {
         if (data.inv_type == 'receipt') {
             colTop -= 90;
         }
+        if (data.inv_type == 'internal_order') {
+            colTop -= 50;
+        }
         doc
             .fontSize(10)
             .font('NotoSansBold')
@@ -366,7 +379,7 @@ module.exports = fp((instance, _, next) => {
             padding: [5, 0, 0, 2],
             align: 'left'
         }
-        if (data.inv_type == 'receipt') {
+        if (data.inv_type == 'receipt' || data.inv_type == 'internal_order') {
             tableSettings.border = ['B', 'R', 'L'];
             tableSettings.padding = [5, 2, 2, 2];
             tableSettings.headerBorder = ['B', 'R', 'L', 'T'];
