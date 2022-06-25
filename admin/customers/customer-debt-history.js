@@ -48,7 +48,7 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
         //     projectDebtHistory
         // ]).allowDiskUse(true).exec();
 
-        customer.debt_pay_history = debt_pay_history;
+        // customer.debt_pay_history = debt_pay_history;
 
         const matchReceipts = {
             $match: {
