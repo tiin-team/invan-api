@@ -702,6 +702,10 @@ module.exports = (instance, _, next) => {
         nds_value: { type: 'number' },
         address: { type: 'string' },
         epos_token: { type: 'string' },
+        director_name: { type: 'string' },
+        accaunter: { type: 'string' },
+        org_phone_number: { type: 'string' },
+        taxes_pair_code: { type: 'string' },
       }
     }
   };

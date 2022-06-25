@@ -185,6 +185,23 @@ module.exports = fp((instance, _, next) => {
       type: Boolean,
       default: false
     },
+    director_name: {
+      type: String,
+      default: "",
+    },
+    accaunter: {
+      type: String,
+      default: "",
+    },
+    org_phone_number: {
+      type: String,
+      default: "",
+    },
+    //didox uchun soliq to'lovchining kodi
+    taxes_pair_code: {
+      type: String,
+      default: "",
+    },
   })
 
   instance.decorate('organizations', organizations)

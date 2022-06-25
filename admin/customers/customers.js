@@ -474,9 +474,9 @@ module.exports = (instance, options, next) => {
    */
   async function insert_new_client(clientData) {
     try {
-      if (!clientData.user_id) {
-        clientData.user_id = clientData.phone_number + new Date().getTime();
-      }
+      // if (!clientData.user_id) {
+      //   clientData.user_id = clientData.phone_number + new Date().getTime();
+      // }
       const newClient = new instance.clientsDatabase(clientData);
       const result = await newClient.save();
       if (!result) {
