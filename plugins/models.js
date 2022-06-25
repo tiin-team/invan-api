@@ -477,6 +477,7 @@ module.exports = fp((instance, _, next) => {
       type: Number,
       default: 0
     },
+    comment: String,
   })
   instance.decorate('Receipts', Receipts)
 

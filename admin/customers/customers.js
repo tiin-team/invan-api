@@ -699,7 +699,8 @@ module.exports = (instance, options, next) => {
           },
           note: {
             type: "string"
-          }
+          },
+          user_id: { type: "string" },
         },
       },
     },

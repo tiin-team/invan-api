@@ -32,7 +32,9 @@ module.exports = fp((instance, _, next) => {
             total_price: receipt.total_price,
             date: receipt.date,
             minus_cash: minus_cash ? minus_cash : 0,
-            comment: `receipt cash-back ${minus_cash ? `cashback used ${minus_cash}` : ''}`,
+            comment: receipt.comment
+              ? receipt.comment
+              : `receipt cash-back ${minus_cash ? `cashback used ${minus_cash}` : ''}`,
           }
         }
       },

@@ -3,7 +3,11 @@ const fp = require('fastify-plugin')
 const PdfTable = require('voilab-pdf-table')
 
 module.exports = fp((instance, _, next) => {
-
+    /**
+     * 
+     * @param {PDFKit.PDFDocument} doc 
+     * @param {any} data 
+     */
     const inventoryPdf = function (doc, data) {
         let col1LeftPos = 50;
         let colTop = 70;
@@ -27,7 +31,7 @@ module.exports = fp((instance, _, next) => {
             doc
                 .font('NotoSansBold')
                 .fontSize(20)
-                .text(data.title, col1LeftPos + 400, colTop-10, {
+                .text(data.title, col1LeftPos + 400, colTop - 10, {
                     lineGap: 30
                 })
             colTop -= 10;
@@ -98,7 +102,65 @@ module.exports = fp((instance, _, next) => {
 
                 break;
             }
+            case 'internal_order': {
+                doc
+                    .fontSize(12)
+                    .font('NotoSansBold')
+                    .text('IO date: ', col1LeftPos, colTop, {
+                        continued: true
+                    })
+                    .font('NotoSansRegular')
+                    .text(data.purchase_order_date, {
+                        lineGap: 5
+                    })
+                colTop += 15
 
+                doc
+                    .font('NotoSansBold')
+                    .text('Ordered by: ', col1LeftPos, colTop, {
+                        continued: true
+                    })
+                    .font('NotoSansRegular')
+                    .text(data.ordered_by_name, {
+                        lineGap: 25
+                    })
+                colTop += 20
+
+                doc
+                    .font('NotoSansBold')
+                    .text('Accepted date: ', col1LeftPos, colTop, {
+                        continued: true
+                    })
+                    .font('NotoSansRegular')
+                    .text(data.accept_date, {
+                        lineGap: 5
+                    })
+                colTop += 15
+
+                doc
+                    .font('NotoSansBold')
+                    .text('Accepted by: ', col1LeftPos, colTop, {
+                        continued: true
+                    })
+                    .font('NotoSansRegular')
+                    .text(data.accept_by_name, {
+                        lineGap: 5
+                    })
+                colTop += 20
+
+                doc
+                    .fontSize(12)
+                    .font('NotoSansBold')
+                    .text('Store: ', col1LeftPos, colTop, { continued: true })
+                    .font('NotoSansRegular')
+                    .text(data.service_name, { lineGap: 5 })
+                // .font('NotoSansBold')
+                // .text('Ship to:', col2LeftPos, colTop, { width: colWidth })
+                // .font('NotoSansRegular')
+                // .text(data.service_name, col2LeftPos, colTop + 15, { width: colWidth })
+
+                break;
+            }
             case 'transfer': {
                 doc
                     .fontSize(12)

@@ -1,8 +1,10 @@
 const PDFDocument = require('pdfkit');
 const ExcelJs = require('exceljs');
 const fs = require('fs');
+const fp = require('fastify-plugin');
 const path = require('path')
-const moment = require('moment')
+const moment = require('moment');
+const { IncomingMessage, ServerResponse } = require('http');
 
 const removeBorders = (worksheet, list) => {
     for (const cell of list) {
@@ -32,7 +34,7 @@ const multiMergeCells = (worksheet, list) => {
     }
 }
 
-module.exports = ((instance, _, next) => {
+module.exports = fp((instance, _, next) => {
 
     const getPurchasePdf = async (request, reply) => {
         try {
@@ -1606,5 +1608,217 @@ module.exports = ((instance, _, next) => {
         return reply;
     })
 
+    /**
+     * 
+     * @param {
+     * import('fastify').FastifyRequest
+     * <IncomingMessage, DefaultQuery, DefaultParams, DefaultHeaders, any>} request 
+     * @param {import('fastify').FastifyReply<ServerResponse>} reply 
+     * @returns 
+     */
+    const getInternalOrderFile = async (request, reply) => {
+        try {
+            const { id } = request.params
+            const { type } = request.query
+
+            const iOrder = await instance.employeesOrder.findById(id).lean()
+            if (!iOrder) {
+                return reply.send('Order not found')
+            }
+
+            const items = iOrder.items
+            const pdfItems = []
+            const exelItems = []
+            index = 1
+            totalAmount = 0
+            if (type == 'exel') {
+                for (const it of items) {
+                    try {
+                        const good = await instance.goodsSales
+                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1 })
+                            .lean()
+                        if (good) {
+                            it.product_name = good.name
+                            if (good.item_type == 'variant') {
+                                it.product_name = `${good.parent_name} (${good.name})`
+                            }
+                        }
+                    } catch (error) { }
+                    exelItems.push([
+                        index,
+                        it.product_name + '',
+                        it.real_stock,
+                        it.in_stock,
+                        it.order_quantity,
+                    ])
+                    index++
+                }
+            } else {
+                for (const it of items) {
+                    try {
+                        const good = await instance.goodsSales
+                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1 })
+                            .lean()
+                        if (good) {
+                            it.product_name = good.name
+                            if (good.item_type == 'variant') {
+                                it.product_name = `${good.parent_name} (${good.name})`
+                            }
+                        }
+                    } catch (error) { }
+                    pdfItems.push({
+                        product_name: it.product_name + '',
+                        real_stock: it.real_stock,
+                        in_stock: it.in_stock,
+                        order_quantity: it.order_quantity,
+                    })
+                }
+            }
+
+            const time = new Date().getTime()
+            const title = `Internal order ${iOrder.p_order}`
+
+            if (type == 'exel') {
+                const headers = [
+                    { name: ' № п.п.', key: 'id' },
+                    { name: 'Наименование', key: 'id' },
+                    { name: 'Real stock', key: 'barcode' },
+                    { name: 'In stock', key: 'type' },
+                    { name: 'Order qunatity', key: 'quantity' },
+                ]
+                const workbook = new ExcelJs.Workbook();
+                const worksheet = workbook.addWorksheet('MyExcel', {
+                    pageSetup: { paperSize: 9, orientation: 'portrait' }
+                });
+                worksheet.properties.defaultColWidth = 200;
+                worksheet.getCell('B2').value = iOrder.p_order;
+                // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
+                worksheet.getCell('B2').font = { name: 'times new roman', size: 16, bold: true };
+                worksheet.getCell('B3').value = iOrder.status
+                worksheet.getCell('B4').value = `Date:                ${moment(iOrder.date).format("DD.MM.YYYY")}`
+                worksheet.getCell('B5').value = `Accepted by:         ${iOrder.accept_by_name}`
+                worksheet.getCell('B6').value = `Accepted date:       ${moment(iOrder.accept_date).format("DD.MM.YYYY")}`
+                worksheet.getCell('B7').value = `Employee:            ${iOrder.employee_name}`
+                worksheet.getCell('B8').value = `Store:               ${iOrder.service_name}`
+
+                multiMergeCells(worksheet, [
+                    'B2:F2', 'B3:F3', 'B4:F4',
+                    'B5:F5', 'B6:F6',
+                    'B7:F7', 'B8:F8',
+                    // 'B9:F9', 'B10:F10', 'B11:F11', 'B12:F12',
+                ]
+                )
+                worksheet.getColumn('B').width = 5
+                worksheet.getColumn('C').width = 25
+                worksheet.getColumn('F').width = 15
+
+                removeBorders(worksheet, [
+                    { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
+                    { cell: `B7` }, { cell: `B8` },
+                    //  { cell: `B9` }, { cell: `B10` }, { cell: `B11` },
+                ])
+
+                try {
+                    worksheet.addTable({
+                        name: 'ItemsTable',
+                        ref: 'B10',
+                        headerRow: true,
+                        // totalsRow: true,
+                        columns: headers,
+                        rows: exelItems
+                    })
+                } catch (error) { }
+
+                const file = `${time}.xlsx`;
+                const file_dir = path.join(__dirname, '../../static/', file)
+
+                await workbook.xlsx.writeFile(file_dir);
+
+                reply.sendFile(`./${time}.xlsx`)
+                setTimeout(() => {
+                    fs.unlink(`./static/${time}.xlsx`, (err) => {
+                        if (err) {
+                            instance.send_Error('exported ' + time + ' file', JSON.stringify(err))
+                        }
+                    })
+                }, 2000);
+            } else {
+                const doc = new PDFDocument;
+                doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
+                doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
+
+                try {
+                    const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`));
+                    // building pdf
+                    const data = {
+                        title: title,
+                        inv_type: 'internal_order',
+                        purchase_type: iOrder.type,
+                        notes: iOrder.note ? iOrder.note + '' : '',
+                        ordered_by_name: iOrder.employee_name ? iOrder.employee_name : '',
+                        accept_by_name: iOrder.accept_by_name ? iOrder.accept_by_name : '',
+                        purchase_order_date: typeof iOrder.date == typeof 5 ? instance.date_ddmmyy(iOrder.date) : '',
+                        accept_date: typeof iOrder.date == typeof 5 ? instance.date_ddmmyy(iOrder.accept_date) : '',
+                        ordered_by_name: typeof iOrder.employee_name == typeof 'invan' ? iOrder.employee_name : '',
+                        service_name: typeof iOrder.service_name == typeof 'invan' ? iOrder.service_name : '',
+                        headers: [
+                            {
+                                header: 'ITEM NAME',
+                                id: 'product_name',
+                                width: 300,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(11)
+                                    return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'REAL STOCK',
+                                id: 'real_stock',
+                                width: 70,
+                                align: 'right'
+                            },
+                            {
+                                header: 'IN STOCK',
+                                id: 'in_stock',
+                                width: 70,
+                                align: 'right'
+                            },
+                            {
+                                header: 'ORDER QUANTITY',
+                                id: 'order_quantity',
+                                width: 70,
+                                align: 'right'
+                            }
+                        ],
+                        items: pdfItems
+                    }
+                    instance.inventoryPdf(doc, data)
+                    doc.end();
+                    stream.on('finish', async function () {
+                        reply.sendFile(`/${time}.pdf`)
+                        setTimeout(() => {
+                            fs.unlink(`./static/${time}.pdf`, (err) => {
+                                if (err) {
+                                    instance.send_Error('exported items file', JSON.stringify(err))
+                                }
+                            })
+                        }, 2000)
+                    })
+                }
+                catch (error) {
+                    return reply.send(error.message)
+                }
+            }
+        } catch (error) {
+            return reply.send(error.message)
+        }
+    }
+    instance.get('/internal/order/pdf/:id/:name', async (request, reply) => {
+
+        getInternalOrderFile(request, reply)
+        return reply;
+    })
     next()
 })

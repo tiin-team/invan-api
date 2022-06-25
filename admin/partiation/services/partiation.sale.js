@@ -157,7 +157,7 @@ module.exports = fp((instance, _, next) => {
       if (!service) {
         return instance.send_Error(
           `goods_partiation_sale
-          \ncannat find service
+          \ncannot find service
           \nservice_id: ${service_id}`,
         )
       }

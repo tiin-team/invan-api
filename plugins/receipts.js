@@ -993,7 +993,8 @@ module.exports = fp((instance, _, next) => {
           },
         },
       },
-      cashback_phone: { type: "string" }
+      cashback_phone: { type: "string" },
+      comment: { type: "string" },
     },
   });
 
