@@ -68,8 +68,6 @@ module.exports = (instance, options, next) => {
               allSum -= getFloat(item.total)
             else if (item.type == 'refund')
               allSum += getFloat(item.total)
-            // else
-            //   allSum += getFloat(data[i].balance)
 
             data.push({
               // _id: "61ac9418a914c3ba42f9e877",
@@ -102,21 +100,26 @@ module.exports = (instance, options, next) => {
         data.sort(((a, b) => b.date - a.date))
         const total = data.length;
         for (let i = 0; i < transactions.length; i++) {
-          allSum += data[i].status == 'pending' ? 0 : getFloat(data[i].balance)
+          allSum += transactions[i].status == 'pending'
+            ? 0
+            : getFloat(transactions[i].balance)
         }
         supp.transactions = data.slice((page - 1) * limit, limit * page);;
         //       supp.transactions = transactions;
         // Calculate supplier balance
-        const $match = { $match: { supplier_id: supp._id } }
-        const $group = { $group: { _id: null, balance: { $sum: '$balance' } } }
+        // const $match = { $match: { supplier_id: supp._id } }
+        // const $group = { $group: { _id: null, balance: { $sum: '$balance' } } }
 
-        const result = await instance.supplierTransaction.aggregate([$match, $group]);
-        const balance = result.length ? result[0].balance : 0;
+        // const result = await instance.supplierTransaction.aggregate([$match, $group]);
+        // const balance = result.length ? result[0].balance : 0;
         reply.ok({
           ...supp,
-          balance,
+          // balance,
           saved_balance: allSum,
           total: total,
+          page: Math.ceil(total / limit),
+          current_page: page,
+          limit: limit,
         })
       }
       catch (error) {
