@@ -16,7 +16,7 @@ module.exports = (instance, options, next) => {
 
         if (!supp) return reply.fourorfour('Supplier')
 
-        // const user_available_services = request.user.services.map(serv => serv.service);
+        const user_available_services = request.user.services.map(serv => serv.service);
 
         const query = {
           supplier_id: supp._id,
