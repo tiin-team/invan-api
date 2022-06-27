@@ -112,8 +112,8 @@ module.exports = (instance, options, next) => {
         data.sort(((a, b) => b.date - a.date))
         const total = data.length;
 
-        // supp.transactions = data.slice((page - 1) * limit, limit * page);
-        supp.transactions = transactions;
+        supp.transactions = data.slice((page - 1) * limit, limit * page);
+        // supp.transactions = transactions;
         // Calculate supplier balance
         // const $match = { $match: { supplier_id: supp._id } }
         // const $group = { $group: { _id: null, balance: { $sum: '$balance' } } }
