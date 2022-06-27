@@ -9,7 +9,7 @@ module.exports = (instance, options, next) => {
         const limit = !isNaN(request.query.limit) ? request.query.limit : 10;
         const page = !isNaN(request.query.page) ? request.query.page : 1;
         const { service } = request.query
-console.log(service, 999999999999);
+
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
           .lean();
@@ -21,15 +21,15 @@ console.log(service, 999999999999);
         const query = {
           supplier_id: supp._id,
           status: { $ne: 'pending' },
-          // service: { $in: user_available_services },
+          service: { $in: user_available_services },
         };
-        // if (service) {
-        //   if (!user_available_services.find(serv => serv + '' === service))
-        //     return reply.code(403).send('Forbidden service')
+        if (service) {
+          if (!user_available_services.find(serv => serv + '' === service))
+            return reply.code(403).send('Forbidden service')
 
-        //   query.service = instance.ObjectId(service);
-        // }
-
+          query.service = instance.ObjectId(service);
+        }
+        console.log(query, 'query', 999999999);
         const transactions = await instance.supplierTransaction.find(query).lean();
 
         // for (const [indexTran, tranItem] of transactions.entries()) {
