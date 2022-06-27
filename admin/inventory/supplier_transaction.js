@@ -321,7 +321,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
         const $sort = { $sort: { _id: 1 } };
 
         const $skip = { $skip: (page - 1) * limit };
-        const $limit = { $limit: limit };;
+        const $limit = { $limit: limit };
 
         const $lookup = {
             $lookup: {

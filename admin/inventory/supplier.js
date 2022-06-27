@@ -9,6 +9,7 @@ module.exports = (instance, options, next) => {
         const limit = !isNaN(request.query.limit) ? request.query.limit : 10;
         const page = !isNaN(request.query.page) ? request.query.page : 1;
         const { service } = request.query
+
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
           .lean();
@@ -26,7 +27,7 @@ module.exports = (instance, options, next) => {
           if (!user_available_services.find(serv => serv + '' === service))
             return reply.code(403).send('Forbidden service')
 
-          query.service = instance.ObjectId(request.query.service);
+          query.service = instance.ObjectId(service);
         }
 
         const transactions = await instance.supplierTransaction.find(query).lean();
@@ -53,6 +54,12 @@ module.exports = (instance, options, next) => {
         let data = transactions
         allSum = 0
         const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
+
+        for (let i = 0; i < transactions.length; i++) {
+          allSum += transactions[i].status == 'pending'
+            ? 0
+            : getFloat(transactions[i].balance)
+        }
 
         //kerak emas
         // let data = transactions.filter(element => element.status != 'pending')
@@ -99,12 +106,8 @@ module.exports = (instance, options, next) => {
 
         data.sort(((a, b) => b.date - a.date))
         const total = data.length;
-        for (let i = 0; i < transactions.length; i++) {
-          allSum += transactions[i].status == 'pending'
-            ? 0
-            : getFloat(transactions[i].balance)
-        }
-        supp.transactions = data.slice((page - 1) * limit, limit * page);;
+
+        supp.transactions = data.slice((page - 1) * limit, limit * page);
         //       supp.transactions = transactions;
         // Calculate supplier balance
         // const $match = { $match: { supplier_id: supp._id } }
