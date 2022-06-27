@@ -9,7 +9,7 @@ module.exports = (instance, options, next) => {
         const limit = !isNaN(request.query.limit) ? request.query.limit : 10;
         const page = !isNaN(request.query.page) ? request.query.page : 1;
         const { service } = request.query
-
+console.log(service);
         const supp = await instance.adjustmentSupplier
           .findOne({ _id: request.params.id })
           .lean();
