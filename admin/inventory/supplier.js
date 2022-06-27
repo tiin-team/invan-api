@@ -55,17 +55,18 @@ module.exports = (instance, options, next) => {
         allSum = 0
         const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
 
+        //kerak emas
+        // let data = transactions.filter(element => element.status != 'pending')
+        // delete query.status
+        // query.organization = supp.organization
+        const purChase = await instance.inventoryPurchase.find(query).lean();
+
         for (let i = 0; i < transactions.length; i++) {
           allSum += transactions[i].status == 'pending'
             ? 0
             : getFloat(transactions[i].balance)
         }
 
-        //kerak emas
-        // let data = transactions.filter(element => element.status != 'pending')
-        // delete query.status
-        // query.organization = supp.organization
-        const purChase = await instance.inventoryPurchase.find(query).lean();
         // .find({ supplier_id: supp._id, organization: supp.organization })
 
         for (const [index, item] of purChase.entries()) {
