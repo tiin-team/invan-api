@@ -109,7 +109,7 @@ module.exports = (instance, options, next) => {
         // }
         // const allSum = data.reduce((accum, item) => item.status == 'active' ? (getFloat(accum) + getFloat(item.balance)) : 0, 0)
 
-        data.sort(((a, b) => b.date - a.date))
+        data.sort(((a, b) => a.date - b.date))
         const total = data.length;
 
         supp.transactions = data.slice((page - 1) * limit, limit * page);
