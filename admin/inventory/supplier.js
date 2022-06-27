@@ -29,7 +29,7 @@ module.exports = (instance, options, next) => {
 
           query.service = instance.ObjectId(service);
         }
-        console.log(query, 'query', 999999999);
+
         const transactions = await instance.supplierTransaction.find(query).lean();
 
         // for (const [indexTran, tranItem] of transactions.entries()) {
@@ -78,7 +78,11 @@ module.exports = (instance, options, next) => {
 
             data.push({
               // _id: "61ac9418a914c3ba42f9e877",
-              balance: item.type == 'coming' ? -1 * item.total : item.type == 'refund' ? getFloat(item.total) : getFloat(item.total),
+              balance: item.type == 'coming'
+                ? -1 * item.total
+                : item.type == 'refund'
+                  ? getFloat(item.total)
+                  : getFloat(item.total),
               balance_type: "cash",
               currency: item.total_currency,
               date: item.purchase_order_date,
@@ -108,7 +112,7 @@ module.exports = (instance, options, next) => {
         const total = data.length;
 
         // supp.transactions = data.slice((page - 1) * limit, limit * page);
-              supp.transactions = transactions;
+        supp.transactions = transactions;
         // Calculate supplier balance
         // const $match = { $match: { supplier_id: supp._id } }
         // const $group = { $group: { _id: null, balance: { $sum: '$balance' } } }
@@ -119,10 +123,10 @@ module.exports = (instance, options, next) => {
           ...supp,
           // balance,
           saved_balance: allSum,
-          // total: total,
-          // page: Math.ceil(total / limit),
-          // current_page: page,
-          // limit: limit,
+          total: total,
+          page: Math.ceil(total / limit),
+          current_page: page,
+          limit: limit,
         })
       }
       catch (error) {
@@ -133,7 +137,7 @@ module.exports = (instance, options, next) => {
   })
   /*
     const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
-
+   
   instance.get('/inventory/get_supplier/:id', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, async (admin) => {
       try {
@@ -141,11 +145,11 @@ module.exports = (instance, options, next) => {
           .findOne({ _id: request.params.id })
           .lean();
         if (!supp) return reply.fourorfour('Supplier')
-
+   
         const query = { supplier_id: supp._id, status: { $ne: 'pending' } };
         // if (request.query.service) query.service = request.query.service;
         // else query.service = { $in: request.user.services.map(elem => elem.service) };
-
+   
         const purChase = await instance.inventoryPurchase.find(query).lean();
         const data = purChase.map(elem => {
           return {
@@ -161,7 +165,7 @@ module.exports = (instance, options, next) => {
             elem,
           }
         })
-
+   
         const transactions = await instance.supplierTransaction.find(query).lean();
         for (const [index, item] of transactions.entries()) {
           if (!data.find(x => x.p_order == item.document_id) && item.status != 'pending') {
@@ -169,7 +173,7 @@ module.exports = (instance, options, next) => {
               allSum -= getFloat(item.balance)
             else if (item.status == 'refund')
               allSum += getFloat(item.balance)
-
+   
             data.push({
               // _id: "61ac9418a914c3ba42f9e877",
               balance: item.status == 'coming'
@@ -188,7 +192,7 @@ module.exports = (instance, options, next) => {
             })
           }
         }
-
+   
         for (const [index, item] of purChase.entries()) {
           invent = await instance.inventoryPurchase.findOne({ _id: item.purchase_id }).lean()
           if (invent) {
@@ -200,20 +204,20 @@ module.exports = (instance, options, next) => {
             await instance.supplierTransaction.findByIdAndUpdate(item._id, { balance: blnc })
           }
         }
-
+   
         allSum = 0
-
+   
         for (let i = 0; i < data.length; i++) {
           allSum += data[i].status == 'pending' ? 0 : getFloat(data[i].balance)
         }
-
+   
         data.sort(((a, b) => a.date - b.date))
         supp.transactions = data;
         //       supp.transactions = transactions;
         // Calculate supplier balance
         const $match = { $match: { supplier_id: supp._id } }
         const $group = { $group: { _id: null, balance: { $sum: '$balance' } } }
-
+   
         const result = await instance.supplierTransaction.aggregate([$match, $group]);
         const balance = result.length ? result[0].balance : 0;
         reply.ok({
