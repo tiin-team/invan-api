@@ -16,19 +16,19 @@ module.exports = (instance, options, next) => {
 
         if (!supp) return reply.fourorfour('Supplier')
 
-        const user_available_services = request.user.services.map(serv => serv.service);
+        // const user_available_services = request.user.services.map(serv => serv.service);
 
         const query = {
           supplier_id: supp._id,
           status: { $ne: 'pending' },
-          service: { $in: user_available_services },
+          // service: { $in: user_available_services },
         };
-        if (service) {
-          if (!user_available_services.find(serv => serv + '' === service))
-            return reply.code(403).send('Forbidden service')
+        // if (service) {
+        //   if (!user_available_services.find(serv => serv + '' === service))
+        //     return reply.code(403).send('Forbidden service')
 
-          query.service = instance.ObjectId(service);
-        }
+        //   query.service = instance.ObjectId(service);
+        // }
 
         const transactions = await instance.supplierTransaction.find(query).lean();
 
@@ -51,7 +51,7 @@ module.exports = (instance, options, next) => {
         //   }
         // }
 
-        let data = transactions
+        const data = transactions
         allSum = 0
         const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
 
@@ -109,7 +109,7 @@ module.exports = (instance, options, next) => {
         // }
         // const allSum = data.reduce((accum, item) => item.status == 'active' ? (getFloat(accum) + getFloat(item.balance)) : 0, 0)
 
-        data.sort(((a, b) => a.date - b.date))
+        data.sort(((a, b) => b.date - a.date))
         const total = data.length;
 
         supp.transactions = data.slice((page - 1) * limit, limit * page);
