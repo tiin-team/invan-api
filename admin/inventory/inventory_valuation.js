@@ -742,7 +742,7 @@ module.exports = fp((instance, options, next) => {
           if (service && !user_available_services.find(serv => serv + '' === service)) {
             return reply.code(403).send('Acces denied')
           }
-          const result = await inventoryValuationResultByPrimarySupplier({
+          const result = await inventoryValuationResultPartiation({
             limit, page,
             organization: user.organization,
             search, service,

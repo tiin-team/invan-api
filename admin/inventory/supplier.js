@@ -477,13 +477,18 @@ module.exports = (instance, options, next) => {
       body.service = service._id
       body.service_name = service.name
 
-      const supplierTransaction = {
-        ...body,
-        supplier_id: supplier._id,
-        employee: user._id,
-        employee_name: user.name,
-        date: new Date().getTime()
-      }
+      body.supplier_id = supplier._id
+      body.employee = user._id
+      body.employee_name = user.name
+      body.date = new Date().getTime()
+      const supplierTransaction = body
+      // const supplierTransaction = {
+      //   ...body,
+      //   supplier_id: supplier._id,
+      //   employee: user._id,
+      //   employee_name: user.name,
+      //   date: new Date().getTime()
+      // }
       const { _id: id } = await new instance.supplierTransaction(supplierTransaction).save()
 
       if (!id) return reply.error('Could not save')

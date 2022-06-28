@@ -2620,5 +2620,25 @@ module.exports = fp((instance, _, next) => {
   });
   instance.decorate('employeesOrder', employeesOrdersSchema);
 
+  const goodsDiscount2 = instance.model('goodsDiscount2', {
+    organization: String,
+    services: [{
+      service_id: mongoose.Types.ObjectId,
+      service_name: String,
+      available: {
+        type: Boolean,
+        default: false
+      }
+    }],
+    created_time: Number,
+    name: String,
+    value: Number,
+    type: {
+      type: String,
+      enum: ['percentage', 'sum']
+    }
+  })
+  instance.decorate('goodsDiscount2', goodsDiscount2)
+
   next()
 })
