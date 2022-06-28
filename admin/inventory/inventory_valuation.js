@@ -379,12 +379,14 @@ async function inventoryValuationResultPartiation({ limit, page, supplier_id, or
   const items = await instance.goodsSales
     .aggregate([
       query,
-      { $skip: limit * (page - 1) },
-      { $limit: limit },
+      // { $skip: limit * (page - 1) },
+      // { $limit: limit },
       $project1,
       unwindSuppliers,
       projectPrimaryFields,
       $group,
+      { $skip: limit * (page - 1) },
+      { $limit: limit },
       // joinItems,
       { $sort: { _id: 1 } },
     ])
