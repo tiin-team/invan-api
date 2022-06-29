@@ -1233,9 +1233,9 @@ module.exports = fp((instance, _, next) => {
 
   const goodsDiscount = instance.model('goodsDiscount', {
     organization: String,
-    service: String,
+    // service: String,
     services: [{
-      service: mongoose.Schema.Types.ObjectId,
+      service: mongoose.Types.ObjectId,
       service_name: String,
       available: {
         type: Boolean,
@@ -1248,7 +1248,11 @@ module.exports = fp((instance, _, next) => {
     type: {
       type: String,
       enum: ['percentage', 'sum']
-    }
+    },
+    product_id: mongoose.Types.ObjectId,
+    product_name: String,
+    start_time: Number,
+    end_time: Number,
   })
   instance.decorate('goodsDiscount', goodsDiscount)
 
