@@ -39,7 +39,7 @@ module.exports = (instance, options, next) => {
 
   // create discount
 
-  const create_discount = (request, reply, admin) => {
+  const create_discount = async (request, reply, admin) => {
     const body = request.body
     const disc = await instance.goodsDiscount
       .findOne({
@@ -109,7 +109,6 @@ module.exports = (instance, options, next) => {
                 minLength: 24,
                 maxLength: 24,
               },
-              product_sku: { type: 'number' },
               sku: { type: 'number' },
               barcode: {
                 type: 'array',

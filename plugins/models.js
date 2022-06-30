@@ -1254,7 +1254,6 @@ module.exports = fp((instance, _, next) => {
     items: [{
       product_id: mongoose.Types.ObjectId,
       product_name: String,
-      product_sku: Number,
       sku: Number,
       barcode: {
         type: Array,
