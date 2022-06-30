@@ -853,6 +853,7 @@ module.exports = (instance, options, next) => {
         .allowDiskUse(true);
 console.log(
   ...pipeline.map(e => {
+    console.log(e, e['$skip']);
     if (!e['$skip'] || !e['$limit']) return e
   })
 );
