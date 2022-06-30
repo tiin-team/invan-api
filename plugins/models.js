@@ -1239,8 +1239,8 @@ module.exports = fp((instance, _, next) => {
       service_name: String,
       available: {
         type: Boolean,
-        default: false
-      }
+        default: false,
+      },
     }],
     created_time: Number,
     name: String,
@@ -1249,10 +1249,18 @@ module.exports = fp((instance, _, next) => {
       type: String,
       enum: ['percentage', 'sum']
     },
-    product_id: mongoose.Types.ObjectId,
-    product_name: String,
     start_time: Number,
     end_time: Number,
+    items: [{
+      product_id: mongoose.Types.ObjectId,
+      product_name: String,
+      product_sku: Number,
+      sku: Number,
+      barcode: {
+        type: Array,
+        default: []
+      },
+    }],
   })
   instance.decorate('goodsDiscount', goodsDiscount)
 

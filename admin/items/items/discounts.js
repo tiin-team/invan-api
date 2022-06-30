@@ -40,43 +40,37 @@ module.exports = (instance, options, next) => {
   // create discount
 
   const create_discount = (request, reply, admin) => {
-    instance.goodsDiscount.findOne({
-      organization: admin.organization,
-      name: request.body.name,
-      type: request.body.type,
-      value: request.body.value
-    }, (err, discs) => {
-      if (err || discs == null) {
-        if (request.body.name && request.body.value) {
-          var discountModel = instance.goodsDiscount(Object.assign({
-            organization: admin.organization
-          }, request.body))
-          discountModel.save((err) => {
-            if (err) {
-              reply.error('Error on saving')
-            }
-            else {
-              reply.ok()
-              instance.push_to_organization(104, admin.organization)
-            }
-          })
-        }
-        else {
-          reply.error('Error on creating')
-        }
-      }
-      else {
-        reply.send({
-          statusCode: 411,
-          message: 'discount Allready exist'
-        })
-      }
-    })
+    const body = request.body
+    const disc = await instance.goodsDiscount
+      .findOne({
+        organization: admin.organization,
+        name: body.name,
+        type: body.type,
+        value: body.value
+      })
+      .lean()
+
+    if (disc)
+      return reply.send({
+        statusCode: 411,
+        message: 'discount Allready exist'
+      })
+    if (body.name && body.value) {
+      const discountModel = instance.goodsDiscount(Object.assign({
+        organization: admin.organization
+      }, body))
+      const result = await discountModel.save()
+      reply.ok(result)
+      instance.push_to_organization(104, admin.organization)
+    }
+    else {
+      reply.error('Error on creating')
+    }
   }
 
   const createDiscountBody = {
     schema: {
-      params: {
+      body: {
         type: 'object',
         properties: {
           created_time: { type: 'number' },
@@ -86,11 +80,8 @@ module.exports = (instance, options, next) => {
             type: 'string',
             enum: ['percentage', 'sum']
           },
-          product_id: {
-            type: 'string',
-            minLength: 24,
-            maxLength: 24,
-          },
+          start_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
+          end_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
           services: {
             type: 'array',
             items: {
@@ -109,9 +100,23 @@ module.exports = (instance, options, next) => {
               },
             },
           },
-          product_name: { type: 'number' },
-          start_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
-          end_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
+          items: {
+            type: 'array',
+            items: {
+              product_name: { type: 'string' },
+              product_id: {
+                type: 'string',
+                minLength: 24,
+                maxLength: 24,
+              },
+              product_sku: { type: 'number' },
+              sku: { type: 'number' },
+              barcode: {
+                type: 'array',
+                items: { type: 'string' }
+              },
+            },
+          },
         }
       }
     }

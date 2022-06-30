@@ -393,13 +393,28 @@ async function inventoryValuationResultPartiation({ limit, page, supplier_id, or
     .allowDiskUse(true)
     .exec();
 
-  const total_items = await instance.goodsSales
-    .countDocuments(query["$match"])
-    .exec();
-
+  // const total_items = await instance.goodsSales
+  //   .countDocuments(query["$match"])
+  //   .exec();
+  const total = (await instance.goodsSales
+    .aggregate([
+      query,
+      // { $skip: limit * (page - 1) },
+      // { $limit: limit },
+      $project1,
+      unwindSuppliers,
+      projectPrimaryFields,
+      $group,
+      {
+        $count: "total",
+      },
+    ]))[0]
+    .total
   return {
-    total: total_items,
-    page: Math.ceil(total_items / limit),
+    // page: Math.ceil(total_items / limit),
+    // total: total_items,
+    total: total,
+    page: Math.ceil(total / limit),
     data: items,
   }
 }
