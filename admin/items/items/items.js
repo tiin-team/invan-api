@@ -855,7 +855,9 @@ module.exports = (instance, options, next) => {
       const total = (
         await instance.goodsSales
           .aggregate([
-            ...pipeline,
+            ...pipeline.map(e => {
+              if (!e['$skip'] || !e['$limit']) return e
+            }),
             {
               $count: "total",
             },
