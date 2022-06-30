@@ -853,9 +853,9 @@ module.exports = (instance, options, next) => {
         .allowDiskUse(true);
       console.log(
         ...pipeline.filter(e => {
-          console.log(!e['$skip'] === undefined && !e['$limit'] === undefined);
-          console.log(!e['$skip'] === undefined, !e['$limit'] === undefined);
-          return !e['$skip'] === undefined && !e['$limit'] === undefined
+          console.log(e['$skip'] === undefined && e['$limit'] === undefined);
+          console.log(e['$skip'] === undefined, e['$limit'] === undefined);
+          return e['$skip'] === undefined && e['$limit'] === undefined
         }),
         'pipeline'
       );
@@ -863,7 +863,7 @@ module.exports = (instance, options, next) => {
         await instance.goodsSales
           .aggregate([
             ...pipeline.filter(e => {
-              return !e['$skip'] === undefined && !e['$limit'] === undefined
+              return e['$skip'] === undefined && e['$limit'] === undefined
             }),
             {
               $count: "total",
