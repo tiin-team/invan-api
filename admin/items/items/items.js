@@ -594,9 +594,9 @@ module.exports = (instance, options, next) => {
 
     let items_count = 0;
 
-    try {
-      items_count = await instance.goodsSales.countDocuments(query);
-    } catch (error) { }
+    // try {
+    //   items_count = await instance.goodsSales.countDocuments(query);
+    // } catch (error) { }
 
     let page;
     try {
@@ -617,8 +617,7 @@ module.exports = (instance, options, next) => {
         limit = 200;
       }
     } catch (err) { }
-    console.log(request.params.limit);
-    console.log(limit);
+
     /*
     instance.goodsSales.aggregate([
       {
@@ -749,7 +748,7 @@ module.exports = (instance, options, next) => {
     }
 
     pipeline.push({ $sort: sort_by });
-    console.log({ $limit: limit }, '{ $limit: limit }');
+
     pipeline.push({ $skip: limit * (page - 1) });
     pipeline.push({ $limit: limit });
 
@@ -852,7 +851,17 @@ module.exports = (instance, options, next) => {
       const goods = await instance.goodsSales
         .aggregate(pipeline)
         .allowDiskUse(true);
-
+      const total = (
+        await instance.goodsSales
+          .aggregate([
+            ...pipeline,
+            {
+              $count: "total",
+            },
+          ])
+          .allowDiskUse(true)
+      )
+        .total;
       // var total = goods.length;
       var with_stocks = [];
       for (let i = 0; i < goods.length; i++) {
@@ -977,8 +986,10 @@ module.exports = (instance, options, next) => {
       }
 
       reply.ok({
-        total: Math.ceil(items_count / limit),
-        page: Math.ceil(items_count / limit),
+        // total: Math.ceil(items_count / limit),
+        // page: Math.ceil(items_count / limit),
+        total: total,
+        page: Math.ceil(total / limit),
         data: goods,
       });
     } catch (error) {
