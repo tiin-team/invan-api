@@ -853,9 +853,10 @@ module.exports = (instance, options, next) => {
         .allowDiskUse(true);
 console.log(
   ...pipeline.map(e => {
-    console.log(e['$skip']);
+    console.log(!e['$skip'] === undefined && !e['$limit'] === undefined);
     if (!e['$skip'] === undefined && !e['$limit'] === undefined) return e
-  })
+  }),
+  'pipeline'
 );
       const total = (
         await instance.goodsSales
