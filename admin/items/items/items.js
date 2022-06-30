@@ -617,7 +617,8 @@ module.exports = (instance, options, next) => {
         limit = 200;
       }
     } catch (err) { }
-
+    console.log(request.params.limit);
+    console.log(limit);
     /*
     instance.goodsSales.aggregate([
       {
@@ -748,7 +749,7 @@ module.exports = (instance, options, next) => {
     }
 
     pipeline.push({ $sort: sort_by });
-
+    console.log({ $limit: limit }, '{ $limit: limit }');
     pipeline.push({ $skip: limit * (page - 1) });
     pipeline.push({ $limit: limit });
 
@@ -852,7 +853,7 @@ module.exports = (instance, options, next) => {
         .aggregate(pipeline)
         .allowDiskUse(true);
 
-      var total = goods.length;
+      // var total = goods.length;
       var with_stocks = [];
       for (let i = 0; i < goods.length; i++) {
         goods[i].in_stock = 0;
