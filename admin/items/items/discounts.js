@@ -2,7 +2,7 @@ module.exports = (instance, options, next) => {
 
   // get discount list
 
-  const list_of_discounts = (request, reply, admin) => {
+  const list_of_discounts = async (request, reply, admin) => {
     const query = { organization: admin.organization }
     if (request.body) {
       if (request.body.services) {
