@@ -851,20 +851,11 @@ module.exports = (instance, options, next) => {
       const goods = await instance.goodsSales
         .aggregate(pipeline)
         .allowDiskUse(true);
-      console.log(
-        ...pipeline.filter(e => {
-          console.log(e['$skip'] === undefined && e['$limit'] === undefined);
-          console.log(e['$skip'] === undefined, e['$limit'] === undefined);
-          return e['$skip'] === undefined && e['$limit'] === undefined
-        }),
-        'pipeline'
-      );
+
       const total = (
         await instance.goodsSales
           .aggregate([
-            ...pipeline.filter(e => {
-              return e['$skip'] === undefined && e['$limit'] === undefined
-            }),
+            ...pipeline.filter(e => e['$skip'] === undefined && e['$limit'] === undefined),
             {
               $count: "total",
             },
