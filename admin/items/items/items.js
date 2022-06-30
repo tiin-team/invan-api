@@ -851,6 +851,15 @@ module.exports = (instance, options, next) => {
       const goods = await instance.goodsSales
         .aggregate(pipeline)
         .allowDiskUse(true);
+      console.log(
+        await instance.goodsSales
+          .aggregate([
+            ...pipeline,
+            {
+              $count: "total",
+            },
+          ])
+      );
       const total = (
         await instance.goodsSales
           .aggregate([
@@ -859,7 +868,6 @@ module.exports = (instance, options, next) => {
               $count: "total",
             },
           ])
-          .allowDiskUse(true)
       )
         .total;
       // var total = goods.length;
