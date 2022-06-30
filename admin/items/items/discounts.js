@@ -103,16 +103,19 @@ module.exports = (instance, options, next) => {
           items: {
             type: 'array',
             items: {
-              product_name: { type: 'string' },
-              product_id: {
-                type: 'string',
-                minLength: 24,
-                maxLength: 24,
-              },
-              sku: { type: 'number' },
-              barcode: {
-                type: 'array',
-                items: { type: 'string' }
+              type: 'object',
+              properties: {
+                product_name: { type: 'string' },
+                product_id: {
+                  type: 'string',
+                  minLength: 24,
+                  maxLength: 24,
+                },
+                sku: { type: 'number' },
+                barcode: {
+                  type: 'array',
+                  items: { type: 'string' }
+                },
               },
             },
           },
