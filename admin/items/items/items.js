@@ -851,7 +851,11 @@ module.exports = (instance, options, next) => {
       const goods = await instance.goodsSales
         .aggregate(pipeline)
         .allowDiskUse(true);
-
+console.log(
+  ...pipeline.map(e => {
+    if (!e['$skip'] || !e['$limit']) return e
+  })
+);
       const total = (
         await instance.goodsSales
           .aggregate([
