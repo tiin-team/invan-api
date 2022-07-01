@@ -197,7 +197,7 @@ module.exports = (instance, options, next) => {
       name: request.body.name,
       type: request.body.type,
       value: request.body.value
-    }, (err, disc) => {
+    }, async (err, disc) => {
       if (disc) {
         instance.allready_exist(reply)
       }
