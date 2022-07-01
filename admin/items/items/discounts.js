@@ -102,9 +102,12 @@ module.exports = (instance, options, next) => {
           start_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
           end_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
           services: {
-            type: 'string',
-            minLength: 24,
-            maxLength: 24,
+            type: 'array',
+            items: {
+              type: 'string',
+              minLength: 24,
+              maxLength: 24,
+            },
           },
           items: {
             type: 'array',
