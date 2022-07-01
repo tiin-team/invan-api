@@ -20,6 +20,8 @@ module.exports = (instance, options, next) => {
     const total = await instance.goodsDiscount.countDocuments(query)
     const discs = await instance.goodsDiscount
       .find(query)
+      .skip((page - 1) * limit)
+      .limit(limit)
       .lean()
 
     reply.ok({
