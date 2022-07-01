@@ -142,6 +142,51 @@ module.exports = (instance, options, next) => {
   })
 
   // update 
+  const updateDiscountBody = {
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          created_time: { type: 'number' },
+          name: { type: 'string' },
+          value: { type: 'number' },
+          type: {
+            type: 'string',
+            enum: ['percentage', 'sum']
+          },
+          start_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
+          end_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
+          services: {
+            type: 'array',
+            items: {
+              type: 'string',
+              minLength: 24,
+              maxLength: 24,
+            },
+          },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                product_name: { type: 'string' },
+                product_id: {
+                  type: 'string',
+                  minLength: 24,
+                  maxLength: 24,
+                },
+                sku: { type: 'number' },
+                barcode: {
+                  type: 'array',
+                  items: { type: 'string' }
+                },
+              },
+            },
+          },
+        }
+      }
+    }
+  }
 
   const list_of_discounts_update = (request, reply, admin) => {
     instance.goodsDiscount.findOne({
@@ -157,6 +202,26 @@ module.exports = (instance, options, next) => {
         instance.allready_exist(reply)
       }
       else {
+        const services = await instance.services
+        .find({ organization: admin.organization }, { name: 1 })
+        .lean();
+
+        request.body.services = services.map(serv => {
+          const current_service = request.body.services.find(e => e + '' === serv._id + '')
+          if (current_service)
+            return {
+              service: serv._id,
+              service_name: serv.name,
+              available: true,
+            }
+          else
+            return {
+              service: serv._id,
+              service_name: serv.name,
+              available: false,
+            }
+        })
+
         instance.goodsDiscount.updateOne({
           _id: request.params.id
         }, {
@@ -175,7 +240,7 @@ module.exports = (instance, options, next) => {
     })
   }
 
-  instance.post('/items/list_of_discounts/update/:id', options.version, (request, reply) => {
+  instance.post('/items/list_of_discounts/update/:id', { ...options.version, ...updateDiscountBody }, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
       list_of_discounts_update(request, reply, admin)
     })
