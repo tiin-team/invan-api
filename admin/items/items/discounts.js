@@ -4,7 +4,7 @@ module.exports = (instance, options, next) => {
 
   const list_of_discounts = async (request, reply, admin) => {
     const query = { organization: admin.organization }
-    const { search, services, service } = request.query.body
+    const { search, services, service } = request.body
 
     if (services && services.length > 0) {
       query.services = { $elemMatch: { service: { $in: services }, available: { $eq: true } } }
