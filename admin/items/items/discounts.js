@@ -4,19 +4,25 @@ module.exports = (instance, options, next) => {
 
   const list_of_discounts = async (request, reply, admin) => {
     const query = { organization: admin.organization }
-    if (request.body) {
-      if (request.body.services) {
-        if (request.body.services.length > 0) {
-          query.services = { $elemMatch: { service: { $in: request.body.services }, available: { $eq: true } } }
-        }
-      }
-      if (typeof request.body.service == typeof 'invan' && request.body.service != '') {
-        query.services = { $elemMatch: { service: { $in: [request.body.service] }, available: { $eq: true } } }
-      }
+    const { search, services, service } = request.query.body
+
+    if (services && services.length > 0) {
+      query.services = { $elemMatch: { service: { $in: services }, available: { $eq: true } } }
     }
+    if (typeof service == typeof 'invan' && service != '' && service.length === 24) {
+      query.services = { $elemMatch: { service: { $in: [service] }, available: { $eq: true } } }
+    }
+
     const page = parseInt(request.params.page)
     const limit = parseInt(request.params.limit)
 
+    if (search) {
+      query.$or = [
+        {
+          name: { $regex: search, $options: 'i' }
+        },
+      ]
+    }
     const total = await instance.goodsDiscount.countDocuments(query)
     const discs = await instance.goodsDiscount
       .find(query)
