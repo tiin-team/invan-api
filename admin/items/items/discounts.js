@@ -55,17 +55,36 @@ module.exports = (instance, options, next) => {
         statusCode: 411,
         message: 'discount Allready exist'
       })
-    if (body.name && body.value) {
-      const discountModel = instance.goodsDiscount(Object.assign({
-        organization: admin.organization
-      }, body))
-      const result = await discountModel.save()
-      reply.ok(result)
-      instance.push_to_organization(104, admin.organization)
-    }
-    else {
-      reply.error('Error on creating')
-    }
+    if (!(body.name && body.value))
+      return reply.error('Error on creating')
+
+    const services = await instance.services
+      .find({ organization: admin.organization }, { name: 1 })
+      .lean();
+
+    body.services = services.map(serv => {
+      const current_service = body.services.find(e => e + '' === serv._id + '')
+      if (current_service)
+        return {
+          service: serv._id,
+          service_name: serv.name,
+          available: true,
+        }
+      else
+        return {
+          service: serv._id,
+          service_name: serv.name,
+          available: false,
+        }
+    })
+    body.organization = admin.organization
+
+    const discountModel = instance.goodsDiscount(body)
+
+    const result = await discountModel.save()
+    reply.ok(result)
+
+    instance.push_to_organization(104, admin.organization)
   }
 
   const createDiscountBody = {
@@ -83,22 +102,9 @@ module.exports = (instance, options, next) => {
           start_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
           end_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
           services: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                service: {
-                  type: 'string',
-                  minLength: 24,
-                  maxLength: 24,
-                },
-                service_name: { type: 'string' },
-                available: {
-                  type: 'boolean',
-                  default: false
-                },
-              },
-            },
+            type: 'string',
+            minLength: 24,
+            maxLength: 24,
           },
           items: {
             type: 'array',
