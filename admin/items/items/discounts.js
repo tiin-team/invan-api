@@ -161,8 +161,8 @@ module.exports = (instance, options, next) => {
             type: 'string',
             enum: ['percentage', 'sum']
           },
-          start_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
-          end_time: { type: 'number', minimum: new Date().getTime() - 216000000 },
+          start_time: { type: 'number'  },
+          end_time: { type: 'number'  },
           services: {
             type: 'array',
             items: {
