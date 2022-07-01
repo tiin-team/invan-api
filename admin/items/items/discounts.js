@@ -20,6 +20,7 @@ module.exports = (instance, options, next) => {
     const total = await instance.goodsDiscount.countDocuments(query)
     const discs = await instance.goodsDiscount
       .find(query)
+      .sort({ _id: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .lean()
@@ -203,8 +204,8 @@ module.exports = (instance, options, next) => {
       }
       else {
         const services = await instance.services
-        .find({ organization: admin.organization }, { name: 1 })
-        .lean();
+          .find({ organization: admin.organization }, { name: 1 })
+          .lean();
 
         request.body.services = services.map(serv => {
           const current_service = request.body.services.find(e => e + '' === serv._id + '')
