@@ -429,13 +429,14 @@ module.exports = ((instance, _, next) => {
       try {
         const org_id = request.params.organization;
         const service_id = request.params.service;
-        const organization = await instance.organizations.findById(org_id);
+        const organization = await instance.organizations.findById(org_id).lean();
         if (!organization) {
           return reply.fourorfour('Organization')
         }
-        const service = await instance.services.findById(service_id);
+        const service = await instance.services.findById(service_id).lean();
         if (!service) {
-          return reply.error('Service')
+          return reply.fourorfour('Service')
+          // return reply.error('Service')
         }
 
         const itemsQuery = {
@@ -507,7 +508,7 @@ module.exports = ((instance, _, next) => {
           itemsText += `${items[index].name};${items[index].sku};${items[index].sku};7;${price};29;\n`;
         }
 
-        fs.writeFile(`./static/${timeStamp}.txt`, itemsText, function (err, data) {
+        fs.writeFile(`./static/${timeStamp}.txt`, itemsText, { encoding: 'utf-8' }, function (err, data) {
           reply.sendFile(`./${timeStamp}.txt`)
           setTimeout(() => {
             fs.unlink(`./static/${timeStamp}.txt`, (err) => {
