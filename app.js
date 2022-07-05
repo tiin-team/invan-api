@@ -25,7 +25,7 @@ module.exports = function (fastify, opts, next) {
   }
 
   fastify.register(Cors, { origin: true })
-
+  fastify.register(require('fastify-formbody'));
   fastify.register(require('fastify-file-upload'))
   fastify.register(require('fastify-static'), {
     root: path.join(__dirname, 'static'),
