@@ -83,7 +83,7 @@ module.exports = fp((instance, _, next) => {
       const files = request.raw.files
 
       const excel = files['excel']
-console.log(excel);
+
       if (excel) {
         const url = './static/' + excel.md5 + excel.name
         const wstream = fs.createWriteStream(url);
@@ -102,7 +102,7 @@ console.log(excel);
       }
     }
     catch (err) {
-      reply.error(error.message)
+      reply.error(err.message)
     }
   }
 
