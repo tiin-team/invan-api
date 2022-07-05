@@ -673,6 +673,7 @@ module.exports = (instance, options, next) => {
 
     const projectionItems = {
       $project: {
+        _id: 1,
         organization: 1,
         name: 1,
         category: 1,
