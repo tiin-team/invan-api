@@ -1924,7 +1924,7 @@ module.exports = (instance, options, next) => {
             return reply.error(error.message);
           }
         }
-        console.log(updateItem.services);
+        // console.log(updateItem.services);
         update_item(updateItem, request.params.id, admin, reply, true);
       });
     }

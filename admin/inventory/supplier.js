@@ -59,6 +59,8 @@ module.exports = (instance, options, next) => {
         // let data = transactions.filter(element => element.status != 'pending')
         // delete query.status
         // query.organization = supp.organization
+        query.document_id = { $nin: transactions.map(tr => tr.p_order) }
+
         const purChase = await instance.inventoryPurchase.find(query).lean();
 
         for (let i = 0; i < transactions.length; i++) {
@@ -71,31 +73,31 @@ module.exports = (instance, options, next) => {
 
         for (const [index, item] of purChase.entries()) {
           // if (!data.find(x => x.document_id == item.p_order)) {
-          if (!data.find(x => x.document_id == item.p_order) && item.status != 'pending') {
-            if (item.type == 'coming')
-              allSum -= getFloat(item.total)
-            else if (item.type == 'refund')
-              allSum += getFloat(item.total)
+          // if (!data.find(x => x.document_id == item.p_order) && item.status != 'pending') {
+          if (item.type == 'coming')
+            allSum -= getFloat(item.total)
+          else if (item.type == 'refund')
+            allSum += getFloat(item.total)
 
-            data.push({
-              // _id: "61ac9418a914c3ba42f9e877",
-              balance: item.type == 'coming'
-                ? -1 * item.total
-                : item.type == 'refund'
-                  ? getFloat(item.total)
-                  : getFloat(item.total),
-              balance_type: "cash",
-              currency: item.total_currency,
-              date: item.purchase_order_date,
-              document_id: item.p_order,
-              purchase_id: item._id,
-              // employee: item.organization"5f5c7d286786602b6cf1dc7a",
-              employee_name: item.ordered_by_name,
-              status: item.type,
-              supplier_id: item.supplier_id,
-              item
-            })
-          }
+          data.push({
+            // _id: "61ac9418a914c3ba42f9e877",
+            balance: item.type == 'coming'
+              ? -1 * item.total
+              : item.type == 'refund'
+                ? getFloat(item.total)
+                : getFloat(item.total),
+            balance_type: "cash",
+            currency: item.total_currency,
+            date: item.purchase_order_date,
+            document_id: item.p_order,
+            purchase_id: item._id,
+            // employee: item.organization"5f5c7d286786602b6cf1dc7a",
+            employee_name: item.ordered_by_name,
+            status: item.type,
+            supplier_id: item.supplier_id,
+            item
+          })
+          // }
         }
 
         // const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
