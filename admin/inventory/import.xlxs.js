@@ -158,7 +158,7 @@ module.exports = fp((instance, _, next) => {
       await invCount.save();
       await instance.inventoryCountItem.insertMany(invCountItems);
       await instance.inventoryHistory.insertMany(inventoryHistories);
-      console.log(invCountHistoryItems);
+
       if (invCountHistoryItems.length)
         await instance.inventoryCountHistory.insertMany(invCountHistoryItems);
 
