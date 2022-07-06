@@ -56,7 +56,7 @@ module.exports = fp((instance, _, next) => {
         type: 'partial',
         created_time: new Date().getTime(),
         closed_time: new Date().getTime(),
-        status: 'completed',
+        status: 'in_progress',
         created_by: user.name,
         created_by_id: instance.ObjectId(user._id),
         cost_currency: 'uzs',
