@@ -36,37 +36,48 @@ module.exports = fp((instance, _, next) => {
   */
   async function importExel(request, reply, user, _path) {
     try {
-      const organization = request.params.service
+      const organization = request.params.organization
       const service_id = request.params.service
-      // return readXlsFunc()
-      // return readExcelJsFunc()
+      const service = await instance.services
+        .findById(service_id, { _id: 1 })
+        .lean()
+
+      if (!service) return reply.code(404).send('Service not found')
+
       const data = await readFileXlsxFunc(_path)
 
       let not_updated = 0
       if (!data.length) return reply.error()
       for (const good of data) {
+        if (!good._id) {
+          not_updated++
+          continue
+        }
+
         const res = await instance.goodsSales.findOneAndUpdate(
           {
             _id: good._id,
             organization: organization,
             services: {
               $elemMatch: {
-                service: service_id
-              }
-            }
+                service: service._id,
+              },
+            },
           },
           {
             $set: {
               'services.$.in_stock': good.in_stock
             }
           },
-          { lean: true },
+          { lean: true, new: true },
         )
-          .then(() => 1)
+          .then((res) => {
+            return res === null ? -1 : 1
+          })
           .catch(() => -1)
 
         if (res === -1)
-          not_updated += 1
+          not_updated++
       }
 
       reply.ok({
@@ -119,15 +130,16 @@ module.exports = fp((instance, _, next) => {
   }
 
   instance.post('/inventory/:organization/:service', version, (request, reply) => {
-    instance.authorization(request, reply, (user) => {
-      if (
-        user.organization != request.params.organization ||
-        !user.services ||
-        !user.services.find(serv => serv.service + '' === request.params.service)
-      )
-        return reply.code(403).send('Forbidden')
-      upload_excel_file_mxik(request, reply, user);
-    });
+    const user = {}
+    // instance.authorization(request, reply, (user) => {
+    //   if (
+    //     user.organization != request.params.organization ||
+    //     !user.services ||
+    //     !user.services.find(serv => serv.service + '' === request.params.service)
+    //   )
+    // return reply.code(403).send('Forbidden')
+    upload_excel_file_mxik(request, reply, user);
+    // });
   })
   next()
 })
