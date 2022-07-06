@@ -245,16 +245,15 @@ module.exports = fp((instance, _, next) => {
   }
 
   instance.post('/inventory/:organization/:service', version, (request, reply) => {
-    const user = {}
-    // instance.authorization(request, reply, (user) => {
-    //   if (
-    //     user.organization != request.params.organization ||
-    //     !user.services ||
-    //     !user.services.find(serv => serv.service + '' === request.params.service)
-    //   )
-    // return reply.code(403).send('Forbidden')
-    upload_excel_file_mxik(request, reply, user);
-    // });
+    instance.authorization(request, reply, (user) => {
+      if (
+        user.organization != request.params.organization ||
+        !user.services ||
+        !user.services.find(serv => serv.service + '' === request.params.service)
+      )
+        return reply.code(403).send('Forbidden')
+      upload_excel_file_mxik(request, reply, user);
+    });
   })
   next()
 })
