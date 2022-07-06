@@ -47,15 +47,15 @@ module.exports = fp((instance, _, next) => {
     try {
       const count_length = await instance.inventoryCount.countDocuments({ organization: user.organization });
       const p_order = 'IC' + (1001 + count_length)
-
+      const date = new Date()
       const invcount = {
         organization: user.organization,
         service: instance.ObjectId(service),
         service_name: service.name,
         p_order: p_order,
         type: 'partial',
-        created_time: new Date().getTime(),
-        closed_time: new Date().getTime(),
+        created_time: date.getTime(),
+        closed_time: date.getTime(),
         status: 'in_progress',
         created_by: user.name,
         created_by_id: instance.ObjectId(user._id),
@@ -78,6 +78,8 @@ module.exports = fp((instance, _, next) => {
             cost: 1,
             barcode: 1,
             services: 1,
+            category_id: 1,
+            category_name: 1,
             cost_currency: 1,
           },
         )
@@ -98,7 +100,8 @@ module.exports = fp((instance, _, next) => {
       }
 
       const invCountItems = [];
-
+      const invCountHistoryItems = []
+      const inventoryHistories = []
       for (const item of items) {
         if (gObj[item._id] != undefined) {
           invCountItems.push({
@@ -119,6 +122,33 @@ module.exports = fp((instance, _, next) => {
           })
           total.total_difference += item.in_stock - gObj[item._id].in_stock
           total.total_cost_difference += (item.in_stock - gObj[item._id].in_stock) * gObj[item._id].cost
+
+          if (item.in_stock - gObj[item._id].in_stock !== 0) {
+            invCountHistoryItems.push({
+              count_id: instance.ObjectId(invCount._id),
+              product_id: gObj[item._id]._id,
+              product_name: gObj[item._id].name,
+              value: item.in_stock - gObj[item._id].in_stock
+            })
+            inventoryHistories.push({
+              organization: user.organization,
+              date: date.getTime(),
+              unique: p_order,
+              category_id: gObj[item._id].category_id,
+              category_name: gObj[item._id].category_name,
+              product_id: gObj[item._id]._id,
+              product_name: gObj[item._id].name,
+              cost: gObj[item._id].cost,
+              service: service._id,
+              service_name: service.name,
+              employee_id: user._id,
+              employee_name: user.name,
+              reason: 'recounted',
+              type: 'item',
+              adjustment: gObj[item._id].in_stock,
+              stock_after: item.in_stock,
+            })
+          }
         }
       }
 
@@ -127,6 +157,9 @@ module.exports = fp((instance, _, next) => {
 
       await invCount.save();
       await instance.inventoryCountItem.insertMany(invCountItems);
+      await instance.inventoryHistory.insertMany(inventoryHistories);
+      if (invCountHistoryItems.length)
+        await instance.inventoryCountHistory.insertMany(invCountHistoryItems);
 
       return {
         _id: invCount._id,

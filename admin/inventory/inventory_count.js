@@ -1015,9 +1015,11 @@ module.exports = (instance, options, next) => {
 
   instance.get('/inventory/count/history/get/:id', options.version, async (request, reply) => {
     try {
-      let histories = await instance.inventoryCountHistory.find({
-        count_id: request.params.id
-      });
+      let histories = await instance.inventoryCountHistory
+        .find({
+          count_id: request.params.id
+        })
+        .lean();
       reply.ok(histories)
     } catch (error) {
       reply.error(error.message);
