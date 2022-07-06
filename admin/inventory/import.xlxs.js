@@ -133,6 +133,7 @@ module.exports = fp((instance, _, next) => {
         error: '',
       }
     } catch (er) {
+      console.log(er);
       return {
         _id: null,
         error: er,
