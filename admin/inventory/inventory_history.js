@@ -162,27 +162,49 @@ module.exports = (instance, options, next) => {
       skipAll,
       limitAll,
       lookupItems,
-      lookupService,
-      lookupEmployees,
+      // lookupService,
+      // lookupEmployees,
     ])
       .allowDiskUse(true)
       .exec();
-
+    const parents = await instance.goodsSales
+      .find(
+        {
+          variant_items: {
+            $elemMatch: {
+              $eq: histories.map(e => e.product_id)
+            }
+          }
+        },
+        { name: 1 }
+      )
+      .lean()
+    const parentsObj = {}
+    for (const parent_item of parents) {
+      parentsObj[parent_item._id] = parent_item
+    }
     for (const index in histories) {
       if (histories[index].product.length > 0) {
         if (histories[index].product[0].item_type == 'variant') {
           let current_item = histories[index].product[0]
           try {
-            const parent = await instance.goodsSales.findOne({
-              variant_items: {
-                $elemMatch: {
-                  $eq: current_item._id
-                }
-              }
-            })
+            // const parent = await instance.goodsSales
+            //   .findOne(
+            //     {
+            //       variant_items: {
+            //         $elemMatch: {
+            //           $eq: current_item._id
+            //         }
+            //       },
+            //     },
+            //     { name: 1 }
+            //   )
+            //   .lean()
 
-            if (parent) {
-              histories[index].product_name = `${parent.name} ( ${current_item.name} )`
+            // if (parent) {
+            if (parentsObj[current_item._id]) {
+              // histories[index].product_name = `${parent.name} ( ${current_item.name} )`
+              histories[index].product_name = `${parentsObj[current_item._id].name} ( ${current_item.name} )`
             }
           }
           catch (err) { }
@@ -194,14 +216,14 @@ module.exports = (instance, options, next) => {
       }
       delete histories[index].product
 
-      if (histories[index].service.length > 0) {
-        histories[index].service_name = histories[index].service[0].name
-      }
-      delete histories[index].service
-      if (histories[index].employee.length > 0) {
-        histories[index].employee_name = histories[index].employee[0].name
-      }
-      delete histories[index].employee;
+      // if (histories[index].service.length > 0) {
+      //   histories[index].service_name = histories[index].service[0].name
+      // }
+      // delete histories[index].service
+      // if (histories[index].employee.length > 0) {
+      //   histories[index].employee_name = histories[index].employee[0].name
+      // }
+      // delete histories[index].employee;
       histories[index].adjustment = Math.round(histories[index].adjustment * 100) / 100
       histories[index].stock_after = Math.round(histories[index].stock_after * 100) / 100
     }

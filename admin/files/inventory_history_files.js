@@ -281,11 +281,31 @@ async function getExcelFileNew(request, reply, instance) {
         const limitHistory = {
             $limit: 10000
         }
+        // pipeline bilan faqat barcodeni ozini olib kelish krk, qilindi
+        // faqat birinchisini olish krk
         const lookupItems = {
             $lookup: {
                 from: 'goodssales',
-                localField: 'product_id',
-                foreignField: '_id',
+                // localField: 'product_id',
+                // foreignField: '_id',
+
+                let: { product_id: '$product_id' },
+                pipeline: [
+                    {
+                        $expr: {
+                            $eq: [
+                                { $toString: "$$product_id" },
+                                { $toString: "$_id" },
+                            ]
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            barcode: 1,
+                        },
+                    },
+                ],
                 as: 'product'
             }
         }
