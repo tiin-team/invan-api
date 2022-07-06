@@ -6,12 +6,12 @@ const fs = require('fs')
 
 /**
  * @param {string} path
- * @return {{
- * _id: string
+ * @return {Promise<{
+ * _id: string,
  *  sku: number,
  *  name: string,
  *  in_stock: number,
- * }[]}
+ * }[]>}
 */
 async function readFileXlsxFunc(path) {
   try {
@@ -36,19 +36,16 @@ module.exports = fp((instance, _, next) => {
   */
   async function importExel(request, reply, user, _path) {
     try {
-
-      // const _path = join(__dirname, './ExcelItems.xls')
-      console.log(_path);
-
       const organization = request.params.service
       const service_id = request.params.service
       // return readXlsFunc()
       // return readExcelJsFunc()
-      const data = readFileXlsxFunc(_path)
-      // console.log(data);
+      const data = await readFileXlsxFunc(_path)
+
+      let not_updated = 0
       if (!data.length) return reply.error()
       for (const good of data) {
-        await instance.goodsSales.findOneAndUpdate(
+        const res = await instance.goodsSales.findOneAndUpdate(
           {
             _id: good._id,
             organization: organization,
@@ -65,9 +62,24 @@ module.exports = fp((instance, _, next) => {
           },
           { lean: true },
         )
+          .then(() => 1)
+          .catch(() => -1)
+
+        if (res === -1)
+          not_updated += 1
       }
 
-      reply.ok()
+      reply.ok({
+        all_data: data.length,
+        success: data.length - not_updated,
+        fail_count: not_updated,
+      })
+
+      fs.unlink(_path, (err) => {
+        if (err) {
+          instance.send_Error(`Unlink file, path: ${_path}`, JSON.stringify(err))
+        }
+      })
     } catch (error) {
       reply.error(error)
     }
@@ -108,6 +120,12 @@ module.exports = fp((instance, _, next) => {
 
   instance.post('/inventory/:organization/:service', version, (request, reply) => {
     instance.authorization(request, reply, (user) => {
+      if (
+        user.organization != request.params.organization ||
+        !user.services ||
+        !user.services.find(serv => serv.service + '' === request.params.service)
+      )
+        return reply.code(403).send('Forbidden')
       upload_excel_file_mxik(request, reply, user);
     });
   })
