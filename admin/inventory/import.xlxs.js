@@ -87,8 +87,8 @@ module.exports = fp((instance, _, next) => {
 
       const gObj = {}
       for (const g of goods) {
-        serv = g.services.find(s => s.service + '' === service._id + '')
-        g.in_stock = serv.in_stock
+        serv = g.services.find(s => s.service + '' === service._id + '' || s.service_id + '' === service._id + '')
+        g.in_stock = serv && serv.in_stock ? serv.in_stock : 0
         gObj[g._id] = g
       }
 
@@ -122,7 +122,8 @@ module.exports = fp((instance, _, next) => {
           })
           total.total_difference += item.in_stock - gObj[item._id].in_stock
           total.total_cost_difference += (item.in_stock - gObj[item._id].in_stock) * gObj[item._id].cost
-
+          console.log(item.in_stock, 'item.in_stock');
+          console.log(gObj[item._id].in_stock, 'gObj[item._id].in_stock');
           if (item.in_stock - gObj[item._id].in_stock !== 0) {
             invCountHistoryItems.push({
               count_id: instance.ObjectId(invCount._id),
