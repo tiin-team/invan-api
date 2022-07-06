@@ -36,7 +36,7 @@ module.exports = fp((instance, _, next) => {
    * name: string;
    * in_stock: number;
    * }[]} items 
-   * @param {*} service 
+   * @param {{_id: string, name: string}} service 
    * @param {*} user 
    * @return {Promise<{
    *   _id: string,
@@ -100,7 +100,7 @@ module.exports = fp((instance, _, next) => {
       const invCountItems = [];
 
       for (const item of items) {
-        if (gObj[item.product_id] != undefined) {
+        if (gObj[item._id] != undefined) {
           invCountItems.push({
             organization: user.organization,
             service: instance.ObjectId(service),
@@ -151,7 +151,7 @@ module.exports = fp((instance, _, next) => {
       const organization = request.params.organization
       const service_id = request.params.service
       const service = await instance.services
-        .findById(service_id, { _id: 1 })
+        .findById(service_id, { _id: 1, name: 1 })
         .lean()
 
       if (!service) return reply.code(404).send('Service not found')
