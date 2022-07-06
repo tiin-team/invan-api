@@ -98,7 +98,7 @@ module.exports = fp((instance, _, next) => {
       }
 
       const invCountItems = [];
-console.log(items);
+
       for (const item of items) {
         if (gObj[item._id] != undefined) {
           invCountItems.push({
@@ -106,19 +106,19 @@ console.log(items);
             service: instance.ObjectId(service),
             service_name: service.name,
             count_id: instance.ObjectId(invCount._id),
-            product_id: gObj[item.product_id]._id,
-            barcode: gObj[item.product_id].barcode,
-            product_name: gObj[item.product_id].name,
-            sku: gObj[item.product_id].sku,
-            exp_in_stock: gObj[item.product_id].in_stock,
-            cost: gObj[item.product_id].cost,
+            product_id: gObj[item._id]._id,
+            barcode: gObj[item._id].barcode,
+            product_name: gObj[item._id].name,
+            sku: gObj[item._id].sku,
+            exp_in_stock: gObj[item._id].in_stock,
+            cost: gObj[item._id].cost,
             cost_currency: 'uzs',
             counted: item.in_stock,
-            difference: item.in_stock - gObj[item.product_id].in_stock,
-            cost_difference: (item.in_stock - gObj[item.product_id].in_stock) * gObj[item.product_id].cost
+            difference: item.in_stock - gObj[item._id].in_stock,
+            cost_difference: (item.in_stock - gObj[item._id].in_stock) * gObj[item._id].cost
           })
-          total.total_difference += item.in_stock - gObj[item.product_id].in_stock
-          total.total_cost_difference += (item.in_stock - gObj[item.product_id].in_stock) * gObj[item.product_id].cost
+          total.total_difference += item.in_stock - gObj[item._id].in_stock
+          total.total_cost_difference += (item.in_stock - gObj[item._id].in_stock) * gObj[item._id].cost
         }
       }
 
