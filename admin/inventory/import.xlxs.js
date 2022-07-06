@@ -195,6 +195,9 @@ module.exports = fp((instance, _, next) => {
 
       let not_updated = 0
       if (!data.length) return reply.error()
+
+      const invCount = await createInventoryCount(data, service, user)
+
       for (const good of data) {
         if (!good._id) {
           not_updated++
@@ -226,8 +229,6 @@ module.exports = fp((instance, _, next) => {
         if (res === -1)
           not_updated++
       }
-
-      const invCount = await createInventoryCount(data, service, user)
 
       reply.ok({
         inv_count_id: invCount._id,
