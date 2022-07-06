@@ -196,6 +196,7 @@ module.exports = fp((instance, _, next) => {
 
       reply.ok({
         inv_count_id: invCount._id,
+        inv_create_error: invCount.error,
         all_data: data.length,
         success: data.length - not_updated,
         fail_count: not_updated,
