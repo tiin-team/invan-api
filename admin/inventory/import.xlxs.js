@@ -29,6 +29,118 @@ module.exports = fp((instance, _, next) => {
   const version = { version: '2.0.0' }
 
   /**
+   * 
+   * @param {{
+   * _id: string;
+   * sku: number;
+   * name: string;
+   * in_stock: number;
+   * }[]} items 
+   * @param {*} service 
+   * @param {*} user 
+   * @return {Promise<{
+   *   _id: string,
+   *   error: string,
+   * }>}
+   */
+  async function createInventoryCount(items, service, user) {
+    try {
+      const count_length = await instance.inventoryCount.countDocuments({ organization: user.organization });
+      const p_order = 'IC' + (1001 + count_length)
+
+      const invcount = {
+        organization: user.organization,
+        service: instance.ObjectId(service),
+        service_name: service.name,
+        p_order: p_order,
+        type: 'partial',
+        created_time: new Date().getTime(),
+        closed_time: new Date().getTime(),
+        status: 'completed',
+        created_by: user.name,
+        created_by_id: instance.ObjectId(user._id),
+        cost_currency: 'uzs',
+      }
+
+      const query = {
+        organization: user.organization,
+        _id: {
+          $in: items.map(e => e._id)
+        }
+      }
+
+      const goods = await instance.goodsSales
+        .find(
+          query,
+          {
+            sku: 1,
+            name: 1,
+            cost: 1,
+            barcode: 1,
+            services: 1,
+            cost_currency: 1,
+          },
+        )
+        .lean();
+
+      const gObj = {}
+      for (const g of goods) {
+        serv = g.services.find(s => s.service + '' === service._id + '')
+        g.in_stock = serv.in_stock
+        gObj[g._id] = g
+      }
+
+      const invCount = new instance.inventoryCount(invcount)
+
+      const total = {
+        total_difference: 0,
+        total_cost_difference: 0
+      }
+
+      const invCountItems = [];
+
+      for (const item of items) {
+        if (gObj[item.product_id] != undefined) {
+          invCountItems.push({
+            organization: user.organization,
+            service: instance.ObjectId(service),
+            service_name: service.name,
+            count_id: instance.ObjectId(invCount._id),
+            product_id: gObj[item.product_id]._id,
+            barcode: gObj[item.product_id].barcode,
+            product_name: gObj[item.product_id].name,
+            sku: gObj[item.product_id].sku,
+            exp_in_stock: gObj[item.product_id].in_stock,
+            cost: gObj[item.product_id].cost,
+            cost_currency: 'uzs',
+            counted: item.in_stock,
+            difference: item.in_stock - gObj[item.product_id].in_stock,
+            cost_difference: (item.in_stock - gObj[item.product_id].in_stock) * gObj[item.product_id].cost
+          })
+          total.total_difference += item.in_stock - gObj[item.product_id].in_stock
+          total.total_cost_difference += (item.in_stock - gObj[item.product_id].in_stock) * gObj[item.product_id].cost
+        }
+      }
+
+      invCount.total_difference = total.total_difference
+      invCount.total_cost_difference = total.total_cost_difference
+
+      await invCount.save();
+      await instance.inventoryCountItem.insertMany(invCountItems);
+
+      return {
+        _id: invCount._id,
+        error: '',
+      }
+    } catch (er) {
+      return {
+        _id: null,
+        error: er,
+      }
+    }
+  }
+
+  /**
    * @param {import('fastify').FastifyRequest<IncomingMessage, import('fastify').DefaultQuery, import('fastify').DefaultParams, import('fastify').DefaultHeaders, any>} request
    * @param {import('fastify').FastifyReply<ServerResponse>} reply
    * @param {any} user
@@ -80,7 +192,10 @@ module.exports = fp((instance, _, next) => {
           not_updated++
       }
 
+      const invCount = await createInventoryCount(data, service, user)
+
       reply.ok({
+        inv_count_id: invCount._id,
         all_data: data.length,
         success: data.length - not_updated,
         fail_count: not_updated,
