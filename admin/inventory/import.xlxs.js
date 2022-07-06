@@ -98,7 +98,7 @@ module.exports = fp((instance, _, next) => {
       }
 
       const invCountItems = [];
-
+console.log(items);
       for (const item of items) {
         if (gObj[item._id] != undefined) {
           invCountItems.push({
