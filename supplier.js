@@ -23,7 +23,16 @@ module.exports = function (fastify, opts, next) {
     })
 
     fastify.register(AutoLoad, {
-        dir: path.join(__dirname, 'supplier'),
+        dir: path.join(__dirname, 'supplier/auth'),
+        options: Object.assign(options, opts)
+    })
+
+    fastify.register(AutoLoad, {
+        dir: path.join(__dirname, 'supplier/routes'),
+        options: Object.assign(options, opts)
+    })
+    fastify.register(AutoLoad, {
+        dir: path.join(__dirname, 'supplier/sms'),
         options: Object.assign(options, opts)
     })
 
