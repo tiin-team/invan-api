@@ -250,6 +250,7 @@ module.exports = fp((instance, _, next) => {
 
       // tovarlarni update qilish
       // const not_updated = await updateGoods(data, service)
+      const not_updated = data.length
 
       reply.ok({
         inv_count_id: invCount._id,
