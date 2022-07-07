@@ -1,8 +1,8 @@
 const XLSX = require('xlsx')
-const { join } = require('path')
 const fp = require('fastify-plugin');
 const { IncomingMessage, ServerResponse } = require('http');
 const fs = require('fs')
+const joi = require('joi');
 
 /**
  * @param {string} path
@@ -246,17 +246,31 @@ module.exports = fp((instance, _, next) => {
 
       if (!data.length) return reply.error()
 
-      const invCount = await createInventoryCount(data, service, user)
+      const itemsSchema = joi.array().items({
+        _id: joi.string().length(24).required(),
+        name: joi.string().required(),
+        sku: joi.number(),
+        in_stock: joi.number().required(),
+      }).options({ allowUnknown: true })
+
+      const { error, value: items } = itemsSchema.validate(data);
+      if (error) {
+        const { details } = error;
+        const message = details.map(i => i.message).join(', ');
+        return reply.error(message)
+      }
+
+      const invCount = await createInventoryCount(items, service, user)
 
       // tovarlarni update qilish
       // const not_updated = await updateGoods(data, service)
-      const not_updated = data.length
+      const not_updated = items.length
 
       reply.ok({
         inv_count_id: invCount._id,
         inv_create_error: invCount.error,
-        all_data: data.length,
-        success: data.length - not_updated,
+        all_data: items.length,
+        success: items.length - not_updated,
         fail_count: not_updated,
       })
 
