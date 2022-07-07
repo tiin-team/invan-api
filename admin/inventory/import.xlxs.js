@@ -250,8 +250,8 @@ module.exports = fp((instance, _, next) => {
         .array()
         .items({
           _id: joi.string().length(24).required(),
-          name: joi.string().required(),
-          sku: joi.number(),
+          // name: joi.string().required(),
+          // sku: joi.number(),
           in_stock: joi.number().required(),
         })
         .options({ allowUnknown: true })
