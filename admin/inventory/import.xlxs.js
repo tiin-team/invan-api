@@ -28,6 +28,55 @@ async function readFileXlsxFunc(path) {
 module.exports = fp((instance, _, next) => {
   const version = { version: '2.0.0' }
 
+
+  /**
+   * @param {{
+   * _id: string,
+   *  sku: number,
+   *  name: string,
+   *  in_stock: number,
+   * }[]} data
+   * @param {{_id: string, name: string, organization: string}} service 
+   * @return {Promise<number>}
+  */
+  async function updateGoods(data, service, organization) {
+    let not_updated = 0;
+
+    for (const good of data) {
+      if (!good._id) {
+        not_updated++
+        continue
+      }
+
+      const res = await instance.goodsSales.findOneAndUpdate(
+        {
+          _id: good._id,
+          organization: service.organization,
+          services: {
+            $elemMatch: {
+              service: service._id,
+            },
+          },
+        },
+        {
+          $set: {
+            'services.$.in_stock': good.in_stock
+          }
+        },
+        { lean: true, new: true },
+      )
+        .then((res) => {
+          return res === null ? -1 : 1
+        })
+        .catch(() => -1)
+
+      if (res === -1)
+        not_updated++
+    }
+
+    return not_updated;
+  }
+
   /**
    * 
    * @param {{
@@ -36,7 +85,7 @@ module.exports = fp((instance, _, next) => {
    * name: string;
    * in_stock: number;
    * }[]} items 
-   * @param {{_id: string, name: string}} service 
+   * @param {{_id: string, name: string, organization: string}} service 
    * @param {*} user 
    * @return {Promise<{
    *   _id: string,
@@ -157,7 +206,7 @@ module.exports = fp((instance, _, next) => {
 
       await invCount.save();
       await instance.inventoryCountItem.insertMany(invCountItems);
-      await instance.inventoryHistory.insertMany(inventoryHistories);
+      // await instance.inventoryHistory.insertMany(inventoryHistories);
 
       if (invCountHistoryItems.length)
         await instance.inventoryCountHistory.insertMany(invCountHistoryItems);
@@ -186,49 +235,22 @@ module.exports = fp((instance, _, next) => {
       const organization = request.params.organization
       const service_id = request.params.service
       const service = await instance.services
-        .findById(service_id, { _id: 1, name: 1 })
+        .findOne(
+          { _id: service_id, organization: organization },
+          { _id: 1, name: 1, organization: 1 },
+        )
         .lean()
 
       if (!service) return reply.code(404).send('Service not found')
 
       const data = await readFileXlsxFunc(_path)
 
-      let not_updated = 0
       if (!data.length) return reply.error()
 
       const invCount = await createInventoryCount(data, service, user)
 
-      for (const good of data) {
-        if (!good._id) {
-          not_updated++
-          continue
-        }
-
-        const res = await instance.goodsSales.findOneAndUpdate(
-          {
-            _id: good._id,
-            organization: organization,
-            services: {
-              $elemMatch: {
-                service: service._id,
-              },
-            },
-          },
-          {
-            $set: {
-              'services.$.in_stock': good.in_stock
-            }
-          },
-          { lean: true, new: true },
-        )
-          .then((res) => {
-            return res === null ? -1 : 1
-          })
-          .catch(() => -1)
-
-        if (res === -1)
-          not_updated++
-      }
+      // tovarlarni update qilish
+      const not_updated = await updateGoods(data, service)
 
       reply.ok({
         inv_count_id: invCount._id,
