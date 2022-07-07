@@ -246,12 +246,15 @@ module.exports = fp((instance, _, next) => {
 
       if (!data.length) return reply.error()
 
-      const itemsSchema = joi.array().items({
-        _id: joi.string().length(24).required(),
-        name: joi.string().required(),
-        sku: joi.number(),
-        in_stock: joi.number().required(),
-      }).options({ allowUnknown: true })
+      const itemsSchema = joi
+        .array()
+        .items({
+          _id: joi.string().length(24).required(),
+          name: joi.string().required(),
+          sku: joi.number(),
+          in_stock: joi.number().required(),
+        })
+        .options({ allowUnknown: true })
 
       const { error, value: items } = itemsSchema.validate(data);
       if (error) {
