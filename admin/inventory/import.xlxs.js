@@ -216,7 +216,6 @@ module.exports = fp((instance, _, next) => {
         error: '',
       }
     } catch (er) {
-      console.log(er);
       return {
         _id: null,
         error: er,
@@ -250,7 +249,7 @@ module.exports = fp((instance, _, next) => {
       const invCount = await createInventoryCount(data, service, user)
 
       // tovarlarni update qilish
-      const not_updated = await updateGoods(data, service)
+      // const not_updated = await updateGoods(data, service)
 
       reply.ok({
         inv_count_id: invCount._id,
