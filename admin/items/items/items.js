@@ -2610,25 +2610,29 @@ module.exports = (instance, options, next) => {
               const CSVString = my_array.join('\n');
               const file = new Date().getTime() + '_ITEMS.csv';
               const file_path = join(__dirname, '../../../static/')
-              console.log(file_path + file);
-              fs.writeFile(file_path + file, CSVString, (err) => {
-                if (err) {
-                  instance.send_Error('writing to file', JSON.stringify(err));
-                }
-                reply.sendFile(`${file_path}${file}`, (err) => {
-                  instance.send_Error('on sending file', JSON.stringify(err));
-                });
-                setTimeout(() => {
-                  fs.unlink(file_path + file, (err) => {
-                    if (err) {
-                      instance.send_Error(
-                        'exported items file',
-                        JSON.stringify(err)
-                      );
-                    }
+              try {
+                fs.writeFile(file_path + file, CSVString, (err) => {
+                  if (err) {
+                    instance.send_Error('writing to file', JSON.stringify(err));
+                  }
+                  reply.sendFile(`./${file}`, (err) => {
+                    instance.send_Error('on sending file', JSON.stringify(err));
                   });
-                }, 10000);
-              });
+                  setTimeout(() => {
+                    fs.unlink(file_path + file, (err) => {
+                      if (err) {
+                        instance.send_Error(
+                          'exported items file',
+                          JSON.stringify(err)
+                        );
+                      }
+                    });
+                  }, 10000);
+                });
+              }
+              catch (er) {
+                reply.error(er)
+              }
             }
           );
         }
