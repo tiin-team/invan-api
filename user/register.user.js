@@ -85,12 +85,18 @@ module.exports = fp((instance, options, next) => {
     }
 
     const User_model = new instance.User(data)
-    const new_user = await User_model.save((error) => {
-      if (error) {
-        instance.send_Error('new_user', JSON.stringify(err))
-      }
+
+    const new_user_create_error = await new Promise((resolve) => {
+      User_model.save((error) => {
+        if (error) {
+          instance.send_Error('new_user', JSON.stringify(err))
+          return resolve(true)
+        }
+        return resolve(false)
+      })
     })
-    if (!new_user) {
+
+    if (new_user_create_error) {
       return reply.error('Could not save')
     }
 
