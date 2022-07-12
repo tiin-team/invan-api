@@ -2615,7 +2615,7 @@ module.exports = (instance, options, next) => {
                 if (err) {
                   instance.send_Error('writing to file', JSON.stringify(err));
                 }
-                reply.sendFile(file_path + file, (err) => {
+                reply.sendFile(`${file_path}${file}`, (err) => {
                   instance.send_Error('on sending file', JSON.stringify(err));
                 });
                 setTimeout(() => {
