@@ -2442,7 +2442,7 @@ module.exports = (instance, options, next) => {
                   typeof g.barcode == typeof 'invan' &&
                   g.barcode.length > 0
                 ) {
-                  good.push(g.barcode);
+                  good.push(g.barcode + '');
                 } else {
                   good.push('');
                 }
@@ -2494,7 +2494,7 @@ module.exports = (instance, options, next) => {
 
                 good.push(g.primary_supplier_name);
                 good.push(g.default_purchase_cost);
-                good.push(g.mxik);
+                good.push(g.mxik + '');
                 if (typeof g.services == typeof [] && !g.has_variants) {
                   for (var s of g.services) {
                     if (serviceObj[s.service + '']) {
@@ -2629,8 +2629,10 @@ module.exports = (instance, options, next) => {
             }
           );
         }
-      );
-    });
+      )
+        .lean();
+    })
+      .lean();
   };
   const get_file_new = async (request, reply, admin) => {
     var service = request.params.service;
