@@ -26,7 +26,7 @@ async function signSupplier(request, reply, instance) {
             phone_number
         })
     } catch (error) {
-        reply.error(error.message)
+        return reply.error(error.message)
     }
     return reply;
 }
