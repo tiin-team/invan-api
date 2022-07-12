@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { join } = require('path');
 
 module.exports = (instance, options, next) => {
   const version = { version: '1.0.0' };
@@ -2608,15 +2609,16 @@ module.exports = (instance, options, next) => {
               }
               const CSVString = my_array.join('\n');
               const file = new Date().getTime() + '_ITEMS.csv';
-              fs.writeFile('./static/' + file, CSVString, (err) => {
+              const file_path = join(__dirname, '../../../static/')
+              fs.writeFile(file_path + file, CSVString, (err) => {
                 if (err) {
                   instance.send_Error('writing to file', JSON.stringify(err));
                 }
-                reply.sendFile(`./${file}`, (err) => {
+                reply.sendFile(file_path + file, (err) => {
                   instance.send_Error('on sending file', JSON.stringify(err));
                 });
                 setTimeout(() => {
-                  fs.unlink('./static/' + file, (err) => {
+                  fs.unlink(file_path + file, (err) => {
                     if (err) {
                       instance.send_Error(
                         'exported items file',
