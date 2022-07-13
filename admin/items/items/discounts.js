@@ -90,6 +90,27 @@ module.exports = (instance, options, next) => {
 
     const discountModel = instance.goodsDiscount(body)
 
+    const goodsDiscountItems = body.items.map(item => {
+      return {
+        discount_id: discountModel._id,
+        // service: discountModel.service,
+        services: discountModel.services,
+        organization: discountModel.organization,
+        created_time: discountModel.created_time,
+        name: discountModel.name,
+        type: discountModel.type,
+        value: discountModel.value,
+        end_time: discountModel.end_time,
+        start_time: discountModel.start_time,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        sku: item.sku,
+        barcode: item.barcode,
+      }
+    })
+
+    await instance.goodsDiscountItems.insertMany(goodsDiscountItems)
+
     const result = await discountModel.save()
     reply.ok(result)
 
@@ -161,8 +182,8 @@ module.exports = (instance, options, next) => {
             type: 'string',
             enum: ['percentage', 'sum']
           },
-          start_time: { type: 'number'  },
-          end_time: { type: 'number'  },
+          start_time: { type: 'number' },
+          end_time: { type: 'number' },
           services: {
             type: 'array',
             items: {

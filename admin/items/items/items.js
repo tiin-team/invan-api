@@ -2967,6 +2967,21 @@ module.exports = (instance, options, next) => {
                 goods = [];
               }
 
+              const discounts = await instance.goodsDiscountItems.find({
+                organization: admin.organization,
+                services: {
+                  $elemMatch: {
+                    service: { $eq: request.params.service },
+                    available: { $eq: true },
+                  }
+                }
+              })
+
+              const discountsObj = {}
+              for (const disc of discounts) {
+                discountsObj[disc.product_id] = disc
+              }
+
               for (const [index, good] of goods.entries()) {
                 serv = good.services.find(
                   (serv) => serv.service + '' == request.params.service
@@ -2977,7 +2992,7 @@ module.exports = (instance, options, next) => {
                   serv && serv.price ? serv.price : good.price;
                 goods[index].mxik = good.mxik ? good.mxik : randimMxik();
                 goods[index].nds_value = isNaN(parseFloat(good.nds_value)) ? 15 : parseFloat(good.nds_value);
-
+                goods[index].discount = discountsObj[goods[index]._id]
                 delete goods[index].services;
               }
 

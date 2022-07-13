@@ -1263,6 +1263,37 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('goodsDiscount', goodsDiscount)
 
+  const goodsDiscountItems = instance.model('goodsDiscountItems', {
+    discount_id: mongoose.Types.ObjectId,
+    organization: String,
+    // service: String,
+    services: [{
+      service: mongoose.Types.ObjectId,
+      service_name: String,
+      available: {
+        type: Boolean,
+        default: false,
+      },
+    }],
+    created_time: Number,
+    name: String,
+    value: Number,
+    type: {
+      type: String,
+      enum: ['percentage', 'sum']
+    },
+    start_time: Number,
+    end_time: Number,
+    product_id: mongoose.Types.ObjectId,
+    product_name: String,
+    sku: Number,
+    barcode: {
+      type: Array,
+      default: []
+    },
+  })
+  instance.decorate('goodsDiscountItems', goodsDiscountItems)
+
   const settingsTaxes = instance.model('settingsTaxes', {
     organization: String,
     services: [{
