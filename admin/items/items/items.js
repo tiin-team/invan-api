@@ -2976,6 +2976,7 @@ module.exports = (instance, options, next) => {
                   }
                 }
               })
+                .lean()
 
               const discountsObj = {}
               for (const disc of discounts) {
