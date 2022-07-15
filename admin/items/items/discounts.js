@@ -327,5 +327,37 @@ module.exports = (instance, options, next) => {
     })
   })
 
+  instance.get('/discount-items', options.version, (request, reply) => {
+    instance.oauth_admin(request, reply, (admin) => {
+      const limit = isNaN(parseInt(request.query.limit)) ? 10 : parseInt(request.query.limit)
+      const page = isNaN(parseInt(request.query.page)) ? 1 : parseInt(request.query.page)
+      const service = request.query.service
+      const filter_query = { organization: admin.organization }
+
+      if (service)
+        filter_query.services = {
+          $elemMatch: {
+            service: { $eq: service },
+            available: { $eq: true },
+          }
+        }
+
+      const data = await instance.goodsDiscountItems.find(filter_query)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+      const total = await instance.goodsDiscountItems.countDocuments(filter_query)
+
+      return {
+        limit: limit,
+        current_page: page,
+        pages: Math.ceil(total / query.page),
+        total: total,
+        data: data,
+      }
+    })
+  })
+
   next()
 }

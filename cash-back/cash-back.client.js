@@ -21,22 +21,22 @@ module.exports = fp((instance, _, next) => {
           total_sale: receipt.total_price,
           sales: 1,
         },
-        $push: {
-          debt_pay_history: {
-            receipt_id: receipt._id,
-            receipt_no: receipt.receipt_no,
-            cash_back: cash_back,
-            total_price: receipt.total_price,
-            currency: receipt.currency,
-            currency_value: receipt.currency_value,
-            total_price: receipt.total_price,
-            date: receipt.date,
-            minus_cash: minus_cash ? minus_cash : 0,
-            comment: receipt.comment
-              ? receipt.comment
-              : `receipt cash-back ${minus_cash ? `cashback used ${minus_cash}` : ''}`,
-          }
-        }
+        // $push: {
+        //   debt_pay_history: {
+        //     receipt_id: receipt._id,
+        //     receipt_no: receipt.receipt_no,
+        //     cash_back: cash_back,
+        //     total_price: receipt.total_price,
+        //     currency: receipt.currency,
+        //     currency_value: receipt.currency_value,
+        //     total_price: receipt.total_price,
+        //     date: receipt.date,
+        //     minus_cash: minus_cash ? minus_cash : 0,
+        //     comment: receipt.comment
+        //       ? receipt.comment
+        //       : `receipt cash-back ${minus_cash ? `cashback used ${minus_cash}` : ''}`,
+        //   }
+        // }
       },
       { new: true }
     )
