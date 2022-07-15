@@ -328,7 +328,7 @@ module.exports = (instance, options, next) => {
   })
 
   instance.get('/discount-items', options.version, (request, reply) => {
-    instance.oauth_admin(request, reply, (admin) => {
+    instance.oauth_admin(request, reply, async (admin) => {
       const limit = isNaN(parseInt(request.query.limit)) ? 10 : parseInt(request.query.limit)
       const page = isNaN(parseInt(request.query.page)) ? 1 : parseInt(request.query.page)
       const service = request.query.service
