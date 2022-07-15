@@ -2495,7 +2495,7 @@ module.exports = (instance, options, next) => {
 
                 good.push(g.primary_supplier_name);
                 good.push(g.default_purchase_cost);
-                good.push(g.mxik + '');
+                good.push(g.mxik ? g.mxik + ';' : '')
                 if (typeof g.services == typeof [] && !g.has_variants) {
                   for (var s of g.services) {
                     if (serviceObj[s.service + '']) {
