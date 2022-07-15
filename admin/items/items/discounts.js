@@ -352,7 +352,7 @@ module.exports = (instance, options, next) => {
       return {
         limit: limit,
         current_page: page,
-        pages: Math.ceil(total / query.page),
+        pages: Math.ceil(total / page),
         total: total,
         data: data,
       }
