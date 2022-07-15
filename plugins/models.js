@@ -494,6 +494,10 @@ module.exports = fp((instance, _, next) => {
       type: Number,
       default: 0
     },
+    zdachi_to_cashback: {
+      type: Number,
+      default: 0
+    },
     comment: String,
   })
   instance.decorate('Receipts', Receipts)
@@ -1384,7 +1388,11 @@ module.exports = fp((instance, _, next) => {
     debt_pay_history: {
       type: Array,
       default: []
-    }
+    },
+    percentage: {
+      type: Number,
+      default: 1,
+    },
   })
   instance.decorate('clientsDatabase', clients)
 

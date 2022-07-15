@@ -994,6 +994,7 @@ module.exports = fp((instance, _, next) => {
         },
       },
       cashback_phone: { type: "string" },
+      zdachi_to_cashback: { type: "number", default: 0 },
       comment: { type: "string" },
     },
   });

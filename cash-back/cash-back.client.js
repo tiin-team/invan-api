@@ -53,6 +53,7 @@ module.exports = fp((instance, _, next) => {
   }
   async function calculateCash(receipt, client, user) {
     try {
+      const zdachi_to_cashback = isNaN(receipt.zdachi_to_cashback) ? 0 : receipt.zdachi_to_cashback
       const phone_number = receipt.cashback_phone.replace('+', '')
 
       const organization = await instance.organizations.findById(receipt.organization).lean()
@@ -64,7 +65,8 @@ module.exports = fp((instance, _, next) => {
       }
       const clientsDatabase = await instance.clientsDatabase.findOne(query, { _id: 1 })
         .lean()
-      const default_cash_back = await calculateDefaultCash(receipt.sold_item_list, organization.loyalty_bonus)
+      const default_cash_back = (await calculateDefaultCash(receipt.sold_item_list, organization.loyalty_bonus))
+        + zdachi_to_cashback
 
       // agar cashbackni ishlatsa minus qilish
       const gift = receipt.payment.find(pay => pay.name == 'gift')
@@ -134,7 +136,7 @@ module.exports = fp((instance, _, next) => {
           })
         // console.log(res?.status, 'res status');
         if (res.data && res.data.cash_back && !isNaN(res.data.cash_back))
-          cash_back = parseFloat(res.data.cash_back);
+          cash_back = parseFloat(res.data.cash_back) + zdachi_to_cashback;
 
         if (res.status !== 201) {
           //send error
