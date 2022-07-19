@@ -129,8 +129,8 @@ module.exports = ((instance, _, next) => {
                         difference: { type: 'number' }
                     },
                     sales_summary: {
-                        cashback_sales: { type: 'number' },
-                        cashback_zdachi: { type: 'number' },
+                        cashback_in: { type: 'number' },
+                        cashback_out: { type: 'number' },
                         gross_sales: { type: 'number' },
                         refunds: { type: 'number' },
                         discounts: { type: 'number' },

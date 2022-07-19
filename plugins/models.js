@@ -613,11 +613,11 @@ module.exports = fp((instance, _, next) => {
         type: Number,
         default: 0
       },
-      cashback_sales: {
+      cashback_in: {
         type: Number,
         default: 0
       },
-      cashback_zdachi: {
+      cashback_out: {
         type: Number,
         default: 0
       },
