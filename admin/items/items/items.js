@@ -2993,7 +2993,7 @@ module.exports = (instance, options, next) => {
                   serv && serv.price ? serv.price : good.price;
                 goods[index].mxik = good.mxik ? good.mxik : randimMxik();
                 goods[index].nds_value = isNaN(parseFloat(good.nds_value)) ? 15 : parseFloat(good.nds_value);
-                goods[index].discount = discountsObj[goods[index]._id]
+                goods[index].sale = discountsObj[goods[index]._id]
                 delete goods[index].services;
               }
 

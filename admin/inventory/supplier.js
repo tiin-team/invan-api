@@ -93,6 +93,7 @@ module.exports = (instance, options, next) => {
             purchase_id: item._id,
             // employee: item.organization"5f5c7d286786602b6cf1dc7a",
             employee_name: item.ordered_by_name,
+            service_name: item.service_name,
             status: item.type,
             supplier_id: item.supplier_id,
             item

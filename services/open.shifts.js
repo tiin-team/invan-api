@@ -97,6 +97,16 @@ module.exports = ((instance, _, next) => {
     })
     const schemaShiftUpdate = {
         schema: {
+            params: {
+                type: 'object',
+                properties: {
+                    id: {
+                        type: 'string',
+                        minLength: 24,
+                        maxLength: 24,
+                    },
+                },
+            },
             body: {
                 type: 'object',
                 // required: ['by_whom_name_close', 'by_whom_close'],
@@ -119,6 +129,8 @@ module.exports = ((instance, _, next) => {
                         difference: { type: 'number' }
                     },
                     sales_summary: {
+                        cashback_sales: { type: 'number' },
+                        cashback_zdachi: { type: 'number' },
                         gross_sales: { type: 'number' },
                         refunds: { type: 'number' },
                         discounts: { type: 'number' },
