@@ -16,7 +16,7 @@ module.exports = fp((instance, options, next) => {
     if (!phone_number)
       return reply.error('phone number')
 
-    if (!/^\+9989[012345789][0-9]{7}$/.test(phone_number))
+    if (!/^\+998[3g9][012345789][0-9]{7}$/.test(phone_number))
       return reply.error('phone_number validation error')
 
     const user = await instance.User
