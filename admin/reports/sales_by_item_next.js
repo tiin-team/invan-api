@@ -635,26 +635,28 @@ module.exports = (instance, _, next) => {
       for (const item of items) {
         itemsObj[item._id] = item
       }
-      console.log(result.map(i => i.id));
+
       for (const index in result) {
         try {
           // const item = await instance.goodsSales.findById(result[index].id).lean();
-          const cat_id = itemsObj[result[index].id].category
-            ? itemsObj[result[index].id].category
-            : itemsObj[result[index].id].category_id;
-          if (itemsObj[result[index].id] && cat_id) {
-            if (!categoryMap[cat_id]) {
-              try {
-                const category = await instance.goodsCategory
-                  .findById(itemsObj[result[index].id].category, { name: 1 })
-                  .lean();
-                if (category) {
-                  categoryMap[cat_id] = category.name
-                }
-              } catch (error) { }
+          if (itemsObj[result[index].id]) {
+            const cat_id = itemsObj[result[index].id].category
+              ? itemsObj[result[index].id].category
+              : itemsObj[result[index].id].category_id;
+            if (itemsObj[result[index].id] && cat_id) {
+              if (!categoryMap[cat_id]) {
+                try {
+                  const category = await instance.goodsCategory
+                    .findById(itemsObj[result[index].id].category, { name: 1 })
+                    .lean();
+                  if (category) {
+                    categoryMap[cat_id] = category.name
+                  }
+                } catch (error) { }
+              }
+              result[index].category = categoryMap[cat_id] ? categoryMap[cat_id] : ''
+              result[index].barcode = itemsObj[result[index].id].barcode ? itemsObj[result[index].id].barcode : []
             }
-            result[index].category = categoryMap[cat_id] ? categoryMap[cat_id] : ''
-            result[index].barcode = itemsObj[result[index].id].barcode ? itemsObj[result[index].id].barcode : []
           }
         } catch (error) { }
       }

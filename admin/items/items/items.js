@@ -854,7 +854,7 @@ module.exports = (instance, options, next) => {
         .aggregate(pipeline)
         .allowDiskUse(true);
 
-      const total = (
+      let total = (
         await instance.goodsSales
           .aggregate([
             ...pipeline.filter(e => e['$skip'] === undefined && e['$limit'] === undefined),
@@ -863,7 +863,7 @@ module.exports = (instance, options, next) => {
             },
           ])
       )[0]
-        .total;
+      total = total && total.total ? total.total : 0
       // var total = goods.length;
       var with_stocks = [];
       for (let i = 0; i < goods.length; i++) {
