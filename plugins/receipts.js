@@ -102,6 +102,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
     const itemsObj = {}
     const primary_supplier_ids = new Set()
     const category_ids = new Set()
+    console.log(items);
     for (const item of items) {
       itemsObj[items._id] = item
       if (item.primary_supplier_id)
