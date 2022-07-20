@@ -72,6 +72,65 @@ const receiptCreateGroup = async (request, reply, instance) => {
     if (!current_currency) {
       current_currency = {};
     }
+
+    const sold_item_ids = []
+    for (const rr of request.body) {
+      if (
+        !date_and_numbers.includes(
+          JSON.stringify({ date: rr.date, number: rr.receipt_no })
+        )
+      ) {
+        rr.sold_item_list = Array.isArray(rr.sold_item_list) ? rr.sold_item_list : []
+        sold_item_ids.push(...rr.sold_item_list.map(it => it.product_id))
+      }
+    }
+    const items = await instance.goodsSales
+      .find(
+        { _id: { $in: sold_item_ids } },
+        {
+          sku: 1,
+          barcode: 1,
+          services: 1,
+          category: 1,
+          queue: 1,
+          primary_supplier_id: 1,
+          count_by_type: 1,
+        },
+      )
+      .lean()
+    const itemsObj = {}
+    const primary_supplier_ids = []
+    for (const item of items) {
+      itemsObj[items._id] = item
+      if (item.primary_supplier_id)
+        primary_supplier_ids.push(item.primary_supplier_id)
+    }
+
+    const categories = await instance.goodsCategory
+      .find(
+        { _id: { $in: items.map(i => i.category) } },
+        { name: 1 },
+      )
+      .lean();
+    const categoriesObj = {}
+    for (const cat of categories) {
+      categoriesObj[cat._id] = cat
+    }
+
+    const suppliers = await instance.adjustmentSupplier
+      .find(
+        { _id: { $in: primary_supplier_ids } },
+      )
+      .lean();
+    const suppliersObj = {}
+    for (const supp of suppliers) {
+      suppliersObj[supp._id] = supp
+    }
+
+    const other_category = await instance.goodsCategory
+      .findOne({ organization: user.organization, is_other: true })
+      .lean();
+
     for (const rr of request.body) {
       console.log('Order id')
       console.log(rr.order_id)
@@ -184,9 +243,21 @@ const receiptCreateGroup = async (request, reply, instance) => {
           $receiptModel.sold_item_list[i].receipt_id = $receiptModel._id;
 
           try {
-            const item = await instance.goodsSales
-              .findById($receiptModel.sold_item_list[i].product_id)
-              .lean();
+            const item = itemsObj[$receiptModel.sold_item_list[i].product_id]
+            // const item = await instance.goodsSales
+            //   .findById(
+            //     $receiptModel.sold_item_list[i].product_id,
+            //     {
+            //       sku: 1,
+            //       barcode: 1,
+            //       services: 1,
+            //       category: 1,
+            //       queue: 1,
+            //       primary_supplier_id: 1,
+            //       count_by_type: 1,
+            //     },
+            //   )
+            //   .lean();
             if (item) {
               $receiptModel.sold_item_list[i].sku = item.sku;
               $receiptModel.sold_item_list[i].barcode =
@@ -208,17 +279,14 @@ const receiptCreateGroup = async (request, reply, instance) => {
               // set category id and supplier id
 
               try {
-                const category = await instance.goodsCategory
-                  .findById(item.category)
-                  .lean();
-                if (category) {
-                  $receiptModel.sold_item_list[i].category_id = category._id;
-                  $receiptModel.sold_item_list[i].category_name = category.name;
+                // const category = await instance.goodsCategory
+                //   .findById(item.category)
+                //   .lean();
+                if (categoriesObj[item.category]) {
+                  $receiptModel.sold_item_list[i].category_id = categoriesObj[item.category]._id;
+                  $receiptModel.sold_item_list[i].category_name = categoriesObj[item.category].name;
                 } else {
                   try {
-                    const other_category = await instance.goodsCategory
-                      .findOne({ organization: user.organization, is_other: true })
-                      .lean();
                     if (other_category) {
                       $receiptModel.sold_item_list[i].category_id =
                         other_category._id;
@@ -238,19 +306,19 @@ const receiptCreateGroup = async (request, reply, instance) => {
                   .findOne({
                     product_id: item._id,
                     service_id: service_id,
-                    queue: item.queue,
+                    // queue: item.queue,
                     quantity_left: { $ne: 0 },
                   })
                   .sort({ queue: 1 })
                   .lean()
                 // bu keyinchalik olib tashlanadi
                 if (item.primary_supplier_id) {
-                  const supplier = await instance.adjustmentSupplier
-                    .findById(item.primary_supplier_id)
-                    .lean();
-                  $receiptModel.sold_item_list[i].supplier_id = supplier._id;
+                  // const supplier = await instance.adjustmentSupplier
+                  //   .findById(item.primary_supplier_id)
+                  //   .lean();
+                  $receiptModel.sold_item_list[i].supplier_id = suppliersObj[item.primary_supplier_id]._id;
                   $receiptModel.sold_item_list[i].supplier_name =
-                    supplier.supplier_name;
+                    suppliersObj[item.primary_supplier_id].supplier_name;
                 }
 
                 if (queue) {
@@ -267,12 +335,12 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 item.count_by_type;
             } else {
               try {
-                const other_category = await instance.goodsCategory
-                  .findOne({
-                    organization: user.organization,
-                    is_other: true,
-                  })
-                  .lean();
+                // const other_category = await instance.goodsCategory
+                //   .findOne({
+                //     organization: user.organization,
+                //     is_other: true,
+                //   })
+                //   .lean();
                 if (other_category) {
                   $receiptModel.sold_item_list[i].category_id =
                     other_category._id;

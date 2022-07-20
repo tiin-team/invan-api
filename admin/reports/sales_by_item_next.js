@@ -561,6 +561,7 @@ module.exports = (instance, _, next) => {
               "$cost_of_goods",
             ],
           },
+          barcode: "$barcode",
         },
       };
       const projectCategoryFilter = {
