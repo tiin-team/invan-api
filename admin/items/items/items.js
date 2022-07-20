@@ -2991,7 +2991,9 @@ module.exports = (instance, options, next) => {
                   serv && serv.prices ? serv.prices : good.prices;
                 goods[index].price =
                   serv && serv.price ? serv.price : good.price;
-                goods[index].mxik = good.mxik ? good.mxik : randimMxik();
+                goods[index].mxik = good.mxik && good.mxik.length === 17
+                  ? good.mxik
+                  : randimMxik();
                 goods[index].nds_value = isNaN(parseFloat(good.nds_value)) ? 15 : parseFloat(good.nds_value);
                 goods[index].sale = discountsObj[goods[index]._id]
                 delete goods[index].services;

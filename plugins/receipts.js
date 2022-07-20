@@ -98,6 +98,10 @@ const receiptCreateGroup = async (request, reply, instance) => {
         },
       )
       .lean()
+    console.log(items.length);
+    console.log(sold_item_ids);
+    console.log([...sold_item_ids]);
+
     const itemsObj = {}
     const primary_supplier_ids = new Set()
     const category_ids = new Set()
@@ -261,6 +265,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
             //     },
             //   )
             //   .lean();
+            $receiptModel.sold_item_list[i].price_position = 0
             if (item) {
               $receiptModel.sold_item_list[i].sku = item.sku;
               $receiptModel.sold_item_list[i].barcode =
@@ -280,7 +285,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 : []
               prices = prices.sort((a, b) => a.from - b.from)
 
-              $receiptModel.sold_item_list[i].price_position = 0
               for (const f_price_index in prices) {
                 if ($receiptModel.sold_item_list[i].value >= prices[f_price_index].from) {
                   $receiptModel.sold_item_list[i].price_position = f_price_index
