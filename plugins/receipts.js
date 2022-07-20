@@ -794,7 +794,7 @@ async function findReceipt(request, reply, instance) {
     if (!posdevice)
       return reply.fourorfour('Posdevice')
 
-    const { search } = request.query;
+    const { receipt_no } = request.query;
     const limit = !isNaN(parseInt(request.query.limit))
       ? parseInt(request.query.limit)
       : 10
@@ -814,8 +814,9 @@ async function findReceipt(request, reply, instance) {
         $gte: min_date_time,
         $lte: date_time,
       },
-      receipt_no: { $regex: search, $options: 'i' }
     }
+    if (receipt_no) filter_query.receipt_no = receipt_no;
+
     const receipts = await instance.Receipts
       .find(filter_query)
       .skip((page - 1) * limit)
@@ -1166,7 +1167,36 @@ module.exports = fp((instance, _, next) => {
 
   instance.get(
     '/desktop-receipt/find',
-    { version: "1.0.0" },
+    {
+      version: "1.0.0",
+      schema: {
+        headers: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "Accept-version",
+            "Accept-user",
+            "Authorization",
+            "Accept-id",
+          ],
+          properties: {
+            "Accept-version": { type: 'string' },
+            "Accept-user": { type: 'string', enum: ['bos', 'admin', 'employee'] },
+            "Authorization": { type: 'string' },
+            "Accept-id": { type: 'string' },
+          },
+        },
+        querystring: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            receipt_no: { type: 'string', default: '' },
+            limit: { type: 'number', minimum: 3, maximum: 50 },
+            page: { type: 'number', minimum: 1, },
+          },
+        }
+      }
+    },
     (request, reply) => {
       instance.authorization(request, reply, async (user) => {
         if (!user) {
