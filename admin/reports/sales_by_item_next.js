@@ -635,7 +635,7 @@ module.exports = (instance, _, next) => {
       console.log(items[0]);
       const itemsObj = {}
       for (const item of items) {
-        itemsObj[items._id] = item
+        itemsObj[item._id] = item
       }
 
       for (const index in result) {
