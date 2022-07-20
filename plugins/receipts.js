@@ -264,7 +264,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
             //   )
             //   .lean();
             $receiptModel.sold_item_list[i].price_position = 0
-            console.log(item);
+
             if (item) {
               $receiptModel.sold_item_list[i].sku = item.sku;
               $receiptModel.sold_item_list[i].barcode =
