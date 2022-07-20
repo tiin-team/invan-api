@@ -621,15 +621,33 @@ module.exports = (instance, _, next) => {
       const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
 
       const categoryMap = {}
+      const items = await instance.goodsSales
+        .find(
+          { _id: { $in: result.map(i => i.id) } },
+          {
+            category: 1,
+            category_id: 1,
+            barcode: 1,
+          },
+        )
+        .lean()
+      const itemsObj = {}
+      for (const item of items) {
+        itemsObj[items._id] = item
+      }
 
       for (const index in result) {
         try {
-          const item = await instance.goodsSales.findById(result[index].id).lean();
-          const cat_id = item.category ? item.category : item.category_id;
-          if (item && cat_id) {
+          // const item = await instance.goodsSales.findById(result[index].id).lean();
+          const cat_id = itemsObj[result[index].id].category
+            ? itemsObj[result[index].id].category
+            : itemsObj[result[index].id].category_id;
+          if (itemsObj[result[index].id] && cat_id) {
             if (!categoryMap[cat_id]) {
               try {
-                const category = await instance.goodsCategory.findById(item.category).lean();
+                const category = await instance.goodsCategory
+                  .findById(itemsObj[result[index].id].category, { name: 1 })
+                  .lean();
                 if (category) {
                   categoryMap[cat_id] = category.name
                 }
