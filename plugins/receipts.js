@@ -73,15 +73,15 @@ const receiptCreateGroup = async (request, reply, instance) => {
       current_currency = {};
     }
 
-    const sold_item_ids = []
+    const sold_item_ids = new Set()
     for (const rr of request.body) {
       if (
         !date_and_numbers.includes(
-          JSON.stringify({ date: rr.date, number: rr.receipt_no })
+          JSON.strinify({ date: rr.date, number: rr.receipt_no })
         )
       ) {
         rr.sold_item_list = Array.isArray(rr.sold_item_list) ? rr.sold_item_list : []
-        sold_item_ids.push(...rr.sold_item_list.map(it => it.product_id))
+        rr.sold_item_list.forEach(item => sold_item_ids.add(item.product_id))
       }
     }
     const items = await instance.goodsSales
@@ -99,16 +99,19 @@ const receiptCreateGroup = async (request, reply, instance) => {
       )
       .lean()
     const itemsObj = {}
-    const primary_supplier_ids = []
+    const primary_supplier_ids = new Set()
+    const category_ids = new Set()
     for (const item of items) {
       itemsObj[items._id] = item
       if (item.primary_supplier_id)
-        primary_supplier_ids.push(item.primary_supplier_id)
+        primary_supplier_ids.add(item.primary_supplier_id)
+      if (item.category)
+        category_ids.add(item.category)
     }
 
     const categories = await instance.goodsCategory
       .find(
-        { _id: { $in: items.map(i => i.category) } },
+        { _id: { $in: category_ids } },
         { name: 1 },
       )
       .lean();
