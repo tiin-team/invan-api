@@ -86,7 +86,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
     }
     const items = await instance.goodsSales
       .find(
-        { _id: { $in: sold_item_ids } },
+        { _id: { $in: [...sold_item_ids] } },
         {
           sku: 1,
           barcode: 1,
@@ -98,9 +98,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
         },
       )
       .lean()
-    console.log(items.length);
-    console.log(sold_item_ids);
-    console.log([...sold_item_ids]);
 
     const itemsObj = {}
     const primary_supplier_ids = new Set()
@@ -115,7 +112,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
     const categories = await instance.goodsCategory
       .find(
-        { _id: { $in: category_ids } },
+        { _id: { $in: [...category_ids] } },
         { name: 1 },
       )
       .lean();
@@ -126,7 +123,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
     const suppliers = await instance.adjustmentSupplier
       .find(
-        { _id: { $in: primary_supplier_ids } },
+        { _id: { $in: [...primary_supplier_ids] } },
       )
       .lean();
     const suppliersObj = {}
