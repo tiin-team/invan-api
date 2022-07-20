@@ -631,6 +631,8 @@ module.exports = (instance, _, next) => {
           },
         )
         .lean()
+      console.log(items.length);
+      console.log(items[0]);
       const itemsObj = {}
       for (const item of items) {
         itemsObj[items._id] = item
