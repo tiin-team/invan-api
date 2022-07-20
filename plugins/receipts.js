@@ -267,11 +267,19 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 item.barcode
                   && item.barcode.length > 0
                   ? item.barcode[0]
-                  : "";
+                  : $receiptModel.sold_item_list[i].barcode
+                    ? $receiptModel.sold_item_list[i].barcode
+                    : '';
+
               const serv = item.services
                 .find(serv => serv.service + '' == service_id)
 
-              const prices = serv && serv.prices ? serv.prices.sort((a, b) => a.from - b.from) : []
+              // const prices = serv && serv.prices ? serv.prices.filter(a => a.from !== 0) : []
+              let prices = serv && Array.isArray(serv.prices)
+                ? serv.prices.filter(a => a.from !== 0 && a.price !== 0)
+                : []
+              prices = prices.sort((a, b) => a.from - b.from)
+
               $receiptModel.sold_item_list[i].price_position = 0
               for (const f_price_index in prices) {
                 if ($receiptModel.sold_item_list[i].value >= prices[f_price_index].from) {
