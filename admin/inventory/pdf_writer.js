@@ -112,6 +112,7 @@ module.exports = fp((instance, _, next) => {
 
                 break;
             }
+
             case 'internal_order': {
                 doc
                     .fontSize(12)
@@ -171,6 +172,7 @@ module.exports = fp((instance, _, next) => {
 
                 break;
             }
+
             case 'transfer': {
                 doc
                     .fontSize(12)

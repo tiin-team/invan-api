@@ -784,6 +784,64 @@ const receiptSetClient = async (request, reply, instance) => {
   return reply;
 }
 
+async function findReceipt(request, reply, instance) {
+  try {
+    const pos_id = request.headers['accept-id']
+    const posdevice = await instance.posDevices
+      .findOne({ _id: pos_id })
+      .lean()
+    if (!posdevice)
+      return reply.fourorfour('Posdevice')
+
+    const { search } = request.query;
+    const limit = !isNaN(parseInt(request.query.limit))
+      ? parseInt(request.query.limit)
+      : 10
+    const page = !isNaN(parseInt(request.query.page))
+      ? parseInt(request.query.page)
+      : 1
+
+    const date = new Date();
+    const date_time = date.getTime();
+    date.setDate(date.getDate() - 30);
+
+    const min_date_time = date.getTime();
+    const filter_query = {
+      organization: posdevice.organization,
+      service: posdevice.service,
+      created_time: {
+        $gte: min_date_time,
+        $lte: date_time,
+      },
+      receipt_no: { $regex: search, $options: 'i' }
+    }
+    const receipts = await instance.Receipts
+      .find(filter_query)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    const total = await instance.Receipts.countDocuments(filter_query)
+
+    return reply.code(200).send({
+      error: "Ok",
+      message: "Success",
+      statusCode: 200,
+      limit: limit,
+      current_page: page,
+      page: Math.ceil(total / limit),
+      total: total,
+      data: receipts,
+    })
+  } catch (error) {
+    instance.send_Error(
+      `On receipt search, \nPosId: ${posdevice._id}, \nPosName: ${posdevice.name}`,
+      JSON.stringify(error)
+    );
+    return reply.error(error.message)
+  }
+}
+
 module.exports = fp((instance, _, next) => {
   instance.patch('/update/receipts/:organization', { version: '3.9.9' }, async (request, reply) => {
     return reply.ok(`ruxsat yo'q`);
@@ -1104,6 +1162,20 @@ module.exports = fp((instance, _, next) => {
       })
     }
   )
+
+  instance.get(
+    '/desktop-receipt/find',
+    { version: "1.0.0" },
+    (request, reply) => {
+      instance.authorization(request, reply, async (user) => {
+        if (!user) {
+          return reply.error('Access')
+        }
+        request.user = user;
+
+        findReceipt(request, reply, instance);
+      })
+    })
 
   next();
 });
