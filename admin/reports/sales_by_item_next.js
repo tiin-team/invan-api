@@ -631,13 +631,11 @@ module.exports = (instance, _, next) => {
           },
         )
         .lean()
-      console.log(items.length);
-      console.log(items[0]);
       const itemsObj = {}
       for (const item of items) {
         itemsObj[item._id] = item
       }
-
+      console.log(result.map(i => i.id));
       for (const index in result) {
         try {
           // const item = await instance.goodsSales.findById(result[index].id).lean();
@@ -656,7 +654,7 @@ module.exports = (instance, _, next) => {
               } catch (error) { }
             }
             result[index].category = categoryMap[cat_id] ? categoryMap[cat_id] : ''
-            result[index].barcode = itemsObj[result[index].id].barcode
+            result[index].barcode = itemsObj[result[index].id].barcode ? itemsObj[result[index].id].barcode : []
           }
         } catch (error) { }
       }
