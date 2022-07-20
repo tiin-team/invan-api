@@ -785,8 +785,9 @@ const receiptSetClient = async (request, reply, instance) => {
 }
 
 async function findReceipt(request, reply, instance) {
+  const pos_id = request.headers['accept-id']
+  const user = request.user;
   try {
-    const pos_id = request.headers['accept-id']
     const posdevice = await instance.posDevices
       .findOne({ _id: pos_id })
       .lean()
@@ -835,7 +836,7 @@ async function findReceipt(request, reply, instance) {
     })
   } catch (error) {
     instance.send_Error(
-      `On receipt search, \nPosId: ${posdevice._id}, \nPosName: ${posdevice.name}`,
+      `On receipt search, \nPosId: ${pos_id}, \User name: ${user.name}`,
       JSON.stringify(error)
     );
     return reply.error(error.message)
