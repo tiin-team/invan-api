@@ -654,6 +654,7 @@ module.exports = (instance, _, next) => {
               } catch (error) { }
             }
             result[index].category = categoryMap[cat_id] ? categoryMap[cat_id] : ''
+            result[index].barcode = itemsObj[result[index].id].barcode
           }
         } catch (error) { }
       }
