@@ -77,7 +77,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
     for (const rr of request.body) {
       if (
         !date_and_numbers.includes(
-          JSON.strinify({ date: rr.date, number: rr.receipt_no })
+          JSON.stringify({ date: rr.date, number: rr.receipt_no })
         )
       ) {
         rr.sold_item_list = Array.isArray(rr.sold_item_list) ? rr.sold_item_list : []
