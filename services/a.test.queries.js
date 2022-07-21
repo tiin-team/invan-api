@@ -202,8 +202,35 @@ module.exports = fp((instance, options, next) => {
                 adjustment: 1,
             }
         }
-
-        const aggregate = [$match, $group, $project]
+        const getCond = (name) => {
+            return {
+                $cond: [
+                    { $eq: ['$reason', name] },
+                    '$adjustment',
+                    0
+                ]
+            }
+        }
+        const $group2 = {
+            $group: {
+                _id: '$_id',
+                product_name: { $first: '$product_name' },
+                sold: getCond('sold'),
+                returned: getCond('returned'),
+                received: getCond('received'),
+                returned_order: getCond('returned_order'),
+                transferred: getCond('transferred'),
+                recounted: getCond('recounted'),
+                damaged: getCond('damaged'),
+                lost: getCond('lost'),
+                production: getCond('production'),
+                workgroup_order: getCond('workgroup_order'),
+                fee: getCond('fee'),
+                loss: getCond('loss'),
+                item_edit: getCond('item edit'),
+            }
+        }
+        const aggregate = [$match, $group, $project, $group2]
 
         const goods = await instance.inventoryHistory.aggregate(aggregate).exec()
 
