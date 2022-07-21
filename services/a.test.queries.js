@@ -211,6 +211,7 @@ module.exports = fp((instance, options, next) => {
                 ]
             }
         }
+        console.log(getCond('sold'));
         const $group2 = {
             $group: {
                 _id: '$_id',
