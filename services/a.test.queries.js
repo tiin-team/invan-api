@@ -194,7 +194,16 @@ module.exports = fp((instance, options, next) => {
             }
         }
 
-        const aggregate = [$match, $group]
+        const $project = {
+            $project: {
+                _id: '$_id._id',
+                reason: '$reason.reason',
+                product_name: 1,
+                adjustment: 1,
+            }
+        }
+
+        const aggregate = [$match, $group, $project]
 
         const goods = await instance.inventoryHistory.aggregate(aggregate).exec()
 
