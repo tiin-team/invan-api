@@ -213,7 +213,7 @@ module.exports = fp((instance, options, next) => {
                 }
             }
         }
-        console.log(getCond('sold').$cond[0]);
+
         const $group2 = {
             $group: {
                 _id: '$_id',
