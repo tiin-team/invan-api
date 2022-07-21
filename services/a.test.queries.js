@@ -204,11 +204,13 @@ module.exports = fp((instance, options, next) => {
         }
         const getCond = (name) => {
             return {
-                $cond: [
-                    { $eq: ['$reason', name] },
-                    '$adjustment',
-                    0
-                ]
+                $sum: {
+                    $cond: [
+                        { $eq: ['$reason', name] },
+                        '$adjustment',
+                        0
+                    ]
+                }
             }
         }
         console.log(getCond('sold').$cond[0]);
