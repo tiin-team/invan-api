@@ -197,7 +197,7 @@ module.exports = fp((instance, options, next) => {
         const $project = {
             $project: {
                 _id: '$_id._id',
-                reason: '$reason.reason',
+                reason: '$_id.reason',
                 product_name: 1,
                 adjustment: 1,
             }
