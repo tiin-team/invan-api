@@ -161,12 +161,12 @@ module.exports = fp((instance, options, next) => {
     });
 
     instance.get('/items/inv_history', async (request, reply) => {
-        const { from, to } = request.query
+        const { from, to, organization } = request.query
 
         const $match = {
             $match: {
-                organization: '5f5641e8dce4e706c062837a',
-                reason: 'sold',
+                organization: organization,
+                // reason: 'sold',
             }
         }
         const date = {};
@@ -181,13 +181,16 @@ module.exports = fp((instance, options, next) => {
 
         const $group = {
             $group: {
-                _id: '$product_id',
-                type: { $first: '$type' },
-                date: { $first: '$date' },
-                category_id: { $first: '$category_id' },
-                category_name: { $first: '$category_name' },
+                _id: { _id: '$product_id', reason: '$reason' },
+                // type: { $first: '$type' },
+                // date: { $first: '$date' },
+                // category_id: { $first: '$category_id' },
+                // category_name: { $first: '$category_name' },
                 product_name: { $first: '$product_name' },
-                reason: { $first: '$reason' },
+                // reason: { $first: '$reason' },
+                adjustment: {
+                    $sum: '$adjustment',
+                }
             }
         }
 
