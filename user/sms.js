@@ -44,7 +44,7 @@ module.exports = fp((instance, _, next) => {
       }
     }
 
-    try {
+    try  {
       const tgText = `<b>${sms_code}</b> is Sms code of ${phone_number} ${user}\n\nOrganization: ${organization.name}`
       const URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`
         + `/sendMessage?chat_id=${process.env.SMSCHANNEL}&parse_mode=html&text=${tgText}`

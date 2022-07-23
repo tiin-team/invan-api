@@ -16,6 +16,8 @@ module.exports = fp((instance, options, next) => {
     }
 
     for (const purch_item of items) {
+      if (!goods_obj[purch_item.product_id])
+        continue
       const queue = await instance.goodsSaleQueue
         .findOne(
           {

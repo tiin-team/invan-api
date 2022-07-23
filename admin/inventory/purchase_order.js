@@ -686,6 +686,7 @@ module.exports = fp((instance, options, next) => {
 
       reply.ok(purch)
     } catch (error) {
+      instance.send_Error('receive_purchase', JSON.stringify(error.message))
       reply.error(error.message)
     }
 

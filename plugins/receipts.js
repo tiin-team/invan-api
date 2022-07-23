@@ -374,26 +374,33 @@ const receiptCreateGroup = async (request, reply, instance) => {
     // let result = instance.Receipts.insertMany(need_to_save);
     let result = []
     for (const r of need_to_save) {
-      const check = await new instance.Receipts(r).save();
-      // save agent transaction
-      console.log('save agent transaction')
-      console.log(r.order_id)
-      if (r.order_id) {
-        await instance.save_agent_transaction(instance, check);
-      }
-      // cashbackni hisoblash
-      if (r.cashback_phone) {
-        console.log('save cashback')
+      try {
+        const check = await new instance.Receipts(r).save();
+        // save agent transaction
+        console.log('save agent transaction')
+        console.log(r.order_id)
+        if (r.order_id) {
+          await instance.save_agent_transaction(instance, check);
+        }
+        // cashbackni hisoblash
+        if (r.cashback_phone) {
+          console.log('save cashback')
 
-        cash_back = await instance.CashBackClientUpdate(
-          { ...{ ...check }._doc },
-          { phone_number: r.cashback_phone, },
-          user
+          cash_back = await instance.CashBackClientUpdate(
+            { ...{ ...check }._doc },
+            { phone_number: r.cashback_phone, },
+            user
+          )
+          cash_back = !isNaN(cash_back) ? cash_back : 0;
+          await instance.Receipts.findByIdAndUpdate(r._id, { $set: { cash_back: cash_back } });
+        }
+        result.push(check)
+      } catch (error) {
+        instance.send_Error(
+          `Save check \nservice_id: ${service_id}\n`,
+          JSON.stringify(error),
         )
-        cash_back = !isNaN(cash_back) ? cash_back : 0;
-        await instance.Receipts.findByIdAndUpdate(r._id, { $set: { cash_back: cash_back } });
       }
-      result.push(check)
     }
     for (const r of result) {
       if (!r.refund_not_stock && r.is_refund || !r.is_refund) {
