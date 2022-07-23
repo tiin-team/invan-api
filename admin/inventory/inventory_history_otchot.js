@@ -152,17 +152,17 @@ module.exports = fp((instance, options, next) => {
 
     const $facet = {
       data: aggregate,
-      total: aggregate.push({ $count: "total" })
+      total: aggregate.concat({ $count: "total" })
     }
     const data = await instance.inventoryHistory.aggregate([$facet]).exec()
 
-    let total = (await instance.goodsSales
-      .aggregate([
-        ...aggregate.filter(e => e['$skip'] === undefined && e['$limit'] === undefined),
-        {
-          $count: "total",
-        },
-      ]))[0]
+    // let total = (await instance.goodsSales
+    //   .aggregate([
+    //     ...aggregate.filter(e => e['$skip'] === undefined && e['$limit'] === undefined),
+    //     {
+    //       $count: "total",
+    //     },
+    //   ]))[0]
 
     total = total && total.total ? total.total : 0
 
@@ -172,9 +172,9 @@ module.exports = fp((instance, options, next) => {
       statusCode: 200,
       limit: limit,
       current_page: page,
-      page: Math.ceil(total / limit),
-      total: total,
-      data: data,
+      page: Math.ceil(data.total / limit),
+      total: data.total,
+      data: data.data,
     })
   }
 
