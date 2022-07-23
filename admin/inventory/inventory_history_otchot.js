@@ -151,9 +151,12 @@ module.exports = fp((instance, options, next) => {
     const aggregate = [$match, $group, $project, $group2, $skip, $limit]
 
     const $facet = {
-      data: aggregate,
-      total: aggregate.concat({ $count: "total" })
+      $facet: {
+        data: aggregate,
+        total: aggregate.concat({ $count: "total" })
+      }
     }
+
     const data = await instance.inventoryHistory.aggregate([$facet]).exec()
 
     // let total = (await instance.goodsSales
@@ -164,7 +167,7 @@ module.exports = fp((instance, options, next) => {
     //     },
     //   ]))[0]
 
-    total = total && total.total ? total.total : 0
+    const total = data[0].total[0] && data[0].total[0].total ? data[0].total[0].total : 0
 
     reply.code(200).send({
       error: "Ok",
@@ -172,9 +175,9 @@ module.exports = fp((instance, options, next) => {
       statusCode: 200,
       limit: limit,
       current_page: page,
-      page: Math.ceil(data.total / limit),
-      total: data.total,
-      data: data.data,
+      page: Math.ceil(total / limit),
+      total: total,
+      data: data[0].data,
     })
   }
 
@@ -190,6 +193,7 @@ module.exports = fp((instance, options, next) => {
           return reply.error('Access')
         }
         history_of_inventory_group(request, reply, admin)
+        // history_of_inventory_group(request, reply, { services: [] })
       })
     }
   )
