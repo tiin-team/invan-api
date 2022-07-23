@@ -150,7 +150,11 @@ module.exports = fp((instance, options, next) => {
 
     const aggregate = [$match, $group, $project, $group2, $skip, $limit]
 
-    const data = await instance.inventoryHistory.aggregate(aggregate).exec()
+    const $facet = {
+      data: aggregate,
+      total: aggregate.push({ $count: "total" })
+    }
+    const data = await instance.inventoryHistory.aggregate([$facet]).exec()
 
     let total = (await instance.goodsSales
       .aggregate([
