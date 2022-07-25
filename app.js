@@ -4,8 +4,9 @@ require('dotenv').config()
 const path = require('path')
 const AutoLoad = require('fastify-autoload')
 const Cors = require('fastify-cors')
+const fp = require('fastify-plugin')
 
-module.exports = function (fastify, opts, next) {
+module.exports = fp(function (fastify, opts, next) {
 
   const options = {
     version: { version: '1.0.0' },
@@ -31,6 +32,12 @@ module.exports = function (fastify, opts, next) {
     root: path.join(__dirname, 'static'),
     prefix: '/static/'
   })
+  // fastify.register(require('fastify-socket.io'))
+
+  // fastify.register(AutoLoad, {
+  //   dir: path.join(__dirname, 'socket/connect-test'),
+  //   options: Object.assign(options, opts)
+  // })
 
   fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'plugins'),
@@ -203,4 +210,4 @@ module.exports = function (fastify, opts, next) {
   })
 
   next()
-}
+})

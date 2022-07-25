@@ -2294,7 +2294,10 @@ module.exports = (instance, options, next) => {
       '03402002003000000',
       '03402002001000000',
     ];
-    const mxiks_with_nds = ['02202002001010010'];
+    const mxiks_with_nds = [
+      '02202002001010010',
+      '01904001001000000',
+    ];
     const randomMxikCode = mxiks[Math.floor(Math.random() * mxiks.length)];
     const randomMxikCodeWithNds =
       mxiks_with_nds[Math.floor(Math.random() * mxiks_with_nds.length)];
