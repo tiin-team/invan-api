@@ -42,6 +42,9 @@ mongoose.connect(process.env.INVAN_DB_CONN_STR || 'mongodb://localhost:27017/inv
   useUnifiedTopology: true,
   useCreateIndex: true,
 })
+  .catch(err => {
+    return send_Error('On connect DB', JSON.stringify(err))
+  })
 
 // mongoose.connect('mongodb://yusufjon:password@localhost:27017/inonedb_v2', {
 //   useNewUrlParser: true,

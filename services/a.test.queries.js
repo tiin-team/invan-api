@@ -276,5 +276,88 @@ module.exports = fp((instance, options, next) => {
 
         reply.ok(goods)
     })
+
+    instance.post('/feko/test/method', async (request, reply) => {
+
+        const aggregate =
+            [
+                {
+                    '$match': {
+                        'organization': '5f5641e8dce4e706c062837a'
+                    }
+                }, {
+                    '$unwind': '$services'
+                }, {
+                    '$group': {
+                        '_id': '$_id',
+                        'prices': {
+                            '$push': '$services.prices'
+                        },
+                        'name': {
+                            '$first': '$name'
+                        },
+                        'sku': {
+                            '$first': '$sku'
+                        },
+                        'barcode': {
+                            '$first': '$barcode'
+                        }
+                    }
+                }, {
+                    '$project': {
+                        'prices': 1,
+                        'prices_filter': {
+                            '$function': {
+                                'body': 'function(prices) {\n            let i = 0\n            for(const price of prices[0]) {\n             const fin_d = prices[1].find(p => p.from === price.from && p.price === price.price)\n              i = fin_d ? i + 1 : i\n            }\n            return prices[0].length === i ? [] : prices\n            return prices.filter((v, i, a) => a.indexOf(v) === i) \n\n                      }',
+                                'args': [
+                                    '$prices'
+                                ],
+                                'lang': 'js'
+                            }
+                        },
+                        'prices_count': {
+                            '$size': {
+                                '$function': {
+                                    'body': 'function(prices) {\n            let i = 0\n            for(const price of prices[0]) {\n             const fin_d = prices[1].find(p => p.from === price.from && p.price === price.price)\n              i = fin_d ? i + 1 : i\n            }\n            return prices[0].length === i ? [] : prices\n            return prices.filter((v, i, a) => a.indexOf(v) === i) \n\n                      }',
+                                    'args': [
+                                        '$prices'
+                                    ],
+                                    'lang': 'js'
+                                }
+                            }
+                        },
+                        'name': 1,
+                        'sku': 1,
+                        'barcode': 1
+                    }
+                }, {
+                    '$match': {
+                        'prices_count': {
+                            '$gte': 1
+                        }
+                    }
+                }, {
+                    '$group': {
+                        '_id': null,
+                        'count': {
+                            '$sum': 1
+                        },
+                        'items': {
+                            '$push': {
+                                'prices': '$prices',
+                                'name': '$name',
+                                'sku': '$sku',
+                                'barcode': '$barcode',
+                                'prices_count': '$prices_count'
+                            }
+                        }
+                    }
+                }
+            ]
+        const data = await instance.goodsSales.aggregate(aggregate).exec()
+
+        reply.ok(data)
+    })
+
     next()
 })

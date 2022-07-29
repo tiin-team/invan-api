@@ -93,24 +93,6 @@ module.exports = fp((instance, options, next) => {
       $match.$match.reason = { $in: reasons }
     }
 
-    const $group = {
-      $group: {
-        _id: { _id: '$product_id', reason: '$reason' },
-        product_name: { $first: '$product_name' },
-        adjustment: {
-          $sum: '$adjustment',
-        }
-      }
-    }
-
-    const $project = {
-      $project: {
-        _id: '$_id._id',
-        reason: '$_id.reason',
-        product_name: 1,
-        adjustment: 1,
-      }
-    }
     const getCond = (name) => {
       return {
         $sum: {
@@ -123,7 +105,7 @@ module.exports = fp((instance, options, next) => {
       }
     }
 
-    const $group2 = {
+    const $group = {
       $group: {
         _id: '$_id',
         product_name: { $first: '$product_name' },
@@ -148,24 +130,17 @@ module.exports = fp((instance, options, next) => {
     }
     const $limit = { $limit: limit }
 
-    const aggregate = [$match, $group, $project, $group2, $skip, $limit]
-
     const $facet = {
       $facet: {
-        data: aggregate,
-        total: aggregate.concat({ $count: "total" })
+        data: [$match, $group, $skip, $limit],
+        total: [
+          $match, $group,
+          { $count: "total" },
+        ]
       }
     }
 
-    const data = await instance.inventoryHistory.aggregate([$facet]).exec()
-
-    // let total = (await instance.goodsSales
-    //   .aggregate([
-    //     ...aggregate.filter(e => e['$skip'] === undefined && e['$limit'] === undefined),
-    //     {
-    //       $count: "total",
-    //     },
-    //   ]))[0]
+    const data = await instance.inventoryHistory.aggregate([$facet]).allowDiskUse(true).exec()
 
     const total = data[0].total[0] && data[0].total[0].total ? data[0].total[0].total : 0
 
