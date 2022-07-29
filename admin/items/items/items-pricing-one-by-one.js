@@ -46,6 +46,14 @@ module.exports = ((instance, _, next) => {
               }
             }
           }
+        },
+        services: {
+          type: 'array',
+          items: {
+            type: 'string',
+            minLength: 24,
+            maxLength: 24
+          }
         }
       }
     }
@@ -91,6 +99,7 @@ module.exports = ((instance, _, next) => {
     try {
       const service_id = request.body.service;
       const items = request.body.items;
+      const services = request.body.services;
       const user = request.user;
       const itemsMap = {}
       const ids = []
@@ -126,11 +135,18 @@ module.exports = ((instance, _, next) => {
         }
       }
 
-      const goods = await instance.goodsSales.find({
-        _id: {
-          $in: ids
-        }
-      })
+      const goods = await instance.goodsSales
+        .find(
+          {
+            _id: {
+              $in: ids
+            }
+          },
+          {
+            name: 1,
+            services: 1,
+          },
+        )
         .lean()
 
       const updated_items = [];
@@ -141,7 +157,10 @@ module.exports = ((instance, _, next) => {
         if (item.services instanceof Array) {
           const setData = {}
           for (const ind in item.services) {
-            if (item.services[ind].service + '' == service_id + '') {
+            if (
+              item.services[ind].service + '' == service_id + '' ||
+              services.find(s => s + '' === item.services[ind].service + '')
+            ) {
               if (typeof itemsMap[item._id].price == typeof 5) {
                 if (!item.services[ind].price) {
                   item.services[ind].price = 0
@@ -150,7 +169,7 @@ module.exports = ((instance, _, next) => {
                 if (item.services[ind].price != itemsMap[item._id].price) {
                   instance.create_price_change_history(
                     user,
-                    service_id,
+                    item.services[ind].service,
                     item._id,
                     item.services[ind].price,
                     itemsMap[item._id].price,
@@ -164,7 +183,7 @@ module.exports = ((instance, _, next) => {
                     //     _id: item._id,
                     //     services: {
                     //       $elemMatch: {
-                    //         service: mongoose.Types.ObjectId(service_id)
+                    //         service: mongoose.Types.ObjectId(item.services[ind].service)
                     //       }
                     //     }
                     //   },
@@ -190,7 +209,7 @@ module.exports = ((instance, _, next) => {
                 if (item.services[ind].prices != itemsMap[item._id].prices) {
                   instance.create_prices_change_history(
                     user,
-                    service_id,
+                    item.services[ind].service,
                     item._id,
                     item.services[ind].prices,
                     itemsMap[item._id].prices,
@@ -203,7 +222,7 @@ module.exports = ((instance, _, next) => {
                         _id: item._id,
                         services: {
                           $elemMatch: {
-                            service: mongoose.Types.ObjectId(service_id)
+                            service: mongoose.Types.ObjectId(item.services[ind].service)
                           }
                         }
                       },

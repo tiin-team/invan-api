@@ -201,6 +201,7 @@ module.exports = fp(function (instance, _, next) {
       if (body.type === 'company_to_fees') {
         const supplierTransaction = {
           service: body.service,
+          service_name: body.service_name,
           supplier_id: body.supplier,
           document_id: body.comment,
           currency: body.currency,
