@@ -159,7 +159,7 @@ module.exports = ((instance, _, next) => {
           for (const ind in item.services) {
             if (
               item.services[ind].service + '' == service_id + '' ||
-              services.find(s => s + '' === item.services[ind].service + '')
+              services.includes(item.services[ind].service + '')
             ) {
               if (typeof itemsMap[item._id].price == typeof 5) {
                 if (!item.services[ind].price) {
