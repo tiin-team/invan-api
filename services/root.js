@@ -706,6 +706,7 @@ module.exports = (instance, _, next) => {
         accaunter: { type: 'string' },
         org_phone_number: { type: 'string' },
         taxes_pair_code: { type: 'string' },
+        is_same_service_price: { type: 'boolean' }
       }
     }
   };

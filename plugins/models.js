@@ -197,6 +197,10 @@ module.exports = fp((instance, _, next) => {
       type: String,
       default: "",
     },
+    is_same_service_price: {
+      type: Boolean,
+      default: false,
+    },
     //didox uchun soliq to'lovchining kodi
     taxes_pair_code: {
       type: String,

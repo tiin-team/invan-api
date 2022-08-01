@@ -1794,11 +1794,17 @@ module.exports = (instance, options, next) => {
         }
         if (request.body.service) {
           try {
+            const organization = await instance.organizations
+              .findById(admin.organization, {
+                is_same_service_price: 1
+              })
+              .lean()
+
             const services = await instance.services
               .find({ organization: admin.organization })
               .lean();
             const item = await instance.goodsSales
-              .findOne({ _id: request.params.id })
+              .findOne({ _id: request.params.id }, { price: 1, services: 1 })
               .lean();
             const serviceMap = {};
             if (typeof item.services == typeof []) {
@@ -1849,7 +1855,7 @@ module.exports = (instance, options, next) => {
                 // } catch (error) {
                 //   instance.send_Error('to Object', error.message);
                 // }
-                if (service_id + '' == ser._id + '') {
+                if (service_id + '' == ser._id + '' || organization.is_same_service_price) {
                   if (
                     typeof request.body.price == typeof 5 &&
                     request.body.price != serviceMap[ser._id + ''].price
@@ -1891,7 +1897,7 @@ module.exports = (instance, options, next) => {
                   updateItem.services.push(serviceMap[ser._id + '']);
                 }
               } else {
-                if (service_id + '' == ser._id + '') {
+                if (service_id + '' == ser._id + '' || organization.is_same_service_price) {
                   updateItem.services.push({
                     service: ser._id,
                     service_name: ser.name,
