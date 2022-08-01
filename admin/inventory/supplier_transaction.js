@@ -460,6 +460,14 @@ async function calculateSupplierBalance(instance, supp, service = '') {
             else if (item.type == 'refund')
                 allSum += getFloat(item.total)
         }
+
+        await instance.adjustmentSupplier.findByIdAndUpdate(
+            supp._id,
+            {
+                $set: { balance: allSum }
+            },
+            { lean: true }
+        )
         return allSum
     }
     catch (error) {
