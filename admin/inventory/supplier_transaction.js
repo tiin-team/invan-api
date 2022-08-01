@@ -390,7 +390,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
         let index = 1;
 
         for (const s of suppliers) {
-            s.balance = await calculateSupplierBalance(instance, s)
+            // s.balance = await calculateSupplierBalance(instance, s)
             suppliers_excel.push({
                 [`${instance.i18n.__('number')}`]: index++,
                 [`${instance.i18n.__('supplier_name')}`]: s.supplier_name,
