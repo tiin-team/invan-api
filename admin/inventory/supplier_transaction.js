@@ -388,7 +388,9 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
         }
         const suppliers_excel = []
         let index = 1;
+
         for (const s of suppliers) {
+            s.balance = await calculateSupplierBalance(instance, s)
             suppliers_excel.push({
                 [`${instance.i18n.__('number')}`]: index++,
                 [`${instance.i18n.__('supplier_name')}`]: s.supplier_name,
@@ -421,6 +423,51 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
     }
     return reply;
 }
+
+async function calculateSupplierBalance(instance, supp, service = '') {
+    try {
+        const query = {
+            supplier_id: supp._id,
+            status: { $ne: 'pending' },
+        };
+
+        if (service) {
+            query.service = instance.ObjectId(service);
+        }
+
+        const transactions = await instance.supplierTransaction
+            .find(query, { p_order: 1, status: 1, balance: 1 })
+            .lean();
+
+        allSum = 0
+        const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
+
+        query.document_id = { $nin: transactions.map(tr => tr.p_order) }
+
+        const purChase = await instance.inventoryPurchase
+            .find(query, { type: 1, total: 1 })
+            .lean();
+
+        for (let i = 0; i < transactions.length; i++) {
+            allSum += transactions[i].status == 'pending'
+                ? 0
+                : getFloat(transactions[i].balance)
+        }
+
+        for (const [index, item] of purChase.entries()) {
+            if (item.type == 'coming')
+                allSum -= getFloat(item.total)
+            else if (item.type == 'refund')
+                allSum += getFloat(item.total)
+        }
+        return allSum
+    }
+    catch (error) {
+        instance.send_Error("calculateSupplierBalance Supplier /:id", JSON.stringify(error))
+        return 0
+    }
+}
+
 module.exports = ((instance, options, next) => {
     const schema = {
         schema: {
