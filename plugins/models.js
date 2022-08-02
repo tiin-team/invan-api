@@ -1009,6 +1009,7 @@ module.exports = fp((instance, _, next) => {
     description: String,
     mxik: String,
     nds_value: Number,
+    marking: { type: Boolean, default: false }
   })
   instance.decorate('goodsSales', goodsSales)
 
