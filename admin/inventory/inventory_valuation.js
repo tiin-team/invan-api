@@ -97,12 +97,19 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
 
   service = instance.ObjectId(service);
 
+  // let is_service = {
+  //   $and: [
+  //     { $ne: ["$service", service] },
+  //     { $ne: ["$service", service + ""] },
+  //   ],
+  // }; 
   let is_service = {
     $and: [
-      { $ne: ["$service", service] },
-      { $ne: ["$service", service + ""] },
+      { $eq: ["$service", service] },
+      { $eq: ["$service", service + ""] },
     ],
   };
+
   service = service + "";
   if (typeof service == typeof "invan" && service != "") {
     try {
@@ -179,9 +186,9 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
         },
       },
       retail: {
-        $sum: {
-          $cond: ["$has_variants", 0, "$retail"],
-        },
+        $sum: "$retail"
+        // $cond: ["$has_variants", 0, "$retail"],
+        // },
       },
       potential: {
         $sum: {
@@ -205,7 +212,8 @@ async function inventoryValuationResult({ limit, page, supplier_id, organization
       },
       retail: {
         $sum: {
-          $cond: [{ $or: [is_service, "$has_variants"] }, 0, "$retail"],
+          $cond: [is_service, 0, "$retail"],
+          // $cond: [{ $or: [is_service, "$has_variants"] }, 0, "$retail"],
         },
       },
       potential: {

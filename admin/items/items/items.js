@@ -2967,6 +2967,7 @@ module.exports = (instance, options, next) => {
                   services: 1,
                   mxik: 1,
                   nds_value: 1,
+                  marking: 1,
                 },
               },
             ],
@@ -3005,6 +3006,7 @@ module.exports = (instance, options, next) => {
                   : randimMxik();
                 goods[index].nds_value = isNaN(parseFloat(good.nds_value)) ? 15 : parseFloat(good.nds_value);
                 goods[index].sale = discountsObj[goods[index]._id]
+                goods[index].marking = goods[index].marking === true ? true : false;
                 delete goods[index].services;
               }
 
