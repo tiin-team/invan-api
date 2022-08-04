@@ -616,6 +616,7 @@ module.exports = (instance, _, next) => {
         { $match: filterReceipts },
         projectCategoryFilter,
         unwindSoldItemList,
+        { $match: filterAfterUnwind },
         groupSoldItems,
         searchByItemName,
         countAllItems
