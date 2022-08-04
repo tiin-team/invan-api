@@ -978,8 +978,13 @@ module.exports = (instance, _, next) => {
                   "$$value",
                   {
                     $cond: [
-                      { $eq: ["$$this.name", "cashback"] },
-                      "this.value",
+                      {
+                        $and: [
+                          { $eq: ["$$this.name", "cashback"] },
+                          { $isNumber: { $toDouble: "this.value" } }
+                        ]
+                      },
+                      { $toDouble: "this.value" },
                       0
                     ],
                   },
