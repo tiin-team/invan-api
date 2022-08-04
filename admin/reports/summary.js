@@ -978,13 +978,15 @@ module.exports = (instance, _, next) => {
                   "$$value",
                   {
                     $cond: [
+                      { $eq: ["$$this.name", "cashback"] },
                       {
-                        $and: [
-                          { $eq: ["$$this.name", "cashback"] },
-                          { $isNumber: { $toDouble: "this.value" } }
-                        ]
+                        $convert: {
+                          input: 'this.value',
+                          to: 'double',
+                          onError: 0,
+                          onNull: 0
+                        }
                       },
-                      { $toDouble: "this.value" },
                       0
                     ],
                   },
