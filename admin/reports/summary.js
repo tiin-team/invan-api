@@ -969,13 +969,32 @@ module.exports = (instance, _, next) => {
             },
           },
           cash_back: 1,
+          used_cashback: {
+            $reduce: {
+              input: "$payment",
+              initialValue: 0,
+              in: {
+                $add: [
+                  "$$value",
+                  {
+                    $cond: [
+                      { $eq: ["$$this.name", "cashback"] },
+                      "this.value",
+                      0
+                    ],
+                  },
+                ],
+              },
+            }
+          }
         },
       };
 
       const groupByDate = {
         $group: {
           _id: '$count_type',
-          cash_backs: { $sum: '$cash_back' },
+          cash_back: { $sum: '$cash_back' },
+          used_cashback: { $sum: '$used_cashback' },
           date: {
             $first: '$date',
           },
@@ -1051,7 +1070,8 @@ module.exports = (instance, _, next) => {
       const groupTotalReport = {
         $group: {
           _id: null,
-          cash_backs: { $sum: '$cash_back' },
+          cash_back: { $sum: '$cash_back' },
+          used_cashback: { $sum: '$used_cashback' },
           cost_of_goods: {
             $sum: '$cost_of_goods',
           },
