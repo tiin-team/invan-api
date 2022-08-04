@@ -94,6 +94,7 @@ module.exports = fp((instance, options, next) => {
     //     const end_time = new Date().getTime()
     //     console.log('ketgan vaqt', end_time - start_time);
     // })
+
     instance.get('/get/tiin/transaction/dublicat/:organization/:service', async (request, reply) => {
         const data = await instance.services.aggregate([
             {

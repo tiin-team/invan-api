@@ -363,6 +363,8 @@ module.exports = (instance, _, next) => {
         },
       };
 
+      const filterAfterUnwind = {}
+
       if (services && services.length > 0) {
         for (const service of services) {
           if (!user_available_services.includes(service)) {
@@ -509,13 +511,15 @@ module.exports = (instance, _, next) => {
         },
       };
       if (supplier) {
-        filterReceipts["sold_item_list.supplier_id"] = supplier
+        filterAfterUnwind["sold_item_list.supplier_id"] = supplier
+        // filterReceipts["sold_item_list.supplier_id"] = supplier
         calculateItemsReport.$group.supplier = { $last: "$sold_item_list.supplier_name" }
       }
-      // if (category) {
-      //   filterReceipts["sold_item_list.category_id"] = category
-      //   calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
-      // }
+      if (category) {
+        filterAfterUnwind["sold_item_list.category_id"] = category
+        // filterReceipts["sold_item_list.category_id"] = category
+        calculateItemsReport.$group.category = { $last: "$sold_item_list.category_name" }
+      }
 
       const searchByItemName = {
         $match: {
@@ -583,6 +587,7 @@ module.exports = (instance, _, next) => {
         { $match: filterReceipts },
         projectCategoryFilter,
         unwindSoldItemList,
+        { $match: filterAfterUnwind },
         calculateItemsReport,
         searchByItemName,
         sortResult,

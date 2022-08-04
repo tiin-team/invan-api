@@ -1801,7 +1801,7 @@ module.exports = (instance, options, next) => {
               .lean()
 
             const services = await instance.services
-              .find({ organization: admin.organization })
+              .find({ organization: admin.organization }, { name: 1, _id: 1 })
               .lean();
             const item = await instance.goodsSales
               .findOne({ _id: request.params.id }, { price: 1, services: 1 })
@@ -1850,8 +1850,7 @@ module.exports = (instance, options, next) => {
             for (const ser of services) {
               if (serviceMap[ser._id + '']) {
                 // try {
-                //   serviceMap[ser._id + ''] =
-                //     serviceMap[ser._id + ''].toObject();
+                //   serviceMap[ser._id + ''] = serviceMap[ser._id + ''].toObject();
                 // } catch (error) {
                 //   instance.send_Error('to Object', error.message);
                 // }
@@ -1866,10 +1865,7 @@ module.exports = (instance, options, next) => {
                   if (
                     prices instanceof Array &&
                     serviceMap[ser._id + ''].prices instanceof Array &&
-                    !instance.equalPrices(
-                      prices,
-                      serviceMap[ser._id + ''].prices
-                    )
+                    !instance.equalPrices(prices, serviceMap[ser._id + ''].prices)
                   ) {
                     updateItem.last_price_change = new Date().getTime();
                     serviceMap[ser._id + ''].last_price_change = new Date().getTime();

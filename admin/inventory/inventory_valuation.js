@@ -466,6 +466,7 @@ module.exports = fp((instance, options, next) => {
             supplier_id,
             organization: user.organization,
             service,
+            sort: { retail: -1 }
             // user_available_services,
           }, instance)
 

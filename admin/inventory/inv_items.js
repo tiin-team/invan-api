@@ -254,10 +254,14 @@ module.exports = ((instance, _, next) => {
 
       const itemPurchaseCostMap = {}
       try {
-        const feature = await instance.settingFeatures.findOne({ organization: user.organization });
+        const feature = await instance.settingFeatures
+          .findOne({ organization: user.organization }, { use_purchase_cost_on_pricing: 1 })
+          .lean();
 
         if (inv_type == 'purchase' && inv_id && feature && feature.use_purchase_cost_on_pricing) {
-          const p_items = await instance.purchaseItem.find({ purchase_id: inv_id });
+          const p_items = await instance.purchaseItem
+            .find({ purchase_id: inv_id }, { product_id: 1, purchase_cost: 1 })
+            .lean();
           for (const itm of p_items) {
             itemPurchaseCostMap[itm.product_id] = itm.purchase_cost ? itm.purchase_cost : 0;
           }
