@@ -60,7 +60,7 @@ module.exports = (instance, options, next) => {
       .lean()
 
     if (disc)
-      return reply.send({
+      return reply.code(411).send({
         statusCode: 411,
         message: 'discount Allready exist'
       })

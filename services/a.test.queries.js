@@ -95,6 +95,78 @@ module.exports = fp((instance, options, next) => {
     //     console.log('ketgan vaqt', end_time - start_time);
     // })
 
+    instance.get('/get/tiin/check-prices', async (request, reply) => {
+        const update = request.query.update
+
+        const match = {
+            $match: {
+                organization: "5f5641e8dce4e706c062837a",
+                show_on_bot: true
+            }
+        }
+        const unwindServices = {
+            $unwind: '$services'
+        }
+
+        const project = {
+            $project: {
+                name: 1,
+                barcode: 1,
+                sku: 1,
+                services: 1,
+                prices_size: { $size: "$services.prices" }
+            }
+        }
+
+        const match_prices_size = {
+            $match: {
+                prices_size: { $eq: 2 }
+            }
+        }
+
+        const aggregate = [match, unwindServices, project, match_prices_size,]
+        const goods = await instance.goodsSales.aggregate(aggregate)
+        if (update === 'yes') {
+            const err_goods = goods.map(g => g._id)
+            for (const good of goods) {
+                const services = [g.services]
+                if (
+                    good.services.service + '' === '5f5641e8dce4e706c0628380' ||
+                    good.services.service + '' === '62e2c8a4612608fcff4cac39'
+                ) {
+                    services.push({
+                        service: good.services.service + '' === '62e2c8a4612608fcff4cac39'
+                            ? instance.ObjectId('5f5641e8dce4e706c0628380')
+                            : instance.ObjectId('62e2c8a4612608fcff4cac39'),
+                        service_id: good.services.service + '' === '62e2c8a4612608fcff4cac39'
+                            ? instance.ObjectId('5f5641e8dce4e706c0628380')
+                            : instance.ObjectId('62e2c8a4612608fcff4cac39'),
+                        service_name: good.services.service + '' === '62e2c8a4612608fcff4cac39'
+                            ? 'Tiin Market (Sayram)'
+                            : 'Tiin Market (Anjir)',
+                        price: good.services.price,
+                        is_price_change: good.services.is_price_change,
+                        price_currency: good.services.price_currency,
+                        price_auto_fill: good.services.price_auto_fill,
+                        prices: good.services.prices,
+                        in_stock: good.services.in_stock,
+                        low_stock: good.services.low_stock,
+                        optimal_stock: good.services.optimal_stock,
+                        reminder: good.services.reminder,
+                        variant_name: good.services.variant_name,
+                        available: good.services.available,
+                        stopped_item: good.services.stopped_item,
+                        sku: good.services.sku,
+                        printed_time: good.services.printed_time,
+                        printed_price_change_time: good.services.printed_price_change_time,
+                        top_sale: 0,
+                    })
+                }
+            }
+            return reply.ok(goods)
+        }
+        reply.ok(goods)
+    })
     instance.get('/get/tiin/transaction/dublicat/:organization/:service', async (request, reply) => {
         const data = await instance.services.aggregate([
             {
