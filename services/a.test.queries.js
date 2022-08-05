@@ -120,7 +120,7 @@ module.exports = fp((instance, options, next) => {
 
         const match_prices_size = {
             $match: {
-                prices_size: { $eq: 2 }
+                prices_size: { $eq: 1 }
             }
         }
 
