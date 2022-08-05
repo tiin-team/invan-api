@@ -132,7 +132,7 @@ module.exports = fp((instance, options, next) => {
             }
         }
 
-        const aggregate = [match, unwindServices, project, match_prices_size,]
+        const aggregate = [match, project, match_prices_size,]
         const goods = await instance.goodsSales.aggregate(aggregate)
         if (update === 'yes') {
             const err_goods = goods.map(g => g._id)
