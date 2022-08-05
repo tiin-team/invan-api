@@ -114,13 +114,13 @@ module.exports = fp((instance, options, next) => {
                 barcode: 1,
                 sku: 1,
                 services: 1,
-                prices_size: { $size: "$services.prices" }
+                services_size: { $size: "$services" }
             }
         }
 
         const match_prices_size = {
             $match: {
-                prices_size: { $eq: 1 }
+                services_size: { $eq: 1 }
             }
         }
 
