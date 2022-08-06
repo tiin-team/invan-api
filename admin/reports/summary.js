@@ -968,7 +968,7 @@ module.exports = (instance, _, next) => {
               },
             },
           },
-          cash_back: 1,
+          // cash_back: 1,
           used_cashback: {
             $reduce: {
               input: "$payment",
@@ -1000,7 +1000,7 @@ module.exports = (instance, _, next) => {
       const groupByDate = {
         $group: {
           _id: '$count_type',
-          cash_back: { $sum: '$cash_back' },
+          // cash_back: { $sum: '$cash_back' },
           used_cashback: { $sum: '$used_cashback' },
           date: {
             $first: '$date',
@@ -1077,8 +1077,8 @@ module.exports = (instance, _, next) => {
       const groupTotalReport = {
         $group: {
           _id: null,
-          cash_back: { $sum: '$cash_back' },
-          used_cashback: { $sum: '$used_cashback' },
+          // cash_back: { $sum: '$cash_back' },
+          cash_back: { $sum: '$used_cashback' },
           cost_of_goods: {
             $sum: '$cost_of_goods',
           },
@@ -1247,6 +1247,7 @@ module.exports = (instance, _, next) => {
             refunds: 1,
             discounts: 1,
             date: 1,
+            cash_back: { $sum: '$used_cashback' },
             net_sales: {
               $subtract: [
                 {
