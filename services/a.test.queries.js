@@ -172,6 +172,7 @@ module.exports = fp((instance, options, next) => {
                         printed_price_change_time: good.services[0].printed_price_change_time,
                         top_sale: 0,
                     })
+                    good.services = services
                 }
                 // await instance.goodsSales.findByIdAndUpdate(
                 //     good._id,
