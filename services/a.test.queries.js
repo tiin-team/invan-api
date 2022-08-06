@@ -101,7 +101,7 @@ module.exports = fp((instance, options, next) => {
         const match = {
             $match: {
                 organization: "5f5641e8dce4e706c062837a",
-                show_on_bot: true
+                // show_on_bot: true
             }
         }
         const unwindServices = {
@@ -139,37 +139,43 @@ module.exports = fp((instance, options, next) => {
             for (const good of goods) {
                 const services = [g.services]
                 if (
-                    good.services.service + '' === '5f5641e8dce4e706c0628380' ||
-                    good.services.service + '' === '62e2c8a4612608fcff4cac39'
+                    good.services.length === 1 &&
+                    good.services[0].service + '' === '5f5641e8dce4e706c0628380' ||
+                    good.services[0].service + '' === '62e2c8a4612608fcff4cac39'
                 ) {
                     services.push({
-                        service: good.services.service + '' === '62e2c8a4612608fcff4cac39'
+                        service: good.services[0].service + '' === '62e2c8a4612608fcff4cac39'
                             ? instance.ObjectId('5f5641e8dce4e706c0628380')
                             : instance.ObjectId('62e2c8a4612608fcff4cac39'),
-                        service_id: good.services.service + '' === '62e2c8a4612608fcff4cac39'
+                        service_id: good.services[0].service + '' === '62e2c8a4612608fcff4cac39'
                             ? instance.ObjectId('5f5641e8dce4e706c0628380')
                             : instance.ObjectId('62e2c8a4612608fcff4cac39'),
-                        service_name: good.services.service + '' === '62e2c8a4612608fcff4cac39'
+                        service_name: good.services[0].service + '' === '62e2c8a4612608fcff4cac39'
                             ? 'Tiin Market (Sayram)'
                             : 'Tiin Market (Anjir)',
-                        price: good.services.price,
-                        is_price_change: good.services.is_price_change,
-                        price_currency: good.services.price_currency,
-                        price_auto_fill: good.services.price_auto_fill,
-                        prices: good.services.prices,
-                        in_stock: good.services.in_stock,
-                        low_stock: good.services.low_stock,
-                        optimal_stock: good.services.optimal_stock,
-                        reminder: good.services.reminder,
-                        variant_name: good.services.variant_name,
-                        available: good.services.available,
-                        stopped_item: good.services.stopped_item,
-                        sku: good.services.sku,
-                        printed_time: good.services.printed_time,
-                        printed_price_change_time: good.services.printed_price_change_time,
+                        price: good.services[0].price,
+                        is_price_change: good.services[0].is_price_change,
+                        price_currency: good.services[0].price_currency,
+                        price_auto_fill: good.services[0].price_auto_fill,
+                        prices: good.services[0].prices,
+                        in_stock: good.services[0].in_stock,
+                        low_stock: good.services[0].low_stock,
+                        optimal_stock: good.services[0].optimal_stock,
+                        reminder: good.services[0].reminder,
+                        variant_name: good.services[0].variant_name,
+                        available: good.services[0].available,
+                        stopped_item: good.services[0].stopped_item,
+                        sku: good.sku,
+                        printed_time: good.services[0].printed_time,
+                        printed_price_change_time: good.services[0].printed_price_change_time,
                         top_sale: 0,
                     })
                 }
+                // await instance.goodsSales.findByIdAndUpdate(
+                //     good._id,
+                //     { $set: { services: services } },
+                //     { lean: true },
+                // )
             }
             return reply.ok(goods)
         }
