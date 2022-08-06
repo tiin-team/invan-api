@@ -137,7 +137,9 @@ module.exports = fp((instance, options, next) => {
         if (update === 'yes') {
             const err_goods = goods.map(g => g._id)
             for (const good of goods) {
-                const services = [g.services]
+                const services = Array.isArray(good.services)
+                    ? [{ ...good.services[0] }]
+                    : []
                 if (
                     good.services.length === 1 &&
                     good.services[0].service + '' === '5f5641e8dce4e706c0628380' ||
