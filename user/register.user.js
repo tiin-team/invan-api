@@ -148,7 +148,7 @@ module.exports = fp((instance, options, next) => {
     })
 
     await instance.User.findByIdAndUpdate(
-      serviceModel._id,
+      User_model._id,
       {
         $set: {
           services: [{

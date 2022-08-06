@@ -1563,7 +1563,9 @@ module.exports = (instance, options, next) => {
 
           if (data.services && Array.isArray(data.services)) {
             const services = await instance.services
-              .find({ organization: item1.organization })
+              .find(
+                { organization: item1.organization },
+                { name: 1 })
               .lean()
             const itemNewServices = {}
             for (const s of data.services) {
@@ -1578,8 +1580,8 @@ module.exports = (instance, options, next) => {
 
             if (services.length !== item1.services.length) {
               for (const s of services) {
-                if (!allItemServices[s.service])
-                  allItemServices[s.service] = {
+                if (!allItemServices[s._id])
+                  allItemServices[s._id] = {
                     available: false,
                     in_stock: 0,
                     is_price_change: false,
@@ -1591,8 +1593,8 @@ module.exports = (instance, options, next) => {
                     printed_price_change_time: 0,
                     printed_time: 0,
                     reminder: 0,
-                    service: s.service,
-                    service_name: s.service_name,
+                    service: s._id,
+                    service_name: s.name,
                     stopped_item: false,
                     variant_name: "",
                   }
