@@ -1102,7 +1102,7 @@ module.exports = (instance, _, next) => {
                 {
                   $subtract: [
                     '$gross_sales',
-                    { $add: ['$discounts', '$refunds'] },
+                    { $add: ['$discounts', '$refunds', '$used_cashback'] },
                   ],
                 },
                 '$cost_of_goods',
@@ -1247,7 +1247,7 @@ module.exports = (instance, _, next) => {
             refunds: 1,
             discounts: 1,
             date: 1,
-            cash_back: { $sum: '$used_cashback' },
+            cash_back: '$used_cashback',
             net_sales: {
               $subtract: [
                 {
@@ -1279,6 +1279,9 @@ module.exports = (instance, _, next) => {
                         },
                         {
                           $max: [0, '$discounts'],
+                        },
+                        {
+                          $max: [0, '$used_cashback'],
                         },
                       ],
                     },
