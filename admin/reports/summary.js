@@ -981,7 +981,7 @@ module.exports = (instance, _, next) => {
                       { $eq: ["$$this.name", "cashback"] },
                       {
                         $convert: {
-                          input: 'this.value',
+                          input: '$$this.value',
                           to: 'double',
                           onError: 0,
                           onNull: 0
