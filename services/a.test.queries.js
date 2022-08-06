@@ -97,6 +97,68 @@ module.exports = fp((instance, options, next) => {
 
     instance.get('/get/tiin/check-prices', async (request, reply) => {
         const update = request.query.update
+        const size = !isNaN(request.query.size) ? parseInt(request.query.size) : 1
+
+        const match = {
+            $match: {
+                organization: "5f5641e8dce4e706c062837a",
+                // show_on_bot: true
+            }
+        }
+        const unwindServices = {
+            $unwind: '$services'
+        }
+
+        const project = {
+            $project: {
+                name: 1,
+                barcode: 1,
+                sku: 1,
+                services: 1,
+                service_prices_size: {
+                    $cond: {
+                        if: {
+                            $isArray: "$services.prices"
+                        },
+                        then: { $size: "$services.prices" },
+                        else: 0
+                    }
+                }
+            }
+        }
+
+        const match_prices_size = {
+            $match: {
+                service_prices_size: { $eq: size }
+            }
+        }
+
+        const aggregate = [match, unwindServices, project, match_prices_size,]
+
+        const goods = await instance.goodsSales.aggregate(aggregate)
+        // if (update === 'yes') {
+        //     // const err_goods = goods.map(g => g._id)
+        //     for (const good of goods) {
+
+        //         await instance.goodsSales.findOneAndUpdate(
+        //             {
+        //                 _id: good._id,
+        //                 services: {
+        //                     $elemMatch: {
+        //                         service: good.services.service,
+        //                     },
+        //                 },
+        //             },
+        //             { $set: { 'services.$.prices': [] } },
+        //             { lean: true },
+        //         )
+        //     }
+        //     return reply.ok(goods)
+        // }
+        reply.ok(goods)
+    })
+    instance.get('/get/tiin/check-services', async (request, reply) => {
+        const update = request.query.update
 
         const match = {
             $match: {
@@ -174,11 +236,11 @@ module.exports = fp((instance, options, next) => {
                     })
                     good.services = services
                 }
-                await instance.goodsSales.findByIdAndUpdate(
-                    good._id,
-                    { $set: { services: services } },
-                    { lean: true },
-                )
+                // await instance.goodsSales.findByIdAndUpdate(
+                //     good._id,
+                //     { $set: { services: services } },
+                //     { lean: true },
+                // )
             }
             return reply.ok(goods)
         }

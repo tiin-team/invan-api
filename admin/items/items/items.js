@@ -1517,7 +1517,8 @@ module.exports = (instance, options, next) => {
     data.last_stock_updated = new Date().getTime();
     instance.goodsSales.findOne(
       { _id: id },
-      (_, item1) => {
+      { price: 1, max_cost: 1, services: 1, organization: 1 },
+      async (_, item1) => {
         if (!item1) {
           return reply.fourorfour('Item');
         }
@@ -1558,6 +1559,51 @@ module.exports = (instance, options, next) => {
 
           if (typeof data.price == typeof 5 && data.price != item1.price) {
             data.last_price_change = new Date().getTime();
+          }
+
+          if (data.services && Array.isArray(data.services)) {
+            const services = await instance.services
+              .find({ organization: item1.organization })
+              .lean()
+            const itemNewServices = {}
+            for (const s of data.services) {
+              itemNewServices[s.service] = s
+            }
+
+            const allItemServices = {}
+
+            for (const s of item1.services) {
+              allItemServices[s.service] = s
+            }
+
+            if (services.length !== item1.services.length) {
+              for (const s of services) {
+                if (!allItemServices[s.service])
+                  allItemServices[s.service] = {
+                    available: false,
+                    in_stock: 0,
+                    is_price_change: false,
+                    last_price_change: 0,
+                    price: 0,
+                    price_auto_fill: true,
+                    price_currency: "uzs",
+                    prices: [],
+                    printed_price_change_time: 0,
+                    printed_time: 0,
+                    reminder: 0,
+                    service: s.service,
+                    service_name: s.service_name,
+                    stopped_item: false,
+                    variant_name: "",
+                  }
+              }
+            }
+
+            for (const s of Object.keys(allItemServices)) {
+              if (!itemNewServices[s]) {
+                data.services.push(allItemServices[s])
+              }
+            }
           }
 
           instance.goodsSales.updateOne(
