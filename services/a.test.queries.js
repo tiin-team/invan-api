@@ -236,11 +236,11 @@ module.exports = fp((instance, options, next) => {
                     })
                     good.services = services
                 }
-                // await instance.goodsSales.findByIdAndUpdate(
-                //     good._id,
-                //     { $set: { services: services } },
-                //     { lean: true },
-                // )
+                await instance.goodsSales.findByIdAndUpdate(
+                    good._id,
+                    { $set: { services: services } },
+                    { lean: true },
+                )
             }
             return reply.ok(goods)
         }
