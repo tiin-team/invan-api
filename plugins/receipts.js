@@ -318,8 +318,8 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 //xatolik bor
                 const queue = await instance.goodsSaleQueue
                   .findOne({
-                    product_id: item._id,
-                    service_id: service_id,
+                    product_id: instance.ObjectId(item._id),
+                    service_id: instance.ObjectId(service_id),
                     // queue: item.queue,
                     quantity_left: { $ne: 0 },
                   })
@@ -337,13 +337,17 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
                 if (queue) {
                   $receiptModel.sold_item_list[i].queue_id = queue._id
+                  $receiptModel.sold_item_list[i].partiation_id = queue._id
+                  $receiptModel.sold_item_list[i].p_order = queue.p_order
                   $receiptModel.sold_item_list[i].queue = queue.queue
                   // partiali tovar bo'yicha supplierni olish
                   $receiptModel.sold_item_list[i].supplier_id = queue.supplier_id;
                   $receiptModel.sold_item_list[i].supplier_name = queue.supplier_name;
                 }
 
-              } catch (error) { }
+              } catch (error) {
+                instance.send_Error('Solt item partion not found', JSON.stringify(error))
+              }
 
               $receiptModel.sold_item_list[i].count_by_type =
                 item.count_by_type;

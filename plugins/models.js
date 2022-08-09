@@ -350,8 +350,9 @@ module.exports = fp((instance, _, next) => {
     },
     sold_item_list: [{
       queue_id: mongoose.Types.ObjectId,
-      partiation_id: mongoose.Types.ObjectId,
       queue: Number,
+      partiation_id: mongoose.Types.ObjectId,
+      p_order: String,
       receipt_id: String,
       variant_of: String,
       product_id: String,

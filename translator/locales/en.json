@@ -51,5 +51,8 @@
 	"cost_of_goods": "Cost of goods",
 	"gross_profit": "Gross profit",
 	"count": "count",
-	"_id": "_id"
+	"_id": "_id",
+	"barcode": "barcode",
+	"cashback": "cashback",
+	"p_order": "p_order"
 }

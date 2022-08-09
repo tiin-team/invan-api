@@ -59,41 +59,32 @@ module.exports = fp((instance, options, next) => {
     //     console.log('ketgan vaqt', end_time - start_time);
     // })
 
-    // (async () => {
-    //     const transactions = await instance.supplierTransaction.find(
-    //         {
-    //             service: instance.ObjectId("61ae2922a914c3ba42fc6287")
-    //         }
-    //     ).lean()
-    //     console.log(transactions.length);
-    //     const start_time = new Date().getTime()
-    //     const $models = []
-
-    //     const res1 = await new Promise(resolve => {
-    //         fs.writeFile(`./static/Anjir-transactions.json`, JSON.stringify(transactions), (err) => {
-    //             if (err) resolve(false)
-    //             for (const tran of transactions) {
-    //                 delete tran._id
-    //                 tran.service = instance.ObjectId("62e2c8a4612608fcff4cac39")
-    //                 tran.service_name = "Tiin Market (Anjir)"
-    //                 $models.push(new instance.supplierTransaction(tran))
-    //             }
-    //             fs.writeFile(`./static/Anjir-transactions-$models.json`, JSON.stringify($models), (err) => {
-    //                 if (err) resolve(false)
-    //                 else resolve(true)
-    //             });
-    //         });
-    //     })
-    //     if (res1) {
-    //         console.log('saving...');
-    //         const saved = await instance.supplierTransaction.insertMany($models)
-    //         fs.writeFileSync(`./static/Anjir-transactions-$models-saved.json`, JSON.stringify(saved));
-    //         console.log('done.');
-    //     }
-
-    //     const end_time = new Date().getTime()
-    //     console.log('ketgan vaqt', end_time - start_time);
-    // })
+    (async () => {
+        console.log('starting...');
+        const start_time = new Date().getTime()
+        const customers = await instance.clientsDatabase
+            .find(
+                {
+                    organization: "5f5641e8dce4e706c062837a",
+                    gender: null,
+                },
+                {
+                    gender: 1
+                }
+            )
+            .lean();
+        console.log(customers.length);
+        for (const c of customers) {
+            await instance.clientsDatabase
+                .findByIdAndUpdate(c._id, {
+                    $set: {
+                        gender: c.gender ? c.gender : ''
+                    }
+                });
+        }
+        const end_time = new Date().getTime()
+        console.log('ketgan vaqt', end_time - start_time);
+    })()
 
     instance.get('/get/tiin/check-prices', async (request, reply) => {
         const update = request.query.update

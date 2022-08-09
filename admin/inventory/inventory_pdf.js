@@ -1403,12 +1403,16 @@ module.exports = fp((instance, _, next) => {
     const getReceiptPdf = async (request, reply) => {
         try {
             const { id } = request.params;
-            const receipt = await instance.Receipts.findById(id);
+            const receipt = await instance.Receipts
+                .findById(id)
+                .lean();
             if (!receipt) {
                 return reply.send('Receipt not found')
             }
             try {
-                const user = await instance.User.findOne({ organization: receipt.organization });
+                const user = await instance.User
+                    .findOne({ organization: receipt.organization }, { ui_language: 1 })
+                    .lean();
                 if (user.ui_language && user.ui_language.value != undefined) {
                     instance.i18n.setLocale(user.ui_language.value)
                 }
@@ -1417,14 +1421,18 @@ module.exports = fp((instance, _, next) => {
                 console.log(error)
             }
             try {
-                const service = await instance.services.findById(receipt.service)
+                const service = await instance.services
+                    .findById(receipt.service, { name: 1 })
+                    .lean()
                 if (service) {
                     receipt.service_name = service.name
                 }
             } catch (error) { }
 
             try {
-                const cashier = await instance.User.findById(receipt.cashier_id)
+                const cashier = await instance.User
+                    .findById(receipt.cashier_id, { name: 1 })
+                    .lean()
                 if (cashier) {
                     receipt.cashier_name = cashier.name
                 }
@@ -1432,12 +1440,48 @@ module.exports = fp((instance, _, next) => {
 
             let client_name = '';
             try {
-                const client = await instance.clientsDatabase.findOne({ user_id: receipt.user_id, organization: receipt.organization });
+                const client = await instance.clientsDatabase
+                    .findOne(
+                        { user_id: receipt.user_id, organization: receipt.organization },
+                        { first_name: 1, last_name: 1 })
+                    .lean();
                 if (client) {
                     client_name = `${client.first_name} ${client.last_name ? client.last_name : ''}`
                 }
             } catch (error) { }
-            const doc = new PDFDocument({ margin: 0 });
+
+            const partiationsObj = {}
+            try {
+                const partiation_ids = []
+                for (const s_item of receipt.sold_item_list) {
+                    if (s_item.partiation_id)
+                        partiation_ids.push(instance.ObjectId(s_item.partiation_id))
+                }
+                const partiations = await instance.goodsSaleQueue
+                    .find(
+                        {
+                            _id: { $in: partiation_ids },
+                            // organization_id: receipt.organization,
+                            // service_id: receipt.service,
+                        },
+                        {
+                            p_order: 1,
+                            supplier_name: 1
+                        }
+                    ).lean()
+                for (const partiation of partiations) {
+                    partiationsObj[partiation._id] = partiation
+                }
+            } catch (error) { }
+            for (let i = 0; i < receipt.sold_item_list.length; i++) {
+                if (receipt.sold_item_list[i].partiation_id)
+                    receipt.sold_item_list[i].p_order = partiationsObj[receipt.sold_item_list[i].partiation_id].p_order
+                else {
+                    receipt.sold_item_list[i].p_order = ''
+                }
+            }
+
+            const doc = new PDFDocument({ margin: 0, layout: 'landscape' });
             doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
             doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
             // doc.addPage({ margin: 0 })
@@ -1471,12 +1515,34 @@ module.exports = fp((instance, _, next) => {
                     {
                         header: `${instance.i18n.__('item_name')}`,
                         id: 'product_name',
-                        width: has_count_by_type ? 215 : 320,
+                        width: has_count_by_type ? 185 : 290,
                         align: 'left',
                         renderer: function (tb, data) {
                             doc.font('NotoSansRegular')
                             doc.fontSize(8)
                             return data.product_name;
+                        }
+                    },
+                    {
+                        header: `${instance.i18n.__('barcode')}`,
+                        id: 'barcode',
+                        width: 80,
+                        align: 'left',
+                        renderer: function (tb, data) {
+                            doc.font('NotoSansRegular')
+                            doc.fontSize(8)
+                            return data.barcode;
+                        }
+                    },
+                    {
+                        header: `${instance.i18n.__('p_order')}`,
+                        id: 'p_order',
+                        width: 40,
+                        align: 'left',
+                        renderer: function (tb, data) {
+                            doc.font('NotoSansRegular')
+                            doc.fontSize(8)
+                            return data.p_order;
                         }
                     },
                     {
