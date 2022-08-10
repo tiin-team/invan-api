@@ -3753,11 +3753,11 @@ module.exports = (instance, options, next) => {
       ? parseInt(request.query.page)
       : 1
 
-    const barcode = request.query.barcode
+    const barcode = request.query.barcode ? request.query.barcode : ''
 
     const query = {
       barcode: {
-        $elemMatch: barcode
+        $elemMatch: { $eq: barcode }
       }
     };
 
@@ -3790,18 +3790,21 @@ module.exports = (instance, options, next) => {
 
     try {
       const $facet = [{
-        total: [
-          ...pipeline,
-          {
-            $count: "total",
-          },
-        ]
+        $facet: {
+
+          total: [
+            ...pipeline,
+            {
+              $count: "total",
+            },
+          ]
+        }
       }]
 
       pipeline.push({ $skip: limit * (page - 1) });
       pipeline.push({ $limit: limit });
 
-      $facet[0].data = pipeline
+      $facet[0].$facet.data = pipeline
 
       const data = await instance.goodsSales
         .aggregate($facet)
