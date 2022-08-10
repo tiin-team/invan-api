@@ -3755,6 +3755,16 @@ module.exports = (instance, options, next) => {
 
     const barcode = request.query.barcode ? request.query.barcode : ''
 
+    if (barcode === '') {
+      return reply.ok({
+        limit: 10,
+        current_page: 1,
+        total: 0,
+        page: 1,
+        data: [],
+      });
+    }
+
     const query = {
       barcode: {
         $elemMatch: { $eq: barcode }
@@ -3827,7 +3837,7 @@ module.exports = (instance, options, next) => {
 
   }
 
-  instance.get('/items/suggestion', { version: '2.0.0' }, async (request, reply) => {
+  instance.get('/items/suggestion', { version: '2.0.0' }, (request, reply) => {
     instance.authorization(request, reply, (user) => {
       if (user) {
         findSuggestionGoods(request, reply, user);

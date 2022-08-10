@@ -1407,8 +1407,20 @@ module.exports = fp((instance, _, next) => {
       type: Number,
       default: 1,
     },
+    tarif_id: String
   })
   instance.decorate('clientsDatabase', clients)
+
+  instance.decorate('clientstariffes',
+    instance.model('clientstariffes', {
+      organization: String,
+      percentage: {
+        type: Number,
+        default: 1,
+      },
+      name: String,
+    })
+  )
 
   const feedback = instance.model('feedback', {
     organization: String,

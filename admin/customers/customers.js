@@ -701,6 +701,11 @@ module.exports = (instance, options, next) => {
             type: "string"
           },
           user_id: { type: "string" },
+          tarif_id: {
+            type: "string",
+            minLength: 24,
+            maxLength: 24
+          },
         },
       },
     },
