@@ -1395,7 +1395,7 @@ module.exports = fp((instance, _, next) => {
     },
     gender: {
       type: String,
-      enum: ['male', 'female']
+      enum: ['male', 'female', 'not_set']
     },
     birthday: String,
     debt: Number,

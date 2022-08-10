@@ -59,33 +59,6 @@ module.exports = fp((instance, options, next) => {
     //     console.log('ketgan vaqt', end_time - start_time);
     // })
 
-    (async () => {
-        console.log('starting...');
-        const start_time = new Date().getTime()
-        const customers = await instance.clientsDatabase
-            .find(
-                {
-                    organization: "5f5641e8dce4e706c062837a",
-                    gender: null,
-                },
-                {
-                    gender: 1
-                }
-            )
-            .lean();
-        console.log(customers.length);
-        for (const c of customers) {
-            await instance.clientsDatabase
-                .findByIdAndUpdate(c._id, {
-                    $set: {
-                        gender: c.gender ? c.gender : ''
-                    }
-                });
-        }
-        const end_time = new Date().getTime()
-        console.log('ketgan vaqt', end_time - start_time);
-    })()
-
     instance.get('/get/tiin/check-prices', async (request, reply) => {
         const update = request.query.update
         const size = !isNaN(request.query.size) ? parseInt(request.query.size) : 1

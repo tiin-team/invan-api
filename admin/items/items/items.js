@@ -3743,5 +3743,94 @@ module.exports = (instance, options, next) => {
       });
     }
   );
+
+  const findSuggestionGoods = async (request, reply, user) => {
+    const limit = !isNaN(parseInt(request.query.limit))
+      ? parseInt(request.query.limit)
+      : 10
+
+    const page = !isNaN(parseInt(request.query.page))
+      ? parseInt(request.query.page)
+      : 1
+
+    const barcode = request.query.barcode
+
+    const query = {
+      barcode: {
+        $elemMatch: barcode
+      }
+    };
+
+    const sort_by = { _id: 1 };
+
+    const pipeline = [{ $match: query }];
+
+    const projectionItems = {
+      $project: {
+        _id: 1,
+        name: 1,
+        mxik: 1,
+        barcode: 1,
+        category: 1,
+        category_name: 1,
+        sold_by: 1,
+        barcode: 1,
+        item_type: 1,
+        parent_name: 1,
+        has_variants: 1,
+        representation: 1,
+        representation_type: 1,
+        // variant_items: 1,
+      },
+    };
+
+    pipeline.push(projectionItems);
+
+    pipeline.push({ $sort: sort_by });
+
+    try {
+      const $facet = [{
+        total: [
+          ...pipeline,
+          {
+            $count: "total",
+          },
+        ]
+      }]
+
+      pipeline.push({ $skip: limit * (page - 1) });
+      pipeline.push({ $limit: limit });
+
+      $facet[0].data = pipeline
+
+      const data = await instance.goodsSales
+        .aggregate($facet)
+        .allowDiskUse(true);
+
+      const goods = data[0].data
+      const total = data[0].total[0].total
+
+      reply.ok({
+        limit: limit,
+        current_page: page,
+        total: total,
+        page: Math.ceil(total / limit),
+        data: goods,
+      });
+    } catch (error) {
+      reply.error(error.message);
+    }
+    return reply;
+
+  }
+
+  instance.get('/items/suggestion', { version: '2.0.0' }, async (request, reply) => {
+    instance.authorization(request, reply, (user) => {
+      if (user) {
+        findSuggestionGoods(request, reply, user);
+      }
+    });
+  })
+
   next();
 };

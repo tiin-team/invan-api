@@ -78,6 +78,62 @@ module.exports = fp((instance, _, next) => {
           ? gift.value
           : 0
 
+      // Plus Market un
+      if (organization._id == '5f69b8687f9b0f7af484f455') {
+        if (!clientsDatabase) {
+
+          const CashBackClient = await axios.get(`${process.env.cash_back_URL}/clients?phone=${phone_number}`)
+            .then(res => res.data)
+            .catch(err => { })
+
+          if (!CashBackClient) {
+            const text = `\norganization: ${organization._id}` +
+              `\nOrganization name: ${organization.name}` +
+              `\n\nClient phone: ${phone_number}` +
+              `\n\nReceipt: ${receipt._id}` +
+              `\n\nLine: 94`
+            //send error to devs
+            return instance.send_Error(`${process.env.cash_back_URL}/clients?phone=${phone_number}`, text)
+          }
+          let user_id = new Date().getTime();
+          await new instance.clientsDatabase({
+            user_id: user_id,
+            organization: organization._id,
+            first_name: CashBackClient.first_name,
+            last_name: CashBackClient.last_name,
+            phone_number: CashBackClient.phone_number,
+            point_balance: CashBackClient.balance,
+            gender: CashBackClient.gender,
+            total_sale: 0,
+            sales: 0,
+          }).save()
+        }
+
+        const res = await axios.post(`${process.env.cash_back_URL}/receipts`, receipt)
+          .then(res => res)
+          .catch(async (err) => {
+            return {
+              statusText: `${process.env.cash_back_URL}/receipts end pointga post qilib bolmadi!`,
+              status: 404,
+              cash_back: default_cash_back
+            }
+          })
+        // console.log(res?.status, 'res status');
+        if (res.data && res.data.cashback && !isNaN(res.data.cashback))
+          cash_back = parseFloat(res.data.cashback) + zdachi_to_cashback;
+
+        if (res.status !== 201) {
+          //send error
+          const text2 = `Error on post, \nstatusText: ${res.statusText}` +
+            `\nStatus: ${res.status}` +
+            `\norganization: ${organization._id}` +
+            `\nOrganization name: ${organization.name}` +
+            `\n\nClient phone: ${phone_number}` +
+            `\n\nReceipt: ${receipt._id}`
+
+          instance.send_Error(`${process.env.cash_back_URL}/clients?phone=${phone_number}`, text2)
+        }
+      }
       //Yilmaz cashback
       if (organization._id == '6087b4bc3ca09c0c71d6b52f') {
         if (!clientsDatabase)
@@ -88,43 +144,43 @@ module.exports = fp((instance, _, next) => {
         return await updateClient(query, receipt, default_cash_back, minus_cash)
       }
 
-      if (!clientsDatabase) {
-
-        const CashBackClient = await axios.get(`${process.env.cash_back_URL}/clients?phone=${phone_number}`)
-          .then(res => res.data)
-          .catch(err => { })
-
-        if (!CashBackClient) {
-          const text = `\norganization: ${organization._id}` +
-            `\nOrganization name: ${organization.name}` +
-            `\n\nClient phone: ${phone_number}` +
-            `\n\nReceipt: ${receipt._id}` +
-            `\n\nLine: 82`
-          //send error to devs
-          return instance.send_Error(`${process.env.cash_back_URL}/clients?phone=${phone_number}`, text)
-        }
-        let user_id = new Date().getTime();
-        try {
-          user_id = CashBackClient.birthDate.replaceAll('.', '')
-            + CashBackClient.phoneNumber.replace('+', '')
-            + new Date().getTime();
-        } catch (error) { }
-        await new instance.clientsDatabase(
-          {
-            user_id: user_id,
-            organization: organization._id,
-            first_name: CashBackClient.firstName,
-            last_name: CashBackClient.LastName,
-            phone_number: CashBackClient.phoneNumber,
-            point_balance: 0,
-            total_sale: 0,
-            sales: 0,
-          }
-        ).save()
-      }
       let cash_back = default_cash_back;
       //Tiin uchun
       if (organization._id == '5f5641e8dce4e706c062837a' || organization._id == '61ae2917a914c3ba42fc626f') {
+        if (!clientsDatabase) {
+
+          const CashBackClient = await axios.get(`${process.env.cash_back_URL}/clients?phone=${phone_number}`)
+            .then(res => res.data)
+            .catch(err => { })
+
+          if (!CashBackClient) {
+            const text = `\norganization: ${organization._id}` +
+              `\nOrganization name: ${organization.name}` +
+              `\n\nClient phone: ${phone_number}` +
+              `\n\nReceipt: ${receipt._id}` +
+              `\n\nLine: 82`
+            //send error to devs
+            return instance.send_Error(`${process.env.cash_back_URL}/clients?phone=${phone_number}`, text)
+          }
+          let user_id = new Date().getTime();
+          try {
+            user_id = CashBackClient.birthDate.replaceAll('.', '')
+              + CashBackClient.phoneNumber.replace('+', '')
+              + new Date().getTime();
+          } catch (error) { }
+          await new instance.clientsDatabase(
+            {
+              user_id: user_id,
+              organization: organization._id,
+              first_name: CashBackClient.firstName,
+              last_name: CashBackClient.LastName,
+              phone_number: CashBackClient.phoneNumber,
+              point_balance: 0,
+              total_sale: 0,
+              sales: 0,
+            }
+          ).save()
+        }
         const res = await axios.post(`${process.env.cash_back_URL}/receipt`, receipt)
           .then(res => res)
           .catch(async (err) => {
