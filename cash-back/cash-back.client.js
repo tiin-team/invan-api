@@ -243,6 +243,7 @@ module.exports = fp((instance, _, next) => {
             phone_number: 1,
             organization: 1,
             status: 1,
+            is_minimum_price: 1,
           },
         )
         .lean();

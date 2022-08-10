@@ -1407,7 +1407,11 @@ module.exports = fp((instance, _, next) => {
       type: Number,
       default: 1,
     },
-    tarif_id: String
+    tarif_id: String,
+    is_minimum_price: {
+      type: Boolean,
+      default: false,
+    }
   })
   instance.decorate('clientsDatabase', clients)
 

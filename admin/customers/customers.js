@@ -706,6 +706,7 @@ module.exports = (instance, options, next) => {
             minLength: 24,
             maxLength: 24
           },
+          is_minimum_price: { type: "boolean" }
         },
       },
     },
