@@ -3775,27 +3775,22 @@ module.exports = (instance, options, next) => {
 
     const pipeline = [{ $match: query }];
 
-    const projectionItems = {
-      $project: {
-        _id: 1,
-        name: 1,
-        mxik: 1,
-        brand: 1,
-        barcode: 1,
-        category: 1,
-        category_name: 1,
-        sold_by: 1,
-        barcode: 1,
-        item_type: 1,
-        parent_name: 1,
-        has_variants: 1,
-        representation: 1,
-        representation_type: 1,
-        // variant_items: 1,
-      },
-    };
-
-    pipeline.push(projectionItems);
+    const $lookup = {
+      $lookup: {
+        from: 'soliqgoods',
+        let: { mxik: '$mxik' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ['$mxik', '$$mxik']
+              },
+            },
+          },
+        ],
+        as: 'mxiks',
+      }
+    }
 
     pipeline.push({ $sort: sort_by });
 
@@ -3811,10 +3806,47 @@ module.exports = (instance, options, next) => {
           ]
         }
       }]
+      const projectionItems = {
+        $project: {
+          _id: 1,
+          name: 1,
+          // mxik: 1,
+          brand: 1,
+          barcode: 1,
+          category: 1,
+          category_name: 1,
+          sold_by: 1,
+          barcode: 1,
+          item_type: 1,
+          parent_name: 1,
+          has_variants: 1,
+          representation: 1,
+          representation_type: 1,
+          mxik: '$mxiks.mxik',
+          group_name_uz: '$mxiks.group_name_uz',
+          group_name_ru: '$mxiks.group_name_ru',
+          class_name_uz: '$mxiks.class_name_uz',
+          class_name_ru: '$mxiks.class_name_ru',
+          position_uz: '$mxiks.position_uz',
+          position_ru: '$mxiks.position_ru',
+          sub_position_uz: '$mxiks.sub_position_uz',
+          sub_position_ru: '$mxiks.sub_position_ru',
+          // brand: '$mxiks',
+          // barcode: String,
+          attribute_uz: '$mxiks.attribute_uz',
+          attribute_ru: '$mxiks.attribute_ru',
+          unit: '$mxiks.unit',
+          unit_of_pack: '$mxiks.unit_of_pack',
+          // variant_items: 1,
+        },
+      };
 
       pipeline.push({ $skip: limit * (page - 1) });
       pipeline.push({ $limit: limit });
+      pipeline.push($lookup)
+      pipeline.push(projectionItems);
 
+      pipeline.push({ $unwind: '$mxiks' })
       $facet[0].$facet.data = pipeline
 
       const data = await instance.goodsSales
