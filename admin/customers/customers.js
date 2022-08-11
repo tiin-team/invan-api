@@ -217,6 +217,7 @@ module.exports = (instance, options, next) => {
         last_visit: 1,
         point_balance: 1,
         debt_pay_history: 1,
+        is_minimum_price: 1,
         organization: 1,
         phone_number: 1,
         createdAt: 1,
@@ -577,6 +578,7 @@ module.exports = (instance, options, next) => {
               email: { type: "string" },
               note: { type: "string" },
               user_id: { type: "string" },
+              is_minimum_price: { type: "boolean" }
             },
           },
         },

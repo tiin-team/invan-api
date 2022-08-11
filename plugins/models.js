@@ -1412,7 +1412,7 @@ module.exports = fp((instance, _, next) => {
     is_minimum_price: {
       type: Boolean,
       default: false,
-    }
+    },
   })
   instance.decorate('clientsDatabase', clients)
 
