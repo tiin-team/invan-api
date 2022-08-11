@@ -3833,7 +3833,7 @@ module.exports = (instance, options, next) => {
       pipeline.push($lookup)
       pipeline.push(projectionItems);
 
-      // pipeline.push({ $unwind: '$mxiks' })
+      pipeline.push({ $unwind: '$mxiks' })
 
       const $facet = [{
         $facet: {
