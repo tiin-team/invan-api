@@ -3792,20 +3792,9 @@ module.exports = (instance, options, next) => {
       }
     }
 
-    pipeline.push({ $sort: sort_by });
+    // pipeline.push({ $sort: sort_by });
 
     try {
-      const $facet = [{
-        $facet: {
-
-          total: [
-            ...pipeline,
-            {
-              $count: "total",
-            },
-          ]
-        }
-      }]
       const projectionItems = {
         $project: {
           _id: 1,
@@ -3841,12 +3830,24 @@ module.exports = (instance, options, next) => {
         },
       };
 
-      pipeline.push({ $skip: limit * (page - 1) });
-      pipeline.push({ $limit: limit });
       pipeline.push($lookup)
       pipeline.push(projectionItems);
 
-      pipeline.push({ $unwind: '$mxiks' })
+      // pipeline.push({ $unwind: '$mxiks' })
+
+      const $facet = [{
+        $facet: {
+          total: [
+            ...pipeline,
+            {
+              $count: "total",
+            },
+          ]
+        }
+      }]
+
+      pipeline.push({ $skip: limit * (page - 1) });
+      pipeline.push({ $limit: limit });
       $facet[0].$facet.data = pipeline
 
       const data = await instance.goodsSales
