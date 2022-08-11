@@ -701,11 +701,12 @@ module.exports = (instance, options, next) => {
             type: "string"
           },
           user_id: { type: "string" },
-          tarif_id: {
+          tariff_id: {
             type: "string",
             minLength: 24,
             maxLength: 24
           },
+          tariff_name: { type: "string" },
           is_minimum_price: { type: "boolean" }
         },
       },

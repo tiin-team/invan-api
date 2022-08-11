@@ -1407,7 +1407,8 @@ module.exports = fp((instance, _, next) => {
       type: Number,
       default: 1,
     },
-    tarif_id: String,
+    tariff_id: String,
+    tariff_name: String,
     is_minimum_price: {
       type: Boolean,
       default: false,

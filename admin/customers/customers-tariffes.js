@@ -28,7 +28,7 @@ module.exports = fp((instance, options, next) => {
     });
   })
 
-  instance.get("/tariffes/get/", version, (request, reply) => {
+  instance.get("/tariffes/get", version, (request, reply) => {
     instance.authorization(request, reply, async (user) => {
       const limit = !isNaN(parseInt(request.query.limit))
         ? parseInt(request.query.limit)
