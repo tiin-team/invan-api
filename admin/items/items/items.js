@@ -3780,6 +3780,7 @@ module.exports = (instance, options, next) => {
         _id: 1,
         name: 1,
         mxik: 1,
+        brand: 1,
         barcode: 1,
         category: 1,
         category_name: 1,
