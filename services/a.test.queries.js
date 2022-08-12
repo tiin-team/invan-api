@@ -58,7 +58,23 @@ module.exports = fp((instance, options, next) => {
     //     const end_time = new Date().getTime()
     //     console.log('ketgan vaqt', end_time - start_time);
     // })
-
+    (async () => {
+        const items = await instance.goodsSales.find(
+            {
+                $or: [
+                    { barcode: { $elemMatch: { $regex: / $/, $options: 'i' } } },
+                    { barcode: { $elemMatch: { $regex: /^ /, $options: 'i' } } },
+                ]
+            },
+            { barcode: 1 },
+        )
+            .lean()
+        for (const item of items) {
+            item.barcode = item.barcode.map(b => b.trim())
+            await instance.goodsSales.findByIdAndUpdate(item._id, { $set: item })
+        }
+        console.log('end');
+    })()
     instance.get('/get/tiin/check-prices', async (request, reply) => {
         const update = request.query.update
         const size = !isNaN(request.query.size) ? parseInt(request.query.size) : 1

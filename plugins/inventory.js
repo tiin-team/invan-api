@@ -62,7 +62,14 @@ module.exports = fp((instance, _, next) => {
       instance.log.info(`Saved history id -> ${id}`);
     } catch (error) {
       instance.log.error(error.message)
-      instance.send_Error('creating inventory', JSON.stringify(error))
+      instance.send_Error(
+        `creating inventory. reason: ${reason}. user:${JSON.stringify(user)}. service_id: ${service_id}. product_id: ${product_id + '  ' +
+        cost + ' ' +
+        adjustment + ' ' +
+        stock_after + ' ' + date
+        }`,
+        JSON.stringify(error),
+      )
     }
 
     /*

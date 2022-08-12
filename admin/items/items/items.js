@@ -3744,7 +3744,96 @@ module.exports = (instance, options, next) => {
     }
   );
 
-  const findSuggestionGoods = async (request, reply, user) => {
+  const findSuggestionGoodsName = async (request, reply, user) => {
+    const limit = !isNaN(parseInt(request.query.limit))
+      ? parseInt(request.query.limit)
+      : 10
+
+    const page = !isNaN(parseInt(request.query.page))
+      ? parseInt(request.query.page)
+      : 1
+
+    const barcode = request.query.barcode ? request.query.barcode : ''
+
+    if (barcode === '') {
+      return reply.ok({
+        limit: 10,
+        current_page: 1,
+        total: 0,
+        page: 1,
+        data: [],
+      });
+    }
+
+    const query = {
+      barcode: {
+        $elemMatch: { $eq: barcode }
+      }
+    };
+
+    const sort_by = { _id: 1 };
+
+    const pipeline = [{ $match: query }];
+
+    // pipeline.push({ $sort: sort_by });
+
+    try {
+      const projectionItems = {
+        $project: {
+          _id: 1,
+          name: 1,
+          mxik: 1,
+          brand: 1,
+          barcode: 1,
+          category: 1,
+          category_name: 1,
+          sold_by: 1,
+          barcode: 1,
+          item_type: 1,
+          parent_name: 1,
+          has_variants: 1,
+          representation: 1,
+          representation_type: 1,
+        },
+      };
+
+      const $facet = [{
+        $facet: {
+          total: [
+            ...pipeline,
+            {
+              $count: "total",
+            },
+          ]
+        }
+      }]
+      pipeline.push(projectionItems);
+
+      pipeline.push({ $skip: limit * (page - 1) });
+      pipeline.push({ $limit: limit });
+      $facet[0].$facet.data = pipeline
+
+      const data = await instance.goodsSales
+        .aggregate($facet)
+        .allowDiskUse(true);
+
+      const goods = data[0].data
+      const total = data[0].total[0].total
+
+      reply.ok({
+        limit: limit,
+        current_page: page,
+        total: total,
+        page: Math.ceil(total / limit),
+        data: goods,
+      });
+    } catch (error) {
+      reply.error(error.message);
+    }
+    return reply;
+
+  }
+  const findSuggestionGoodsMxik = async (request, reply, user) => {
     const limit = !isNaN(parseInt(request.query.limit))
       ? parseInt(request.query.limit)
       : 10
@@ -3871,13 +3960,20 @@ module.exports = (instance, options, next) => {
 
   }
 
-  instance.get('/items/suggestion', { version: '2.0.0' }, (request, reply) => {
+  instance.get('/items/suggestion/name', { version: '2.0.0' }, (request, reply) => {
     instance.authorization(request, reply, (user) => {
       if (user) {
-        findSuggestionGoods(request, reply, user);
+        findSuggestionGoodsName(request, reply, user);
       }
     });
   })
 
+  instance.get('/items/suggestion/mxik', { version: '2.0.0' }, (request, reply) => {
+    instance.authorization(request, reply, (user) => {
+      if (user) {
+        findSuggestionGoodsMxik(request, reply, user);
+      }
+    });
+  })
   next();
 };
