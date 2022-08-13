@@ -3884,6 +3884,8 @@ module.exports = (instance, options, next) => {
               },
             },
           },
+          { $skip: limit * (page - 1) },
+          { $limit: limit },
         ],
         as: 'mxiks',
       }
