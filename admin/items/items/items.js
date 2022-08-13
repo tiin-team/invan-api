@@ -3954,7 +3954,7 @@ module.exports = (instance, options, next) => {
         .allowDiskUse(true);
 
       const goods = data[0].data
-      const total = data[0].total[0].total
+      const total = data[0].total[0] && data[0].total[0].total ? data[0].total[0].total : 0
 
       reply.ok({
         limit: limit,
