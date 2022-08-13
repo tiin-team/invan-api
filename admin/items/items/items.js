@@ -3767,7 +3767,11 @@ module.exports = (instance, options, next) => {
 
     const query = {
       barcode: {
-        $elemMatch: { $eq: barcode }
+        // $elemMatch: { $eq: barcode },
+        $elemMatch: {
+          $regex: search,
+          $options: "i",
+        },
       }
     };
 
@@ -3856,7 +3860,11 @@ module.exports = (instance, options, next) => {
 
     const query = {
       barcode: {
-        $elemMatch: { $eq: barcode }
+        // $elemMatch: { $eq: barcode },
+        $elemMatch: {
+          $regex: search,
+          $options: "i",
+        },
       }
     };
 

@@ -317,8 +317,8 @@ module.exports = fp((instance, _, next) => {
  *  cost_of_goods: number,
  *  sale_count: number,
  *  amount: number,
- *  cost_of_goods: number,
  * }]>}
+   //  *  cost_of_goods: number,
    //  *  gross_sales: number,
    //  *  refunds: number,
    //  *  discounts: number,
@@ -501,28 +501,15 @@ module.exports = fp((instance, _, next) => {
 
   const inventoryOtchotXLSX = async (request, reply, user) => {
     try {
-      const exelItems = []
-      totalAmount = 0
 
-      exelItems.push([
-        1,
-        '24352345;056746745',
-        `Organization name`,
-        '',
-        '',
-        'Start time count',
-        'Start time sum',
-        'Prixod count',
-        'Prixod sum',
-        'Rasxod count',
-        'Rasxod sum',
-        'End time count',
-        'End Time sum',
-      ])
-
+      // const purchases = await getProductPurchases(user, { max: 1629051900343, min: 1629551900343 })
+      console.log('starting...');
+      const start = new Date().getTime()
       const purchases = await getProductPurchases(user, { max: 1630551900343, min: 1629551900343 })
-      // return reply.code(404).send({ purchases })
+      console.log(new Date().getTime() - start);
+      return reply.code(404).send({ purchases })
       const saleInfo = await getProductsSaleInfo(user, { max: 1630551900343, min: 1629551900343 })
+      console.log(new Date().getTime() - start);
       // return reply.code(404).send({ saleInfo })
       console.log(purchases.length, saleInfo.length);
       const p_items = []
@@ -594,12 +581,33 @@ module.exports = fp((instance, _, next) => {
           }
         }
       }
-
-      return reply.code(404).send({ result })
-      const goodsObj = {}
-      for (const purchase of purchases) {
-        goodsObj[purchase.product_id] = purchase
+      const exelItems = []
+      let index_no = 1
+      for (const [, item] of Object.keys(result)) {
+        console.log(item, result[item]);
+        if (result[item])
+          exelItems.push([
+            index_no,
+            '24352345;056746745',
+            `Organization name` + result[item].name,
+            '',
+            '',
+            'Start time count',
+            'Start time sum',
+            'Prixod count' + result[item].purchase_count,
+            'Prixod sum' + result[item].purchase_amount,
+            'Rasxod count' + result[item].sale_count,
+            'Rasxod sum' + result[item].sale_amount,
+            'End time count',
+            'End Time sum',
+          ])
+        index_no++
       }
+      // return reply.code(404).send({ result })
+      // const goodsObj = {}
+      // // for (const purchase of purchases) {
+      //   // goodsObj[purchase.product_id] = purchase
+      // // }
 
       const time = new Date().getTime()
 
