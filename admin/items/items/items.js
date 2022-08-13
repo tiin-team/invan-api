@@ -3769,7 +3769,7 @@ module.exports = (instance, options, next) => {
       barcode: {
         // $elemMatch: { $eq: barcode },
         $elemMatch: {
-          $regex: search,
+          $regex: barcode,
           $options: "i",
         },
       }
@@ -3862,7 +3862,7 @@ module.exports = (instance, options, next) => {
       barcode: {
         // $elemMatch: { $eq: barcode },
         $elemMatch: {
-          $regex: search,
+          $regex: barcode,
           $options: "i",
         },
       }
