@@ -2701,5 +2701,71 @@ module.exports = fp((instance, _, next) => {
   });
   instance.decorate('employeesOrder', employeesOrdersSchema);
 
+  const invanGoodsOtchotSchema = instance.model('goodsotchot', {
+    organization: String,
+    service_id: mongoose.Schema.Types.ObjectId,
+    service_name: String,
+    available: { type: Boolean },
+    sku: Number,
+    product_id: mongoose.Types.ObjectId,
+    product_name: String,
+    category_id: { type: mongoose.Schema.Types.ObjectId },
+    category_name: String,
+    sold_by: {
+      type: String,
+      enum: [
+        'each',
+        'weight',
+        // 'list',
+        // 'karaoke',
+        'pcs',
+        'box',
+        'litre',
+        'metre'
+      ],
+      default: 'each'
+    },
+    count_by_type: { type: Number, default: 0 },
+    barcode_by_type: String,
+    barcode: { type: Array, default: [] },
+    mxik: String,
+    stock_monthly: [
+      {
+        month_name: { type: String },
+        start_time: Number,
+        end_time: Number,
+        start_stock: { type: Number, default: 0 },
+        end_stock: { type: Number, default: 0 },
+        cost: Number,
+        price: { type: Number, default: 0 },
+        prices: {
+          type: Array,
+          default: []
+        },
+      },
+    ],
+    sale_monthly_info: [
+      {
+        month_name: { type: String },
+        start_time: Number,
+        end_time: Number,
+        count: Number,
+        cost_amount: Number,
+        sale_amount: Number,
+      },
+    ],
+    purchase_monthly_info: [
+      {
+        month_name: { type: String },
+        start_time: Number,
+        end_time: Number,
+        count: Number,
+        cost_amount: Number,
+        sale_amount: Number,
+      },
+    ],
+  })
+  instance.decorate('goodsOtchot', invanGoodsOtchotSchema);
+
   next()
 })

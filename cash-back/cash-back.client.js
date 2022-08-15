@@ -48,14 +48,14 @@ module.exports = fp((instance, _, next) => {
           `\n\nReceipt: ${receipt._id}\n\n` +
           err +
           `\n\nLine: 43`
-        instance.send_Error(`${process.env.cash_back_URL}/clients?phone=${receipt.cashback_phone}`, text);
+        instance.send_Error(`clients?phone=${receipt.cashback_phone}`, text);
       })
   }
   async function calculateCash(receipt, client, user) {
     try {
       const zdachi_to_cashback = isNaN(receipt.zdachi_to_cashback) ? 0 : receipt.zdachi_to_cashback
       const phone_number = receipt.cashback_phone.replace('+', '')
-
+      console.log(phone_number, process.env.cash_back_URL);
       const organization = await instance.organizations.findById(receipt.organization).lean()
       receipt.organization = organization
 
@@ -82,7 +82,7 @@ module.exports = fp((instance, _, next) => {
       if (organization._id == '5f69b8687f9b0f7af484f455') {
         if (!clientsDatabase) {
 
-          const CashBackClient = await axios.get(`${process.env.cash_back_URL}/clients?phone=${phone_number}`)
+          const CashBackClient = await axios.get(`${process.env.plusm_cash_back_URL}/clients?phone=${phone_number}`)
             .then(res => res.data)
             .catch(err => { })
 
@@ -93,7 +93,7 @@ module.exports = fp((instance, _, next) => {
               `\n\nReceipt: ${receipt._id}` +
               `\n\nLine: 94`
             //send error to devs
-            return instance.send_Error(`${process.env.cash_back_URL}/clients?phone=${phone_number}`, text)
+            return instance.send_Error(`${process.env.plusm_cash_back_URL}/clients?phone=${phone_number}`, text)
           }
           let user_id = new Date().getTime();
           await new instance.clientsDatabase({
@@ -109,7 +109,7 @@ module.exports = fp((instance, _, next) => {
           }).save()
         }
 
-        const res = await axios.post(`${process.env.cash_back_URL}/receipts`, receipt)
+        const res = await axios.post(`${process.env.plusm_cash_back_URL}/receipts`, receipt)
           .then(res => res)
           .catch(async (err) => {
             return {
@@ -138,7 +138,7 @@ module.exports = fp((instance, _, next) => {
       if (organization._id == '6087b4bc3ca09c0c71d6b52f') {
         if (!clientsDatabase)
           return instance.send_Error(
-            `${process.env.cash_back_URL}/clients?phone=${phone_number}`,
+            `phone=${phone_number}`,
             `Yilmazni clienti topilmadi!\nphone_number: ${phone_number}`
           )
         return await updateClient(query, receipt, default_cash_back, minus_cash)
@@ -181,18 +181,23 @@ module.exports = fp((instance, _, next) => {
             }
           ).save()
         }
-        const res = await axios.post(`${process.env.cash_back_URL}/receipt`, receipt)
+
+        const res = await axios.post(`${process.env.cash_back_URL}/receipts`, receipt)
           .then(res => res)
           .catch(async (err) => {
+            // console.log(err);
             return {
-              statusText: `${process.env.cash_back_URL}/receipt end pointga post qilib bolmadi!`,
+              statusText: `${process.env.cash_back_URL}/receips end pointga post qilib bolmadi!`,
               status: 404,
               cash_back: default_cash_back
             }
           })
         // console.log(res?.status, 'res status');
-        if (res.data && res.data.cash_back && !isNaN(res.data.cash_back))
-          cash_back = parseFloat(res.data.cash_back) + zdachi_to_cashback;
+        console.log(res.data?.cashback, 'res.data?.cashback');
+        // if (res.data && res.data.cash_back && !isNaN(res.data.cash_back))
+        if (res.data && res.data.cashback && !isNaN(res.data.cashback))
+          // cash_back = parseFloat(res.data.cash_back) + zdachi_to_cashback;
+          cash_back = parseFloat(res.data.cashback) + zdachi_to_cashback;
 
         if (res.status !== 201) {
           //send error
@@ -216,7 +221,7 @@ module.exports = fp((instance, _, next) => {
         err +
         `\n\nLine: 147`
       //send error to devs
-      return instance.send_Error(`${process.env.cash_back_URL}/clients?phone=${receipt.cashback_phone}`, text)
+      return instance.send_Error(`/clients?phone=${receipt.cashback_phone}`, text)
     }
   }
 

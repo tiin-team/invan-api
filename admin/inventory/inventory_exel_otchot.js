@@ -507,7 +507,7 @@ module.exports = fp((instance, _, next) => {
       const start = new Date().getTime()
       const purchases = await getProductPurchases(user, { max: 1630551900343, min: 1629551900343 })
       console.log(new Date().getTime() - start);
-      return reply.code(404).send({ purchases })
+      // return reply.code(404).send({ purchases })
       const saleInfo = await getProductsSaleInfo(user, { max: 1630551900343, min: 1629551900343 })
       console.log(new Date().getTime() - start);
       // return reply.code(404).send({ saleInfo })

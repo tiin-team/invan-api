@@ -1918,48 +1918,72 @@ module.exports = (instance, options, next) => {
                     updateItem.last_price_change = new Date().getTime();
                     serviceMap[ser._id + ''].last_price_change = new Date().getTime();
                   }
-                  updateItem.services.push({
-                    ...serviceMap[ser._id + ''],
-                    price:
-                      request.body.price != undefined
-                        ? request.body.price
-                        : serviceMap[ser._id + ''].price,
-                    prices:
-                      request.body.prices != undefined
-                        ? prices
-                        : serviceMap[ser._id + ''].prices,
-                    in_stock:
-                      request.body && request.body.in_stock != undefined
-                        ? request.body.in_stock
-                        : serviceMap[ser._id + ''].in_stock,
-                    reminder:
-                      request.body && request.body.reminder != undefined
-                        ? request.body.reminder
-                        : serviceMap[ser._id + ''].reminder,
-                  });
+                  if (service_id + '' == ser._id + '')
+                    updateItem.services.push({
+                      ...serviceMap[ser._id + ''],
+                      price:
+                        request.body.price != undefined
+                          ? request.body.price
+                          : serviceMap[ser._id + ''].price,
+                      prices:
+                        request.body.prices != undefined
+                          ? prices
+                          : serviceMap[ser._id + ''].prices,
+                      in_stock:
+                        request.body && request.body.in_stock != undefined
+                          ? request.body.in_stock
+                          : serviceMap[ser._id + ''].in_stock,
+                      reminder:
+                        request.body && request.body.reminder != undefined
+                          ? request.body.reminder
+                          : serviceMap[ser._id + ''].reminder,
+                    });
+                  else
+                    updateItem.services.push({
+                      price:
+                        request.body.price != undefined
+                          ? request.body.price
+                          : serviceMap[ser._id + ''].price,
+                      prices:
+                        request.body.prices != undefined
+                          ? prices
+                          : serviceMap[ser._id + ''].prices,
+                    });
                 } else {
                   updateItem.services.push(serviceMap[ser._id + '']);
                 }
               } else {
                 if (service_id + '' == ser._id + '' || organization.is_same_service_price) {
-                  updateItem.services.push({
-                    service: ser._id,
-                    service_name: ser.name,
-                    price:
-                      request.body.price != undefined
-                        ? request.body.price
-                        : item.price,
-                    prices: request.body.prices != undefined ? prices : [],
-                    in_stock:
-                      request.body && request.body.in_stock != undefined
-                        ? request.body.in_stock
-                        : 0,
-                    reminder:
-                      request.body && request.body.reminder != undefined
-                        ? request.body.reminder
-                        : 0,
-                    last_price_change: new Date().getTime(),
-                  });
+                  if (service_id + '' == ser._id + '')
+                    updateItem.services.push({
+                      service: ser._id,
+                      service_name: ser.name,
+                      price:
+                        request.body.price != undefined
+                          ? request.body.price
+                          : item.price,
+                      prices: request.body.prices != undefined ? prices : [],
+                      in_stock:
+                        request.body && request.body.in_stock != undefined
+                          ? request.body.in_stock
+                          : 0,
+                      reminder:
+                        request.body && request.body.reminder != undefined
+                          ? request.body.reminder
+                          : 0,
+                      last_price_change: new Date().getTime(),
+                    });
+                  else
+                    updateItem.services.push({
+                      service: ser._id,
+                      service_name: ser.name,
+                      price:
+                        request.body.price != undefined
+                          ? request.body.price
+                          : item.price,
+                      prices: request.body.prices != undefined ? prices : [],
+                      last_price_change: new Date().getTime(),
+                    });
                 } else {
                   updateItem.services.push({
                     service: ser._id,
@@ -3767,11 +3791,11 @@ module.exports = (instance, options, next) => {
 
     const query = {
       barcode: {
-        // $elemMatch: { $eq: barcode },
-        $elemMatch: {
-          $regex: barcode,
-          $options: "i",
-        },
+        $elemMatch: { $eq: barcode },
+        // $elemMatch: {
+        //   $regex: barcode,
+        //   $options: "i",
+        // },
       }
     };
 
@@ -3985,5 +4009,6 @@ module.exports = (instance, options, next) => {
       }
     });
   })
+
   next();
 };
