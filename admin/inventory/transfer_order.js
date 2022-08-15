@@ -271,24 +271,36 @@ module.exports = (instance, options, next) => {
                   reply.ok({
                     tansfer_id: id,
                   });
-                  instance.create_partiation_queue(
-                    trans.items.map(item => {
-                      return {
-                        product_id: item.product_id,
-                        purchase_cost: item.cost,
-                        received: item.quality,
-                      }
-                    }),
-                    trans.second_service,
-                    trans.first_service,
-                    {
-                      _id: trans._id,
-                      p_order: trans.p_order,
-                      service: trans.second_service,
-                    }, // purchase
-                    trans.date,
-                    'receive_transfer'
-                  )
+                  try {
+                    // update item partiation queue
+                    instance.create_partiation_queue(
+                      trans.items.map(item => {
+                        return {
+                          product_id: item.product_id,
+                          purchase_cost: item.cost,
+                          received: item.quality,
+                        }
+                      }),
+                      trans.second_service,
+                      trans.first_service,
+                      {
+                        _id: trans._id,
+                        p_order: trans.p_order,
+                        service: trans.second_service,
+                      }, // purchase
+                      trans.date,
+                      'receive_transfer'
+                    )
+                  } catch (error) {
+                    instance.send_Error(
+                      `create_partiation_queue
+                      \nfunksiyani chaqirishda, transfer
+                      \nservice_id: ${trans.second_service}
+                      \nsupplier_id: ${trans.second_service}`,
+                      error,
+                    )
+                  }
+
                   for (const it of trans.items) {
                     receive_function(request, it, trans, admin);
                   }
