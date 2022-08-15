@@ -4,9 +4,9 @@ module.exports = (instance, options, next) => {
   // create transfer order
 
   const create_transfer = (request, reply, admin) => {
-    var trans = request.body;
+    const trans = request.body;
     delete trans._id;
-    var status = trans.status;
+    const status = trans.status;
     trans.status = "in_transit";
     if (trans.date == null || trans.date == "") {
       trans.date = new Date().getTime();
@@ -39,17 +39,17 @@ module.exports = (instance, options, next) => {
               if (aaa == undefined) {
                 aaa = [];
               }
-              var p_order = "TO" + ("00" + (aaa.length + 1001)).slice(-5);
+              const p_order = "TO" + ("00" + (aaa.length + 1001)).slice(-5);
               trans.p_order = p_order;
-              for (var s of services) {
+              for (const s of services) {
                 if (trans.first_service + "" == s._id + "") {
                   trans.first_service_name = s.name;
                 } else if (trans.second_service + "" == s._id + "") {
                   trans.second_service_name = s.name;
                 }
               }
-              var ids = [];
-              for (var it of trans.items) {
+              const ids = [];
+              for (const it of trans.items) {
                 if (it.product_id != undefined && it.product_id != "") {
                   ids.push(it.product_id);
                 }
@@ -64,8 +64,8 @@ module.exports = (instance, options, next) => {
                   if (err || goods == null) {
                     goods = [];
                   }
-                  var gObj = {};
-                  for (var g of goods) {
+                  const gObj = {};
+                  for (const g of goods) {
                     if (g.services instanceof Array) {
                       let item_price = g.price;
                       for (const item_service of g.services) {
@@ -81,7 +81,7 @@ module.exports = (instance, options, next) => {
                     gObj[g._id] = g;
                   }
                   trans.quality = 0;
-                  var ITEMS = [];
+                  const ITEMS = [];
                   for (let i = 0; i < trans.items.length; i++) {
                     if (
                       gObj[trans.items[i].product_id + ""] &&
@@ -103,7 +103,7 @@ module.exports = (instance, options, next) => {
                   }
                   // console.log(ITEMS)
                   trans.items = ITEMS;
-                  var transferModel = instance.Transfer(trans);
+                  const transferModel = instance.Transfer(trans);
                   // console.log(transferModel.items)
                   transferModel.save((err, tran) => {
                     if (err) {
@@ -137,7 +137,8 @@ module.exports = (instance, options, next) => {
               )
                 .lean();
             }
-          );
+          )
+            .lean();
         } else {
           reply.error("Services could not found");
         }
@@ -239,11 +240,12 @@ module.exports = (instance, options, next) => {
               );
             }
           }
-        );
+        )
+          .lean();
   }
 
-  var receive_transfer = (request, reply, admin) => {
-    var id = instance.ObjectId(request.params.id);
+  const receive_transfer = (request, reply, admin) => {
+    const id = instance.ObjectId(request.params.id);
     instance.Transfer.findOne(
       {
         _id: id,
@@ -269,7 +271,25 @@ module.exports = (instance, options, next) => {
                   reply.ok({
                     tansfer_id: id,
                   });
-                  for (var it of trans.items) {
+                  instance.create_partiation_queue(
+                    trans.items.map(item => {
+                      return {
+                        product_id: item.product_id,
+                        purchase_cost: item.cost,
+                        received: item.quality,
+                      }
+                    }),
+                    trans.second_service,
+                    trans.first_service,
+                    {
+                      _id: trans._id,
+                      p_order: trans.p_order,
+                      service: trans.second_service,
+                    }, // purchase
+                    trans.date,
+                    'receive_transfer'
+                  )
+                  for (const it of trans.items) {
                     receive_function(request, it, trans, admin);
                   }
                 }
@@ -280,7 +300,8 @@ module.exports = (instance, options, next) => {
           }
         }
       }
-    );
+    )
+      .lean();
   };
 
   instance.get(

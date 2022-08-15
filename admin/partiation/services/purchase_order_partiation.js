@@ -4,7 +4,7 @@ module.exports = fp((instance, options, next) => {
   /**
    * postavchikdan tovar kelganda partiya yaratish
   */
-  instance.decorate('create_partiation_queue', async (items, current_service, current_supplier, purch, create_date) => {
+  instance.decorate('create_partiation_queue', async (items, current_service, current_supplier, purch, create_date, called_path = '') => {
     const queues = [];
     const sale_goods_ids = items.map(elem => elem.product_id)
     const db_goods = await instance.goodsSales
@@ -87,7 +87,7 @@ module.exports = fp((instance, options, next) => {
     instance.goodsSaleQueue.insertMany(queues, (err, goods_of_queues) => {
       if (err || goods_of_queues == null) {
         instance.send_Error(
-          'create_partiation_queue, saving queues\n', JSON.stringify(err))
+          `create_partiation_queue, saving queues. path: ${called_path}\n`, JSON.stringify(err))
       }
     })
   });

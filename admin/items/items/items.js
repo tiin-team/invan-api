@@ -1940,6 +1940,7 @@ module.exports = (instance, options, next) => {
                     });
                   else
                     updateItem.services.push({
+                      ...serviceMap[ser._id + ''],
                       price:
                         request.body.price != undefined
                           ? request.body.price
