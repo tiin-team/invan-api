@@ -193,7 +193,7 @@ module.exports = fp((instance, _, next) => {
             }
           })
         // console.log(res?.status, 'res status');
-        console.log(res.data?.cashback, 'res.data?.cashback');
+        // console.log(res.data?.cashback, 'res.data?.cashback');
         // if (res.data && res.data.cash_back && !isNaN(res.data.cash_back))
         if (res.data && res.data.cashback && !isNaN(res.data.cashback))
           // cash_back = parseFloat(res.data.cash_back) + zdachi_to_cashback;
