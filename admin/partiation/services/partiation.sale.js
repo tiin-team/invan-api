@@ -171,6 +171,7 @@ module.exports = fp((instance, _, next) => {
       }
       const queues = await instance.goodsSaleQueue
         .find({
+          organization_id: instance.ObjectId(service.organization),
           service_id: service._id,
           good_id: { $in: sale_goods_ids },
           quantity_left: { $gt: 0 },

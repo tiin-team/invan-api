@@ -263,7 +263,7 @@ module.exports = (instance, options, next) => {
             instance.Transfer.updateOne(
               { _id: id },
               { $set: trans },
-              (err, _) => {
+              async (err, _) => {
                 if (err) {
                   reply.error("Error on updating");
                   instance.send_Error("updating transfer", JSON.stringify(err));
@@ -271,8 +271,41 @@ module.exports = (instance, options, next) => {
                   reply.ok({
                     tansfer_id: id,
                   });
+
+                  const first_service = await instance.services
+                    .findById(
+                      trans.first_service,
+                      {
+                        organization: 1,
+                        name: 1,
+                      },
+                    )
+                    .lean()
+                  const second_service = await instance.services
+                    .findById(trans.second_service, { name: 1, organization: 1 })
+                    .lean()
+                  // update item partiation queue
+
                   try {
-                    // update item partiation queue
+                    instance.goods_partiation_sale(
+                      trans.items.map(item => {
+                        return {
+                          product_id: item.product_id,
+                          value: item.quality,
+                        }
+                      }),
+                      first_service._id,
+                    )
+                  }
+                  catch (error) {
+                    instance.send_Error(
+                      `goods_partiation_sale
+                        \nfunksiyani chaqirishda, transfer
+                        \nservice_id: ${trans.second_service}`,
+                      error,
+                    )
+                  }
+                  try {
                     instance.create_partiation_queue(
                       trans.items.map(item => {
                         return {
@@ -281,8 +314,8 @@ module.exports = (instance, options, next) => {
                           received: item.quality,
                         }
                       }),
-                      trans.second_service,
-                      trans.first_service,
+                      second_service,
+                      { _id: first_service._id, supplier_name: first_service.name },
                       {
                         _id: trans._id,
                         p_order: trans.p_order,
@@ -330,9 +363,9 @@ module.exports = (instance, options, next) => {
 
   // updating transfer
 
-  var update_trans = (request, reply, admin) => {
-    var id = request.params.id;
-    var transs = new instance.Transfer(request.body);
+  const update_trans = (request, reply, admin) => {
+    const id = request.params.id;
+    const transs = new instance.Transfer(request.body);
     instance.Transfer.findOne(
       {
         _id: id,
@@ -474,7 +507,8 @@ module.exports = (instance, options, next) => {
           }
         }
       }
-    );
+    )
+      .lean();
   };
 
   instance.post(
@@ -609,7 +643,7 @@ module.exports = (instance, options, next) => {
 
   // get inventory transfer by id
 
-  var get_transfer_by_id = (request, reply, admin) => {
+  const get_transfer_by_id = (request, reply, admin) => {
     if (request.params.id) {
       instance.Transfer.aggregate(
         [
