@@ -645,7 +645,7 @@ module.exports = fp((instance, _, next) => {
   })
 
   instance.decorate('customer_points', async (receipts) => {
-    for (var r of receipts) {
+    for (const r of receipts) {
       if (r.user_id) {
         if (!r.currency_value) {
           r.currency_value = 1;
