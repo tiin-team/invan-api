@@ -514,6 +514,7 @@ module.exports = fp((instance, _, next) => {
           barcode_by_type: 1,
           barcode: 1,
           mxik: 1,
+          cost: 1,
           services: {
             $first: {
               $filter: {
@@ -545,7 +546,7 @@ module.exports = fp((instance, _, next) => {
       if (result[good._id]) {
         if (result[good._id].services) {
           result[good._id].end_stock = result[good._id].services.in_stock;
-          result[good._id].cost = result[good._id].services.cost;
+          result[good._id].cost = result[good._id].cost;
           result[good._id].price = result[good._id].services.price;
           result[good._id].prices = result[good._id].services.prices;
         }
@@ -558,10 +559,10 @@ module.exports = fp((instance, _, next) => {
           purchase_count: 0,
           purchase_amount: 0,
           start_stock: 0,
-          end_stock: result[good._id].services.in_stock,
-          cost: result[good._id].services.cost,
-          price: result[good._id].services.price,
-          prices: result[good._id].services.prices,
+          end_stock: good.services.in_stock,
+          cost: good.cost,
+          price: good.services.price,
+          prices: good.services.prices,
         };
       }
     }
@@ -693,7 +694,7 @@ module.exports = fp((instance, _, next) => {
     }
     console.log('end...');
   }
-  // calculateOrganizationsOtchot()
+  calculateOrganizationsOtchot()
 
   // const cronString_ = '*/50 * * * * *';
   // if (!cronJob.validate(cronString_)) {
