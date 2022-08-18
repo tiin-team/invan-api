@@ -312,7 +312,7 @@ module.exports = fp((instance, _, next) => {
       const worksheet = workbook.addWorksheet('MyExcel', {
         pageSetup: { paperSize: 9, orientation: 'landscape' }
       });
-      if (data.length) {
+      if (!data[0]) {
         data[0] = {}
       }
       const start_date = new Date(data[0].start_time)
