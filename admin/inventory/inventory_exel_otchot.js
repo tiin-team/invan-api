@@ -212,8 +212,9 @@ module.exports = fp((instance, _, next) => {
   const inventoryOtchotXLSX = async (request, reply, user) => {
     try {
       const month_time = request.params.month_time
-      const month = months[new Date(month_time).getMonth() + 1]
-      // const month_num = request.body.month
+      const month_date = new Date(month_time)
+      const month = `${month_date.getDate()}.${month_date.getMonth() + 1}.${month_date.getFullYear()}`
+      const month_name = months[month_date.getMonth()]
       const service_id = request.params.service_id
       // const service_id = '5f5641e8dce4e706c0628380'
       // const service_ids = [instance.ObjectId(service_id)]
@@ -228,7 +229,7 @@ module.exports = fp((instance, _, next) => {
         $match: {
           organization: organization._id + '',
           month: month,
-          month_name: 'August',
+          month_name: month_name,
         }
       }
 
@@ -353,8 +354,8 @@ module.exports = fp((instance, _, next) => {
 
   instance.get('/inventory/otchot/excel/:service_id/:month_time', (request, reply) => {
     // user
-    request.headers['accept-user'] = 'admin'
-    request.headers['authorization'] = 'FsYMuTi4PWc9irRLrfYHLt'
+    // request.headers['accept-user'] = 'admin'
+    // request.headers['authorization'] = 'FsYMuTi4PWc9irRLrfYHLt'
     instance.authorization(request, reply, (user) => {
       inventoryOtchotXLSX(request, reply, user)
       return reply;
