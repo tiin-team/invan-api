@@ -200,7 +200,7 @@ module.exports = fp((instance, _, next) => {
           $lte: filter.max,
         },
       };
-      console.log(filterReceipts);
+
       const unwindSoldItemList = { $unwind: "$sold_item_list" };
 
       const calculateItemsReport = {

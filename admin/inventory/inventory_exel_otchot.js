@@ -311,8 +311,8 @@ module.exports = fp((instance, _, next) => {
       const worksheet = workbook.addWorksheet('MyExcel', {
         pageSetup: { paperSize: 9, orientation: 'landscape' }
       });
-      const start_date = new Date(data[0]?.start_time)
-      const end_date = new Date(data[0]?.end_time)
+      const start_date = new Date(data[0].start_time)
+      const end_date = new Date(data[0].end_time)
       makeInventoryOtchotHeader(
         worksheet,
         {
