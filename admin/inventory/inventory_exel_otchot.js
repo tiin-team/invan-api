@@ -261,7 +261,7 @@ module.exports = fp((instance, _, next) => {
                 input: "$services",
                 as: "service",
                 cond: {
-                  $eq: [{ $toString: "$$service.service_id" }, { $toString: service_id }],
+                  $eq: [{ $toString: "$$service.service_id" }, service_id + ''],
                 },
               },
             },
@@ -280,21 +280,22 @@ module.exports = fp((instance, _, next) => {
       const exelItems = []
       let index = 1
       for (const item of data) {
-        exelItems.push([
-          index,
-          item.barcode,
-          item.product_name,
-          item.mxik,
-          item.services.cost,
-          item.services.stock_monthly.start_stock, // End time count
-          item.services.stock_monthly.start_stock * item.services.cost, // End time count
-          item.services.purchase_monthly_info.count, // Prixod count
-          item.services.purchase_monthly_info.amount, // Prixod sum
-          item.services.sale_monthly_info.count, // Rasxod count
-          item.services.sale_monthly_info.sale_amount, // Rasxod sum
-          item.services.stock_monthly.end_stock, // End Time sum
-          item.services.stock_monthly.end_stock * item.services.stock_monthly.cost, // End Time sum
-        ])
+        if (item.services)
+          exelItems.push([
+            index,
+            item.barcode,
+            item.product_name,
+            item.mxik,
+            item.services.cost,
+            item.services.stock_monthly.start_stock, // End time count
+            item.services.stock_monthly.start_stock * item.services.cost, // End time count
+            item.services.purchase_monthly_info.count, // Prixod count
+            item.services.purchase_monthly_info.amount, // Prixod sum
+            item.services.sale_monthly_info.count, // Rasxod count
+            item.services.sale_monthly_info.sale_amount, // Rasxod sum
+            item.services.stock_monthly.end_stock, // End Time sum
+            item.services.stock_monthly.end_stock * item.services.stock_monthly.cost, // End Time sum
+          ])
         index++
       }
 
