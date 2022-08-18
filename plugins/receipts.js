@@ -1299,7 +1299,8 @@ module.exports = fp((instance, _, next) => {
 
         findReceipt(request, reply, instance);
       })
-    })
+    }
+  )
 
   next();
 });

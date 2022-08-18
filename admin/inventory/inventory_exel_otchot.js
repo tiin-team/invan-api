@@ -194,6 +194,7 @@ const makeInventoryOtchotHeader = (worksheet, data) => {
 }
 
 module.exports = fp((instance, _, next) => {
+  const version = { version: '2.0.0' }
   const months = [
     'January',
     'February',
@@ -355,7 +356,7 @@ module.exports = fp((instance, _, next) => {
     }
   }
 
-  instance.get('/inventory/otchot/excel/:service_id/:month_time', (request, reply) => {
+  instance.get('/inventory/otchot/excel/:service_id/:month_time', version, (request, reply) => {
     // user
     // request.headers['accept-user'] = 'admin'
     // request.headers['authorization'] = 'FsYMuTi4PWc9irRLrfYHLt'
