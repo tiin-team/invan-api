@@ -522,10 +522,10 @@ module.exports = fp((instance, _, next) => {
                 cond: {
                   $or: [
                     {
-                      $eq: [{ $toString: "$$service.service_id" }, { $toString: service_id }],
+                      $eq: [{ $toString: "$$service.service_id" }, service_id + ''],
                     },
                     {
-                      $eq: [{ $toString: "$$service.service" }, { $toString: service_id }],
+                      $eq: [{ $toString: "$$service.service" }, service_id + ''],
                     },
                   ]
                 },
@@ -693,7 +693,7 @@ module.exports = fp((instance, _, next) => {
     }
     console.log('end...');
   }
-  // calculateOrganizationsOtchot()
+  calculateOrganizationsOtchot()
 
   // const cronString_ = '*/50 * * * * *';
   // if (!cronJob.validate(cronString_)) {
