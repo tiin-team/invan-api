@@ -217,7 +217,7 @@ module.exports = fp((instance, _, next) => {
       if (month_date.toString() === 'Invalid Date') {
         return reply.error('Invalid Date')
       }
-      const month = `${month_date.getDate()}.${month_date.getMonth() + 1}.${month_date.getFullYear()}`
+      const month = `${month_date.getMonth() + 1}.${month_date.getFullYear()}`
       const month_name = months[month_date.getMonth()]
       console.log(month_date);
       console.log(user.organization, service_id, month_name, month);
@@ -233,7 +233,7 @@ module.exports = fp((instance, _, next) => {
       const $match = {
         $match: {
           organization: organization._id + '',
-          month: month,
+          month: { $regex: new RegExp(month), $options: 'i' },
           month_name: month_name,
         }
       }
