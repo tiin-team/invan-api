@@ -1638,7 +1638,7 @@ module.exports = fp((instance, _, next) => {
                     service_name: typeof receipt.service_name == typeof 'invan' ? receipt.service_name : '',
                     client_name: client_name,
                     // created_at: typeof receipt.date == typeof 5 ? instance.date_ddmmyy_hhmm(receipt.date + 4 * 60 * 60 * 1000) : '',
-                    created_at: typeof receipt.date == typeof 5 ? instance.date_ddmmyy_hhmm(receipt.date) : '',
+                    created_at: typeof receipt.date == typeof 5 ? instance.date_ddmmyy_hhmm(receipt.date + 3 * 60 * 60 * 1000) : '',
                     pos_name: typeof receipt.pos_name == 'string' ? receipt.pos_name : '',
                     headers: item_headers,
                     items: receipt.sold_item_list,

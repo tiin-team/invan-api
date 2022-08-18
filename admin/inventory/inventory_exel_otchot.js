@@ -287,7 +287,7 @@ module.exports = fp((instance, _, next) => {
         if (item.services)
           exelItems.push([
             index,
-            item.barcode,
+            Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '') : '',
             item.product_name,
             item.mxik,
             item.services.cost,

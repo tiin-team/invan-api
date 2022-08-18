@@ -783,7 +783,8 @@ module.exports = fp((instance, _, next) => {
 
     ////'update_in_stock_of_sold_items', (id, service_id, in_stock, user, receipt, REASON = 'other', request)
     pro_ids = [...new Set(pro_ids)]
-    for (var r of pro_ids) {
+    console.log(pro_ids, request.headers['accept-service'], pro_index[pro_ids[0]]);
+    for (const r of pro_ids) {
       await instance.update_in_stock_of_sold_items(r, request.headers['accept-service'], pro_index[r] * (-1), user, receipt, 'other', request, sold_by_types[r])
     }
   }

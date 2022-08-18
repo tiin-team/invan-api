@@ -200,15 +200,32 @@ module.exports = fp((instance, _, next) => {
       catch (err) { }
 
       try {
-        const item = await instance.goodsSales.findOne({ _id: id })
+        const item = await instance.goodsSales
+          .findOne(
+            { _id: id },
+            {
+              item_type: 1,
+              name: 1,
+              is_track_stock: 1,
+              is_composite_item: 1,
+              use_production: 1,
+              count_by_type: 1,
+              services: 1,
+            },
+          )
+          .lean()
         if (item != null) {
           if (item.item_type == 'variant') {
             try {
-              const parent = await instance.goodsSales.findOne({
-                variant_items: {
-                  $elemMatch: { $eq: item._id }
-                }
-              })
+              const parent = await instance.goodsSales.findOne(
+                {
+                  variant_items: {
+                    $elemMatch: { $eq: item._id },
+                  },
+                },
+                { name: 1, is_track_stock: 1, is_composite_item: 1 },
+              )
+                .lean()
               if (parent) {
                 item.name = `${parent.name} ( ${item.name} )`;
                 if (typeof item.is_track_stock != typeof true) {
