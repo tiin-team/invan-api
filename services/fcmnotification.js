@@ -1,9 +1,9 @@
 const mongoose = require('mongoose')
-var FCM = require('fcm-node')
-var serverKey = 'AAAACPKexKE:APA91bHcaxbRaXNjWGaxWglbs0U4OpbI1MLxb1IvF3UY1OZnkllgQ_nizhvVyr9fXv2EBVyZxjb3C9rmrXFDuMap4Z96bgZ_kcVM7YA0kWgvMbpUAisdycuxCdUd_x3ib4gMN0y5Mlml'
-var fcm = new FCM(serverKey)
+const FCM = require('fcm-node')
+const serverKey = 'AAAACPKexKE:APA91bHcaxbRaXNjWGaxWglbs0U4OpbI1MLxb1IvF3UY1OZnkllgQ_nizhvVyr9fXv2EBVyZxjb3C9rmrXFDuMap4Z96bgZ_kcVM7YA0kWgvMbpUAisdycuxCdUd_x3ib4gMN0y5Mlml'
+const fcm = new FCM(serverKey)
 
-var wrong_token = {
+const wrong_token = {
   statusCode: 498,
   error: "Invalid token",
   message: "Invalid token"

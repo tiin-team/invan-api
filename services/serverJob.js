@@ -1,25 +1,45 @@
-
-const cronJob = require('node-cron');
-const axios = require('axios');
+const cronJob = require("node-cron");
+const axios = require("axios");
+const fp = require("fastify-plugin");
 const os = require("os");
 
 const sendNotify = async function (instance) {
   try {
     if (!process.env.BOT_TOKEN) {
-      return
+      return;
     }
-    const used_memory = Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100;
-    const freeRAM = Math.round(os.freemem() / 1024 / 1024 * 100) / 100;
-    await axios.get(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=569942658&parse_mode=html&text=Used memory: ${used_memory} MB\nFree RAM: ${freeRAM} MB`, {})
-    await axios.get(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=270852337&parse_mode=html&text=Working fine!`, {})
-    instance.log.info(`Send`)
+    const used_memory =
+      Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100;
+    const freeRAM = Math.round((os.freemem() / 1024 / 1024) * 100) / 100;
+    await axios.get(
+      `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=569942658&parse_mode=html&text=Used memory: ${used_memory} MB\nFree RAM: ${freeRAM} MB`,
+      {}
+    );
+    await axios.get(
+      `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=270852337&parse_mode=html&text=Working fine!`,
+      {}
+    );
+    instance.log.info(`Send`);
   } catch (error) {
-    instance.log.error(error.message)
+    instance.log.error(error.message);
   }
-}
+};
 
-module.exports = ((instance, _, next) => {
-
+const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+module.exports = fp((instance, _, next) => {
   // const cronString = '*/50 * * * * *';
   // if (!cronJob.validate(cronString)) {
   //   instance.log.error('Invalid CRON_TIME is specified:', cronString);
@@ -31,119 +51,124 @@ module.exports = ((instance, _, next) => {
   //   })
 
   /**
-  * @param {[string]} services 
-  * @param {{ min: string, max: string }} filter
-  * @return {Promise<[{
-  *   _id: string,
-  *   p_items: [any[]],
-  * }]>}
-  */
-  const getProductPurchases = async (user, filter, services = []) => {
+   * @param {string} service_id
+   * @param {string} organization_id
+   * @param {{ min: string, max: string }} filter
+   * @return {Promise<[{
+   *   _id: string,
+   *   p_items: [any[]],
+   * }]>}
+   */
+  const getProductPurchases = async (organization_id, filter, service_id) => {
     try {
+      service_id = instance.ObjectId(service_id);
+
       const $match_purchase = {
         $match: {
-          organization: user.organization,
-          status: { $ne: 'pending' },
+          // organization: organization_id,
+          status: { $ne: "pending" },
           purchase_order_date: {
             $gte: filter.min,
             $lte: filter.max,
-          }
-        }
-      }
+          },
+          service: service_id,
+        },
+      };
 
       const $lookup = {
         $lookup: {
-          from: 'purchaseitems',
-          let: { p_id: '$_id' },
+          from: "purchaseitems",
+          let: { p_id: "$_id" },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ['$purchase_id', '$$p_id'] },
+                    { $eq: ["$purchase_id", "$$p_id"] },
+                    { $eq: ['$service', service_id] },
                   ],
                 },
               },
             },
             {
               $group: {
-                _id: '$product_id',
-                product_name: { $first: '$product_name' },
-                barcode: { $addToSet: '$barcode' },
-                ordered: { $sum: '$ordered' },
-                received: { $sum: '$received' },
-                cancelled: { $sum: '$cancelled' },
-                to_receive: { $sum: '$to_receive' },
-                quality: { $sum: '$quality' },
-                amount: { $sum: '$amount' }
+                _id: "$product_id",
+                product_name: { $first: "$product_name" },
+                barcode: { $addToSet: "$barcode" },
+                ordered: { $sum: "$ordered" },
+                received: { $sum: "$received" },
+                cancelled: { $sum: "$cancelled" },
+                to_receive: { $sum: "$to_receive" },
+                quality: { $sum: "$quality" },
+                amount: { $sum: "$amount" },
               },
             },
           ],
-          as: 'p_items',
-        }
-      }
+          as: "p_items",
+        },
+      };
 
       const group = {
         $group: {
-          _id: '$type',
-          p_items: { $push: '$p_items' }
-        }
-      }
-      return await instance.inventoryPurchase.aggregate([
-        $match_purchase, $lookup, group,
-      ])
+          _id: "$type",
+          p_items: { $push: "$p_items" },
+        },
+      };
+      return await instance.inventoryPurchase
+        .aggregate([$match_purchase, $lookup, group])
         .allowDiskUse(true)
-        .exec()
+        .exec();
 
       const purchases = await instance.inventoryPurchase
         .find(
           {
-            organization: user.organization,
-            status: { $ne: 'pending' },
+            organization: organization_id,
+            status: { $ne: "pending" },
             purchase_order_date: {
               $gte: filter.min,
               $lte: filter.max,
-            }
+            },
           },
           { _id: 1 }
-        ).lean()
+        )
+        .lean();
 
       const $match = {
         $match: {
           is_cancelled: false,
-          purchase_id: { $in: purchases.map(p => p._id) }
-        }
-      }
-      if (services.length)
-        $match.$match.service = { $in: services }
+          purchase_id: { $in: purchases.map((p) => p._id) },
+        },
+      };
+      if (services.length) $match.$match.service = { $in: services };
 
       const $group = {
         $group: {
-          _id: '$product_id',
-          product_name: { $first: '$product_name' },
-          barcode: { $addToSet: '$barcode' },
-          ordered: { $sum: '$ordered' },
-          received: { $sum: '$received' },
-          cancelled: { $sum: '$cancelled' },
-          to_receive: { $sum: '$to_receive' },
-          quality: { $sum: '$quality' },
-          amount: { $sum: '$amount' }
-        }
-      }
+          _id: "$product_id",
+          product_name: { $first: "$product_name" },
+          barcode: { $addToSet: "$barcode" },
+          ordered: { $sum: "$ordered" },
+          received: { $sum: "$received" },
+          cancelled: { $sum: "$cancelled" },
+          to_receive: { $sum: "$to_receive" },
+          quality: { $sum: "$quality" },
+          amount: { $sum: "$amount" },
+        },
+      };
 
-      const pipelines = [$match, $group]
+      const pipelines = [$match, $group];
 
-      return await instance.purchaseItem.aggregate(pipelines).exec()
+      return await instance.purchaseItem.aggregate(pipelines).exec();
     } catch (error) {
       console.log(error);
-      instance.send_Error('getProductPurchases xlsx', JSON.stringify(error))
+      instance.send_Error("getProductPurchases xlsx", JSON.stringify(error));
 
-      return []
+      return [];
     }
-  }
+  };
 
   /**
-  * @param {[string]} services 
+  * @param {string} organization_id 
+  * @param {string} service_id 
   * @param {{ min: string, max: string }} filter
   * @return {Promise<[{
   *  id: string,
@@ -163,18 +188,19 @@ module.exports = ((instance, _, next) => {
    //  *  net_sales: number,
    //  *  gross_profit: number
  */
-  const getProductsSaleInfo = async (user, filter, services = []) => {
+  const getProductsSaleInfo = async (organization_id, filter, service_id) => {
     try {
       const filterReceipts = {
-        organization: user.organization,
-        receipt_state: { $ne: 'draft' },
+        organization: organization_id,
+        receipt_state: { $ne: "draft" },
         debt_id: null,
+        service: service_id,
         date: {
           $gte: filter.min,
           $lte: filter.max,
         },
       };
-
+      console.log(filterReceipts);
       const unwindSoldItemList = { $unwind: "$sold_item_list" };
 
       const calculateItemsReport = {
@@ -186,15 +212,15 @@ module.exports = ((instance, _, next) => {
               $multiply: [
                 { $max: ["$sold_item_list.value", 0] },
                 { $cond: ["$is_refund", -1, 1] },
-              ]
-            }
+              ],
+            },
           },
           amount: {
             $sum: {
               $multiply: [
                 { $max: ["$sold_item_list.price", 0] },
                 { $max: ["$sold_item_list.value", 0] },
-                { $cond: ["$is_refund", -1, 1] }
+                { $cond: ["$is_refund", -1, 1] },
               ],
             },
           },
@@ -203,7 +229,7 @@ module.exports = ((instance, _, next) => {
               $multiply: [
                 { $max: ["$sold_item_list.cost", 0] },
                 { $max: ["$sold_item_list.value", 0] },
-                { $cond: ["$is_refund", -1, 1] }
+                { $cond: ["$is_refund", -1, 1] },
               ],
             },
           },
@@ -291,10 +317,7 @@ module.exports = ((instance, _, next) => {
           items_refunded: 1,
           sale_count: 1,
           net_sales: {
-            $subtract: [
-              "$gross_sales",
-              { $add: ["$refunds", "$discounts"] },
-            ],
+            $subtract: ["$gross_sales", { $add: ["$refunds", "$discounts"] }],
           },
           gross_profit: {
             $subtract: [
@@ -313,8 +336,8 @@ module.exports = ((instance, _, next) => {
         $project: {
           sold_item_list: 1,
           is_refund: 1,
-        }
-      }
+        },
+      };
 
       return await instance.Receipts.aggregate([
         { $match: filterReceipts },
@@ -322,203 +345,350 @@ module.exports = ((instance, _, next) => {
         unwindSoldItemList,
         calculateItemsReport,
         sortResult,
-        projectResult
+        projectResult,
       ])
         .allowDiskUse(true)
         .exec();
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
-      instance.send_Error('getProductPurchases xlsx', JSON.stringify(error))
-      return []
+      instance.send_Error("getProductPurchases xlsx", JSON.stringify(error));
+      return [];
     }
-  }
+  };
 
-  const calculateOrganizationOtchot = async (organization_id) => {
+  /**
+   * @param {string} organization_id
+   * @param {string} service_id
+   * @param {string} service_name
+   * @param {{
+   *  month_name: string,
+   *  start_time: number,
+   *  end_time: number
+   * }} time
+  //  *  month: string,
+   */
+  const calculateOrganizationOtchot = async (organization_id, service_id, service_name, time) => {
+    console.log("starting...");
+    const start = new Date().getTime();
+    const purchases = await getProductPurchases(
+      organization_id,
+      {
+        min: time.start_time,
+        max: time.end_time,
+      },
+      service_id,
+    );
+    console.log(new Date().getTime() - start, `purchasega ketgan vaqt`);
 
-    const month_name = ''
-    const start_time = 32
-    const end_time = 3
+    const saleInfo = await getProductsSaleInfo(
+      organization_id + '',
+      {
+        min: time.start_time,
+        max: time.end_time,
+      },
+      service_id + '',
+    );
+    console.log(new Date().getTime() - start, 'boshlanishidan saleInfoni olguncha ketgan vaqt');
 
-    console.log('starting...');
-    const start = new Date().getTime()
-    const purchases = await getProductPurchases(user, { max: 1630551900343, min: 1629551900343 })
-    console.log(new Date().getTime() - start);
-    // return reply.code(404).send({ purchases })
-    const saleInfo = await getProductsSaleInfo(user, { max: 1630551900343, min: 1629551900343 })
-    console.log(new Date().getTime() - start);
-    // return reply.code(404).send({ saleInfo })
     console.log(purchases.length, saleInfo.length);
-    const p_items = []
-    const p_refund_items = []
+    const p_items = [];
+    const p_refund_items = [];
 
     for (const p of purchases) {
-      if (p._id === 'coming')
+      if (p._id === "coming")
         for (const p_item of p.p_items) {
-          p_items.push(...p_item)
+          p_items.push(...p_item);
         }
-      else if (p._id === 'refund')
+      else if (p._id === "refund")
         for (const p_item of p.p_items) {
-          p_refund_items.push(...p_item)
+          p_refund_items.push(...p_item);
         }
     }
 
-    const set = new Set()
-    const result = {}
-
-    for (const p_item of p_items) {
-      set.add(p_item._id)
-      if (result[p_item._id]) {
-        result[p_item._id].purchase_count += p_item.received
-        result[p_item._id].purchase_amount += p_item.amount
-      } else {
-        result[p_item._id] = {
-          name: p_item.product_name,
-          sale_count: 0,
-          cost_of_goods: 0,
-          sale_amount: 0,
-          purchase_count: p_item.received,
-          purchase_amount: p_item.amount,
-        }
-      }
-    }
-    for (const p_item of p_refund_items) {
-      set.add(p_item._id)
-      if (result[p_item._id]) {
-        result[p_item._id].purchase_count -= p_item.received
-        result[p_item._id].purchase_amount -= p_item.amount
-      } else {
-        result[p_item._id] = {
-          name: p_item.product_name,
-          sale_count: 0,
-          cost_of_goods: 0,
-          sale_amount: 0,
-          purchase_count: -p_item.received,
-          purchase_amount: -p_item.amount,
-        }
-      }
-    }
-
-    for (const s of saleInfo) {
-      if (s._id.length === 24) {
-        set.add(s._id)
-        if (result[s._id]) {
-          result[s._id].sale_count += s.sale_count
-          result[s._id].cost_of_goods == s.cost_of_goods
-          result[s._id].sale_amount += s.amount
+    const set = new Set();
+    const result = {};
+    console.log(p_items.length, p_refund_items.length);
+    console.log(saleInfo.length);
+    try {
+      for (const p_item of p_items) {
+        set.add(p_item._id);
+        if (result[p_item._id]) {
+          result[p_item._id].purchase_count += p_item.received;
+          result[p_item._id].purchase_amount += p_item.amount;
         } else {
-          result[s._id] = {
-            name: s.name,
-            sale_count: s.sale_count,
-            cost_of_goods: s.cost_of_goods,
-            sale_amount: s.amount,
-            purchase_count: 0,
-            purchase_amount: 0,
+          result[p_item._id] = {
+            name: p_item.product_name,
+            sale_count: 0,
+            sale_cost_of_goods: 0,
+            sale_amount: 0,
+            purchase_count: p_item.received,
+            purchase_amount: p_item.amount,
+            start_stock: 0,
+            end_stock: 0,
+            cost: 0,
+            price: 0,
+            prices: [],
+          };
+        }
+      }
+    } catch (error) {
+      console.log('error: 1', error);
+      instance.send_Error('error: 1', error)
+    }
+    try {
+      for (const p_item of p_refund_items) {
+        set.add(p_item._id);
+        if (result[p_item._id]) {
+          result[p_item._id].purchase_count -= p_item.received;
+          result[p_item._id].purchase_amount -= p_item.amount;
+        } else {
+          result[p_item._id] = {
+            name: p_item.product_name,
+            sale_count: 0,
+            sale_cost_of_goods: 0,
+            sale_amount: 0,
+            purchase_count: -p_item.received,
+            purchase_amount: -p_item.amount,
+            start_stock: 0,
+            end_stock: 0,
+            cost: 0,
+            price: 0,
+            prices: [],
+          };
+        }
+      }
+    } catch (error) {
+      console.log('error: 2', error);
+      instance.send_Error('error: 2', error)
+    }
+    try {
+      for (const s of saleInfo) {
+        if (s._id.length === 24) {
+          set.add(s._id);
+          if (result[s._id]) {
+            result[s._id].sale_count += s.sale_count;
+            result[s._id].sale_cost_of_goods == s.sale_cost_of_goods;
+            result[s._id].sale_amount += s.amount;
+          } else {
+            result[s._id] = {
+              name: s.name,
+              sale_count: s.sale_count,
+              sale_cost_of_goods: s.sale_cost_of_goods,
+              sale_amount: s.amount,
+              purchase_count: 0,
+              purchase_amount: 0,
+              start_stock: 0,
+              end_stock: 0,
+              cost: 0,
+              price: 0,
+              prices: [],
+            };
           }
         }
       }
-    }
-    const otchot_goods = await instance.goodsOtchot
-      .find({ organization: organization_id })
-      .lean()
-
-    const new_otchot_good_ids = []
-
-    for (const otchot_g of otchot_goods) {
-      if (!Object.keys(result).includes(otchot_g.product_id))
-        new_otchot_good_ids.push(
-          new instance.goodsOtchot({
-            organization: organization_id,
-            // service_id
-            // service_name
-            // available: true,
-            // sku,
-            product_id: result[otchot_g.product_id]._id,
-            product_name: result[otchot_g.product_id].name,
-            // category_id
-            // category_name
-            // sold_by
-            // count_by_type
-            // barcode_by_type
-            // barcode
-            // mxik
-            stock_monthly: [],
-            sale_monthly_info: [],
-            purchase_monthly_info: [],
-          })
-        )
+    } catch (error) {
+      console.log('error: 3', error);
+      instance.send_Error('error: 3', error)
     }
 
-    for (const p_id of Object.keys(result)) {
-      await instance.goodsOtchot.findOneAndUpdate(
-        {
-          product_id: result[result]._id,
-          organization: organization_id,
+    const goods = await instance.goodsSales.aggregate([
+      {
+        $match: {
+          _id: { $in: Object.keys(result).map(i => instance.ObjectId(i)) }
         },
-        {
-          stock_monthly: { $push: result[p_id] },
-          sale_monthly_info: {
-            $push: {
-              month_name: month_name,
-              start_time: start_time,
-              end_time: end_time,
-              count: result[p_id].sale_count,
-              cost_amount: result[p_id].cost_of_goods,
-              sale_amount: result[p_id].sale_amount,
+      },
+      {
+        $project: {
+          sku: 1,
+          name: 1,
+          category_id: 1,
+          category_name: 1,
+          sold_by: 1,
+          count_by_type: 1,
+          barcode_by_type: 1,
+          barcode: 1,
+          mxik: 1,
+          services: {
+            $first: {
+              $filter: {
+                input: "$services",
+                as: "service",
+                cond: {
+                  $or: [
+                    {
+                      $eq: [{ $toString: "$$service.service_id" }, { $toString: service_id }],
+                    },
+                    {
+                      $eq: [{ $toString: "$$service.service" }, { $toString: service_id }],
+                    },
+                  ]
+                },
+              },
             },
           },
-          purchase_monthly_info: { $push: result[p_id] },
-        },
-        { lean: true },
-      )
-      instance.update(update(
-        { "_id": { "$eq": 1 } },
-        [
-          {
-            $set:
-            {
-              "is_exists_sale_monthly_info":
-              {
-                $ne:
-                  [
-                    {
-                      $filter: {
-                        input: "$sale_monthly_info",
-                        cond: { $eq: ["$$this.month_name", month_name] },
-                      },
-                    },
-                    [],
-                  ]
-              }
-            }
-          },
-          {
-            "$set":
-            {
-              "key":
-              {
-                "$cond":
-                  ["$v2-exists",
-                    {
-                      "$map":
-                      {
-                        "input": "$key",
-                        "in":
-                        {
-                          "$cond":
-                            [{ "$eq": ["$$this", "1-value-2"] }, "1-value-3", "$$this"]
-                        }
-                      }
-                    },
-                    { "$concatArrays": ["$key", ["1-value-3"]] }]
-              }
-            }
-          },
-          { "$unset": ["v2-exists"] }
-        ])
-      )
+        }
+      }
+    ],
+    )
+      .allowDiskUse(true)
+      .exec()
+
+    const goodsObj = {}
+    for (const good of goods) {
+      goodsObj[good._id] = good
+      if (result[good._id]) {
+        if (result[good._id].services) {
+          result[good._id].end_stock = result[good._id].services.in_stock;
+          result[good._id].cost = result[good._id].services.cost;
+          result[good._id].price = result[good._id].services.price;
+          result[good._id].prices = result[good._id].services.prices;
+        }
+      } else {
+        result[good._id] = {
+          name: good.name,
+          sale_count: 0,
+          sale_cost_of_goods: 0,
+          sale_amount: 0,
+          purchase_count: 0,
+          purchase_amount: 0,
+          start_stock: 0,
+          end_stock: result[good._id].services.in_stock,
+          cost: result[good._id].services.cost,
+          price: result[good._id].services.price,
+          prices: result[good._id].services.prices,
+        };
+      }
     }
+    const new_otchots = []
+
+    for (const p_id of Object.keys(result)) {
+      const service_info = {
+        service_id: service_id,
+        service_name: service_name,
+        stock_monthly: {
+          start_stock: result[p_id].start_stock,
+          end_stock: result[p_id].end_stock,
+          cost: result[p_id].cost,
+          price: result[p_id].price,
+          prices: result[p_id].prices,
+        },
+        sale_monthly_info: {
+          count: result[p_id].sale_count,
+          cost_amount: result[p_id].sale_cost_of_goods,
+          sale_amount: result[p_id].sale_amount,
+        },
+        purchase_monthly_info: {
+          count: result[p_id].purchase_count,
+          amount: result[p_id].purchase_amount,
+        },
+      }
+
+      const otchot = await instance.goodsOtchot
+        .findOne({
+          product_id: p_id,
+          organization: organization_id,
+          month_name: time.month_name,
+        })
+        .lean()
+
+      const date = new Date(time.end_time)
+      if (!otchot) {
+        if (goodsObj[p_id])
+          new_otchots.push({
+            organization: organization_id,
+            month: `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`,
+            month_name: time.month_name,
+            start_time: time.start_time,
+            end_time: time.end_time,
+            sku: goodsObj[p_id].sku,
+            product_id: goodsObj[p_id]._id,
+            product_name: goodsObj[p_id].name,
+            category_id: goodsObj[p_id].category_id,
+            category_name: goodsObj[p_id].category_name,
+            sold_by: goodsObj[p_id].sold_by,
+            count_by_type: goodsObj[p_id].count_by_type,
+            barcode_by_type: goodsObj[p_id].barcode_by_type,
+            barcode: goodsObj[p_id].barcode,
+            mxik: goodsObj[p_id].mxik ? goodsObj[p_id].mxik : '',
+            services: [service_info]
+          })
+      } else {
+        const service_index = otchot.services.findIndex(serv => serv.service_id + '' === service_id + '')
+        if (service_index >= 0) {
+          otchot.month = `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`
+          otchot.services[service_index].service_id = service_info.service_id
+          otchot.services[service_index].service_name = service_info.service_name
+          otchot.services[service_index].stock_monthly = service_info.stock_monthly
+          otchot.services[service_index].sale_monthly_info = service_info.sale_monthly_info
+          otchot.services[service_index].purchase_monthly_info = service_info.purchase_monthly_info
+        } else {
+          otchot.services.push(service_info)
+        }
+        await instance.goodsOtchot.findByIdAndUpdate(
+          otchot._id,
+          otchot,
+          { lean: true }
+        );
+      }
+    }
+
+    instance.goodsOtchot.insertMany(new_otchots, (err) => {
+      if (err) {
+        instance.send_Error('saving otchot', JSON.stringify(err))
+      }
+    })
+  };
+
+  const calculateOrganizationsOtchot = async () => {
+    const date = new Date()
+    const month = date.getMonth()
+    const date_ = date.getDate()
+    const year = date.getFullYear()
+
+    const month_name = months[month]
+
+    const start_date = new Date(`${month + 1}.${1}.${year}`)
+    const end_date = new Date(`${month + 1}.${date_}.${year}`)
+    // const start_date = new Date(`${8}.${1}.${2021}`)
+    // const end_date = new Date(`${8}.${31}.${2021}`)
+    console.log(start_date, end_date);
+
+    const start_time = start_date.getTime()
+    const end_time = end_date.getTime()
+    console.log(new Date(start_time), start_time);
+    console.log(new Date(end_time), end_time);
+
+    const organizations = await instance.organizations
+      .find(
+        {},
+        // { _id: '5f5641e8dce4e706c062837a' },
+        { _id: 1 },
+      )
+      .lean()
+    console.log(organizations.length, 'organizations.length');
+    for (const org of organizations) {
+      const services = await instance.services.find(
+        { organization: org._id },
+      )
+        .lean()
+
+      for (const service of services) {
+        await calculateOrganizationOtchot(
+          service.organization,
+          service._id + '',
+          service.name,
+          {
+            month_name: month_name,
+            end_time: end_time,
+            start_time: start_time,
+          },
+        )
+      }
+    }
+    console.log('end...');
   }
+  calculateOrganizationsOtchot()
+
   // const cronString_ = '*/50 * * * * *';
   // if (!cronJob.validate(cronString_)) {
   //   instance.log.error('Invalid CRON_TIME is specified:', cronString_);
@@ -536,5 +706,5 @@ module.exports = ((instance, _, next) => {
   //   calculateOrganizationOtchot(organizations[0]._id)
   // })
 
-  next()
-})
+  next();
+});

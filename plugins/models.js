@@ -2703,9 +2703,10 @@ module.exports = fp((instance, _, next) => {
 
   const invanGoodsOtchotSchema = instance.model('goodsotchot', {
     organization: String,
-    service_id: mongoose.Schema.Types.ObjectId,
-    service_name: String,
-    available: { type: Boolean },
+    month: { type: String },
+    month_name: { type: String },
+    start_time: Number,
+    end_time: Number,
     sku: Number,
     product_id: mongoose.Types.ObjectId,
     product_name: String,
@@ -2729,41 +2730,32 @@ module.exports = fp((instance, _, next) => {
     barcode_by_type: String,
     barcode: { type: Array, default: [] },
     mxik: String,
-    stock_monthly: [
-      {
-        month_name: { type: String },
-        start_time: Number,
-        end_time: Number,
+    services: [{
+      service_id: { type: mongoose.Schema.Types.ObjectId },
+      service_name: { type: String },
+      available: { type: Boolean },
+      price: { type: Number, default: 0 },
+      cost: { type: Number, default: 0 },
+      stock_monthly: {
         start_stock: { type: Number, default: 0 },
         end_stock: { type: Number, default: 0 },
-        cost: Number,
+        cost: { type: Number },
         price: { type: Number, default: 0 },
         prices: {
           type: Array,
-          default: []
+          default: [],
         },
       },
-    ],
-    sale_monthly_info: [
-      {
-        month_name: { type: String },
-        start_time: Number,
-        end_time: Number,
-        count: Number,
-        cost_amount: Number,
-        sale_amount: Number,
+      sale_monthly_info: {
+        count: { type: Number, default: 0 },
+        cost_amount: { type: Number, default: 0 },
+        sale_amount: { type: Number, default: 0 },
       },
-    ],
-    purchase_monthly_info: [
-      {
-        month_name: { type: String },
-        start_time: Number,
-        end_time: Number,
-        count: Number,
-        cost_amount: Number,
-        sale_amount: Number,
+      purchase_monthly_info: {
+        count: { type: Number, default: 0 },
+        amount: { type: Number, default: 0 },
       },
-    ],
+    }],
   })
   instance.decorate('goodsOtchot', invanGoodsOtchotSchema);
 

@@ -194,429 +194,110 @@ const makeInventoryOtchotHeader = (worksheet, data) => {
 }
 
 module.exports = fp((instance, _, next) => {
-
-  /**
-   * @param {[string]} services 
-   * @param {{ min: string, max: string }} filter
-   * @return {Promise<[{
-   *   _id: string,
-   *   p_items: [any[]],
-   * }]>}
-   */
-  const getProductPurchases = async (user, filter, services = []) => {
-    try {
-      const $match_purchase = {
-        $match: {
-          organization: user.organization,
-          status: { $ne: 'pending' },
-          purchase_order_date: {
-            $gte: filter.min,
-            $lte: filter.max,
-          }
-        }
-      }
-
-      const $lookup = {
-        $lookup: {
-          from: 'purchaseitems',
-          let: { p_id: '$_id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ['$purchase_id', '$$p_id'] },
-                  ],
-                },
-              },
-            },
-            {
-              $group: {
-                _id: '$product_id',
-                product_name: { $first: '$product_name' },
-                barcode: { $addToSet: '$barcode' },
-                ordered: { $sum: '$ordered' },
-                received: { $sum: '$received' },
-                cancelled: { $sum: '$cancelled' },
-                to_receive: { $sum: '$to_receive' },
-                quality: { $sum: '$quality' },
-                amount: { $sum: '$amount' }
-              },
-            },
-          ],
-          as: 'p_items',
-        }
-      }
-
-      const group = {
-        $group: {
-          _id: '$type',
-          p_items: { $push: '$p_items' }
-        }
-      }
-      return await instance.inventoryPurchase.aggregate([
-        $match_purchase, $lookup, group,
-      ])
-        .allowDiskUse(true)
-        .exec()
-
-      const purchases = await instance.inventoryPurchase
-        .find(
-          {
-            organization: user.organization,
-            status: { $ne: 'pending' },
-            purchase_order_date: {
-              $gte: filter.min,
-              $lte: filter.max,
-            }
-          },
-          { _id: 1 }
-        ).lean()
-
-      const $match = {
-        $match: {
-          is_cancelled: false,
-          purchase_id: { $in: purchases.map(p => p._id) }
-        }
-      }
-      if (services.length)
-        $match.$match.service = { $in: services }
-
-      const $group = {
-        $group: {
-          _id: '$product_id',
-          product_name: { $first: '$product_name' },
-          barcode: { $addToSet: '$barcode' },
-          ordered: { $sum: '$ordered' },
-          received: { $sum: '$received' },
-          cancelled: { $sum: '$cancelled' },
-          to_receive: { $sum: '$to_receive' },
-          quality: { $sum: '$quality' },
-          amount: { $sum: '$amount' }
-        }
-      }
-
-      const pipelines = [$match, $group]
-
-      return await instance.purchaseItem.aggregate(pipelines).exec()
-    } catch (error) {
-      console.log(error);
-      instance.send_Error('getProductPurchases xlsx', JSON.stringify(error))
-
-      return []
-    }
-  }
-
-  /**
- * @param {[string]} services 
- * @param {{ min: string, max: string }} filter
- * @return {Promise<[{
- *  id: string,
- *  _id: string,
- *  name : string,
- *  cost_of_goods: number,
- *  sale_count: number,
- *  amount: number,
- * }]>}
-   //  *  cost_of_goods: number,
-   //  *  gross_sales: number,
-   //  *  refunds: number,
-   //  *  discounts: number,
-   //  *  sale_count: number,
-   //  *  items_sold: number,
-   //  *  items_refunded: number,
-   //  *  net_sales: number,
-   //  *  gross_profit: number
- */
-  const getProductsSaleInfo = async (user, filter, services = []) => {
-    try {
-      const filterReceipts = {
-        organization: user.organization,
-        receipt_state: { $ne: 'draft' },
-        debt_id: null,
-        date: {
-          $gte: filter.min,
-          $lte: filter.max,
-        },
-      };
-
-      const unwindSoldItemList = { $unwind: "$sold_item_list" };
-
-      const calculateItemsReport = {
-        $group: {
-          _id: "$sold_item_list.product_id",
-          product_name: { $last: "$sold_item_list.product_name" },
-          sale_count: {
-            $sum: {
-              $multiply: [
-                { $max: ["$sold_item_list.value", 0] },
-                { $cond: ["$is_refund", -1, 1] },
-              ]
-            }
-          },
-          amount: {
-            $sum: {
-              $multiply: [
-                { $max: ["$sold_item_list.price", 0] },
-                { $max: ["$sold_item_list.value", 0] },
-                { $cond: ["$is_refund", -1, 1] }
-              ],
-            },
-          },
-          cost_of_goods: {
-            $sum: {
-              $multiply: [
-                { $max: ["$sold_item_list.cost", 0] },
-                { $max: ["$sold_item_list.value", 0] },
-                { $cond: ["$is_refund", -1, 1] }
-              ],
-            },
-          },
-          // gross_sales: {
-          //   $sum: {
-          //     $multiply: [
-          //       { $max: ["$sold_item_list.price", 0] },
-          //       { $max: ["$sold_item_list.value", 0] },
-          //       { $cond: ["$is_refund", 0, 1] },
-          //     ]
-          //   }
-          // },
-          // refunds: {
-          //   $sum: {
-          //     $multiply: [
-          //       { $max: ["$sold_item_list.price", 0] },
-          //       { $max: ["$sold_item_list.value", 0] },
-          //       { $cond: ["$is_refund", 1, 0] },
-          //     ],
-          //   },
-          // },
-          // discounts: {
-          //   $sum: {
-          //     $multiply: [
-          //       { $max: ["$sold_item_list.total_discount", 0] },
-          //       { $cond: ["$is_refund", -1, 1] },
-          //     ],
-          //   },
-          // },
-          // items_sold: {
-          //   $sum: {
-          //     $cond: [
-          //       "$is_refund",
-          //       0,
-          //       {
-          //         $cond: [
-          //           { $eq: ['$sold_item_list.sold_item_type', 'box_item'] },
-          //           {
-          //             $divide: [
-          //               { $max: ["$sold_item_list.value", 0] },
-          //               { $max: ["$sold_item_list.count_by_type", 1] }
-          //             ]
-          //           },
-          //           { $max: ["$sold_item_list.value", 0] },
-          //         ],
-          //       },
-          //     ],
-          //   },
-          // },
-          // items_refunded: {
-          //   $sum: {
-          //     $cond: [
-          //       "$is_refund",
-          //       {
-          //         $cond: [
-          //           { $eq: ['$sold_item_list.sold_item_type', 'box_item'] },
-          //           {
-          //             $divide: [
-          //               { $max: ["$sold_item_list.value", 0] },
-          //               { $max: ["$sold_item_list.count_by_type", 1] }
-          //             ],
-          //           },
-          //           { $max: ["$sold_item_list.value", 0] },
-          //         ],
-          //       },
-          //       0,
-          //     ],
-          //   },
-          // },
-        },
-      };
-
-      const sortResult = { $sort: { gross_sales: -1 } };
-
-      const projectResult = {
-        $project: {
-          id: "$_id",
-          name: "$product_name",
-          amount: 1,
-          cost_of_goods: 1,
-          gross_sales: 1,
-          refunds: 1,
-          discounts: 1,
-          items_sold: 1,
-          items_refunded: 1,
-          sale_count: 1,
-          net_sales: {
-            $subtract: [
-              "$gross_sales",
-              { $add: ["$refunds", "$discounts"] },
-            ],
-          },
-          gross_profit: {
-            $subtract: [
-              {
-                $subtract: [
-                  "$gross_sales",
-                  { $add: ["$refunds", "$discounts"] },
-                ],
-              },
-              "$cost_of_goods",
-            ],
-          },
-        },
-      };
-      const projectCategoryFilter = {
-        $project: {
-          sold_item_list: 1,
-          is_refund: 1,
-        }
-      }
-
-      return await instance.Receipts.aggregate([
-        { $match: filterReceipts },
-        projectCategoryFilter,
-        unwindSoldItemList,
-        calculateItemsReport,
-        sortResult,
-        projectResult
-      ])
-        .allowDiskUse(true)
-        .exec();
-    }
-    catch (error) {
-      console.log(error);
-      instance.send_Error('getProductPurchases xlsx', JSON.stringify(error))
-      return []
-    }
-  }
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ]
 
   const inventoryOtchotXLSX = async (request, reply, user) => {
     try {
+      const month_time = request.params.month_time
+      const month = months[new Date(month_time).getMonth() + 1]
+      // const month_num = request.body.month
+      const service_id = request.params.service_id
+      // const service_id = '5f5641e8dce4e706c0628380'
+      // const service_ids = [instance.ObjectId(service_id)]
 
-      // const purchases = await getProductPurchases(user, { max: 1629051900343, min: 1629551900343 })
-      console.log('starting...');
-      const start = new Date().getTime()
-      const purchases = await getProductPurchases(user, { max: 1630551900343, min: 1629551900343 })
-      console.log(new Date().getTime() - start);
-      // return reply.code(404).send({ purchases })
-      const saleInfo = await getProductsSaleInfo(user, { max: 1630551900343, min: 1629551900343 })
-      console.log(new Date().getTime() - start);
-      // return reply.code(404).send({ saleInfo })
-      console.log(purchases.length, saleInfo.length);
-      const p_items = []
-      const p_refund_items = []
-
-      for (const p of purchases) {
-        if (p._id === 'coming')
-          for (const p_item of p.p_items) {
-            p_items.push(...p_item)
-          }
-        else if (p._id === 'refund')
-          for (const p_item of p.p_items) {
-            p_refund_items.push(...p_item)
-          }
+      const organization = await instance.organizations
+        .findById(user.organization)
+        .lean()
+      if (!organization) {
+        return reply.fourorfour('Organization')
       }
-
-      const set = new Set()
-      const result = {}
-
-      for (const p_item of p_items) {
-        set.add(p_item._id)
-        if (result[p_item._id]) {
-          result[p_item._id].purchase_count += p_item.received
-          result[p_item._id].purchase_amount += p_item.amount
-        } else {
-          result[p_item._id] = {
-            name: p_item.product_name,
-            sale_count: 0,
-            cost_of_goods: 0,
-            sale_amount: 0,
-            purchase_count: p_item.received,
-            purchase_amount: p_item.amount,
-          }
-        }
-      }
-      for (const p_item of p_refund_items) {
-        set.add(p_item._id)
-        if (result[p_item._id]) {
-          result[p_item._id].purchase_count -= p_item.received
-          result[p_item._id].purchase_amount -= p_item.amount
-        } else {
-          result[p_item._id] = {
-            name: p_item.product_name,
-            sale_count: 0,
-            cost_of_goods: 0,
-            sale_amount: 0,
-            purchase_count: -p_item.received,
-            purchase_amount: -p_item.amount,
-          }
+      const $match = {
+        $match: {
+          organization: organization._id + '',
+          month: month,
+          month_name: 'August',
         }
       }
 
-      for (const s of saleInfo) {
-        if (s._id.length === 24) {
-          set.add(s._id)
-          if (result[s._id]) {
-            result[s._id].sale_count += s.sale_count
-            result[s._id].cost_of_goods == s.cost_of_goods
-            result[s._id].sale_amount += s.amount
-          } else {
-            result[s._id] = {
-              name: s.name,
-              sale_count: s.sale_count,
-              cost_of_goods: s.cost_of_goods,
-              sale_amount: s.amount,
-              purchase_count: 0,
-              purchase_amount: 0,
-            }
-          }
+      const $project = {
+        $project: {
+          organization: 1,
+          month: 1,
+          month_name: 1,
+          start_time: 1,
+          end_time: 1,
+          sku: 1,
+          product_id: 1,
+          product_name: 1,
+          category_id: 1,
+          category_name: 1,
+          sold_by: 1,
+          count_by_type: 1,
+          barcode_by_type: 1,
+          barcode: 1,
+          mxik: 1,
+          services: {
+            $first: {
+              $filter: {
+                input: "$services",
+                as: "service",
+                cond: {
+                  $eq: [{ $toString: "$$service.service_id" }, { $toString: service_id }],
+                },
+              },
+            },
+          },
         }
       }
-      const exelItems = []
-      let index_no = 1
-      for (const [, item] of Object.keys(result)) {
-        console.log(item, result[item]);
-        if (result[item])
-          exelItems.push([
-            index_no,
-            '24352345;056746745',
-            `Organization name` + result[item].name,
-            '',
-            '',
-            'Start time count',
-            'Start time sum',
-            'Prixod count' + result[item].purchase_count,
-            'Prixod sum' + result[item].purchase_amount,
-            'Rasxod count' + result[item].sale_count,
-            'Rasxod sum' + result[item].sale_amount,
-            'End time count',
-            'End Time sum',
-          ])
-        index_no++
-      }
+      const data = await instance.goodsOtchot.aggregate([$match, $project])
+
+      // return reply.ok(data)
       // return reply.code(404).send({ result })
       // const goodsObj = {}
       // // for (const purchase of purchases) {
       //   // goodsObj[purchase.product_id] = purchase
       // // }
 
-      const time = new Date().getTime()
+      const exelItems = []
+      let index = 1
+      for (const item of data) {
+        exelItems.push([
+          index,
+          item.barcode,
+          item.product_name,
+          item.mxik,
+          item.services.cost,
+          item.services.stock_monthly.start_stock, // End time count
+          item.services.stock_monthly.start_stock * item.services.cost, // End time count
+          item.services.purchase_monthly_info.count, // Prixod count
+          item.services.purchase_monthly_info.amount, // Prixod sum
+          item.services.sale_monthly_info.count, // Rasxod count
+          item.services.sale_monthly_info.sale_amount, // Rasxod sum
+          item.services.stock_monthly.end_stock, // End Time sum
+          item.services.stock_monthly.end_stock * item.services.stock_monthly.cost, // End Time sum
+        ])
+        index++
+      }
 
       const headers = [
         { name: '№', key: '1' },
         { name: 'A', key: '2' },
         { name: `A`, key: '3' },
         { name: 'A', key: '4' },
-        { name: `Итого по ${'organization_name'}`, key: '5' },
+        { name: `Итого по ${organization.name}`, key: '5' },
         { name: 'Start time count', key: '6' },
         { name: 'Start time sum', key: '7' },
         { name: 'Prixod count', key: '8' },
@@ -630,13 +311,16 @@ module.exports = fp((instance, _, next) => {
       const worksheet = workbook.addWorksheet('MyExcel', {
         pageSetup: { paperSize: 9, orientation: 'landscape' }
       });
+      const start_date = new Date(data[0]?.start_time)
+      const end_date = new Date(data[0]?.end_time)
       makeInventoryOtchotHeader(
         worksheet,
         {
-          end_time: 'end Time',
-          start_time: 'Start time'
+          end_time: `${start_date.getDate()}.${start_date.getMonth() + 1}.${start_date.getFullYear()}`,
+          start_time: `${end_date.getDate()}.${end_date.getMonth() + 1}.${end_date.getFullYear()}`,
         },
       )
+      const time = new Date().getTime()
 
       try {
         worksheet.addTable({
@@ -667,7 +351,7 @@ module.exports = fp((instance, _, next) => {
     }
   }
 
-  instance.get('/inventory/otchot/excel', (request, reply) => {
+  instance.get('/inventory/otchot/excel/:service_id/:month_time', (request, reply) => {
     // user
     request.headers['accept-user'] = 'admin'
     request.headers['authorization'] = 'FsYMuTi4PWc9irRLrfYHLt'
