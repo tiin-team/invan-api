@@ -217,6 +217,8 @@ module.exports = fp((instance, _, next) => {
       const month = `${month_date.getDate()}.${month_date.getMonth() + 1}.${month_date.getFullYear()}`
       const month_name = months[month_date.getMonth()]
       const service_id = request.params.service_id
+      console.log(month_date);
+      console.log(user.organization, service_id, month_name, month);
       // const service_id = '5f5641e8dce4e706c0628380'
       // const service_ids = [instance.ObjectId(service_id)]
 
