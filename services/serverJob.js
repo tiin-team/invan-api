@@ -25,6 +25,12 @@ const sendNotify = async function (instance) {
   }
 };
 
+/**
+ * @param {string} month
+ * @return {string}
+ */
+const correctMonth = (month) => month >= 10 ? month : `0${month}`
+
 const months = [
   'January',
   'February',
@@ -596,7 +602,7 @@ module.exports = fp((instance, _, next) => {
         if (goodsObj[p_id])
           new_otchots.push({
             organization: organization_id,
-            month: `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`,
+            month: `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`,
             month_name: time.month_name,
             start_time: time.start_time,
             end_time: time.end_time,
@@ -615,7 +621,7 @@ module.exports = fp((instance, _, next) => {
       } else {
         const service_index = otchot.services.findIndex(serv => serv.service_id + '' === service_id + '')
         if (service_index >= 0) {
-          otchot.month = `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`
+          otchot.month = `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`
           otchot.services[service_index].service_id = service_info.service_id
           otchot.services[service_index].service_name = service_info.service_name
           otchot.services[service_index].stock_monthly = service_info.stock_monthly
@@ -687,7 +693,7 @@ module.exports = fp((instance, _, next) => {
     }
     console.log('end...');
   }
-  calculateOrganizationsOtchot()
+  // calculateOrganizationsOtchot()
 
   // const cronString_ = '*/50 * * * * *';
   // if (!cronJob.validate(cronString_)) {
