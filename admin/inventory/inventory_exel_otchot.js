@@ -212,11 +212,13 @@ module.exports = fp((instance, _, next) => {
 
   const inventoryOtchotXLSX = async (request, reply, user) => {
     try {
-      const month_time = request.params.month_time
-      const month_date = new Date(month_time)
+      const { service_id, month_time } = request.params
+      const month_date = new Date(parseInt(month_time))
+      if (month_date.toString() === 'Invalid Date') {
+        return reply.error('Invalid Date')
+      }
       const month = `${month_date.getDate()}.${month_date.getMonth() + 1}.${month_date.getFullYear()}`
       const month_name = months[month_date.getMonth()]
-      const service_id = request.params.service_id
       console.log(month_date);
       console.log(user.organization, service_id, month_name, month);
       // const service_id = '5f5641e8dce4e706c0628380'
