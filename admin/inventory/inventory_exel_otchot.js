@@ -330,8 +330,8 @@ module.exports = fp((instance, _, next) => {
       makeInventoryOtchotHeader(
         worksheet,
         {
-          end_time: `${start_date.getDate()}.${end_date.getMonth() + 1}.${end_date.getFullYear()}`,
-          start_time: `${end_date.getDate()}.${start_date.getMonth() + 1}.${start_date.getFullYear()}`,
+          start_time: `${start_date.getDate()}.${start_date.getMonth() + 1}.${start_date.getFullYear()}`,
+          end_time: `${end_date.getDate()}.${end_date.getMonth() + 1}.${end_date.getFullYear()}`,
         },
       )
       const time = new Date().getTime()
