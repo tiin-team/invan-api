@@ -1403,6 +1403,7 @@ module.exports = fp((instance, _, next) => {
     const getReceiptPdf = async (request, reply) => {
         try {
             const { id } = request.params;
+            const { type } = request.query
             const receipt = await instance.Receipts
                 .findById(id)
                 .lean();
@@ -1481,12 +1482,123 @@ module.exports = fp((instance, _, next) => {
                 }
             }
 
+            const time = new Date().getTime()
+
+            const exelItems = []
+            index = 1
+            totalAmount = 0
+            if (type == 'exel') {
+                for (const it of receipt.sold_item_list) {
+                    exelItems.push([
+                        index,
+                        it.product_name + '',
+                        it.barcode,
+                        it.sold_by,
+                        it.value,
+                        it.price,
+                        it.value * it.price,
+                    ])
+                    index++
+                }
+
+                const headers = [
+                    { name: ' № п.п.', key: 'id', width: 10 },
+                    { name: 'Наименование', key: 'id', width: 300 },
+                    { name: 'Штрих код', key: 'barcode', width: 5000 },
+                    { name: 'Ед. изм.', key: 'type', width: 1000 },
+                    { name: 'Кол-во', key: 'quantity', width: 100 },
+                    { name: 'Цена', key: 'price', width: 100 },
+                    { name: 'Сумма', key: 'Amount', filterButton: false, width: 100 },
+                    // { name: 'Amount', totalsRowFunction: 'sum', filterButton: false },
+                ]
+                const workbook = new ExcelJs.Workbook();
+                const worksheet = workbook.addWorksheet('MyExcel', {
+                    pageSetup: { paperSize: 9, orientation: 'landscape' }
+                });
+                worksheet.properties.defaultColWidth = 200;
+                worksheet.getCell('B2').value = `Дата: ${moment(receipt.date).format("DD.MM.YYYY MM:HH")}`;
+                // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
+                worksheet.getCell('B2').font = { name: 'times new roman', size: 16, bold: true };
+                worksheet.getCell('B3').value = `Заведения:      ${receipt.service_name}`
+                worksheet.getCell('B4').value = `Касса:     ${receipt.cashier_name}`
+                worksheet.getCell('B5').value = `POS:        ${receipt.pos_name}`
+                if (receipt.is_refund)
+                    worksheet.getCell('B6').value = `Тип:        Возврат`
+
+                // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
+                // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
+                const payment_len = receipt.payment && receipt.payment.length
+                    ? receipt.payment.length
+                    : 0;
+                for (let i = 0; i < payment_len; i++) {
+                    worksheet.getCell(`G${exelItems.length + 10 + i}`).value = `${receipt.payment[i].name}          ${receipt.payment[i].value}`
+                }
+                worksheet.getCell(`G${exelItems.length + 10 + payment_len}`).value = `Всего        ${receipt.total_price}`
+
+                multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6',])
+                multiSetAlign(worksheet, [
+                    { col: 'B', rows: [10, 10 + exelItems.length], },
+                    // { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                ])
+                removeBorders(worksheet, [
+                    { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
+                    { cell: `D2` }, { cell: `D3` }, { cell: `D4` }, { cell: `D5` }, { cell: `D6` },
+                    { cell: `B7`, bottom: 'A9A9A9' }, { cell: `C7`, bottom: 'A9A9A9' },
+                    { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
+                    { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
+                    { cell: `H7`, bottom: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 9}`, top: 'A9A9A9', left: 'A9A9A9' },
+                    { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `F${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `G${exelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `H${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 10}`, left: 'A9A9A9' },
+                    { cell: `C${exelItems.length + 10}` },
+                    { cell: `D${exelItems.length + 10}` },
+                    { cell: `F${exelItems.length + 10}` },
+                    { cell: `G${exelItems.length + 10}` },
+                    { cell: `H${exelItems.length + 10}`, right: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 11}`, bottom: 'A9A9A9', left: 'A9A9A9' },
+                    { cell: `F${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                ])
+
+                try {
+                    worksheet.addTable({
+                        name: 'ItemsTable',
+                        ref: 'B8',
+                        headerRow: true,
+                        // totalsRow: true,
+                        columns: headers,
+                        rows: exelItems
+                    })
+                } catch (error) { }
+
+                const file = `${time}.xlsx`;
+                const file_dir = path.join(__dirname, '..', '..', '/static/', file)
+                await workbook.xlsx.writeFile(file_dir);
+
+                reply.sendFile(`./${time}.xlsx`)
+                setTimeout(() => {
+                    fs.unlink(`./static/${time}.xlsx`, (err) => {
+                        if (err) {
+                            instance.send_Error('exported ' + time + ' file', JSON.stringify(err))
+                        }
+                    })
+                }, 2000);
+                return
+            }
             const doc = new PDFDocument({ margin: 0, layout: 'landscape' });
             doc.registerFont('NotoSansRegular', './static/pdfFonts/ya_r.ttf');
             doc.registerFont('NotoSansBold', './static/pdfFonts/ya_b.ttf')
             // doc.addPage({ margin: 0 })
 
-            const time = new Date().getTime()
             try {
                 const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`));
                 // building pdf
