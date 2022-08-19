@@ -289,7 +289,7 @@ module.exports = fp((instance, _, next) => {
             index,
             Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '') : '',
             item.product_name,
-            instance.i18.__(item.sold_by),
+            instance.i18n.__(item.sold_by),
             item.services.cost,
             item.services.stock_monthly.start_stock, // End time count
             item.services.stock_monthly.start_stock * item.services.cost, // End time count
