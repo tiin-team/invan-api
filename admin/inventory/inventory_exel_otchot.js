@@ -289,7 +289,7 @@ module.exports = fp((instance, _, next) => {
             index,
             Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '') : '',
             item.product_name,
-            item.sold_by,
+            instance.i18.__(item.sold_by),
             item.services.cost,
             item.services.stock_monthly.start_stock, // End time count
             item.services.stock_monthly.start_stock * item.services.cost, // End time count
@@ -309,14 +309,14 @@ module.exports = fp((instance, _, next) => {
         { name: `A`, key: '3' },
         { name: 'A', key: '4' },
         { name: `Итого по ${organization.name}`, key: '5' },
-        { name: 'Start time count', key: '6' },
-        { name: 'Start time sum', key: '7' },
-        { name: 'Prixod count', key: '8' },
-        { name: 'Prixod sum', key: '9' },
-        { name: 'Rasxod count', key: '10' },
-        { name: 'Rasxod sum', key: '11' },
-        { name: 'End time count', key: '12' },
-        { name: 'End Time sum', key: '13' },
+        { name: '', key: '6' },
+        { name: '', key: '7' },
+        { name: '', key: '8' },
+        { name: '', key: '9' },
+        { name: '', key: '10' },
+        { name: '', key: '11' },
+        { name: '', key: '12' },
+        { name: '', key: '13' },
       ]
       const workbook = new ExcelJs.Workbook();
       const worksheet = workbook.addWorksheet('MyExcel', {
@@ -330,8 +330,8 @@ module.exports = fp((instance, _, next) => {
       makeInventoryOtchotHeader(
         worksheet,
         {
-          end_time: `${start_date.getDate()}.${start_date.getMonth() + 1}.${start_date.getFullYear()}`,
-          start_time: `${end_date.getDate()}.${end_date.getMonth() + 1}.${end_date.getFullYear()}`,
+          end_time: `${start_date.getDate()}.${end_date.getMonth() + 1}.${end_date.getFullYear()}`,
+          start_time: `${end_date.getDate()}.${start_date.getMonth() + 1}.${start_date.getFullYear()}`,
         },
       )
       const time = new Date().getTime()

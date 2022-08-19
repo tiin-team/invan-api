@@ -1474,7 +1474,9 @@ module.exports = fp((instance, _, next) => {
                     partiationsObj[partiation._id] = partiation
                 }
             } catch (error) { }
+            const goods_id = []
             for (let i = 0; i < receipt.sold_item_list.length; i++) {
+                goods_id.push(receipt.sold_item_list[i].product_id)
                 if (receipt.sold_item_list[i].partiation_id)
                     receipt.sold_item_list[i].p_order = partiationsObj[receipt.sold_item_list[i].partiation_id].p_order
                 else {
@@ -1482,6 +1484,17 @@ module.exports = fp((instance, _, next) => {
                 }
             }
 
+            const goods = await instance.goodsSales
+                .find(
+                    { _id: { $in: goods_id } },
+                    { sold_by: 1 },
+                )
+                .lean()
+
+            const goodsObj = {}
+            for (const good of goods) {
+                goodsObj[good._id] = good
+            }
             const time = new Date().getTime()
 
             const exelItems = []
@@ -1493,7 +1506,7 @@ module.exports = fp((instance, _, next) => {
                         index,
                         it.product_name + '',
                         it.barcode,
-                        it.sold_by,
+                        instance.i18n.__(goodsObj[it.product_id].sold_by),
                         it.value,
                         it.price,
                         it.value * it.price,
@@ -1502,7 +1515,7 @@ module.exports = fp((instance, _, next) => {
                 }
 
                 const headers = [
-                    { name: ' № п.п.', key: 'id', width: 10 },
+                    { name: '№', key: 'id', width: 10 },
                     { name: 'Наименование', key: 'id', width: 300 },
                     { name: 'Штрих код', key: 'barcode', width: 5000 },
                     { name: 'Ед. изм.', key: 'type', width: 1000 },
@@ -1516,24 +1529,38 @@ module.exports = fp((instance, _, next) => {
                     pageSetup: { paperSize: 9, orientation: 'landscape' }
                 });
                 worksheet.properties.defaultColWidth = 200;
-                worksheet.getCell('B2').value = `Дата: ${moment(receipt.date).format("DD.MM.YYYY MM:HH")}`;
+                let a = 2
+                console.log(client_name);
+                if (client_name) {
+                    worksheet.getCell(`B${a}`).value = `${instance.i18n.__('client')}: ${client_name}               ${instance.i18n.__('receipt_no')}:  ${receipt.receipt_no}`;
+                    // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
+                    worksheet.getCell(`B${a}`).font = { name: 'times new roman', size: 16, bold: true };
+                    a++
+                }
+                worksheet.getCell(`B${a}`).value = `${instance.i18n.__('date')}: ${moment(receipt.date + 3 * 60 * 60 * 1000).format("DD.MM.YYYY MM:HH")}               ${instance.i18n.__('receipt_no')}:  ${receipt.receipt_no}`;
                 // worksheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'center' };
-                worksheet.getCell('B2').font = { name: 'times new roman', size: 16, bold: true };
-                worksheet.getCell('B3').value = `Заведения:      ${receipt.service_name}`
-                worksheet.getCell('B4').value = `Касса:     ${receipt.cashier_name}`
-                worksheet.getCell('B5').value = `POS:        ${receipt.pos_name}`
-                if (receipt.is_refund)
-                    worksheet.getCell('B6').value = `Тип:        Возврат`
-
+                worksheet.getCell(`B${a}`).font = { name: 'times new roman', size: 16, bold: true };
+                a++
+                worksheet.getCell(`B${a}`).value = `${instance.i18n.__('store')}:      ${receipt.service_name}`
+                a++
+                worksheet.getCell(`B${a}`).value = `${instance.i18n.__('cashier')}:     ${receipt.cashier_name}`
+                a++
+                worksheet.getCell(`B${a}`).value = `${instance.i18n.__('pos')}:        ${receipt.pos_name}`
+                // worksheet.getCell('B6').value = `Receipt:        ${receipt.receipt_no}`
+                a++
+                if (receipt.is_refund) {
+                    worksheet.getCell(`B${a}`).value = `${instance.i18n.__('type')}:        ${instance.i18n.__('refund')}`
+                    a++
+                }
                 // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
                 // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
                 const payment_len = receipt.payment && receipt.payment.length
                     ? receipt.payment.length
                     : 0;
                 for (let i = 0; i < payment_len; i++) {
-                    worksheet.getCell(`G${exelItems.length + 10 + i}`).value = `${receipt.payment[i].name}          ${receipt.payment[i].value}`
+                    worksheet.getCell(`G${exelItems.length + 9 + i}`).value = `${instance.i18n.__(receipt.payment[i].name)}          ${receipt.payment[i].value}`
                 }
-                worksheet.getCell(`G${exelItems.length + 10 + payment_len}`).value = `Всего        ${receipt.total_price}`
+                worksheet.getCell(`G${exelItems.length + 9 + payment_len}`).value = `${instance.i18n.__('total')}          ${receipt.total_price}`
 
                 multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6',])
                 multiSetAlign(worksheet, [
@@ -1554,19 +1581,20 @@ module.exports = fp((instance, _, next) => {
                     { cell: `F${exelItems.length + 9}`, top: 'A9A9A9' },
                     { cell: `G${exelItems.length + 9}`, top: 'A9A9A9' },
                     { cell: `H${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 10}`, left: 'A9A9A9' },
-                    { cell: `C${exelItems.length + 10}` },
-                    { cell: `D${exelItems.length + 10}` },
-                    { cell: `F${exelItems.length + 10}` },
-                    { cell: `G${exelItems.length + 10}` },
-                    { cell: `H${exelItems.length + 10}`, right: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 11}`, bottom: 'A9A9A9', left: 'A9A9A9' },
-                    { cell: `F${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${exelItems.length + 10}`, bottom: 'A9A9A9', left: 'A9A9A9' },
+                    { cell: `C${exelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `D${exelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `E${exelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `F${exelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `G${exelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `H${exelItems.length + 10}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${exelItems.length + 11}`, bottom: 'A9A9A9', left: 'A9A9A9' },
+                    // { cell: `F${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
 
                 try {

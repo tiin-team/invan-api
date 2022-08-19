@@ -54,5 +54,7 @@
 	"_id": "_id",
 	"barcode": "barcode",
 	"cashback": "cashback",
-	"p_order": "p_order"
+	"p_order": "p_order",
+	"receipt_no": "receipt_no",
+	"each": "each"
 }
