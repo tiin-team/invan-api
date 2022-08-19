@@ -668,8 +668,8 @@ module.exports = fp((instance, _, next) => {
 
     const organizations = await instance.organizations
       .find(
-        // {},
-        { _id: '5f5641e8dce4e706c062837a' },
+        {},
+        // { _id: '5f5641e8dce4e706c062837a' },
         { _id: 1 },
       )
       .lean()
