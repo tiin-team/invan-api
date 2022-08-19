@@ -544,12 +544,12 @@ module.exports = fp((instance, _, next) => {
     for (const good of goods) {
       goodsObj[good._id] = good
       if (result[good._id]) {
-        if (result[good._id].services) {
-          result[good._id].end_stock = result[good._id].services.in_stock;
-          result[good._id].cost = result[good._id].cost;
-          result[good._id].price = result[good._id].services.price;
-          result[good._id].prices = result[good._id].services.prices;
-        }
+        // if (result[good._id].services) {
+        result[good._id].end_stock = good.services.in_stock;
+        result[good._id].cost = good.cost;
+        result[good._id].price = good.services.price;
+        result[good._id].prices = good.services.prices;
+        // }
       } else {
         result[good._id] = {
           name: good.name,
@@ -558,7 +558,7 @@ module.exports = fp((instance, _, next) => {
           sale_amount: 0,
           purchase_count: 0,
           purchase_amount: 0,
-          start_stock: 0,
+          start_stock: good.services.in_stock,
           end_stock: good.services.in_stock,
           cost: good.cost,
           price: good.services.price,
@@ -622,6 +622,7 @@ module.exports = fp((instance, _, next) => {
       } else {
         const service_index = otchot.services.findIndex(serv => serv.service_id + '' === service_id + '')
         if (service_index >= 0) {
+          delete service_info.stock_monthly.start_stock
           otchot.month = `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`
           otchot.services[service_index].service_id = service_info.service_id
           otchot.services[service_index].service_name = service_info.service_name
@@ -667,8 +668,8 @@ module.exports = fp((instance, _, next) => {
 
     const organizations = await instance.organizations
       .find(
-        {},
-        // { _id: '5f5641e8dce4e706c062837a' },
+        // {},
+        { _id: '5f5641e8dce4e706c062837a' },
         { _id: 1 },
       )
       .lean()

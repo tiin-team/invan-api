@@ -272,8 +272,8 @@ module.exports = fp((instance, _, next) => {
         return reply.unauthorized()
     })
   });
-  instance.get("/cash-back/client/", { version: "1.0.0" }, async (request, reply) => {
-    const organization = request.params.organization;
+  instance.get("/cash-back/client", { version: "1.0.0" }, async (request, reply) => {
+    const organization = request.query.organization;
     // instance.authProvider(request, reply, (provider) => {
     // if (provider) {
     // }
