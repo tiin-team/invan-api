@@ -2183,6 +2183,7 @@ module.exports = fp((instance, _, next) => {
     report_discount: boolean,
     report_taxes: boolean,
     report_shift: boolean,
+    material_report: boolean,
     //items
     items: boolean,
     item_edit: boolean,
