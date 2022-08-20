@@ -221,6 +221,7 @@ module.exports = fp((instance, options, next) => {
       report_discount: true,
       report_taxes: true,
       report_shift: true,
+      material_report: true,
       items: true,
       item_edit: true,
       item_list: true,

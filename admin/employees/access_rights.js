@@ -154,6 +154,7 @@ module.exports = (instance, options, next) => {
           report_sale_by_payment: false,
           report_sale_by_supplier: false,
           report_shift: false,
+          material_report: false,
           report_taxes: false,
           setting_buttons: false,
           setting_currency: false,
@@ -398,6 +399,7 @@ module.exports = (instance, options, next) => {
           report_discount: true,
           report_taxes: true,
           report_shift: true,
+          material_report: true,
           //items
           items: true,
           item_list: true,
