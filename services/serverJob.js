@@ -697,22 +697,22 @@ module.exports = fp((instance, _, next) => {
   }
   calculateOrganizationsOtchot()
 
-  // const cronString_ = '*/50 * * * * *';
-  // if (!cronJob.validate(cronString_)) {
-  //   instance.log.error('Invalid CRON_TIME is specified:', cronString_);
-  //   // process.exit(1);
-  // } else
+  const cronString_ = '0 01 * * *';
+  if (!cronJob.validate(cronString_)) {
+    instance.log.error('Invalid CRON_TIME is specified:', cronString_);
+    // process.exit(1);
+  } else
+    cronJob.schedule(cronString_, async () => {
+      calculateOrganizationsOtchot()
+      // const organizations = await instance.organization
+      //   .find(
+      //     { _id: '' },
+      //     { _id: 1 },
+      //   )
+      //   .lean()
 
-  // cronJob.schedule(cronString_, async () => {
-  //   const organizations = await instance.organization
-  //     .find(
-  //       { _id: '' },
-  //       { _id: 1 },
-  //     )
-  //     .lean()
-
-  //   calculateOrganizationOtchot(organizations[0]._id)
-  // })
+      // calculateOrganizationOtchot(organizations[0]._id)
+    })
 
   next();
 });
