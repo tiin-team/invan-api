@@ -237,7 +237,7 @@ module.exports = fp((instance, _, next) => {
       const $match = {
         $match: {
           organization: organization._id + '',
-          month: { $regex: new RegExp(month), $options: 'i' },
+          month: { $regex: month, $options: 'i' },
           month_name: month_name,
         }
       }
