@@ -26,7 +26,7 @@ const sendNotify = async function (instance) {
 };
 
 /**
- * @param {string} month
+ * @param {number} month
  * @return {string}
  */
 const correctMonth = (month) => month >= 10 ? month : `0${month}`
@@ -542,6 +542,7 @@ module.exports = fp((instance, _, next) => {
 
     const goodsObj = {}
     for (const good of goods) {
+      good.services = good.services ? good.services : {}
       goodsObj[good._id] = good
       if (result[good._id]) {
         // if (result[good._id].services) {
@@ -695,7 +696,7 @@ module.exports = fp((instance, _, next) => {
     }
     console.log('end...');
   }
-  calculateOrganizationsOtchot()
+  // calculateOrganizationsOtchot()
 
   const cronString_ = '0 01 * * *';
   if (!cronJob.validate(cronString_)) {

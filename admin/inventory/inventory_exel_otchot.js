@@ -272,7 +272,9 @@ module.exports = fp((instance, _, next) => {
           },
         }
       }
-      const data = await instance.goodsOtchot.aggregate([$match, $project])
+      const data = await instance.goodsOtchot
+        .aggregate([$match, $project])
+        .exec()
 
       // return reply.ok(data)
       // return reply.code(404).send({ result })
@@ -283,8 +285,24 @@ module.exports = fp((instance, _, next) => {
 
       const exelItems = []
       let index = 1
+      let ostatok_start_stock = 0
+      let ostatok_start_sum = 0
+      let ostatok_stock = 0
+      let ostatok_sum = 0
+      let prixod_stock = 0
+      let prixod_sum = 0
+      let rasxod_stock = 0
+      let rasxod_sum = 0
       for (const item of data) {
-        if (item.services)
+        if (item.services) {
+          ostatok_start_stock += item.services.stock_monthly.start_stock
+          ostatok_start_sum += item.services.stock_monthly.start_stock * item.services.cost
+          ostatok_stock += item.services.purchase_monthly_info.count
+          ostatok_sum += item.services.purchase_monthly_info.amount
+          prixod_stock += item.services.sale_monthly_info.count
+          prixod_sum += item.services.sale_monthly_info.sale_amount
+          rasxod_stock += item.services.stock_monthly.end_stock
+          rasxod_sum += item.services.stock_monthly.end_stock * item.services.stock_monthly.cost
           exelItems.push([
             index,
             Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '') : '',
@@ -300,6 +318,7 @@ module.exports = fp((instance, _, next) => {
             item.services.stock_monthly.end_stock, // End Time sum
             item.services.stock_monthly.end_stock * item.services.stock_monthly.cost, // End Time sum
           ])
+        }
         index++
       }
 
@@ -309,14 +328,14 @@ module.exports = fp((instance, _, next) => {
         { name: `A`, key: '3' },
         { name: 'A', key: '4' },
         { name: `Итого по ${organization.name}`, key: '5' },
-        { name: '', key: '6' },
-        { name: '', key: '7' },
-        { name: '', key: '8' },
-        { name: '', key: '9' },
-        { name: '', key: '10' },
-        { name: '', key: '11' },
-        { name: '', key: '12' },
-        { name: '', key: '13' },
+        { name: `${instance.i18n.__('total')} ${ostatok_start_stock}`, key: '6' },
+        { name: `${instance.i18n.__('total')} ${ostatok_start_sum}`, key: '7' },
+        { name: `${instance.i18n.__('total')} ${ostatok_stock}`, key: '8' },
+        { name: `${instance.i18n.__('total')} ${ostatok_sum}`, key: '9' },
+        { name: `${instance.i18n.__('total')} ${prixod_stock}`, key: '10' },
+        { name: `${instance.i18n.__('total')} ${prixod_sum}`, key: '11' },
+        { name: `${instance.i18n.__('total')} ${rasxod_stock}`, key: '12' },
+        { name: `${instance.i18n.__('total')} ${rasxod_sum}`, key: '13' },
       ]
       const workbook = new ExcelJs.Workbook();
       const worksheet = workbook.addWorksheet('MyExcel', {
