@@ -316,7 +316,9 @@ module.exports = fp((instance, _, next) => {
             item.services.sale_monthly_info.count, // Rasxod count
             item.services.sale_monthly_info.sale_amount, // Rasxod sum
             item.services.stock_monthly.end_stock, // End Time sum
-            item.services.stock_monthly.end_stock * item.services.stock_monthly.cost, // End Time sum
+            // item.services.stock_monthly.end_stock * item.services.stock_monthly.cost, // End Time sum
+            item.services.stock_monthly.end_stock
+            * (item.services.purchase_monthly_info.amount / item.services.purchase_monthly_info.count), // End Time sum
           ])
         }
         index++
