@@ -657,7 +657,7 @@ module.exports = fp((instance, _, next) => {
     const month_name = months[month]
 
     const start_date = new Date(`${month + 1}.${1}.${year}`)
-    const end_date = new Date(`${month + 1}.${date_}.${year}`)
+    const end_date = new Date(`${month + 1}.${date_ + 1}.${year}`)
     // const start_date = new Date(`${8}.${1}.${2021}`)
     // const end_date = new Date(`${8}.${31}.${2021}`)
     console.log(start_date, end_date);
@@ -669,8 +669,8 @@ module.exports = fp((instance, _, next) => {
 
     const organizations = await instance.organizations
       .find(
-        {},
-        // { _id: '5f5641e8dce4e706c062837a' },
+        // {},
+        { _id: '6305d062d18af98192f6a238' },
         { _id: 1 },
       )
       .lean()
