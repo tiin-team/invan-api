@@ -2,14 +2,6 @@ const fp = require('fastify-plugin');
 const fs = require('fs');
 
 module.exports = fp((instance, options, next) => {
-    (async () => {
-        const accesses = await instance.AccessRights.find({}).lean();
-        for (const access of accesses) {
-            access.material_report = access.is_bos
-            await instance.AccessRights.findByIdAndUpdate(access._id, { $set: access }, { lean: true });
-        }
-        console.log('end...');
-    })()
     // (async () => {
     //     const transactions = await instance.supplierTransaction.find(
     //         {
