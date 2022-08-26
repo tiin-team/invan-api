@@ -623,8 +623,11 @@ module.exports = fp((instance, _, next) => {
       } else {
         const service_index = otchot.services.findIndex(serv => serv.service_id + '' === service_id + '')
         if (service_index >= 0) {
-          delete service_info.stock_monthly.start_stock
           otchot.month = `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`
+          otchot.end_time = time.end_time
+          if (new Date().getDate() === 1)
+            otchot.services[service_index].start_stock = service_info.start_stock
+          delete service_info.stock_monthly.start_stock
           otchot.services[service_index].service_id = service_info.service_id
           otchot.services[service_index].service_name = service_info.service_name
           otchot.services[service_index].stock_monthly = service_info.stock_monthly
@@ -696,7 +699,7 @@ module.exports = fp((instance, _, next) => {
     }
     console.log('end...');
   }
-  // calculateOrganizationsOtchot()
+  calculateOrganizationsOtchot()
 
   const cronString_ = '0 01 * * *';
   if (!cronJob.validate(cronString_)) {
