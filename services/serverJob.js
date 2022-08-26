@@ -699,7 +699,7 @@ module.exports = fp((instance, _, next) => {
     }
     console.log('end...');
   }
-  calculateOrganizationsOtchot()
+  // calculateOrganizationsOtchot()
 
   const cronString_ = '0 01 * * *';
   if (!cronJob.validate(cronString_)) {

@@ -305,20 +305,22 @@ module.exports = fp((instance, _, next) => {
           rasxod_sum += item.services.stock_monthly.end_stock * item.services.stock_monthly.cost
           exelItems.push([
             index,
-            Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '') : '',
+            Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '').toFixed(2) : '',
             item.product_name,
             instance.i18n.__(item.sold_by),
-            item.services.cost,
-            item.services.stock_monthly.start_stock, // End time count
-            item.services.stock_monthly.start_stock * item.services.cost, // End time count
-            item.services.purchase_monthly_info.count, // Prixod count
-            item.services.purchase_monthly_info.amount, // Prixod sum
-            item.services.sale_monthly_info.count, // Rasxod count
-            item.services.sale_monthly_info.sale_amount, // Rasxod sum
-            item.services.stock_monthly.end_stock, // End Time sum
+            item.services.cost.toFixed(2),
+            item.services.stock_monthly.start_stock.toFixed(2), // End time count
+            (item.services.stock_monthly.start_stock * item.services.cost).toFixed(2), // End time count
+            item.services.purchase_monthly_info.count.toFixed(2), // Prixod count
+            item.services.purchase_monthly_info.amount.toFixed(2), // Prixod sum
+            item.services.sale_monthly_info.count.toFixed(2), // Rasxod count
+            item.services.sale_monthly_info.sale_amount.toFixed(2), // Rasxod sum
+            item.services.stock_monthly.end_stock.toFixed(2), // End Time sum
             // item.services.stock_monthly.end_stock * item.services.stock_monthly.cost, // End Time sum
-            item.services.stock_monthly.end_stock
-            * (item.services.purchase_monthly_info.amount / item.services.purchase_monthly_info.count), // End Time sum
+            (
+              item.services.stock_monthly.end_stock
+              * (item.services.purchase_monthly_info.amount / item.services.purchase_monthly_info.count)
+            ).toFixed(2), // End Time sum
           ])
         }
         index++
@@ -330,14 +332,14 @@ module.exports = fp((instance, _, next) => {
         { name: `A`, key: '3' },
         { name: 'A', key: '4' },
         { name: `Итого по ${organization.name}`, key: '5' },
-        { name: `${instance.i18n.__('total')} ${ostatok_start_stock}`, key: '6' },
-        { name: `${instance.i18n.__('total')} ${ostatok_start_sum}`, key: '7' },
-        { name: `${instance.i18n.__('total')} ${ostatok_stock}`, key: '8' },
-        { name: `${instance.i18n.__('total')} ${ostatok_sum}`, key: '9' },
-        { name: `${instance.i18n.__('total')} ${prixod_stock}`, key: '10' },
-        { name: `${instance.i18n.__('total')} ${prixod_sum}`, key: '11' },
-        { name: `${instance.i18n.__('total')} ${rasxod_stock}`, key: '12' },
-        { name: `${instance.i18n.__('total')} ${rasxod_sum}`, key: '13' },
+        { name: `${instance.i18n.__('total')} ${ostatok_start_stock.toFixed(2)}`, key: '6' },
+        { name: `${instance.i18n.__('total')} ${ostatok_start_sum.toFixed(2)}`, key: '7' },
+        { name: `${instance.i18n.__('total')} ${ostatok_stock.toFixed(2)}`, key: '8' },
+        { name: `${instance.i18n.__('total')} ${ostatok_sum.toFixed(2)}`, key: '9' },
+        { name: `${instance.i18n.__('total')} ${prixod_stock.toFixed(2)}`, key: '10' },
+        { name: `${instance.i18n.__('total')} ${prixod_sum.toFixed(2)}`, key: '11' },
+        { name: `${instance.i18n.__('total')} ${rasxod_stock.toFixed(2)}`, key: '12' },
+        { name: `${instance.i18n.__('total')} ${rasxod_sum.toFixed(2)}`, key: '13' },
       ]
       const workbook = new ExcelJs.Workbook();
       const worksheet = workbook.addWorksheet('MyExcel', {
