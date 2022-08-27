@@ -522,22 +522,23 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                     },
                     {
                         percentage: 100,
+                        processing: false,
                     },
                     { lean: true },
                 )
-            reply.sendFile(`./suppliers_excel-${timeStamp}.xls`);
+            // reply.sendFile(`./suppliers_excel-${timeStamp}.xls`);
 
-            setTimeout(() => {
-                fs.unlink(`./static/suppliers_excel-${timeStamp}.xls`, (err) => {
-                    console.log(`Deleted suppliers_excel-${timeStamp}.xls`)
-                    if (err) {
-                        instance.send_Error(
-                            "exported file",
-                            JSON.stringify(err)
-                        );
-                    }
-                });
-            }, 2000);
+            // setTimeout(() => {
+            //     fs.unlink(`./static/suppliers_excel-${timeStamp}.xls`, (err) => {
+            //         console.log(`Deleted suppliers_excel-${timeStamp}.xls`)
+            //         if (err) {
+            //             instance.send_Error(
+            //                 "exported file",
+            //                 JSON.stringify(err)
+            //             );
+            //         }
+            //     });
+            // }, 2000);
             return
         }
         const $sort = { $sort: { _id: 1 } };
