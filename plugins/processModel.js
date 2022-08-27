@@ -17,7 +17,11 @@ module.exports = fp((instance, _, next) => {
         processing: {
             type: Boolean,
             default: false
-        }
+        },
+        user_id: String,
+        name: { type: String, default: '' },
+        percentage: Number,
+        path: String
     })
 
     ProcessSchema.statics.findProcess = async function (data) {
@@ -43,9 +47,9 @@ module.exports = fp((instance, _, next) => {
     }
 
     const ProcessModel = mongoose.model('ProcessModel', ProcessSchema);
-    
+
     updateProcesses(ProcessModel);
-    
+
     instance.decorate('ProcessModel', ProcessModel)
 
     next()
