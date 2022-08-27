@@ -411,6 +411,14 @@ module.exports = fp((instance, _, next) => {
         }
     }
 
+    const transfers = await instance.Transfer
+      .find({
+        organization: organization_id + '',
+        first_service: service_id + '',
+        status: 'transferred',
+      })
+      .lean()
+
     const set = new Set();
     const result = {};
     console.log(p_items.length, p_refund_items.length);

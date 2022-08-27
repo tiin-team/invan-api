@@ -320,18 +320,19 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
             }
 
         if (service) {
-            const process = await this.ProcessModel
-                .find({
+            const process = await instance.ProcessModel
+                .findOne({
                     user_id: user._id,
                     organization: user.organization,
                     name: 'supplier-transactions',
                     processing: true
                 })
                 .lean()
+            console.log(process);
             if (process) {
                 if (process.percentage == 100) {
                     reply.sendFile(process.path);
-                    await this.ProcessModel
+                    await instance.ProcessModel
                         .findOneAndUpdate(
                             {
                                 _id: process._id
@@ -356,7 +357,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                 }
                 return reply.ok({ percentage: process.percentage })
             } else {
-                await this.ProcessModel.create({
+                await instance.ProcessModel.create({
                     user_id: user._id,
                     processing: true,
                     organization: user.organization,
@@ -477,7 +478,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                 ])
                 .allowDiskUse(true)
                 .exec();
-            await this.ProcessModel
+            await instance.ProcessModel
                 .findOneAndUpdate(
                     {
                         user_id: user._id,
@@ -511,7 +512,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
             const xls = json2xls(suppliers_excel);
             const timeStamp = new Date().getTime()
             fs.writeFileSync(`./static/suppliers_excel-${timeStamp}.xls`, xls, "binary");
-            await this.ProcessModel
+            await instance.ProcessModel
                 .findOneAndUpdate(
                     {
                         user_id: user._id,
