@@ -509,6 +509,19 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
             const xls = json2xls(suppliers_excel);
             const timeStamp = new Date().getTime()
             fs.writeFileSync(`./static/suppliers_excel-${timeStamp}.xls`, xls, "binary");
+            await this.ProcessModel
+                .findOneAndUpdate(
+                    {
+                        user_id: user._id,
+                        organization: user.organization,
+                        name: 'supplier-transactions',
+                        processing: true
+                    },
+                    {
+                        percentage: 100,
+                    },
+                    { lean: true },
+                )
             reply.sendFile(`./suppliers_excel-${timeStamp}.xls`);
 
             setTimeout(() => {
