@@ -310,13 +310,15 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
         const $match = {
             $match: {
                 organization: user.organization,
-                supplier_name: {
-                    $regex: supplier_name,
-                    $options: 'i'
-                },
                 is_deleted: { $ne: true },
             },
         };
+        if (supplier_name)
+            $match.$match.supplier_name = {
+                $regex: supplier_name,
+                $options: 'i'
+            }
+
         if (service) {
             const process = await this.ProcessModel
                 .find({
