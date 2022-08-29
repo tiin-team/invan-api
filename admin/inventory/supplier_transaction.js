@@ -336,7 +336,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                     // reply.sendFile(process.path);
                     reply.ok({
                         percentage: process.percentage,
-                        path: `https://pos.in1.uz/api/static/${process.path}`
+                        path: process.path
                     })
                     await instance.ProcessModel
                         .findOneAndUpdate(
