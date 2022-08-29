@@ -1,6 +1,7 @@
 
 const fs = require("fs");
 const json2xls = require("json2xls");
+const { join } = require("path");
 
 async function supplierTransactionsGet(request, reply, instance) {
     try {
@@ -325,13 +326,18 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                     user_id: user._id,
                     organization: user.organization,
                     name: 'supplier-transactions',
-                    processing: true
+                    // processing: true,
+                    // is_send: false,
                 })
                 .lean()
-            console.log(process);
+
             if (process) {
                 if (process.percentage == 100) {
-                    reply.sendFile(process.path);
+                    // reply.sendFile(process.path);
+                    reply.ok({
+                        percentage: process.percentage,
+                        path: `https://pos.in1.uz/api/static/${process.path}`
+                    })
                     await instance.ProcessModel
                         .findOneAndUpdate(
                             {
@@ -339,11 +345,12 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                             },
                             {
                                 processing: false,
+                                is_send: true,
                             },
                             { lean: true },
                         )
                     setTimeout(() => {
-                        fs.unlink(process.path, (err) => {
+                        fs.unlink(`./static/${process.path}`, (err) => {
                             console.log(`Deleted ${process.path}`)
                             if (err) {
                                 instance.send_Error(
@@ -352,7 +359,8 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                                 );
                             }
                         });
-                    }, 2000);
+                    }, 30000);
+                    await instance.ProcessModel.findByIdAndDelete(process._id)
                     return
                 }
                 return reply.ok({ percentage: process.percentage })
@@ -466,7 +474,21 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                     },
                 }
             }
-
+            reply.ok({ percentage: 50 })
+            await instance.ProcessModel
+                .findOneAndUpdate(
+                    {
+                        user_id: user._id,
+                        organization: user.organization,
+                        name: 'supplier-transactions',
+                        processing: true
+                    },
+                    {
+                        percentage: 50,
+                    },
+                    { lean: true },
+                )
+            // console.log('start...');
             const suppliers = await instance.adjustmentSupplier
                 .aggregate([
                     $match,
@@ -478,6 +500,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                 ])
                 .allowDiskUse(true)
                 .exec();
+            // console.log('end...');
             await instance.ProcessModel
                 .findOneAndUpdate(
                     {
@@ -523,6 +546,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                     {
                         percentage: 100,
                         processing: false,
+                        path: `suppliers_excel-${timeStamp}.xls`,
                     },
                     { lean: true },
                 )

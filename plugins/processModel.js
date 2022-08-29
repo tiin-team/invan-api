@@ -18,6 +18,10 @@ module.exports = fp((instance, _, next) => {
             type: Boolean,
             default: false
         },
+        is_send: {
+            type: Boolean,
+            default: false
+        },
         user_id: String,
         name: { type: String, default: '' },
         percentage: Number,
