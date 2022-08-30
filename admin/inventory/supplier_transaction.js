@@ -1,7 +1,6 @@
 
 const fs = require("fs");
 const json2xls = require("json2xls");
-const { join } = require("path");
 
 async function supplierTransactionsGet(request, reply, instance) {
     try {
