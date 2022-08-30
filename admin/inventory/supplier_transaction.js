@@ -460,16 +460,38 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                     balance: {
                         $add: [
                             {
-                                $max: ['$allSum', 0]
+                                $cond: [
+                                    {
+                                        $isNumber: '$allSum',
+                                    },
+                                    '$allSum',
+                                    0,
+                                ],
                             },
                             {
-                                $max: [
+                                $cond: [
+                                    {
+                                        $isNumber: {
+                                            $first: '$purchases.allSum'
+                                        },
+                                    },
                                     {
                                         $first: '$purchases.allSum'
                                     },
                                     0,
                                 ],
                             },
+                            // {
+                            //     $max: ['$allSum', 0]
+                            // },
+                            // {
+                            //     $max: [
+                            //         {
+                            //             $first: '$purchases.allSum'
+                            //         },
+                            //         0,
+                            //     ],
+                            // },
                         ],
                     },
                 }
