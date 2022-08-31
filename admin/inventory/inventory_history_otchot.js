@@ -107,7 +107,7 @@ module.exports = fp((instance, options, next) => {
 
     const $group = {
       $group: {
-        _id: '$_id',
+        _id: '$product_id',
         product_name: { $first: '$product_name' },
         sold: getCond('sold'),
         returned: getCond('returned'),
