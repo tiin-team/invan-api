@@ -55,6 +55,9 @@ module.exports = fp((instance, options, next) => {
   }
 
   const history_of_inventory_group = async (request, reply, admin) => {
+    // const clickhouse = instance.clickhouse
+    // console.log(clickhouse);
+    // return
     const { min, max, limit, page } = request.params;
     const { services, employees, categories, reasons, search } = request.body;
     const user_available_services = admin.services.map(serv => serv.service);
@@ -93,6 +96,105 @@ module.exports = fp((instance, options, next) => {
       $match.$match.reason = { $in: reasons }
     }
 
+    const c_data = await instance.clickhouse.query(`
+    SELECT
+      product_id,
+      product_name,
+      reason,
+      SUM(adjustment) AS adjustment
+    FROM inventory_history
+    WHERE (organization = '${admin.organization}') AND
+    (date BETWEEN ${min} AND ${max})
+    GROUP BY product_id, product_name, reason
+    LIMIT ${limit}
+  `).toPromise()
+    // service IN ${user_available_services}
+    console.log(c_data.length);
+    const result = {}
+    for (const item of c_data) {
+      if (!result[item.product_id]) {
+        result[item.product_id] = {
+          product_id: item.product_id,
+          product_name: item.product_name,
+          sold: 0,
+          returned: 0,
+          received: 0,
+          returned_order: 0,
+          transferred: 0,
+          recounted: 0,
+          damaged: 0,
+          lost: 0,
+          production: 0,
+          workgroup_order: 0,
+          fee: 0,
+          loss: 0,
+          item_edit: 0,
+        }
+      }
+      switch (item.reason) {
+        case 'sold':
+          result[item.product_id].sold += item.adjustment
+          break;
+        case 'returned':
+          result[item.product_id].returned += item.adjustment
+          break;
+        case 'received':
+          result[item.product_id].received += item.adjustment
+          break;
+        case 'returned_order':
+          result[item.product_id].returned_order += item.adjustment
+          break;
+
+        case 'transferred':
+          result[item.product_id].transferred += item.adjustment
+          break;
+        case 'recounted':
+          result[item.product_id].recounted += item.adjustment
+          break;
+        case 'damaged':
+          result[item.product_id].damaged += item.adjustment
+          break;
+        case 'lost':
+          result[item.product_id].lost += item.adjustment
+          break;
+        case 'production':
+          result[item.product_id].production += item.adjustment
+          break;
+        case 'workgroup_order':
+          result[item.product_id].workgroup_order += item.adjustment
+          break;
+        case 'fee':
+          result[item.product_id].fee += item.adjustment
+          break;
+        case 'loss':
+          result[item.product_id].loss += item.adjustment
+          break;
+        case 'item edit':
+          result[item.product_id].item_edit += item.adjustment
+          break;
+        default:
+          break;
+      }
+    }
+    const c_total = await instance.clickhouse.query(`
+    SELECT
+    product_id
+    FROM inventory_history
+    WHERE (organization = '${admin.organization}') AND
+    (date BETWEEN ${min} AND ${max})
+    GROUP BY product_id
+  `).toPromise()
+
+    return reply.code(200).send({
+      error: "Ok",
+      message: "Success",
+      statusCode: 200,
+      limit: limit,
+      current_page: page,
+      page: Math.ceil(c_total.length / limit),
+      total: c_total.length,
+      data: Object.values(result),
+    })
     const getCond = (name) => {
       return {
         $sum: {
@@ -107,21 +209,22 @@ module.exports = fp((instance, options, next) => {
 
     const $group = {
       $group: {
-        _id: '$product_id',
-        product_name: { $first: '$product_name' },
-        sold: getCond('sold'),
-        returned: getCond('returned'),
-        received: getCond('received'),
-        returned_order: getCond('returned_order'),
-        transferred: getCond('transferred'),
-        recounted: getCond('recounted'),
-        damaged: getCond('damaged'),
-        lost: getCond('lost'),
-        production: getCond('production'),
-        workgroup_order: getCond('workgroup_order'),
-        fee: getCond('fee'),
-        loss: getCond('loss'),
-        item_edit: getCond('item edit'),
+        _id: { product_id: '$product_id', reason: '$reason' },
+        total: { $sum: '$adjustment' }
+        // product_name: { $first: '$product_name' },
+        // sold: getCond('sold'),
+        // returned: getCond('returned'),
+        // received: getCond('received'),
+        // returned_order: getCond('returned_order'),
+        // transferred: getCond('transferred'),
+        // recounted: getCond('recounted'),
+        // damaged: getCond('damaged'),
+        // lost: getCond('lost'),
+        // production: getCond('production'),
+        // workgroup_order: getCond('workgroup_order'),
+        // fee: getCond('fee'),
+        // loss: getCond('loss'),
+        // item_edit: getCond('item edit'),
       }
     }
 
@@ -134,7 +237,7 @@ module.exports = fp((instance, options, next) => {
       $facet: {
         data: [$match, $group, $skip, $limit],
         total: [
-          $match, $group,
+          $match, { $group: { _id: '$product_id' } },
           { $count: "total" },
         ]
       }

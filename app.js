@@ -39,6 +39,22 @@ module.exports = fp(function (fastify, opts, next) {
   //   options: Object.assign(options, opts)
   // })
 
+  fastify.register(require('./clickhouse/decorator'), {
+    url: 'http://localhost',
+    port: 8123,
+    debug: false,
+    basicAuth: { username: '', password: '' },
+    isUseGzip: false,
+    format: 'json', // "json" || "csv" || "tsv"
+    config: {
+      // session_id: 'session_id if neeed',
+      session_timeout: 60,
+      output_format_json_quote_64bit_integers: 0,
+      enable_http_compression: 0,
+      database: 'INVAN',
+    },
+  });
+
   fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'plugins'),
     options: Object.assign(options, opts)

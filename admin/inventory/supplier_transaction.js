@@ -385,7 +385,12 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                                     $and: [
                                         { $eq: ['$$id', '$supplier_id'] },
                                         { $ne: ['$status', 'pending'] },
-                                        { $eq: ['$service', instance.ObjectId(service)] },
+                                        {
+                                            $or: [
+                                                { $eq: ['$service', service + ''] },
+                                                { $eq: ['$service', instance.ObjectId(service)] },
+                                            ]
+                                        },
                                         // { $in: ['$service', user_available_services] },
                                     ]
                                 },
@@ -425,7 +430,13 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                                     $and: [
                                         { $eq: ['$$id', '$supplier_id'] },
                                         { $ne: ['$status', 'pending'] },
-                                        { $eq: ['$service', instance.ObjectId(service)] },
+                                        {
+                                            $or: [
+                                                { $eq: ['$service', service + ''] },
+                                                { $eq: ['$service', instance.ObjectId(service)] },
+                                            ]
+                                        },
+                                        // { $eq: ['$service', instance.ObjectId(service)] },
                                         // { $in: ['$service', user_available_services] },
                                     ]
                                 },
@@ -439,7 +450,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                                 allSum: {
                                     $sum: {
                                         $cond: [
-                                            { $eq: ["type", "coming"] },
+                                            { $eq: ["$type", "coming"] },
                                             {
                                                 $multiply: ['$balance', -1]
                                             },
