@@ -416,7 +416,16 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
         const $lookup_purchases = {
             $lookup: {
                 from: 'inventorypurchases',
-                let: { id: '$_id', document_ids: '$document_ids' },
+                let: {
+                    id: '$_id',
+                    document_ids: {
+                        $cond: [
+                            { $isArray: '$document_ids' },
+                            '$document_ids',
+                            [],
+                        ]
+                    }
+                },
                 pipeline: [
                     {
                         $match: {
@@ -426,7 +435,7 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                                     { $ne: ['$status', 'pending'] },
                                     // { $eq: ['$service', instance.ObjectId(service)] },
                                     // { $in: ['$service', user_available_services] },
-                                    { $nin: ['$p_order', '$$document_ids'] },
+                                    { $not: { $in: ['$p_order', '$$document_ids'] } },
                                 ]
                             },
                             // p_order: { $nin: '$$document_ids' },
@@ -995,7 +1004,7 @@ module.exports = ((instance, options, next) => {
             //     page: 1,
             //     supplier_name: ''
             // }
-            // return supplierTransactionsGetExelNew(request, reply, instance)
+            return supplierTransactionsGetExelNew(request, reply, instance)
             return supplierTransactionsGetExelFromDB(request, reply, instance)
         }
     )
