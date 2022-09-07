@@ -59,7 +59,7 @@ module.exports = (instance, options, next) => {
         // let data = transactions.filter(element => element.status != 'pending')
         // delete query.status
         // query.organization = supp.organization
-        query.document_id = { $nin: transactions.map(tr => tr.p_order) }
+        // query.document_id = { $nin: transactions.map(tr => tr.p_order) }
 
         const purChase = await instance.inventoryPurchase.find(query).lean();
 
