@@ -1,4 +1,5 @@
-const fp = require('fastify-plugin')
+const fp = require('fastify-plugin');
+const { insertInvHistory } = require('../clickhouse/insert_inv_history');
 
 module.exports = fp((instance, _, next) => {
 
@@ -8,12 +9,16 @@ module.exports = fp((instance, _, next) => {
     try {
       if (adjustment == 0) return;
 
-      const service = await instance.services.findById(service_id);
+      const service = await instance.services
+        .findById(service_id)
+        .lean();
       if (!service) {
         instance.log.error('Service not found');
         return;
       }
-      const item = await instance.goodsSales.findById(product_id);
+      const item = await instance.goodsSales
+        .findById(product_id)
+        .lean();
       if (!item) {
         instance.log.error('Item not found')
         return;
@@ -41,7 +46,7 @@ module.exports = fp((instance, _, next) => {
         catch (err) { }
       }
 
-      const history_model = new instance.inventoryHistory({
+      const new_history = {
         organization: user.organization,
         date: date,
         unique: unique,
@@ -57,7 +62,11 @@ module.exports = fp((instance, _, next) => {
         reason: reason,
         adjustment: adjustment,
         stock_after: stock_after
-      })
+      }
+
+      await insertInvHistory(instance, [new_history])
+
+      const history_model = new instance.inventoryHistory(new_history)
       const { _id: id } = await history_model.save();
       instance.log.info(`Saved history id -> ${id}`);
     } catch (error) {

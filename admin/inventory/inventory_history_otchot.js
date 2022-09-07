@@ -64,9 +64,6 @@ module.exports = fp((instance, options, next) => {
   }
 
   const history_of_inventory_group = async (request, reply, admin) => {
-    // const clickhouse = instance.clickhouse
-    // console.log(clickhouse);
-    // return
     const { min, max, page } = request.params;
     let { limit } = request.params
     const { services, employees, categories, reasons, search } = request.body;

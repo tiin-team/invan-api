@@ -3,6 +3,7 @@ const fp = require('fastify-plugin');
 const { IncomingMessage, ServerResponse } = require('http');
 const fs = require('fs')
 const joi = require('joi');
+const { insertInvHistory } = require('../../clickhouse/insert_inv_history');
 
 /**
  * @param {string} path
@@ -205,6 +206,8 @@ module.exports = fp((instance, _, next) => {
       invCount.total_cost_difference = total.total_cost_difference
 
       await invCount.save();
+      await insertInvHistory(instance, invCountItems)
+
       await instance.inventoryCountItem.insertMany(invCountItems);
       // await instance.inventoryHistory.insertMany(inventoryHistories);
 

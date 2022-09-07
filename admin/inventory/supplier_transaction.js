@@ -703,6 +703,151 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
     return reply;
 }
 
+async function supplierTransactionsGetExelFromDB(request, reply, instance) {
+    try {
+        const { limit, page, supplier_name, service } = request.body;
+        const { name } = request.params;
+        const user = request.user;
+        const user_available_services = user.services.map(serv => instance.ObjectId(serv.service));
+        if (service && !user_available_services.find(s => s.service + '' === service + ''))
+            return reply.code(403).send('Forbidden Service')
+
+        const $match = {
+            $match: {
+                organization: user.organization,
+                is_deleted: { $ne: true },
+            },
+        };
+        if (supplier_name)
+            $match.$match.supplier_name = {
+                $regex: supplier_name,
+                $options: 'i'
+            }
+
+        const $sort = { $sort: { _id: 1 } };
+
+        const $skip = { $skip: (page - 1) * limit };
+        const $limit = { $limit: limit };
+
+        const $project = {
+            $project: {
+                supplier_name: 1,
+                // balance: 1,
+                balance: service
+                    ? ({
+                        $reduce: {
+                            input: "$services",
+                            initialValue: 0,
+                            in: {
+                                $sum: [
+                                    {
+                                        $cond: [
+                                            {
+                                                $eq: [
+                                                    { $toString: "$$this.service" },
+                                                    service + '',
+                                                ],
+                                            },
+                                            "$$this.balance",
+                                            0,
+                                        ],
+                                    },
+                                    "$$value",
+                                ],
+                            },
+                        },
+                    })
+                    : ({
+                        $reduce: {
+                            input: "$services",
+                            initialValue: 0,
+                            in: {
+                                $sum: [
+                                    "$$this.balance",
+                                    "$$value",
+                                ],
+                            },
+                        },
+                    }),
+            }
+        }
+
+        const pipeline = [
+            $match,
+            $sort
+        ];
+
+        if (!name) {
+            pipeline.push($skip);
+            pipeline.push($limit);
+        }
+
+        pipeline.push($sort);
+        pipeline.push($project);
+        const suppliers = await instance.adjustmentSupplier
+            .aggregate(pipeline)
+            .allowDiskUse(true)
+            .exec();
+        // for (const index in suppliers) {
+        //     try {
+        //         suppliers[index].total_receive = Math.round(suppliers[index].total_receive * 100) / 100;
+        //         suppliers[index].total_spend = Math.round(suppliers[index].total_spend * 100) / 100;
+        //         suppliers[index].total_debt = Math.round(suppliers[index].total_debt * 100) / 100;
+        //         suppliers[index].total_favor = Math.round(suppliers[index].total_favor * 100) / 100;
+        //     }
+        //     catch (error) {
+        //         console.log(error.message)
+        //     }
+        // }
+
+        if (!name) {
+            const total = await instance.adjustmentSupplier.countDocuments($match.$match);
+            return reply.ok({
+                total,
+                data: suppliers
+            })
+        }
+        if (user.ui_language && user.ui_language.value != undefined) {
+            instance.i18n.setLocale('uz')
+        }
+        const suppliers_excel = []
+        let index = 1;
+
+        for (const s of suppliers) {
+            // s.balance = await calculateSupplierBalance(instance, s)
+            suppliers_excel.push({
+                [`${instance.i18n.__('number')}`]: index++,
+                [`${instance.i18n.__('supplier_name')}`]: s.supplier_name,
+                // [`${instance.i18n.__('total_receive')}`]: s.total_receive ? s.total_receive : '',
+                // [`${instance.i18n.__('total_spend')}`]: s.total_spend ? s.total_spend : '',
+                // [`${instance.i18n.__('total_debt')}`]: s.total_debt ? s.total_debt : '',
+                // [`${instance.i18n.__('total_favor')}`]: s.total_favor ? s.total_favor : '',
+                [`${instance.i18n.__('total_balance')}`]: s.balance ? s.balance : 0,
+            })
+        }
+        const xls = json2xls(suppliers_excel);
+        const timeStamp = new Date().getTime()
+        fs.writeFileSync(`./static/suppliers_excel-${timeStamp}.xls`, xls, "binary");
+        reply.sendFile(`./suppliers_excel-${timeStamp}.xls`);
+
+        setTimeout(() => {
+            fs.unlink(`./static/suppliers_excel-${timeStamp}.xls`, (err) => {
+                console.log(`Deleted suppliers_excel-${timeStamp}.xls`)
+                if (err) {
+                    instance.send_Error(
+                        "exported file",
+                        JSON.stringify(err)
+                    );
+                }
+            });
+        }, 2000);
+
+    } catch (error) {
+        reply.error(error.message)
+    }
+    return reply;
+}
+
 async function calculateSupplierBalance(instance, supp, service = '') {
     try {
         const query = {
@@ -848,7 +993,8 @@ module.exports = ((instance, options, next) => {
             //     page: 1,
             //     supplier_name: ''
             // }
-            return supplierTransactionsGetExelNew(request, reply, instance)
+            // return supplierTransactionsGetExelNew(request, reply, instance)
+            return supplierTransactionsGetExelFromDB(request, reply, instance)
         }
     )
 

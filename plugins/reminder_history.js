@@ -1,5 +1,6 @@
 
 const fp = require('fastify-plugin');
+const { insertInvHistory } = require('../clickhouse/insert_inv_history');
 
 module.exports = fp((instance, _, next) => {
 
@@ -20,13 +21,14 @@ module.exports = fp((instance, _, next) => {
                 stock_after: new_reminder
             }
             const service = instance.services.findById(service_id);
-            if(service) {
+            if (service) {
                 historyModel.service_name = service.name
             }
             const item = instance.goodsSales.findById(id);
-            if(item) {
+            if (item) {
                 historyModel.product_name = item.name
             }
+            await insertInvHistory(instance, [historyModel])
             await new instance.inventoryHistory(historyModel).save()
         } catch (error) {
             instance.log.error(error.message)

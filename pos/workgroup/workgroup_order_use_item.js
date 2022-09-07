@@ -1,3 +1,4 @@
+const { insertInvHistory } = require("../../clickhouse/insert_inv_history");
 
 const useWorkgroupOrder = async (request, reply, instance) => {
   try {
@@ -5,7 +6,7 @@ const useWorkgroupOrder = async (request, reply, instance) => {
     const body = request.body;
     const service_id = request.headers['accept-service']
     const service = await instance.services.findById(service_id)
-    
+
     if (!service) {
       return reply.fourorfour('Service')
     }
@@ -26,8 +27,8 @@ const useWorkgroupOrder = async (request, reply, instance) => {
 
     const items = [];
     let is_exist = false;
-    for(const itm of workgroup_order.items) {
-      if(itm.product_id == item._id) {
+    for (const itm of workgroup_order.items) {
+      if (itm.product_id == item._id) {
         is_exist = true;
         itm.used_quantities.push({
           quantity: body.quantity,
@@ -39,30 +40,30 @@ const useWorkgroupOrder = async (request, reply, instance) => {
       items.push(itm)
     }
 
-    if(!is_exist) {
+    if (!is_exist) {
       return reply.response(412, 'Item is not in workgroup');
     }
-    
+
     const result = await instance.WorkgroupOrder.useWorkgroupOrderItem(workgroup_order, items)
-    if(!result) {
+    if (!result) {
       return reply.error('Could not use item')
     }
 
     let item_in_stock;
-    if(item.services instanceof Array) {
-      for(const s of item.services) {
-        if(s.service+'' == service._id+'') {
+    if (item.services instanceof Array) {
+      for (const s of item.services) {
+        if (s.service + '' == service._id + '') {
           item_in_stock = s.in_stock;
         }
       }
     }
 
-    if(body.quantity) {
+    if (body.quantity) {
       await instance.goodsSales.updateOne(
         { _id: item._id },
         {
           $inc: {
-            "services.$[elem].in_stock": body.quantity*(-1)
+            "services.$[elem].in_stock": body.quantity * (-1)
           },
           $set: {
             last_updated: new Date().getTime(),
@@ -79,8 +80,7 @@ const useWorkgroupOrder = async (request, reply, instance) => {
           ]
         }
       )
-
-      await new instance.inventoryHistory({
+      const new_history = {
         organization: user.organization,
         service: service._id,
         service_name: service.name,
@@ -91,9 +91,13 @@ const useWorkgroupOrder = async (request, reply, instance) => {
         employee_name: user.name,
         unique: workgroup_order.order_number,
         reason: 'workgroup_order',
-        adjustment: body.quantity*(-1),
-        stock_after: (+body.quantity)*(-1) + +item_in_stock
-      }).save()
+        adjustment: body.quantity * (-1),
+        stock_after: (+body.quantity) * (-1) + +item_in_stock
+      }
+
+      await insertInvHistory(instance, [new_history])
+
+      await new instance.inventoryHistory(new_history).save()
     }
 
     reply.ok()
@@ -148,7 +152,7 @@ module.exports = ((instance, _, next) => {
       preValidation: [instance.authorize_employee]
     },
     async (request, reply) => {
-      if(request.validationError) {
+      if (request.validationError) {
         return reply.validation(request.validationError.message)
       }
       useWorkgroupOrder(request, reply, instance)
