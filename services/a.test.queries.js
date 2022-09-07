@@ -2,6 +2,100 @@ const fp = require('fastify-plugin');
 const fs = require('fs');
 
 module.exports = fp((instance, options, next) => {
+    async function calculateSupplierBalance(supp, service) {
+        console.log('calculateSupplierBalance, starting...');
+        const query = {
+            supplier_id: supp._id,
+            status: { $ne: 'pending' },
+            service: instance.ObjectId(service),
+        };
+
+        const transactions = await instance.supplierTransaction.find(query).lean()
+
+        allSum = 0
+        const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
+
+        const purChase = await instance.inventoryPurchase.find(query).lean();
+
+        for (let i = 0; i < transactions.length; i++) {
+            allSum += transactions[i].status == 'pending'
+                ? 0
+                : getFloat(transactions[i].balance)
+        }
+
+        for (const [index, item] of purChase.entries()) {
+            // if (!data.find(x => x.document_id == item.p_order)) {
+            if (!transactions.find(x => x.document_id == item.p_order) && item.status != 'pending') {
+                if (item.type == 'coming')
+                    allSum -= getFloat(item.total)
+                else if (item.type == 'refund')
+                    allSum += getFloat(item.total)
+                // else
+                //   allSum += getFloat(data[i].balance)
+            }
+        }
+
+        return allSum;
+    }
+
+    (async () => {
+        console.log('starting...');
+        const organizations = await instance.organizations
+            .find({})
+            .lean()
+
+        for (const organization of organizations) {
+            const services = await instance.services
+                .find({
+                    organization: organization._id + ''
+                })
+                .lean()
+
+            const suppliers = await instance.adjustmentSupplier
+                .find({ organization: organization._id + '' })
+                .lean()
+            for (const service of services) {
+                for (const supp of suppliers) {
+                    const balance = await calculateSupplierBalance(supp, service).catch(err => {
+                        console.log(err, 'err');
+                    })
+                    console.log(supp._id, service._id, balance);
+                    if (!isNaN(balance)) {
+                        if (!(supp.services && supp.services.length)) {
+                            supp.services = [{
+                                service: service._id,
+                                service_name: service.name,
+                                balance: balance,
+                                balance_usd: 0,
+                                balance_currency: 'uzs',
+                                available: true,
+                                telegram_acces: false,
+                            }]
+                        }
+                        const service_index = supp.services
+                            .findIndex(serv => serv.service + '' == service._id + '')
+
+                        if (service_index == -1)
+                            supp.services.push({
+                                service: service._id,
+                                service_name: service.name,
+                                balance: balance,
+                                balance_usd: 0,
+                                balance_currency: 'uzs',
+                                available: true,
+                                telegram_acces: false,
+                            })
+                        else {
+                            supp.services[service_index].balance = balance;
+                        }
+
+                        await instance.adjustmentSupplier.findByIdAndUpdate(supp._id, supp, { lean: true })
+                    }
+                }
+            }
+        }
+        console.log('end...');
+    })()
     // (async () => {
     //     const transactions = await instance.supplierTransaction.find(
     //         {
