@@ -319,349 +319,235 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
                 $options: 'i'
             }
 
-        if (service) {
-            const process = await instance.ProcessModel
-                .findOne({
-                    user_id: user._id,
-                    organization: user.organization,
-                    name: 'supplier-transactions',
-                    // processing: true,
-                    // is_send: false,
-                })
-                .lean()
+        const process = await instance.ProcessModel
+            .findOne({
+                user_id: user._id,
+                organization: user.organization,
+                name: 'supplier-transactions',
+                // processing: true,
+                // is_send: false,
+            })
+            .lean()
 
-            if (process) {
-                if (process.percentage == 100) {
-                    // reply.sendFile(process.path);
-                    reply.ok({
-                        percentage: process.percentage,
-                        path: process.path
-                    })
-                    await instance.ProcessModel
-                        .findOneAndUpdate(
-                            {
-                                _id: process._id
-                            },
-                            {
-                                processing: false,
-                                is_send: true,
-                            },
-                            { lean: true },
-                        )
-                    setTimeout(() => {
-                        fs.unlink(`./static/${process.path}`, (err) => {
-                            console.log(`Deleted ${process.path}`)
-                            if (err) {
-                                instance.send_Error(
-                                    "exported file",
-                                    JSON.stringify(err)
-                                );
-                            }
-                        });
-                    }, 30000);
-                    await instance.ProcessModel.findByIdAndDelete(process._id)
-                    return
-                }
-                return reply.ok({ percentage: process.percentage })
-            } else {
-                await instance.ProcessModel.create({
-                    user_id: user._id,
-                    processing: true,
-                    organization: user.organization,
-                    name: 'supplier-transactions',
-                    percentage: 0,
-                    path: ''
+        if (process) {
+            if (process.percentage == 100) {
+                // reply.sendFile(process.path);
+                reply.ok({
+                    percentage: process.percentage,
+                    path: process.path
                 })
-            }
-            // $match.$match.service = service
-            const $lookup_transactions = {
-                $lookup: {
-                    from: 'suppliertransactions',
-                    let: { id: '$_id' },
-                    pipeline: [
+                await instance.ProcessModel
+                    .findOneAndUpdate(
                         {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$$id', '$supplier_id'] },
-                                        { $ne: ['$status', 'pending'] },
-                                        {
-                                            $or: [
-                                                { $eq: ['$service', service + ''] },
-                                                { $eq: ['$service', instance.ObjectId(service)] },
-                                            ]
-                                        },
-                                        // { $in: ['$service', user_available_services] },
-                                    ]
-                                },
-                            }
+                            _id: process._id
                         },
                         {
-                            $group: {
-                                _id: null,
-                                allSum: {
-                                    $sum: '$balance',
-                                },
-                                document_ids: {
-                                    $push: '$document_id'
-                                }
-                            }
-                        }
-                    ],
-                    as: 'transactions'
-                }
-            }
-            const $project_after_transactions_lookup = {
-                $project: {
-                    supplier_name: 1,
-                    document_ids: { $first: '$transactions.document_ids' },
-                    allSum: { $first: '$transactions.allSum' },
-                }
-            }
-
-            const $lookup_purchases = {
-                $lookup: {
-                    from: 'inventorypurchases',
-                    let: { id: '$_id', document_ids: '$document_ids' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$$id', '$supplier_id'] },
-                                        { $ne: ['$status', 'pending'] },
-                                        {
-                                            $or: [
-                                                { $eq: ['$service', service + ''] },
-                                                { $eq: ['$service', instance.ObjectId(service)] },
-                                            ]
-                                        },
-                                        // { $eq: ['$service', instance.ObjectId(service)] },
-                                        // { $in: ['$service', user_available_services] },
-                                    ]
-                                },
-                                // { $nin: ['$p_order', '$$document_ids'] },
-                                // p_order: { $nin: '$$document_ids' },
-                            }
+                            processing: false,
+                            is_send: true,
                         },
-                        {
-                            $group: {
-                                _id: null,
-                                allSum: {
-                                    $sum: {
-                                        $cond: [
-                                            { $eq: ["$type", "coming"] },
-                                            {
-                                                $multiply: ['$balance', -1]
-                                            },
-                                            '$balance',
-                                        ]
-                                    },
-                                },
-                            }
+                        { lean: true },
+                    )
+                setTimeout(() => {
+                    fs.unlink(`./static/${process.path}`, (err) => {
+                        console.log(`Deleted ${process.path}`)
+                        if (err) {
+                            instance.send_Error(
+                                "exported file",
+                                JSON.stringify(err)
+                            );
                         }
-                    ],
-                    as: 'purchases'
-                }
+                    });
+                }, 30000);
+                await instance.ProcessModel.findByIdAndDelete(process._id)
+                return
             }
-            const $project_after_purchase_lookup = {
-                $project: {
-                    supplier_name: 1,
-                    balance: {
-                        $add: [
-                            {
-                                $cond: [
-                                    {
-                                        $isNumber: '$allSum',
-                                    },
-                                    '$allSum',
-                                    0,
-                                ],
-                            },
-                            {
-                                $cond: [
-                                    {
-                                        $isNumber: {
-                                            $first: '$purchases.allSum'
-                                        },
-                                    },
-                                    {
-                                        $first: '$purchases.allSum'
-                                    },
-                                    0,
-                                ],
-                            },
-                            // {
-                            //     $max: ['$allSum', 0]
-                            // },
-                            // {
-                            //     $max: [
-                            //         {
-                            //             $first: '$purchases.allSum'
-                            //         },
-                            //         0,
-                            //     ],
-                            // },
-                        ],
-                    },
-                }
-            }
-            reply.ok({ percentage: 50 })
-            await instance.ProcessModel
-                .findOneAndUpdate(
-                    {
-                        user_id: user._id,
-                        organization: user.organization,
-                        name: 'supplier-transactions',
-                        processing: true
-                    },
-                    {
-                        percentage: 50,
-                    },
-                    { lean: true },
-                )
-            // console.log('start...');
-            const suppliers = await instance.adjustmentSupplier
-                .aggregate([
-                    $match,
-                    $lookup_transactions,
-                    $project_after_transactions_lookup,
-                    $lookup_purchases,
-                    $project_after_purchase_lookup,
-                    // $project
-                ])
-                .allowDiskUse(true)
-                .exec();
-            // console.log('end...');
-            await instance.ProcessModel
-                .findOneAndUpdate(
-                    {
-                        user_id: user._id,
-                        organization: user.organization,
-                        name: 'supplier-transactions',
-                        processing: true
-                    },
-                    {
-                        percentage: 90,
-                    },
-                    { lean: true },
-                )
-            if (user.ui_language && user.ui_language.value != undefined) {
-                instance.i18n.setLocale('uz')
-            }
-            const suppliers_excel = []
-            let index = 1;
-
-            for (const s of suppliers) {
-                // s.balance = await calculateSupplierBalance(instance, s)
-                suppliers_excel.push({
-                    [`${instance.i18n.__('number')}`]: index++,
-                    [`${instance.i18n.__('supplier_name')}`]: s.supplier_name,
-                    // [`${instance.i18n.__('total_receive')}`]: s.total_receive ? s.total_receive : '',
-                    // [`${instance.i18n.__('total_spend')}`]: s.total_spend ? s.total_spend : '',
-                    // [`${instance.i18n.__('total_debt')}`]: s.total_debt ? s.total_debt : '',
-                    // [`${instance.i18n.__('total_favor')}`]: s.total_favor ? s.total_favor : '',
-                    [`${instance.i18n.__('total_balance')}`]: s.balance ? s.balance : 0,
-                })
-            }
-            const xls = json2xls(suppliers_excel);
-            const timeStamp = new Date().getTime()
-            fs.writeFileSync(`./static/suppliers_excel-${timeStamp}.xls`, xls, "binary");
-            await instance.ProcessModel
-                .findOneAndUpdate(
-                    {
-                        user_id: user._id,
-                        organization: user.organization,
-                        name: 'supplier-transactions',
-                        processing: true
-                    },
-                    {
-                        percentage: 100,
-                        processing: false,
-                        path: `suppliers_excel-${timeStamp}.xls`,
-                    },
-                    { lean: true },
-                )
-            // reply.sendFile(`./suppliers_excel-${timeStamp}.xls`);
-
-            // setTimeout(() => {
-            //     fs.unlink(`./static/suppliers_excel-${timeStamp}.xls`, (err) => {
-            //         console.log(`Deleted suppliers_excel-${timeStamp}.xls`)
-            //         if (err) {
-            //             instance.send_Error(
-            //                 "exported file",
-            //                 JSON.stringify(err)
-            //             );
-            //         }
-            //     });
-            // }, 2000);
-            return
+            return reply.ok({ percentage: process.percentage })
+        } else {
+            await instance.ProcessModel.create({
+                user_id: user._id,
+                processing: true,
+                organization: user.organization,
+                name: 'supplier-transactions',
+                percentage: 0,
+                path: ''
+            })
         }
-        const $sort = { $sort: { _id: 1 } };
-
-        const $skip = { $skip: (page - 1) * limit };
-        const $limit = { $limit: limit };
-
-        const $lookup = {
+        // $match.$match.service = service
+        const $lookup_transactions = {
             $lookup: {
                 from: 'suppliertransactions',
-                localField: '_id',
-                foreignField: 'supplier_id',
+                let: { id: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$$id', '$supplier_id'] },
+                                    { $ne: ['$status', 'pending'] },
+                                    // { $in: ['$service', user_available_services] },
+                                ]
+                            },
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            allSum: {
+                                $sum: '$balance',
+                            },
+                            document_ids: {
+                                $push: '$document_id'
+                            }
+                        }
+                    }
+                ],
                 as: 'transactions'
             }
         }
-        const $unwind = {
-            $unwind: {
-                path: '$transactions',
-                preserveNullAndEmptyArrays: true
-            }
-        }
-        const $group = {
-            $group: {
-                _id: '$_id',
-                supplier_name: { $first: '$supplier_name' },
-                balance: { $first: '$balance' },
-            }
-        }
-        const $project = {
+
+        const $project_after_transactions_lookup = {
             $project: {
                 supplier_name: 1,
-                balance: 1,
+                document_ids: { $first: '$transactions.document_ids' },
+                allSum: { $first: '$transactions.allSum' },
             }
         }
-        const pipeline = [
-            $match,
-            $sort
-        ];
-        if (!name) {
-            pipeline.push($skip);
-            pipeline.push($limit);
-        }
-        // pipeline.push($lookup);
-        // pipeline.push($unwind);
-        // pipeline.push($group);
-        pipeline.push($sort);
-        pipeline.push($project);
-        const suppliers = await instance.adjustmentSupplier.aggregate(pipeline).allowDiskUse(true).exec();
-        // for (const index in suppliers) {
-        //     try {
-        //         suppliers[index].total_receive = Math.round(suppliers[index].total_receive * 100) / 100;
-        //         suppliers[index].total_spend = Math.round(suppliers[index].total_spend * 100) / 100;
-        //         suppliers[index].total_debt = Math.round(suppliers[index].total_debt * 100) / 100;
-        //         suppliers[index].total_favor = Math.round(suppliers[index].total_favor * 100) / 100;
-        //     }
-        //     catch (error) {
-        //         console.log(error.message)
-        //     }
-        // }
 
-        if (!name) {
-            const total = await instance.adjustmentSupplier.countDocuments($match.$match);
-            return reply.ok({
-                total,
-                data: suppliers
+        const $lookup_purchases = {
+            $lookup: {
+                from: 'inventorypurchases',
+                let: { id: '$_id', document_ids: '$document_ids' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$$id', '$supplier_id'] },
+                                    { $ne: ['$status', 'pending'] },
+                                    // { $eq: ['$service', instance.ObjectId(service)] },
+                                    // { $in: ['$service', user_available_services] },
+                                    { $nin: ['$p_order', '$$document_ids'] },
+                                ]
+                            },
+                            // p_order: { $nin: '$$document_ids' },
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            allSum: {
+                                $sum: {
+                                    $cond: [
+                                        { $eq: ["$type", "coming"] },
+                                        {
+                                            $multiply: ['$balance', -1]
+                                        },
+                                        '$balance',
+                                    ]
+                                },
+                            },
+                        }
+                    }
+                ],
+                as: 'purchases'
+            }
+        }
+        const $project_after_purchase_lookup = {
+            $project: {
+                supplier_name: 1,
+                balance: {
+                    $add: [
+                        {
+                            $cond: [
+                                {
+                                    $isNumber: '$allSum',
+                                },
+                                '$allSum',
+                                0,
+                            ],
+                        },
+                        {
+                            $cond: [
+                                {
+                                    $isNumber: {
+                                        $first: '$purchases.allSum'
+                                    },
+                                },
+                                {
+                                    $first: '$purchases.allSum'
+                                },
+                                0,
+                            ],
+                        },
+                        // {
+                        //     $max: ['$allSum', 0]
+                        // },
+                        // {
+                        //     $max: [
+                        //         {
+                        //             $first: '$purchases.allSum'
+                        //         },
+                        //         0,
+                        //     ],
+                        // },
+                    ],
+                },
+            }
+        }
+        reply.ok({ percentage: 50 })
+        await instance.ProcessModel
+            .findOneAndUpdate(
+                {
+                    user_id: user._id,
+                    organization: user.organization,
+                    name: 'supplier-transactions',
+                    processing: true
+                },
+                {
+                    percentage: 50,
+                },
+                { lean: true },
+            )
+        if (service) {
+            $lookup_transactions.$lookup.pipeline[0].$match.$expr.$and.push({
+                $or: [
+                    { $eq: ['$service', service + ''] },
+                    { $eq: ['$service', instance.ObjectId(service)] },
+                ]
+            })
+            $lookup_purchases.$lookup.pipeline[0].$match.$expr.$and.push({
+                $or: [
+                    { $eq: ['$service', service + ''] },
+                    { $eq: ['$service', instance.ObjectId(service)] },
+                ]
             })
         }
+        // console.log('start...');
+        const suppliers = await instance.adjustmentSupplier
+            .aggregate([
+                $match,
+                $lookup_transactions,
+                $project_after_transactions_lookup,
+                $lookup_purchases,
+                $project_after_purchase_lookup,
+                // $project
+            ])
+            .allowDiskUse(true)
+            .exec();
+        // console.log('end...');
+        await instance.ProcessModel
+            .findOneAndUpdate(
+                {
+                    user_id: user._id,
+                    organization: user.organization,
+                    name: 'supplier-transactions',
+                    processing: true
+                },
+                {
+                    percentage: 90,
+                },
+                { lean: true },
+            )
         if (user.ui_language && user.ui_language.value != undefined) {
             instance.i18n.setLocale('uz')
         }
@@ -683,19 +569,135 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
         const xls = json2xls(suppliers_excel);
         const timeStamp = new Date().getTime()
         fs.writeFileSync(`./static/suppliers_excel-${timeStamp}.xls`, xls, "binary");
-        reply.sendFile(`./suppliers_excel-${timeStamp}.xls`);
+        await instance.ProcessModel
+            .findOneAndUpdate(
+                {
+                    user_id: user._id,
+                    organization: user.organization,
+                    name: 'supplier-transactions',
+                    processing: true
+                },
+                {
+                    percentage: 100,
+                    processing: false,
+                    path: `suppliers_excel-${timeStamp}.xls`,
+                },
+                { lean: true },
+            )
+        // reply.sendFile(`./suppliers_excel-${timeStamp}.xls`);
 
-        setTimeout(() => {
-            fs.unlink(`./static/suppliers_excel-${timeStamp}.xls`, (err) => {
-                console.log(`Deleted suppliers_excel-${timeStamp}.xls`)
-                if (err) {
-                    instance.send_Error(
-                        "exported file",
-                        JSON.stringify(err)
-                    );
-                }
-            });
-        }, 2000);
+        // setTimeout(() => {
+        //     fs.unlink(`./static/suppliers_excel-${timeStamp}.xls`, (err) => {
+        //         console.log(`Deleted suppliers_excel-${timeStamp}.xls`)
+        //         if (err) {
+        //             instance.send_Error(
+        //                 "exported file",
+        //                 JSON.stringify(err)
+        //             );
+        //         }
+        //     });
+        // }, 2000);
+        return
+
+        // const $sort = { $sort: { _id: 1 } };
+
+        // const $skip = { $skip: (page - 1) * limit };
+        // const $limit = { $limit: limit };
+
+        // const $lookup = {
+        //     $lookup: {
+        //         from: 'suppliertransactions',
+        //         localField: '_id',
+        //         foreignField: 'supplier_id',
+        //         as: 'transactions'
+        //     }
+        // }
+        // const $unwind = {
+        //     $unwind: {
+        //         path: '$transactions',
+        //         preserveNullAndEmptyArrays: true
+        //     }
+        // }
+        // const $group = {
+        //     $group: {
+        //         _id: '$_id',
+        //         supplier_name: { $first: '$supplier_name' },
+        //         balance: { $first: '$balance' },
+        //     }
+        // }
+        // const $project = {
+        //     $project: {
+        //         supplier_name: 1,
+        //         balance: 1,
+        //     }
+        // }
+        // const pipeline = [
+        //     $match,
+        //     $sort
+        // ];
+        // if (!name) {
+        //     pipeline.push($skip);
+        //     pipeline.push($limit);
+        // }
+        // // pipeline.push($lookup);
+        // // pipeline.push($unwind);
+        // // pipeline.push($group);
+        // pipeline.push($sort);
+        // pipeline.push($project);
+        // const suppliers = await instance.adjustmentSupplier.aggregate(pipeline).allowDiskUse(true).exec();
+        // // for (const index in suppliers) {
+        // //     try {
+        // //         suppliers[index].total_receive = Math.round(suppliers[index].total_receive * 100) / 100;
+        // //         suppliers[index].total_spend = Math.round(suppliers[index].total_spend * 100) / 100;
+        // //         suppliers[index].total_debt = Math.round(suppliers[index].total_debt * 100) / 100;
+        // //         suppliers[index].total_favor = Math.round(suppliers[index].total_favor * 100) / 100;
+        // //     }
+        // //     catch (error) {
+        // //         console.log(error.message)
+        // //     }
+        // // }
+
+        // if (!name) {
+        //     const total = await instance.adjustmentSupplier.countDocuments($match.$match);
+        //     return reply.ok({
+        //         total,
+        //         data: suppliers
+        //     })
+        // }
+        // if (user.ui_language && user.ui_language.value != undefined) {
+        //     instance.i18n.setLocale('uz')
+        // }
+        // const suppliers_excel = []
+        // let index = 1;
+
+        // for (const s of suppliers) {
+        //     // s.balance = await calculateSupplierBalance(instance, s)
+        //     suppliers_excel.push({
+        //         [`${instance.i18n.__('number')}`]: index++,
+        //         [`${instance.i18n.__('supplier_name')}`]: s.supplier_name,
+        //         // [`${instance.i18n.__('total_receive')}`]: s.total_receive ? s.total_receive : '',
+        //         // [`${instance.i18n.__('total_spend')}`]: s.total_spend ? s.total_spend : '',
+        //         // [`${instance.i18n.__('total_debt')}`]: s.total_debt ? s.total_debt : '',
+        //         // [`${instance.i18n.__('total_favor')}`]: s.total_favor ? s.total_favor : '',
+        //         [`${instance.i18n.__('total_balance')}`]: s.balance ? s.balance : 0,
+        //     })
+        // }
+        // const xls = json2xls(suppliers_excel);
+        // const timeStamp = new Date().getTime()
+        // fs.writeFileSync(`./static/suppliers_excel-${timeStamp}.xls`, xls, "binary");
+        // reply.sendFile(`./suppliers_excel-${timeStamp}.xls`);
+
+        // setTimeout(() => {
+        //     fs.unlink(`./static/suppliers_excel-${timeStamp}.xls`, (err) => {
+        //         console.log(`Deleted suppliers_excel-${timeStamp}.xls`)
+        //         if (err) {
+        //             instance.send_Error(
+        //                 "exported file",
+        //                 JSON.stringify(err)
+        //             );
+        //         }
+        //     });
+        // }, 2000);
 
     } catch (error) {
         reply.error(error.message)
