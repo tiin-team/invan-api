@@ -798,6 +798,9 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
 
         pipeline.push($sort);
         pipeline.push($project);
+        pipeline.push({
+            $limit: 10
+        })
         const suppliers = await instance.adjustmentSupplier
             .aggregate(pipeline)
             .allowDiskUse(true)
@@ -832,7 +835,7 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
             // s.balance = await calculateSupplierBalance(instance, s)
             const services_balance = {}
             for (const serv of s.services) {
-                services_balance[`${serv.service_name} [${instance.i18n.__('total_balance')}]`] = serv.balance ? serv.balance : 0
+                services_balance[`${instance.i18n.__('total_balance')} [${serv.service_name}]`] = serv.balance ? serv.balance : 0
             }
             suppliers_excel.push({
                 [`${instance.i18n.__('number')}`]: index++,
