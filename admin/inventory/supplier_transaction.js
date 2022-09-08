@@ -225,13 +225,13 @@ async function supplierTransactionsGet(request, reply, instance) {
 
         const pipeline = [$match];
 
-        if (!name) pipeline.push($skip, $limit);
         pipeline.push($lookup);
         // pipeline.push($unwindInv);
         // pipeline.push($lookup);
         // pipeline.push($unwind);
         pipeline.push($unwind);
         pipeline.push($group);
+        if (!name) pipeline.push($skip, $limit);
         pipeline.push($fixProject);
         pipeline.push($sort);
         pipeline.push($project);
@@ -832,9 +832,10 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
         for (const s of suppliers) {
             // s.balance = await calculateSupplierBalance(instance, s)
             const services_balance = {}
-            for (const serv of s.services) {
-                services_balance[`${instance.i18n.__('total_balance')} [${serv.service_name}]`] = serv.balance ? serv.balance : 0
-            }
+            if (service)
+                for (const serv of s.services) {
+                    services_balance[`${instance.i18n.__('total_balance')} [${serv.service_name}]`] = serv.balance ? serv.balance : 0
+                }
             suppliers_excel.push({
                 [`${instance.i18n.__('number')}`]: index++,
                 [`${instance.i18n.__('supplier_name')}`]: s.supplier_name,
