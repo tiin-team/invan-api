@@ -671,13 +671,11 @@ module.exports = fp((instance, options, next) => {
           if (g.cost_currency == 'usd') {
             g.cost = g.cost / currency.value
           }
-          // console.log(g.services[index].in_stock);
           // console.log(index);
           // console.log(goodsObj[g._id].to_receive);
           // console.log(+goodsObj[g._id].to_receive);
           // g.services[index].in_stock += (+goodsObj[g._id].to_receive)
           g.services[index].in_stock += (+goodsObj[g._id].received)
-          // console.log(g.services[index].in_stock);
           // create inv history
 
           // ('create_inventory_history', (user, reason, unique, service_id, product_id, cost, adjustment, stock_after, date)
@@ -908,9 +906,8 @@ module.exports = fp((instance, options, next) => {
       body.service_name = service.name
 
       const supplier = await instance.adjustmentSupplier.findOne({ _id: supplier_id }).lean();
-      if (!supplier) {
-        return reply.fourorfour('Supplier')
-      }
+      if (!supplier) return reply.fourorfour('Supplier')
+
       body.supplier_name = supplier.supplier_name
 
       const orders_length = await instance.inventoryPurchase.countDocuments({ organization: admin.organization })
@@ -1020,7 +1017,7 @@ module.exports = fp((instance, options, next) => {
       services[supp_serv_index].balance_usd += balance_usd
 
       await instance.adjustmentSupplier.updateOne(
-        { _id: supplier._id, 'services.service': service_id },
+        { _id: supplier._id },
         {
           $set: {
             balance: supplier.balance,
