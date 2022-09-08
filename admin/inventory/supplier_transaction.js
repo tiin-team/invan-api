@@ -1004,7 +1004,7 @@ module.exports = ((instance, options, next) => {
             //     page: 1,
             //     supplier_name: ''
             // }
-            return supplierTransactionsGetExelNew(request, reply, instance)
+            // return supplierTransactionsGetExelNew(request, reply, instance)
             return supplierTransactionsGetExelFromDB(request, reply, instance)
         }
     )
