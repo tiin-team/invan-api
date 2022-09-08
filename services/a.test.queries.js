@@ -95,64 +95,64 @@ module.exports = fp((instance, options, next) => {
             }
         }
         console.log('end...');
-    })
+    });
 
-        (async () => {
-            const transactions = await instance.supplierTransaction.find(
-                {
-                    $and: [
-                        { purchase_id: { $exists: true } },
-                        {
-                            $or: [
-                                { service: { $exists: false } },
-                                { service_name: { $exists: false } },
-                            ]
-                        },
-                    ]
-                },
-                { _id: 1, service: 1, service_name: 1, supplier_id: 1, purchase_id: 1 },
-            ).lean()
-            console.log(transactions.length);
-            const start_time = new Date().getTime()
+    (async () => {
+        const transactions = await instance.supplierTransaction.find(
+            {
+                $and: [
+                    { purchase_id: { $exists: true } },
+                    {
+                        $or: [
+                            { service: { $exists: false } },
+                            { service_name: { $exists: false } },
+                        ]
+                    },
+                ]
+            },
+            { _id: 1, service: 1, service_name: 1, supplier_id: 1, purchase_id: 1 },
+        ).lean()
+        console.log(transactions.length);
+        const start_time = new Date().getTime()
 
-            for (const tran of transactions) {
-                // if (tran.purchase_id) {
-                // console.log(tran.purchase_id, tran.service, tran.service_name, 'service service_name');
-                const purchase = await instance
-                    .inventoryPurchase
-                    .findById(tran.purchase_id)
-                    .lean()
+        for (const tran of transactions) {
+            // if (tran.purchase_id) {
+            // console.log(tran.purchase_id, tran.service, tran.service_name, 'service service_name');
+            const purchase = await instance
+                .inventoryPurchase
+                .findById(tran.purchase_id)
+                .lean()
 
-                // const supplier = await instance.adjustmentSupplier
-                //     .findById(tran.supplier_id, { organization: 1 })
-                //     .lean()
+            // const supplier = await instance.adjustmentSupplier
+            //     .findById(tran.supplier_id, { organization: 1 })
+            //     .lean()
 
-                if (purchase && purchase.service && !purchase.service_name) {
-                    const service = await instance.services.findById(purchase.service, { _id: 1, name: 1 }).lean()
-                    if (service) {
-                        tran.service = tran.service ? tran.service : service._id;
-                        tran.service_name = tran.service_name ? tran.service_name : service.service_name;
-
-                        await instance.supplierTransaction.findByIdAndUpdate(
-                            tran._id,
-                            { $set: { service_name: tran.service_name } }
-                        )
-                    }
-                }
-                if (purchase && purchase.organization && purchase.service && purchase.service_name) {
-                    tran.service = tran.service ? tran.service : purchase.service;
-                    tran.service_name = tran.service_name ? tran.service_name : purchase.service_name;
+            if (purchase && purchase.service && !purchase.service_name) {
+                const service = await instance.services.findById(purchase.service, { _id: 1, name: 1 }).lean()
+                if (service) {
+                    tran.service = tran.service ? tran.service : service._id;
+                    tran.service_name = tran.service_name ? tran.service_name : service.service_name;
 
                     await instance.supplierTransaction.findByIdAndUpdate(
                         tran._id,
                         { $set: { service_name: tran.service_name } }
                     )
                 }
-                // }
             }
-            const end_time = new Date().getTime()
-            console.log('ketgan vaqt', end_time - start_time);
-        })()
+            if (purchase && purchase.organization && purchase.service && purchase.service_name) {
+                tran.service = tran.service ? tran.service : purchase.service;
+                tran.service_name = tran.service_name ? tran.service_name : purchase.service_name;
+
+                await instance.supplierTransaction.findByIdAndUpdate(
+                    tran._id,
+                    { $set: { service_name: tran.service_name } }
+                )
+            }
+            // }
+        }
+        const end_time = new Date().getTime()
+        console.log('ketgan vaqt', end_time - start_time);
+    })()
     // trim feko barcodes    
     // (async () => {
     //     const items = await instance.goodsSales.find(
