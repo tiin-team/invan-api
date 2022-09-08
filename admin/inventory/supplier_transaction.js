@@ -798,9 +798,7 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
 
         pipeline.push($sort);
         pipeline.push($project);
-        pipeline.push({
-            $limit: 10
-        })
+
         const suppliers = await instance.adjustmentSupplier
             .aggregate(pipeline)
             .allowDiskUse(true)
