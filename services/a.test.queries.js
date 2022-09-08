@@ -38,64 +38,65 @@ module.exports = fp((instance, options, next) => {
         return allSum;
     }
 
-    // (async () => {
-    //     console.log('starting...');
-    //     const organizations = await instance.organizations
-    //         .find({})
-    //         .lean()
+    (async () => {
+        console.log('starting...');
+        const organizations = await instance.organizations
+            .find({})
+            .lean()
 
-    //     for (const organization of organizations) {
-    //         const services = await instance.services
-    //             .find({
-    //                 organization: organization._id + ''
-    //             })
-    //             .lean()
+        for (const organization of organizations) {
+            const services = await instance.services
+                .find({
+                    organization: organization._id + ''
+                })
+                .lean()
 
-    //         const suppliers = await instance.adjustmentSupplier
-    //             .find({ organization: organization._id + '' })
-    //             .lean()
-    //         for (const service of services) {
-    //             for (const supp of suppliers) {
-    //                 const balance = await calculateSupplierBalance(supp, service).catch(err => {
-    //                     console.log(err, 'err');
-    //                 })
-    //                 console.log(supp._id, service._id, balance);
-    //                 if (!isNaN(balance)) {
-    //                     if (!(supp.services && supp.services.length)) {
-    //                         supp.services = [{
-    //                             service: service._id,
-    //                             service_name: service.name,
-    //                             balance: balance,
-    //                             balance_usd: 0,
-    //                             balance_currency: 'uzs',
-    //                             available: true,
-    //                             telegram_acces: false,
-    //                         }]
-    //                     }
-    //                     const service_index = supp.services
-    //                         .findIndex(serv => serv.service + '' == service._id + '')
+            const suppliers = await instance.adjustmentSupplier
+                .find({ organization: organization._id + '' })
+                .lean()
+            for (const service of services) {
+                for (const supp of suppliers) {
+                    const balance = await calculateSupplierBalance(supp, service).catch(err => {
+                        console.log(err, 'err');
+                    })
+                    console.log(supp._id, service._id, balance);
+                    if (!isNaN(balance)) {
+                        if (!(supp.services && supp.services.length)) {
+                            supp.services = [{
+                                service: service._id,
+                                service_name: service.name,
+                                balance: balance,
+                                balance_usd: 0,
+                                balance_currency: 'uzs',
+                                available: true,
+                                telegram_acces: false,
+                            }]
+                        }
+                        const service_index = supp.services
+                            .findIndex(serv => serv.service + '' == service._id + '')
 
-    //                     if (service_index == -1)
-    //                         supp.services.push({
-    //                             service: service._id,
-    //                             service_name: service.name,
-    //                             balance: balance,
-    //                             balance_usd: 0,
-    //                             balance_currency: 'uzs',
-    //                             available: true,
-    //                             telegram_acces: false,
-    //                         })
-    //                     else {
-    //                         supp.services[service_index].balance = balance;
-    //                     }
+                        if (service_index == -1)
+                            supp.services.push({
+                                service: service._id,
+                                service_name: service.name,
+                                balance: balance,
+                                balance_usd: 0,
+                                balance_currency: 'uzs',
+                                available: true,
+                                telegram_acces: false,
+                            })
+                        else {
+                            supp.services[service_index].balance = balance;
+                        }
 
-    //                     await instance.adjustmentSupplier.findByIdAndUpdate(supp._id, supp, { lean: true })
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     console.log('end...');
-    // })
+                        await instance.adjustmentSupplier.findByIdAndUpdate(supp._id, supp, { lean: true })
+                    }
+                }
+            }
+        }
+        console.log('end...');
+    })()
+
     // (async () => {
     //     const transactions = await instance.supplierTransaction.find(
     //         {

@@ -152,6 +152,7 @@ const getItemsForPurchase = async (request, reply, instance) => {
 
     reply.ok(Answer)
   } catch (error) {
+    instance.send_Error('getItemsForPurchase', JSON.stringify(error.message))
     reply.error(error.message)
   }
 }
@@ -424,11 +425,13 @@ module.exports = fp((instance, options, next) => {
         reqObj[items[i]._id] = items[i]
         reqObj[items[i]._id].to_receive = parseFloat(reqObj[items[i]._id].to_receive)
       }
-      items = await instance.purchaseItem.find({
-        _id: {
-          $in: item_ids
-        }
-      }).lean();
+      items = await instance.purchaseItem
+        .find({
+          _id: {
+            $in: item_ids
+          }
+        })
+        .lean();
 
       let goodsObj = {}
       let pro_ids = []
@@ -517,7 +520,8 @@ module.exports = fp((instance, options, next) => {
             additional_cost: purch.additional_cost,
             is_service_changable: purch.is_service_changable,
           }
-        });
+        },
+      );
       if (item_ids && item_ids.length == 0) {
         return reply.ok(purch)
       }
