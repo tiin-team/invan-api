@@ -720,7 +720,9 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
         const { name } = request.params;
         const user = request.user;
         const user_available_services = user.services.map(serv => instance.ObjectId(serv.service));
-        if (service && !user_available_services.find(s => s.service + '' === service + ''))
+        console.log(service, !user_available_services.find(s => s + '' === service + ''));
+        console.log(user.services);
+        if (service && !user_available_services.find(s => s + '' === service + ''))
             return reply.code(403).send('Forbidden Service')
 
         const $match = {
