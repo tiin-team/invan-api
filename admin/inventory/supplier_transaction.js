@@ -226,15 +226,16 @@ async function supplierTransactionsGet(request, reply, instance) {
         const pipeline = [$match];
 
         if (!name) pipeline.push($skip, $limit);
-        // pipeline.push($lookupInv);
+        pipeline.push($lookup);
         // pipeline.push($unwindInv);
         // pipeline.push($lookup);
         // pipeline.push($unwind);
+        pipeline.push($unwind);
         pipeline.push($group);
         pipeline.push($fixProject);
         pipeline.push($sort);
         pipeline.push($project);
-        // pipeline.push($sort);
+        pipeline.push($sort);
 
         const suppliers = await instance.adjustmentSupplier.aggregate(pipeline)
             .allowDiskUse(true)
@@ -720,8 +721,7 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
         const { name } = request.params;
         const user = request.user;
         const user_available_services = user.services.map(serv => instance.ObjectId(serv.service));
-        console.log(service, !user_available_services.find(s => s + '' === service + ''));
-        console.log(user.services);
+
         if (service && !user_available_services.find(s => s + '' === service + ''))
             return reply.code(403).send('Forbidden Service')
 
@@ -746,6 +746,7 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
             $project: {
                 supplier_name: 1,
                 // balance: 1,
+                services: 1,
                 balance: service
                     ? ({
                         $reduce: {
@@ -826,8 +827,13 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
         const suppliers_excel = []
         let index = 1;
 
+
         for (const s of suppliers) {
             // s.balance = await calculateSupplierBalance(instance, s)
+            const services_balance = {}
+            for (const serv of s.services) {
+                services_balance[`${serv.service_name} [${instance.i18n.__('total_balance')}]`] = serv.balance ? serv.balance : 0
+            }
             suppliers_excel.push({
                 [`${instance.i18n.__('number')}`]: index++,
                 [`${instance.i18n.__('supplier_name')}`]: s.supplier_name,
@@ -835,6 +841,7 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
                 // [`${instance.i18n.__('total_spend')}`]: s.total_spend ? s.total_spend : '',
                 // [`${instance.i18n.__('total_debt')}`]: s.total_debt ? s.total_debt : '',
                 // [`${instance.i18n.__('total_favor')}`]: s.total_favor ? s.total_favor : '',
+                ...services_balance,
                 [`${instance.i18n.__('total_balance')}`]: s.balance ? s.balance : 0,
             })
         }
