@@ -225,13 +225,12 @@ async function supplierTransactionsGet(request, reply, instance) {
 
         const pipeline = [$match];
 
-        pipeline.push($lookup);
-        // pipeline.push($unwindInv);
+        if (!name) pipeline.push($skip, $limit);
         // pipeline.push($lookup);
-        // pipeline.push($unwind);
+        // pipeline.push($unwindInv);
+        pipeline.push($lookup);
         pipeline.push($unwind);
         pipeline.push($group);
-        if (!name) pipeline.push($skip, $limit);
         pipeline.push($fixProject);
         pipeline.push($sort);
         pipeline.push($project);
