@@ -40,7 +40,7 @@ module.exports = fp((instance, options, next) => {
     }
     (async () => {
         is_end = false
-        let limit = 500000
+        let limit = 100000
         // let limit = 1//0000
         let page = 1
         console.log('start...');
