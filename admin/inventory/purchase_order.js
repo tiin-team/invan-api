@@ -671,9 +671,6 @@ module.exports = fp((instance, options, next) => {
           if (g.cost_currency == 'usd') {
             g.cost = g.cost / currency.value
           }
-          // console.log(index);
-          // console.log(goodsObj[g._id].to_receive);
-          // console.log(+goodsObj[g._id].to_receive);
           // g.services[index].in_stock += (+goodsObj[g._id].to_receive)
           g.services[index].in_stock += (+goodsObj[g._id].received)
           // create inv history
@@ -1051,7 +1048,9 @@ module.exports = fp((instance, options, next) => {
           date: new Date().getTime(),
           purchase_id: purchase_id
         }).save();
-      } catch (error) { }
+      } catch (error) {
+        instance.send_Error('createPurchaseOrderRefund save tr', JSON.stringify(error.message))
+      }
       for (const index in items) {
         items[index].purchase_id = purchase_id
         await new instance.purchaseItem(items[index]).save()
@@ -1085,6 +1084,7 @@ module.exports = fp((instance, options, next) => {
       }
       return reply.ok({ _id: purchase_id })
     } catch (error) {
+      instance.send_Error('createPurchaseOrderRefund', JSON.stringify(error.message))
       return reply.error(error.message)
     }
   }

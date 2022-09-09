@@ -104,6 +104,7 @@ async function insertInvHistory(instance, data = []) {
   } catch (error) {
     instance.send_Error('insertInvHistory', JSON.stringify(error) + JSON.stringify(data))
   }
+  return
 }
 
 module.exports = { insertInvHistory }

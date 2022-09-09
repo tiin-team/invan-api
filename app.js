@@ -39,6 +39,15 @@ module.exports = fp(function (fastify, opts, next) {
   //   options: Object.assign(options, opts)
   // })
 
+  fastify.register(require('fastify-graceful-shutdown'))
+
+  fastify.after(() => {
+    fastify.gracefulShutdown((signal, next) => {
+      console.log('Upps!')
+      next()
+    })
+  })
+
   fastify.register(require('./clickhouse/decorator'), {
     url: 'http://localhost',
     port: 8123,
@@ -53,6 +62,7 @@ module.exports = fp(function (fastify, opts, next) {
       enable_http_compression: 0,
       database: 'INVAN',
     },
+    debug: true,
   });
 
   fastify.register(AutoLoad, {

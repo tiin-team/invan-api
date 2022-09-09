@@ -46,7 +46,6 @@ async function clickhouseConnector(fastify, options, done) {
     config: {
       database,
     },
-    // debug: true,
   });
   createInventoryTable(clickhouse)
   fastify.decorate("clickhouse", clickhouse);

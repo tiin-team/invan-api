@@ -114,9 +114,10 @@ module.exports = fp((instance, options, next) => {
     limit = limit == 'all' ? c_total.length : limit
 
     const c_data = await instance.clickhouse.query(`
-    SELECT
+      SELECT
       product_id,
       reason,
+      anyLast(product_name) AS product_name,
       SUM(adjustment) AS adjustment
     FROM inventory_history
     WHERE (organization = '${admin.organization}') AND
