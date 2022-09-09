@@ -62,7 +62,7 @@ module.exports = fp(function (fastify, opts, next) {
       enable_http_compression: 0,
       database: 'INVAN',
     },
-    debug: true,
+    // debug: true,
   });
 
   fastify.register(AutoLoad, {

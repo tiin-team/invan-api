@@ -1,5 +1,6 @@
 const fp = require('fastify-plugin');
 const fs = require('fs');
+const { insertInvHistory } = require('../clickhouse/insert_inv_history');
 
 module.exports = fp((instance, options, next) => {
     async function calculateSupplierBalance(supp, service) {
@@ -37,6 +38,25 @@ module.exports = fp((instance, options, next) => {
 
         return allSum;
     }
+    (async () => {
+        is_end = false
+        let limit = 500000
+        // let limit = 1//0000
+        let page = 1
+        console.log('start...');
+        while (!is_end) {
+            const inv_history = await instance.inventoryHistory
+                .find({})
+                .limit(limit)
+                .skip((page - 1) * limit)
+                .lean()
+            await insertInvHistory(instance, inv_history)
+            page++
+            if (inv_history.length == 0)
+                is_end = true
+        }
+        console.log('end...');
+    })();
 
     (async () => {
         console.log('starting...');
