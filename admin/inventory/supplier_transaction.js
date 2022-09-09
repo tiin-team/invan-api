@@ -833,8 +833,14 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
             const services_balance = {}
             if (service)
                 for (const serv of s.services) {
+                    if (serv.service + '' == service + '')
+                        services_balance[`${instance.i18n.__('total_balance')} [${serv.service_name}]`] = serv.balance ? serv.balance : 0
+                }
+            else
+                for (const serv of s.services) {
                     services_balance[`${instance.i18n.__('total_balance')} [${serv.service_name}]`] = serv.balance ? serv.balance : 0
                 }
+
             suppliers_excel.push({
                 [`${instance.i18n.__('number')}`]: index++,
                 [`${instance.i18n.__('supplier_name')}`]: s.supplier_name,

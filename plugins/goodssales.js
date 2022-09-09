@@ -425,7 +425,7 @@ module.exports = fp((instance, _, next) => {
         //   }
         // })
       } catch (error) {
-
+        instance.send_Error('update_in_stock_of_sold_items', JSON.stringify(error))
       }
     })
 
