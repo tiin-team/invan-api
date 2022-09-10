@@ -305,7 +305,7 @@ module.exports = fp((instance, _, next) => {
           rasxod_sum += item.services.stock_monthly.end_stock * item.services.stock_monthly.cost
           exelItems.push([
             index,
-            Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '').toFixed(2) : '',
+            Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '') : '',
             item.product_name,
             instance.i18n.__(item.sold_by),
             item.services.cost.toFixed(2),

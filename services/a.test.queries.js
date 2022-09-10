@@ -38,6 +38,8 @@ module.exports = fp((instance, options, next) => {
 
         return allSum;
     }
+
+    //insert inv_history to clickhouse
     (async () => {
         is_end = false
         let limit = 100000
@@ -56,7 +58,7 @@ module.exports = fp((instance, options, next) => {
                 is_end = true
         }
         console.log('end...');
-    })();
+    });
 
     (async () => {
         console.log('starting...');
