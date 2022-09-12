@@ -155,6 +155,26 @@ module.exports = fp((instance, options, next) => {
     //insert inv_history to clickhouse
 
     (async () => {
+        console.log('start update goods...');
+        const goods = await instance.goodsSales.find(
+            {
+                cost: {
+                    $lt: 0
+                }
+            },
+            { cost: 1 },
+        )
+            .lean()
+        console.log('goods.length', goods.length);
+
+        for (const good of goods) {
+            good.cost = Math.abs(good.cost == Infinity ? 0 : good.cost)
+            await instance.goodsSales.findByIdAndUpdate(good._id, good)
+        }
+        console.log('update goods end...');
+    })();
+
+    (async () => {
         console.log('starting...');
         const organizations = await instance.organizations
             .find({})
