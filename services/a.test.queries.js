@@ -203,20 +203,20 @@ module.exports = fp((instance, options, next) => {
             let i = 0
             for (const inv_history of org_inv_history.histories) {
                 const inv_date = new Date(inv_history.date)
-                if (inv_date.getHours() === 0 || inv_date.getHours() === 5) {
-                    inv_date.setHours(9 + hours_inc)
-                    inv_date.setMinutes(minut)
-                    inv_history.date = inv_date.getTime();
-                    hours_inc += parseInt(11 * (i / org_inv_history.histories.length))
-                    minut += parseInt(50 * (i / org_inv_history.histories.length))
-                    changed++
-                    i++
-                    await instance.inventoryHistory.findByIdAndUpdate(
-                        inv_history._id,
-                        { date: inv_history.date },
-                        { lean: true },
-                    )
-                }
+                // if (inv_date.getHours() === 0 || inv_date.getHours() === 5) {
+                inv_date.setHours(9 + hours_inc)
+                inv_date.setMinutes(minut)
+                inv_history.date = inv_date.getTime();
+                hours_inc += parseInt(11 * (i / org_inv_history.histories.length))
+                minut += parseInt(50 * (i / org_inv_history.histories.length))
+                changed++
+                i++
+                await instance.inventoryHistory.findByIdAndUpdate(
+                    inv_history._id,
+                    { date: inv_history.date },
+                    { lean: true },
+                )
+                // }
             }
         }
         console.log('end...', changed);
