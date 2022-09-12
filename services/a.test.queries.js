@@ -210,7 +210,7 @@ module.exports = fp((instance, options, next) => {
                     changed++
                     await instance.inventoryHistory.findByIdAndUpdate(
                         inv_history._id,
-                        inv_history,
+                        { date: inv_history.date },
                         { lean: true },
                     )
                 }
