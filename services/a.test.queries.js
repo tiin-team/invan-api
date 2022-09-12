@@ -84,7 +84,7 @@ module.exports = fp((instance, options, next) => {
     const feko_method = async () => {
         console.log('start..');
         const startDate = new Date('07.09.2022')//.toISOString()
-        const endDate = new Date()//.toISOString()
+        const endDate = new Date('10.09.2022')//.toISOString()
         console.log(startDate, endDate);
         const inv_histories = await instance.inventoryHistory
             .aggregate([
