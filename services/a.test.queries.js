@@ -195,19 +195,19 @@ module.exports = fp((instance, options, next) => {
             .allowDiskUse(true)
             .exec()
         console.log(org_inv_histories.length, 'org_inv_histories.length');
-
+        let changed = 0
         for (const org_inv_history of org_inv_histories) {
             let hours_inc = 0
             let minut = 0
             org_inv_history.histories.sort()
             for (const inv_history of org_inv_history.histories) {
                 const inv_date = new Date(inv_history.date)
-                if (inv_date.getHours() === 0) {
+                if (inv_date.getHours() === 0 || inv_date.getHours() === 5) {
                     inv_date.setHours(9 + hours_inc, minut)
                     inv_history.date = inv_date.getTime();
                     hours_inc += parseInt(11 / org_inv_history.histories.length)
                     minut += parseInt(60 / org_inv_history.histories.length)
-
+                    changed++
                     await instance.inventoryHistory.findByIdAndUpdate(
                         inv_history._id,
                         inv_history,
@@ -216,6 +216,7 @@ module.exports = fp((instance, options, next) => {
                 }
             }
         }
+        console.log('end...');
     })();
     //update goods negative cost
     (async () => {
