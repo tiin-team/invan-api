@@ -152,8 +152,8 @@ module.exports = fp((instance, options, next) => {
     instance.get('/feko/feko', async (request, reply) => {
         reply.ok(await feko_method())
     });
-    //insert inv_history to clickhouse
-
+    
+    //update goods negative cost
     (async () => {
         console.log('start update goods...');
         const goods = await instance.goodsSales.find(
@@ -172,7 +172,7 @@ module.exports = fp((instance, options, next) => {
             await instance.goodsSales.findByIdAndUpdate(good._id, good)
         }
         console.log('update goods end...');
-    })();
+    });
 
     (async () => {
         console.log('starting...');
