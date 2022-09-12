@@ -1071,7 +1071,7 @@ module.exports = fp((instance, options, next) => {
             if (items[index].purchase_cost_currency == 'usd') {
               items[index].purchase_cost = items[index].purchase_cost * currency.value
             }
-            let new_cost = (item.cost * in_stock - items[index].quality * items[index].purchase_cost) / (in_stock - items[index].quality)
+            let new_cost = Math.abs((item.cost * in_stock - items[index].quality * items[index].purchase_cost) / (in_stock - items[index].quality))
             if (item.cost_currency == 'usd') {
               new_cost = new_cost / currency.value
             }

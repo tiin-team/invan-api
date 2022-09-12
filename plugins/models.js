@@ -1949,7 +1949,7 @@ module.exports = fp((instance, _, next) => {
     reason: {
       type: String,
       enum: [
-        'sold', 'returned', 'received',
+        'sold', 'returned', 'received', 'receivedd',
         'returned_order', 'transferred',
         'recounted', 'damaged', 'lost',
         'item edit', 'production',

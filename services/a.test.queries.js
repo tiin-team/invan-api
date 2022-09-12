@@ -1,6 +1,5 @@
 const fp = require('fastify-plugin');
 const fs = require('fs');
-const { insertInvHistory } = require('../clickhouse/insert_inv_history');
 
 module.exports = fp((instance, options, next) => {
     async function calculateSupplierBalance(supp, service) {
@@ -38,27 +37,122 @@ module.exports = fp((instance, options, next) => {
 
         return allSum;
     }
+    const updateGoodsWithPurchase = async (admin, purch) => {
+        const pro_ids = purch.items.map(item => item.product_id)
 
-    //insert inv_history to clickhouse
-    (async () => {
-        is_end = false
-        let limit = 100000
-        // let limit = 1//0000
-        let page = 1
-        console.log('start...');
-        while (!is_end) {
-            const inv_history = await instance.inventoryHistory
-                .find({})
-                .limit(limit)
-                .skip((page - 1) * limit)
-                .lean()
-            await insertInvHistory(instance, inv_history)
-            page++
-            if (inv_history.length == 0)
-                is_end = true
+        const goods = await instance.goodsSales
+            .find({ _id: { $in: pro_ids } })
+            .lean();
+        const goodsObj = {}
+        for (const p_item of purch.items) {
+            goodsObj[p_item.product_id] = p_item
         }
-        console.log('end...');
+
+        for (const g of goods) {
+            let in_stock = null
+            let index = -1
+            for (let i = 0; i < g.services.length; i++) {
+                if (g.services[i].service + "" == purch.service + "") {
+                    in_stock = +g.services[i].in_stock
+                    index = i
+                }
+            }
+            if (in_stock != null) {
+                // g.services[index].in_stock += (+goodsObj[g._id].to_receive)
+                const received = +Math.min(goodsObj[g._id].quality, goodsObj[g._id].ordered)
+                g.services[index].in_stock += received
+                console.log(received,
+                    +in_stock + received);
+                await instance.create_inventory_history(
+                    admin,
+                    'receivedd',
+                    purch.p_order,
+                    purch.service,
+                    g._id,
+                    g.cost,
+                    received,
+                    +in_stock + received,
+                    purch.purchase_order_date,
+                )
+                // await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].to_receive, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
+
+                await instance.goodsSales.updateOne({ _id: g._id }, { $set: g })
+            }
+        }
+    }
+
+    const feko_method = async () => {
+        console.log('start..');
+        const startDate = new Date('07.09.2022')//.toISOString()
+        const endDate = new Date()//.toISOString()
+        console.log(startDate, endDate);
+        const inv_histories = await instance.inventoryHistory
+            .aggregate([
+                {
+                    $match: {
+                        createdAt: {
+                            $gte: startDate,
+                            $lte: endDate,
+                        },
+                        reason: 'received'
+                    },
+                },
+                // { $limit: 2 },
+                {
+                    $group: {
+                        _id: '$organization',
+                        uniques: { $push: '$unique' },
+                    }
+                },
+            ])
+            .allowDiskUse(true)
+            .exec()
+        // .lean()
+        console.log(inv_histories.length, 'inv_histories.length');
+        // console.log(inv_histories);
+        // return inv_histories
+
+        // console.log(inv_histories.map(inv_history => inv_history.unique).length);
+        const purchases = []
+        for (const inv_history of inv_histories) {
+            const purchases2 = await instance.inventoryPurchase
+                .find({
+                    organization: inv_history._id,
+                    createdAt: {
+                        $gte: startDate,
+                        $lte: endDate,
+                    },
+                    p_order: { $nin: inv_history.uniques },
+                    items: { $gte: { $size: 1 } },
+                    $or: [
+                        { 'items.quality': { $gt: 0 } },
+                        { 'items.ordered': { $gt: 0 } },
+                    ]
+                    // p_order: { $nin: inv_histories.map(inv_history => inv_history.unique) }
+                })
+                .lean()
+
+            for (const iterator of purchases2) {
+                await updateGoodsWithPurchase(
+                    {
+                        _id: iterator.ordered_by_id,
+                        name: iterator.ordered_by_name,
+                        organization: inv_history._id,
+                    },
+                    iterator,
+                )
+            }
+            purchases.push(...purchases2)
+        }
+        console.log(purchases.length, 'purchases.length');
+        console.log('end..');
+
+        return purchases
+    };
+    instance.get('/feko/feko', async (request, reply) => {
+        reply.ok(await feko_method())
     });
+    //insert inv_history to clickhouse
 
     (async () => {
         console.log('starting...');
