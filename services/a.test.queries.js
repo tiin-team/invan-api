@@ -159,7 +159,7 @@ module.exports = fp((instance, options, next) => {
         console.log('starting...');
         const org_inv_histories = await instance.inventoryHistory
         const startDate = new Date('07.09.2022')//.toISOString()
-        const endDate = new Date('10.09.2022')//.toISOString()
+        const endDate = new Date()//.toISOString()
 
             .aggregate([
                 {
