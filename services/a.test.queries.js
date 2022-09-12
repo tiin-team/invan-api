@@ -206,7 +206,7 @@ module.exports = fp((instance, options, next) => {
             let hours_inc = 0
             let minut = 0
             org_inv_history.histories.sort((a, b) => a.unique > b.unique ? 1 : -1)
-            let i = 0
+            let i = 1
             for (const inv_history of org_inv_history.histories) {
                 const inv_date = new Date(inv_history.date)
                 // if (inv_date.getHours() === 0 || inv_date.getHours() === 5) {
