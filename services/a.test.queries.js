@@ -167,7 +167,7 @@ module.exports = fp((instance, options, next) => {
                 // {
                 //     $sort: '$unique'
                 // },
-                { $limit: 10000 },
+                // { $limit: 10000 },
                 {
                     $group: {
                         _id: '$organization',
@@ -216,7 +216,7 @@ module.exports = fp((instance, options, next) => {
                 }
             }
         }
-        console.log('end...');
+        console.log('end...', changed);
     })();
     //update goods negative cost
     (async () => {
