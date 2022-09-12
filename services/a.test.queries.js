@@ -94,7 +94,10 @@ module.exports = fp((instance, options, next) => {
                             $gte: startDate,
                             $lte: endDate,
                         },
-                        reason: 'received'
+                        $or: [
+                            { reason: 'received' },
+                            { reason: 'receivedd' },
+                        ],
                     },
                 },
                 // { $limit: 2 },
@@ -152,7 +155,7 @@ module.exports = fp((instance, options, next) => {
     instance.get('/feko/feko', async (request, reply) => {
         reply.ok(await feko_method())
     });
-    
+
     //update goods negative cost
     (async () => {
         console.log('start update goods...');
