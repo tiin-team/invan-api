@@ -180,17 +180,17 @@ module.exports = fp((instance, options, next) => {
                         },
                     }
                 },
-                {
-                    $project: {
-                        _id: '$_id',
-                        histories: {
-                            $sortArray: {
-                                input: "$histories",
-                                sortBy: { "histories.unique": -1 }
-                            },
-                        },
-                    },
-                },
+                // {
+                //     $project: {
+                //         _id: '$_id',
+                //         histories: {
+                //             $sortArray: {
+                //                 input: "$histories",
+                //                 sortBy: { "histories.unique": -1 }
+                //             },
+                //         },
+                //     },
+                // },
             ])
             .allowDiskUse(true)
             .exec()
@@ -199,6 +199,7 @@ module.exports = fp((instance, options, next) => {
         for (const org_inv_history of org_inv_histories) {
             let hours_inc = 0
             let minut = 0
+            org_inv_history.histories.sort()
             for (const inv_history of org_inv_history.histories) {
                 const inv_date = new Date(inv_history.date)
                 if (inv_date.getHours() === 0) {
