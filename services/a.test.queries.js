@@ -158,16 +158,23 @@ module.exports = fp((instance, options, next) => {
     (async () => {
         console.log('starting...');
         const org_inv_histories = await instance.inventoryHistory
+        const startDate = new Date('07.09.2022')//.toISOString()
+        const endDate = new Date('10.09.2022')//.toISOString()
+
             .aggregate([
                 {
                     $match: {
                         reason: { $in: ['received', 'receivedd'] },
+                        createdAt: {
+                            $gte: startDate,
+                            $lte: endDate,
+                        },
                     },
                 },
                 // {
                 //     $sort: '$unique'
                 // },
-                { $limit: 10000 },
+                // { $limit: 10000 },
                 {
                     $group: {
                         _id: '$organization',
