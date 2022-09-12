@@ -155,7 +155,67 @@ module.exports = fp((instance, options, next) => {
     instance.get('/feko/feko', async (request, reply) => {
         reply.ok(await feko_method())
     });
+    (async () => {
+        console.log('starting...');
+        const org_inv_histories = await instance.inventoryHistory
+            .aggregate([
+                {
+                    $match: {
+                        reason: 'received',
+                    },
+                },
+                // {
+                //     $sort: '$unique'
+                // },
+                { $limit: 10000 },
+                {
+                    $group: {
+                        _id: '$organization',
+                        histories: {
+                            $push: {
+                                _id: '$_id',
+                                unique: '$unique',
+                                date: '$date',
+                            }
+                        },
+                    }
+                },
+                {
+                    $project: {
+                        _id: '$_id',
+                        histories: {
+                            $sortArray: {
+                                input: "$histories",
+                                sortBy: { "histories.unique": -1 }
+                            },
+                        },
+                    },
+                },
+            ])
+            .allowDiskUse(true)
+            .exec()
+        console.log(org_inv_histories.length, 'org_inv_histories.length');
 
+        for (const org_inv_history of org_inv_histories) {
+            let hours_inc = 0
+            let minut = 0
+            for (const inv_history of org_inv_history.histories) {
+                const inv_date = new Date(inv_history.date)
+                if (inv_date.getHours() === 0) {
+                    inv_date.setHours(9 + hours_inc, minut)
+                    inv_history.date = inv_date.getTime();
+                    hours_inc += parseInt(11 / org_inv_history.histories.length)
+                    minut += parseInt(60 / org_inv_history.histories.length)
+
+                    await instance.inventoryHistory.findByIdAndUpdate(
+                        inv_history._id,
+                        inv_history,
+                        { lean: true },
+                    )
+                }
+            }
+        }
+    })();
     //update goods negative cost
     (async () => {
         console.log('start update goods...');
