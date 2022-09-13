@@ -174,7 +174,7 @@ module.exports = fp((instance, options, next) => {
                 // {
                 //     $sort: '$unique'
                 // },
-                { $limit: 10 },
+                // { $limit: 10 },
                 {
                     $group: {
                         _id: '$organization',
