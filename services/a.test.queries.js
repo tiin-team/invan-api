@@ -159,11 +159,42 @@ module.exports = fp((instance, options, next) => {
         console.log('starting...');
         const startDate = new Date('07.09.2022')//.toISOString()
         const endDate = new Date()//.toISOString()
+        const inv_histories = await instance.inventoryHistory
+            .find(
+                {
+                    reason: 'receivedd',
+                },
+            )
+            .lean()
+
+        for (const history of inv_histories) {
+            const purchase = await instance.inventoryPurchase
+                .findOne(
+                    {
+                        organization: history.organization,
+                        p_order: history.unique,
+                    },
+                    {
+                        _id: 1,
+                    }
+                )
+                .lean()
+            history.date = purchase._id.getTimestamp().getTime()
+
+            await instance.inventoryHistory.findByIdAndUpdate(
+                history._id,
+                { date: history.date },
+                { lean: true },
+            )
+        }
+        console.log('end...', inv_histories.length);
+
+        return
         const org_inv_histories = await instance.inventoryHistory
             .aggregate([
                 {
                     $match: {
-                        reason: 'received',
+                        reason: 'receivedd',
                         // reason: { $in: ['received', 'receivedd'] },
                         // createdAt: {
                         //     $gte: startDate,
@@ -230,7 +261,7 @@ module.exports = fp((instance, options, next) => {
             }
         }
         console.log('end...', changed);
-    });
+    })();
     //update goods negative cost
     (async () => {
         console.log('start update goods...');
