@@ -286,7 +286,11 @@ module.exports = (instance, _, next) => {
 
     const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
 
-    limit = limit == 'all' ? total_result : limit
+    limit = limit == 'all'
+      ? !isNaN(total_result) && total_result > 0
+        ? total_result
+        : 1
+      : limit
     const skipResult = {
       $skip: limit * (page - 1)
     }
