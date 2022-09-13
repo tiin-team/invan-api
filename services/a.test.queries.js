@@ -163,7 +163,8 @@ module.exports = fp((instance, options, next) => {
             .aggregate([
                 {
                     $match: {
-                        reason: { $in: ['received', 'receivedd'] },
+                        reason: 'received',
+                        // reason: { $in: ['received', 'receivedd'] },
                         createdAt: {
                             $gte: startDate,
                             $lte: endDate,
@@ -173,7 +174,7 @@ module.exports = fp((instance, options, next) => {
                 // {
                 //     $sort: '$unique'
                 // },
-                // { $limit: 10000 },
+                { $limit: 10 },
                 {
                     $group: {
                         _id: '$organization',
@@ -206,17 +207,20 @@ module.exports = fp((instance, options, next) => {
             let hours_inc = 0
             let minut = 0
             org_inv_history.histories.sort((a, b) => a.unique > b.unique ? 1 : -1)
-            let i = 1
+            // let i = 1
             for (const inv_history of org_inv_history.histories) {
-                const inv_date = new Date(inv_history.date)
+                // const inv_date = new Date(inv_history._id.getTimestamp())
+                // const inv_date = new Date(inv_history.date)
                 // if (inv_date.getHours() === 0 || inv_date.getHours() === 5) {
-                inv_date.setHours(9 + hours_inc)
-                inv_date.setMinutes(minut)
-                inv_history.date = inv_date.getTime();
-                hours_inc += parseInt(11 * (i / org_inv_history.histories.length))
-                minut += parseInt(50 * (i / org_inv_history.histories.length))
+                // inv_date.setHours(9 + hours_inc)
+                // inv_date.setMinutes(minut)
+                // inv_history.date = inv_date.getTime();
+                inv_history.date = inv_history._id.getTimestamp().getTime()
+
+                // hours_inc += parseInt(11 * (i / org_inv_history.histories.length))
+                // minut += parseInt(50 * (i / org_inv_history.histories.length))
                 changed++
-                i++
+                // i++
                 await instance.inventoryHistory.findByIdAndUpdate(
                     inv_history._id,
                     { date: inv_history.date },
