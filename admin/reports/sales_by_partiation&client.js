@@ -332,7 +332,7 @@ module.exports = (instance, _, next) => {
       .allowDiskUse(true)
       .exec();
 
-    if (!result.length) {
+    if (result.length <= 0) {
       return reply.ok({
         total: total_result,
         page: Math.ceil(total_result / limit),
