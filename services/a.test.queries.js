@@ -215,7 +215,7 @@ module.exports = fp((instance, options, next) => {
                 // inv_date.setHours(9 + hours_inc)
                 // inv_date.setMinutes(minut)
                 // inv_history.date = inv_date.getTime();
-                inv_history.date = inv_history._id.getTimestamp().getTime()
+                // inv_history.date = inv_history._id.getTimestamp().getTime()
 
                 // hours_inc += parseInt(11 * (i / org_inv_history.histories.length))
                 // minut += parseInt(50 * (i / org_inv_history.histories.length))
@@ -230,7 +230,7 @@ module.exports = fp((instance, options, next) => {
             }
         }
         console.log('end...', changed);
-    })();
+    });
     //update goods negative cost
     (async () => {
         console.log('start update goods...');
