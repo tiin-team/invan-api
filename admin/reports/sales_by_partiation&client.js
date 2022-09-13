@@ -13,16 +13,24 @@ module.exports = (instance, _, next) => {
         properties: {
           min: { type: 'number', minimum: 1 },
           max: { type: 'number', minimum: 1 },
-          limit: { type: 'number', minimum: 1 },
+          limit: {
+            oneOf: [
+              { type: 'number', minimum: 5 },
+              {
+                type: 'string',
+                enum: ['all'],
+              }
+            ],
+          },
           page: { type: 'number', minimum: 1 },
         }
       },
       body: {
         type: 'object',
-        required: [
-          'custom', 'employees',
-          'end', 'services', 'start'
-        ],
+        // required: [
+        //   'custom', 'employees',
+        //   'end', 'services', 'start'
+        // ],
         properties: {
           custom: { type: 'boolean' },
           start: { type: 'number' },
@@ -53,7 +61,8 @@ module.exports = (instance, _, next) => {
   }
 
   const by_partiation_report = async (request, reply, admin) => {
-    const { min, max, limit, page } = request.params;
+    const { min, max, page } = request.params;
+    let limit = request.params.limit;
     const { custom, start, end, services, employees, search } = request.body;
 
     const user_available_services = request.user.services.map(serv => serv.service.toString())
@@ -245,6 +254,39 @@ module.exports = (instance, _, next) => {
       }
     }
 
+    const groupSoldItems = {
+      $group: {
+        _id: calculateItemsReport.$group._id,
+        supplier_name: {
+          $last: "$sold_item_list.supplier_name"
+        }
+      }
+    }
+
+    const countAllItems = {
+      $group: {
+        _id: null,
+        count: {
+          $sum: 1
+        }
+      }
+    }
+
+    const totalCount = await instance.Receipts.aggregate([
+      {
+        $match: filterReceipts
+      },
+      unwindSoldItemList,
+      groupSoldItems,
+      searchByItemName,
+      countAllItems
+    ])
+      .allowDiskUse(true)
+      .exec();
+
+    const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
+
+    limit = limit == 'all' ? total_result : limit
     const skipResult = {
       $skip: limit * (page - 1)
     }
@@ -285,39 +327,6 @@ module.exports = (instance, _, next) => {
     ])
       .allowDiskUse(true)
       .exec();
-
-
-    const groupSoldItems = {
-      $group: {
-        _id: calculateItemsReport.$group._id,
-        supplier_name: {
-          $last: "$sold_item_list.supplier_name"
-        }
-      }
-    }
-
-    const countAllItems = {
-      $group: {
-        _id: null,
-        count: {
-          $sum: 1
-        }
-      }
-    }
-
-    const totalCount = await instance.Receipts.aggregate([
-      {
-        $match: filterReceipts
-      },
-      unwindSoldItemList,
-      groupSoldItems,
-      searchByItemName,
-      countAllItems
-    ])
-      .allowDiskUse(true)
-      .exec();
-
-    const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
 
     const clients = await instance.clientsDatabase
       .find(
