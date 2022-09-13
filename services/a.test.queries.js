@@ -261,7 +261,7 @@ module.exports = fp((instance, options, next) => {
             }
         }
         console.log('end...', changed);
-    })();
+    });
     //update goods negative cost
     (async () => {
         console.log('start update goods...');

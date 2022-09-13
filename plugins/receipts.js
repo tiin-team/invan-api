@@ -316,7 +316,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 //xatolik bor
                 const queue = await instance.goodsSaleQueue
                   .findOne({
-                    product_id: instance.ObjectId(item._id),
+                    good_id: instance.ObjectId(item._id),
                     service_id: instance.ObjectId(service_id),
                     // queue: item.queue,
                     quantity_left: { $ne: 0 },

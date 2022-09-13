@@ -117,7 +117,8 @@ module.exports = (instance, options, next) => {
 
     const sortAll = {
       $sort: {
-        _id: -1
+        // _id: -1,
+        date: -1,
       }
     }
 
