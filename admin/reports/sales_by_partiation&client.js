@@ -332,6 +332,14 @@ module.exports = (instance, _, next) => {
       .allowDiskUse(true)
       .exec();
 
+    if (!result.length) {
+      return reply.ok({
+        total: total_result,
+        page: Math.ceil(total_result / limit),
+        data: result
+      })
+    }
+
     const clients = await instance.clientsDatabase
       .find(
         {
