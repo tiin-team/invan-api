@@ -677,7 +677,7 @@ module.exports = fp((instance, options, next) => {
 
           // ('create_inventory_history', (user, reason, unique, service_id, product_id, cost, adjustment, stock_after, date)
 
-          await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].received, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
+          await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].received, +in_stock + +goodsObj[g._id].received, new Date().getTime())
           // await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].to_receive, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
           g.last_updated = new Date().getTime()
           g.last_stock_updated = new Date().getTime()

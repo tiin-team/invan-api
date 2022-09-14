@@ -224,7 +224,7 @@ module.exports = (instance, _, next) => {
           $sum: "$sold_item_list.value"
         },
         p_order: {
-          $first: "$sold_item_list.p_order"
+          $last: "$sold_item_list.p_order"
         },
         cashier_id: {
           $first: "$cashier_id"
