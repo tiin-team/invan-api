@@ -652,7 +652,7 @@ module.exports = fp((instance, options, next) => {
             if (goodsObj[g._id].purchase_cost_currency == 'usd') {
               goodsObj[g._id].purchase_cost = (+goodsObj[g._id].purchase_cost) * currency.value
             }
-            g.cost = (g.cost * In_STOCK + (+goodsObj[g._id].purchase_cost) * (+goodsObj[g._id].to_receive))
+            g.cost = (g.cost * In_STOCK + (+goodsObj[g._id].purchase_cost) * (+goodsObj[g._id].received))
               / (In_STOCK + (+goodsObj[g._id].to_receive))
             if (g.max_cost < g.cost || g.max_cost == 0) {
               g.max_cost = g.cost

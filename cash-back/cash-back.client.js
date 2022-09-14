@@ -149,7 +149,8 @@ module.exports = fp((instance, _, next) => {
       if (organization._id == '5f5641e8dce4e706c062837a' || organization._id == '61ae2917a914c3ba42fc626f') {
         if (!clientsDatabase) {
 
-          const CashBackClient = await axios.get(`${process.env.cash_back_URL}/clients?phone=${phone_number}`)
+          // const CashBackClient = await axios.get(`${process.env.cash_back_URL}/clients?phone=${phone_number}`)
+          const CashBackClient = await axios.get(`${process.env.cash_back_URL}/users?phone=${phone_number}`)
             .then(res => res.data)
             .catch(err => { })
 
