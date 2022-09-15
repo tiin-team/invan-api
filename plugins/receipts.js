@@ -314,13 +314,16 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 // if (item.queue) queue_query.queue = item.queue
                 // else queue_query = { queue: -1 }
                 //xatolik bor
-                const queue = await instance.goodsSaleQueue
-                  .findOne({
+                const partiation_query = $receiptModel.sold_item_list[i].partiation_id
+                  ? ({ _id: $receiptModel.sold_item_list[i].partiation_id })
+                  : ({
                     good_id: instance.ObjectId(item._id),
                     service_id: instance.ObjectId(service_id),
                     // queue: item.queue,
                     quantity_left: { $ne: 0 },
                   })
+                const queue = await instance.goodsSaleQueue
+                  .findOne(partiation_query)
                   .sort({ queue: 1 })
                   .lean()
                 // bu keyinchalik olib tashlanadi
