@@ -5872,6 +5872,9 @@ module.exports = fp((instance, _, next) => {
                     $ne: true
                   }
                 }
+                if (model.collection.name == 'posdevices') {
+                  query.is_active = false
+                }
                 model.find(query).deleteMany((error) => {
                   if (error) {
                     send_Error(request.raw.url, JSON.stringify(error))
