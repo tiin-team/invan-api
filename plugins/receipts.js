@@ -451,7 +451,8 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
   } catch (error) {
     reply.error(error.message);
-    instance.send_Error('receiptCreateGroup', error)
+    instance.send_Error(`receiptCreateGroup, service_id: ${service_id}, pos_id: ${pos_id}`, error)
+    instance.send_Error(`receiptCreateGroup..., sold_item_list: ${JSON.stringify(body.sold_item_list)}`, '')
   }
   return reply;
 };
