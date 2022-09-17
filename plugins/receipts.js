@@ -452,7 +452,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
   } catch (error) {
     reply.error(error.message);
     instance.send_Error(`receiptCreateGroup, service_id: ${service_id}, pos_id: ${pos_id}`, error)
-    instance.send_Error(`receiptCreateGroup..., sold_item_list: ${JSON.stringify(body.sold_item_list)}`, '')
+    // instance.send_Error(`receiptCreateGroup..., sold_item_list: ${JSON.stringify(body.map(b => b.sold_item_list))}`, '')
   }
   return reply;
 };
@@ -1049,6 +1049,7 @@ module.exports = fp((instance, _, next) => {
             "discount",
           ],
           properties: {
+            qty_box: { type: "number", default: 0 },
             partiation_id: { type: "string", maxLength: 24, minLength: 24 },
             product_id: { type: "string" },
             sold_item_id: { type: "string" },

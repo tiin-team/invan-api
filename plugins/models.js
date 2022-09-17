@@ -353,6 +353,7 @@ module.exports = fp((instance, _, next) => {
       queue: Number,
       partiation_id: mongoose.Types.ObjectId,
       p_order: String,
+      qty_box: Number,
       receipt_id: String,
       variant_of: String,
       product_id: String,
@@ -700,6 +701,7 @@ module.exports = fp((instance, _, next) => {
     supplier_name: String,
     purchase_id: mongoose.Types.ObjectId,
     p_order: String,
+    partiation_no: String,
     service_id: mongoose.Types.ObjectId,
     service_name: String,
     good_id: mongoose.Types.ObjectId,
@@ -1515,6 +1517,7 @@ module.exports = fp((instance, _, next) => {
 
   const inventoryPurchase = instance.model('inventoryPurchase', {
     organization: String,
+    partiation_no: String,
     service: mongoose.Schema.Types.ObjectId,
     is_service_changable: {
       type: Boolean,

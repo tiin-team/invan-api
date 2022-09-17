@@ -13,4 +13,5 @@ package-lock.json
 delete.json
 inventorypurchases.json
 test
+.DS_Store
 static/*.*

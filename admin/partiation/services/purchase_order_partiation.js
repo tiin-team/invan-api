@@ -37,6 +37,7 @@ module.exports = fp((instance, options, next) => {
           date: create_date,
           purchase_id: purch._id,
           p_order: purch.p_order,
+          partiation_no: purch.partiation_no ? purch.partiation_no : "",
           supplier_id: current_supplier._id,
           supplier_name: current_supplier.supplier_name,
           service_id: current_service._id,
