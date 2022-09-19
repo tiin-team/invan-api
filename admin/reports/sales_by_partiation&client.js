@@ -464,7 +464,7 @@ module.exports = (instance, _, next) => {
 
     const sortResult = {
       $sort: {
-        "sold_item_list.queue_id": -1
+        date: -1
       }
     }
 
@@ -561,7 +561,7 @@ module.exports = (instance, _, next) => {
       },
       projectBeforUnwind,
       unwindSoldItemList,
-      // sortResult,
+      sortResult,
       skipResult,
       limitResult,
       projectResult,
