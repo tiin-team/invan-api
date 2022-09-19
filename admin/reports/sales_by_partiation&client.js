@@ -500,29 +500,30 @@ module.exports = (instance, _, next) => {
 
     const projectBeforUnwind = {
       $project: {
-        date: {
-          $multiply: [
-            {
-              $floor: {
-                $divide: [
-                  {
-                    $max: [
-                      0,
-                      {
-                        $add: [
-                          '$date',
-                          18000000
-                        ]
-                      }
-                    ]
-                  },
-                  86400000
-                ],
-              },
-            },
-            86400000,
-          ],
-        },
+        date: 1,
+        // date: {
+        //   $multiply: [
+        //     {
+        //       $floor: {
+        //         $divide: [
+        //           {
+        //             $max: [
+        //               0,
+        //               {
+        //                 $add: [
+        //                   '$date',
+        //                   18000000
+        //                 ]
+        //               }
+        //             ]
+        //           },
+        //           86400000
+        //         ],
+        //       },
+        //     },
+        //     86400000,
+        //   ],
+        // },
         receipt_no: 1,
         sold_item_list: 1,
         user_id: 1,
@@ -690,6 +691,11 @@ module.exports = (instance, _, next) => {
       if (users_obj[result[i].partiation_id]) {
         result[i].p_order = partiations_obj[result[i].partiation_id].p_order
         result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no
+          ? partiations_obj[result[i].partiation_id].partiation_no
+          : ""
+        result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
+        result[i].all_group = ""
+        result[i].size = ""
         result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
       }
     }

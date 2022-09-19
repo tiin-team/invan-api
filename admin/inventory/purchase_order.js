@@ -671,14 +671,13 @@ module.exports = fp((instance, options, next) => {
           if (g.cost_currency == 'usd') {
             g.cost = g.cost / currency.value
           }
-          // g.services[index].in_stock += (+goodsObj[g._id].to_receive)
-          g.services[index].in_stock += (+goodsObj[g._id].received)
+          g.services[index].in_stock += (+goodsObj[g._id].to_receive)
+          // g.services[index].in_stock += (+goodsObj[g._id].received)
           // create inv history
 
           // ('create_inventory_history', (user, reason, unique, service_id, product_id, cost, adjustment, stock_after, date)
-
-          await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].received, +in_stock + +goodsObj[g._id].received, new Date().getTime())
-          // await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].to_receive, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
+          // await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].received, +in_stock + +goodsObj[g._id].received, new Date().getTime())
+          await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].to_receive, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
           g.last_updated = new Date().getTime()
           g.last_stock_updated = new Date().getTime()
           await instance.goodsSales.updateOne({ _id: g._id }, { $set: g })
