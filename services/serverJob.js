@@ -421,12 +421,45 @@ module.exports = fp((instance, _, next) => {
 
     const set = new Set();
     const result = {};
+
+    console.log(transfers.length, 'transfers.length');
+    try {
+      for (const transfer of transfers) {
+        for (const t_item of transfer.items) {
+          set.add(t_item.product_id);
+          if (result[t_item.product_id]) {
+            result[t_item.product_id].name += t_item.product_name;
+            result[t_item.product_id].purchase_count += t_item.quality;
+            result[t_item.product_id].purchase_amount += t_item.cost * t_item.quality;
+          } else {
+            result[t_item.product_id] = {
+              name: t_item.product_name,
+              sale_count: 0,
+              sale_cost_of_goods: 0,
+              sale_amount: 0,
+              purchase_count: t_item.quality,
+              purchase_amount: t_item.cost * t_item.quality,
+              start_stock: 0,
+              end_stock: 0,
+              cost: 0,
+              price: 0,
+              prices: [],
+            };
+          }
+        }
+      }
+    } catch (error) {
+      console.log('error: 0', error);
+      instance.send_Error('error: 0', error)
+    }
+
     console.log(p_items.length, p_refund_items.length);
     console.log(saleInfo.length);
     try {
       for (const p_item of p_items) {
         set.add(p_item._id);
         if (result[p_item._id]) {
+          result[p_item._id].name += p_item.product_name;
           result[p_item._id].purchase_count += p_item.received;
           result[p_item._id].purchase_amount += p_item.amount;
         } else {
@@ -453,6 +486,7 @@ module.exports = fp((instance, _, next) => {
       for (const p_item of p_refund_items) {
         set.add(p_item._id);
         if (result[p_item._id]) {
+          result[p_item._id].name -= p_item.product_name;
           result[p_item._id].purchase_count -= p_item.received;
           result[p_item._id].purchase_amount -= p_item.amount;
         } else {
@@ -480,6 +514,7 @@ module.exports = fp((instance, _, next) => {
         if (s._id.length === 24) {
           set.add(s._id);
           if (result[s._id]) {
+            result[s._id].name += s.name;
             result[s._id].sale_count += s.sale_count;
             result[s._id].sale_cost_of_goods == s.sale_cost_of_goods;
             result[s._id].sale_amount += s.amount;
@@ -555,6 +590,8 @@ module.exports = fp((instance, _, next) => {
       if (result[good._id]) {
         // if (result[good._id].services) {
         result[good._id].end_stock = good.services.in_stock;
+        result[good._id].name = good.name;
+        result[good._id].start_stock = good.services.start_stock;
         result[good._id].cost = good.cost;
         result[good._id].price = good.services.price;
         result[good._id].prices = good.services.prices;
@@ -659,8 +696,10 @@ module.exports = fp((instance, _, next) => {
     })
   };
 
-  const calculateOrganizationsOtchot = async () => {
-    const date = new Date()
+  /**
+ * @param {Date} date
+   */
+  const calculateOrganizationsOtchot = async (date) => {
     const month = date.getMonth()
     const date_ = date.getDate()
     const year = date.getFullYear()
@@ -669,6 +708,10 @@ module.exports = fp((instance, _, next) => {
 
     const start_date = new Date(`${month + 1}.${1}.${year}`)
     const end_date = new Date(`${month + 1}.${date_}.${year}`)
+    end_date.setHours(23)
+    end_date.setMinutes(59)
+    end_date.setSeconds(59)
+    end_date.setMilliseconds(999)
     // const start_date = new Date(`${8}.${1}.${2021}`)
     // const end_date = new Date(`${8}.${31}.${2021}`)
     console.log(start_date, end_date);
@@ -715,7 +758,71 @@ module.exports = fp((instance, _, next) => {
     // process.exit(1);
   } else
     cronJob.schedule(cronString_, async () => {
-      calculateOrganizationsOtchot()
+      const date = new Date()
+      calculateOrganizationsOtchot(date)
+      // const organizations = await instance.organization
+      //   .find(
+      //     { _id: '' },
+      //     { _id: 1 },
+      //   )
+      //   .lean()
+
+      // calculateOrganizationOtchot(organizations[0]._id)
+    })
+  const cronStringLastDayOfMonthCalculate = '59 23 * * *';
+  if (!cronJob.validate(cronStringLastDayOfMonthCalculate)) {
+    instance.log.error('Invalid CRON_TIME is specified:', cronStringLastDayOfMonthCalculate);
+    // process.exit(1);
+  } else
+    cronJob.schedule(cronStringLastDayOfMonthCalculate, async () => {
+      const date = new Date();
+      const date_ = date.getDate()
+      const month = date.getMonth()
+
+      const month_name = months[month]
+      let calculate = false
+      switch (month_name) {
+        case 'January':
+          calculate = date_ == 31
+          break;
+        case 'February':
+          calculate = date_ == 28 || date_ == 29
+          break;
+        case 'March':
+          calculate = date_ == 31
+          break;
+        case 'April':
+          calculate = date_ == 30
+          break;
+        case 'May':
+          calculate = date_ == 31
+          break;
+        case 'June':
+          calculate = date_ == 30
+          break;
+        case 'July':
+          calculate = date_ == 31
+          break;
+        case 'August':
+          calculate = date_ == 31
+          break;
+        case 'September':
+          calculate = date_ == 30
+          break;
+        case 'October':
+          calculate = date_ == 31
+          break;
+        case 'November':
+          calculate = date_ == 30
+          break;
+        case 'December':
+          calculate = date_ == 31
+          break;
+        default:
+          break;
+      }
+      if (calculate)
+        calculateOrganizationsOtchot(date)
       // const organizations = await instance.organization
       //   .find(
       //     { _id: '' },
