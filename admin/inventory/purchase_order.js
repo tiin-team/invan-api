@@ -422,7 +422,7 @@ module.exports = fp((instance, options, next) => {
       let reqObj = {};
       for (let i = 0; i < items.length; i++) {
         item_ids.push(items[i]._id)
-        reqObj[items[i]._id] = items[i]
+        reqObj[items[i]._id] = { ...items[i] }
         reqObj[items[i]._id].to_receive = parseFloat(reqObj[items[i]._id].to_receive)
       }
       items = await instance.purchaseItem
@@ -461,7 +461,7 @@ module.exports = fp((instance, options, next) => {
             if (goodsObj[pro_id] == undefined) {
               pro_ids.push(items[i].product_id)
               // try {
-              goodsObj[pro_id] = items[i]
+              goodsObj[pro_id] = { ...items[i] }
               // .toObject()
               // }
               // catch (error) {
@@ -838,6 +838,7 @@ module.exports = fp((instance, options, next) => {
                         instance.send_Error('saving purchase item', JSON.stringify(err))
                       }
                       else {
+                        purchaseitems = purchaseitems.map(p => p._doc)
                         if (request.body.status == 'returned_order') {
                           reply.ok(purch)
                           return_purchase_order(purch, purchase_items, admin)
