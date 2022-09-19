@@ -393,7 +393,7 @@ module.exports = (instance, _, next) => {
   const by_partiation_report_by_item = async (request, reply, admin) => {
     const { min, max, page } = request.params;
     let limit = request.params.limit;
-    const { custom, start, end, services, employees, search } = request.body;
+    const { services } = request.body;
 
     const user_available_services = request.user.services.map(serv => serv.service.toString())
 
@@ -421,80 +421,6 @@ module.exports = (instance, _, next) => {
 
       filterReceipts.service = {
         $in: services
-      }
-    }
-
-    if (custom) {
-      const additional_query = []
-      for (let i = min; i < max; i += 86400000) {
-        additional_query.push({
-          date: {
-            // $lte: i + end * 3600000 - (process.env.TIME_DIFF | 0),
-            // $gte: i + start * 3600000 - (process.env.TIME_DIFF | 0),
-            $lte: i + end * 3600000,
-            $gte: i + start * 3600000,
-          }
-        })
-      }
-      delete filterReceipts.date
-      filterReceipts['$or'] = additional_query
-    }
-
-    if (employees && employees.length > 0) {
-      const employeesFilter = [
-        {
-          $and: [
-            {
-              waiter_id: ""
-            },
-            {
-              cashier_id: {
-                $in: employees
-              }
-            }
-          ]
-        },
-        {
-          $and: [
-            {
-              cashier_id: ""
-            },
-            {
-              waiter_id: {
-                $in: employees
-              }
-            }
-          ]
-        },
-        {
-          $and: [
-            {
-              waiter_id: {
-                $ne: ""
-              }
-            },
-            {
-              cashier_id: {
-                $ne: ""
-              }
-            },
-            {
-              waiter_id: {
-                $in: employees
-              }
-            }
-          ]
-        }
-      ]
-      if (filterReceipts['$or']) {
-        filterReceipts['$and'] = [
-          { $or: employeesFilter },
-          { $or: filterReceipts['$or'] }
-        ]
-        delete filterReceipts['$or']
-      }
-      else {
-        filterReceipts['$or'] = employeesFilter
       }
     }
 
@@ -562,7 +488,7 @@ module.exports = (instance, _, next) => {
       .exec();
 
     const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
-
+    console.log(total_result, 'total_result');
     limit = limit == 'all'
       ? !isNaN(total_result) && total_result > 0
         ? total_result
