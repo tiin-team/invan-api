@@ -688,6 +688,8 @@ module.exports = (instance, _, next) => {
     for (let i = 0; i < result.length; i++) {
       if (users_obj[result[i].user_id])
         result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
+      else
+        result[i].client_name = ""
       if (users_obj[result[i].partiation_id]) {
         result[i].p_order = partiations_obj[result[i].partiation_id].p_order
         result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no
