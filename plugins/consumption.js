@@ -215,6 +215,44 @@ module.exports = fp(function (instance, _, next) {
         }
         const { _id: transaction_id } = await new instance.supplierTransaction(supplierTransaction).save()
         body.transaction_id = transaction_id;
+
+        const supplier = await instance.adjustmentSupplier
+          .findOne({ _id: body.supplier })
+          .lean()
+
+        const services = Array.isArray(supplier.services)
+          && supplier.services
+            .find(elem => elem.service + '' == service._id + '')
+          ? supplier.services
+          : [{
+            service: service._id,
+            service_name: service.name,
+            balance: 0,
+            balance_usd: 0,
+          }]
+        let supp_serv_index = services
+          .findIndex(elem => elem.service + '' == service._id + '')
+
+        if (supp_serv_index === -1) {
+          supp_serv_index = services.length
+          services.push({
+            service: service._id,
+            service_name: service.name,
+            balance: 0,
+            balance_usd: 0,
+          })
+        }
+        services[supp_serv_index].balance += balance_uzs
+        services[supp_serv_index].balance_usd += balance_usd
+        await instance.adjustmentSupplier.updateOne(
+          { _id: supplier._id },
+          {
+            $set: {
+              // balance: supplier.balance,
+              // balance_usd: supplier.balance_usd,
+              services: services,
+            }
+          })
       }
       const { _id: id } = await new instance.consumptionModel(body).save();
 

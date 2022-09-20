@@ -513,12 +513,39 @@ module.exports = (instance, options, next) => {
       else {
         supplier.balance += body.balance;
       }
+
+      const services = Array.isArray(supplier.services)
+        && supplier.services
+          .find(elem => elem.service + '' == service._id + '')
+        ? supplier.services
+        : [{
+          service: service._id,
+          service_name: service.name,
+          balance: 0,
+          balance_usd: 0,
+        }]
+      let supp_serv_index = services
+        .findIndex(elem => elem.service + '' == service._id + '')
+
+      if (supp_serv_index === -1) {
+        supp_serv_index = services.length
+        services.push({
+          service: service._id,
+          service_name: service.name,
+          balance: 0,
+          balance_usd: 0,
+        })
+      }
+      services[supp_serv_index].balance += balance_uzs
+      services[supp_serv_index].balance_usd += balance_usd
+
       await instance.adjustmentSupplier.updateOne(
         { _id: supplier._id },
         {
           $set: {
             balance: supplier.balance,
-            balance_usd: supplier.balance_usd
+            balance_usd: supplier.balance_usd,
+            services: services,
           }
         })
 
