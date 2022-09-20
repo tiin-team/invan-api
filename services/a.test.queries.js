@@ -340,7 +340,7 @@ module.exports = fp((instance, options, next) => {
             }
         }
         console.log('end...');
-    });
+    })();
 
     // (async () => {
     //     const transactions = await instance.supplierTransaction.find(
