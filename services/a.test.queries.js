@@ -294,7 +294,7 @@ module.exports = fp((instance, options, next) => {
             await instance.goodsCategory.findByIdAndUpdate(cat._id, { $set: { services: cat.services } })
         }
         console.log('update categories end...');
-    });
+    })();
 
     (async () => {
         console.log('starting...');
