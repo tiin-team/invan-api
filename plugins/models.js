@@ -1012,7 +1012,9 @@ module.exports = fp((instance, _, next) => {
     description: String,
     mxik: String,
     nds_value: Number,
-    marking: { type: Boolean, default: false }
+    marking: { type: Boolean, default: false },
+    created_by: String,
+    created_by_id: mongoose.Types.ObjectId,
   })
   instance.decorate('goodsSales', goodsSales)
 
@@ -1020,6 +1022,9 @@ module.exports = fp((instance, _, next) => {
     organization: String,
     organization_id: mongoose.Types.ObjectId,
     item_id: String,
+    created_by: String,
+    created_by_id: mongoose.Types.ObjectId,
+    data: Object,
     date: Number
   }))
 

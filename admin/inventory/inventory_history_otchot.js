@@ -105,24 +105,30 @@ module.exports = fp((instance, options, next) => {
 
     const c_total = await instance.clickhouse.query(`
     SELECT
-    product_id
-    FROM inventory_history
-    WHERE (organization = '${admin.organization}') AND
-    (date BETWEEN ${min} AND ${max})
-    GROUP BY product_id
+      product_id
+    FROM
+      "inventory_history"
+    WHERE
+      (organization = '${admin.organization}') AND
+      (date BETWEEN ${min} AND ${max})
+    GROUP BY
+      product_id
   `).toPromise()
     limit = limit == 'all' ? c_total.length : limit
 
     const c_data = await instance.clickhouse.query(`
       SELECT
-      product_id,
-      reason,
-      anyLast(product_name) AS product_name,
-      SUM(adjustment) AS adjustment
-    FROM inventory_history
-    WHERE (organization = '${admin.organization}') AND
-    (date BETWEEN ${min} AND ${max})
-    GROUP BY product_id,reason
+        product_id,
+        reason,
+        anyLast(product_name) AS product_name,
+        SUM(adjustment) AS adjustment
+      FROM
+        "inventory_history"
+      WHERE 
+        (organization = '${admin.organization}') AND
+        (date BETWEEN ${min} AND ${max})
+      GROUP BY
+        product_id,reason
     `).toPromise()
     // LIMIT ${(page - 1) * limit}, ${limit}
     // service IN ${user_available_services}

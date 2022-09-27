@@ -281,6 +281,19 @@ module.exports = fp((instance, options, next) => {
             await instance.goodsSales.findByIdAndUpdate(good._id, good)
         }
         console.log('update goods end...');
+
+        const categories = await instance.goodsCategory.find(
+            { organization: "5f5641e8dce4e706c062837a", }
+        )
+            .lean()
+        for (const cat of categories) {
+            cat.services = cat.services.map(serv => {
+                serv.available = true
+                return serv
+            })
+            await instance.goodsCategory.findByIdAndUpdate(cat._id, { $set: { services: cat.services } })
+        }
+        console.log('update categories end...');
     });
 
     (async () => {
@@ -340,7 +353,7 @@ module.exports = fp((instance, options, next) => {
             }
         }
         console.log('end...');
-    })();
+    });
 
     // (async () => {
     //     const transactions = await instance.supplierTransaction.find(

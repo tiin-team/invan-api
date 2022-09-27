@@ -5819,18 +5819,29 @@ module.exports = fp((instance, _, next) => {
                     deleted_items.push({
                       organization: user.organization,
                       item_id: item._id,
+                      created_by: user.name,
+                      created_by_id: user._id,
                       date: new Date().getTime()
                     })
-                    const variant_items = await instance.goodsSales.find({
-                      organization: user.organization,
-                      _id: {
-                        $in: item.variant_items
+                    const variant_items = await instance.goodsSales.find(
+                      {
+                        organization: user.organization,
+                        _id: {
+                          $in: item.variant_items
+                        }
+                      },
+                      {
+                        _id: 1,
                       }
-                    })
+                    )
+                      .lean()
+
                     for (const v of variant_items) {
                       deleted_items.push({
                         organization: user.organization,
                         item_id: v._id,
+                        created_by: user.name,
+                        created_by_id: user._id,
                         date: new Date().getTime()
                       })
                     }
@@ -5920,6 +5931,7 @@ module.exports = fp((instance, _, next) => {
             }
           }
         })
+          .lean()
       }
     }
     else {

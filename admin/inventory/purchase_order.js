@@ -742,7 +742,10 @@ module.exports = fp((instance, options, next) => {
           if (!currency || !currency.value) currency = { value: 1 }
 
         } catch (error) { }
-        const supp = await instance.adjustmentSupplier.findOne({ _id: id }).lean();
+
+        const supp = await instance.adjustmentSupplier
+          .findOne({ _id: id })
+          .lean();
         if (supp) {
           instance.inventoryPurchase.countDocuments(
             { organization: admin.organization },
@@ -767,6 +770,7 @@ module.exports = fp((instance, options, next) => {
               if (request.body.status != 'returned_order' && request.body.status != 'closed') {
                 request.body.status = 'pending'
               }
+         
               const purchaseModel = new instance.inventoryPurchase(request.body)
 
               if (purchaseModel.status == 'closed')

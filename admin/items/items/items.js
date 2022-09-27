@@ -1338,6 +1338,10 @@ module.exports = (instance, options, next) => {
     const $model = new instance.goodsSales(
       Object.assign({ organization: admin.organization }, data)
     );
+
+    $model.created_by = admin.name
+    $model.created_by_id = admin._id
+
     instance.services.find(
       {
         organization: admin.organization,
@@ -2343,7 +2347,8 @@ module.exports = (instance, options, next) => {
           deleted_items = await instance.deletedGoodsSales.find({
             organization: user.organization,
             date: { $gte: time },
-          });
+          })
+            .lean();
         } catch (error) { }
         const resp = [];
         for (const it of deleted_items) {
@@ -3728,13 +3733,20 @@ module.exports = (instance, options, next) => {
     async (request, reply) => {
       instance.authorization(request, reply, async (user) => {
         const deleted_items = [];
-        const items = request.body.indexes;
+        const item_ids = request.body.indexes;
         try {
+          const items = await instance.goodsSales
+            .find({ _id: { $in: item_ids } })
+            .lean()
+
           for (const item of items) {
             deleted_items.push({
               organization: user.organization,
               organization_id: user.organization,
               item_id: item._id,
+              created_by: user.name,
+              created_by_id: user._id,
+              data: item,
               date: new Date().getTime(),
             });
             const variant_items = await instance.goodsSales
@@ -3751,6 +3763,9 @@ module.exports = (instance, options, next) => {
                 organization: user.organization,
                 organization_id: user.organization,
                 item_id: v._id,
+                created_by: user.name,
+                created_by_id: user._id,
+                data: v,
                 date: new Date().getTime(),
               });
             }

@@ -616,12 +616,14 @@ module.exports = (instance, _, next) => {
         result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
       else
         result[i].client_name = ""
-      if (users_obj[result[i].partiation_id]) {
+
+      result[i].partiation_no = ""
+
+      if (partiations_obj[result[i].partiation_id]) {
         result[i].p_order = partiations_obj[result[i].partiation_id].p_order
         result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no
         result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
       }
-      result[i].partiation_no = result[i].partiation_no ? result[i].partiation_no : ""
       result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
       result[i].all_group = ""
       result[i].size = ""

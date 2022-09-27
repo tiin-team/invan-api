@@ -29,23 +29,28 @@ module.exports = (instance, options, next) => {
         ]
       }
     }
+    const page = parseInt(request.params.page)
+    const limit = parseInt(request.params.limit)
+
     instance.User.find(query, {
       name: 1,
       email: 1,
       phone_number: 1,
       role: 1
-    }, (err, users) => {
+    }, async (err, users) => {
       if (users == undefined) {
         users = []
       }
-      const page = parseInt(request.params.page)
-      const limit = parseInt(request.params.limit)
+      const total = await instance.User.countDocuments(query)
+
       reply.ok({
-        total: users.length,
-        page: Math.ceil(users.length / limit),
-        data: users.splice(limit * (page - 1), limit)
+        total: total,
+        page: Math.ceil(total / limit),
+        data: users,
       })
     })
+      .limit(limit)
+      .skip(limit * (page - 1))
       .lean()
   }
 
@@ -287,7 +292,9 @@ module.exports = (instance, options, next) => {
     try {
       const body = request.body
       // check role
-      const role = await instance.AccessRights.findOne({ organization: user.organization, name: body.role })
+      const role = await instance.AccessRights
+        .findOne({ organization: user.organization, name: body.role })
+        .lean()
       if (!role) {
         return reply.send({
           statusCode: 404,
@@ -296,7 +303,9 @@ module.exports = (instance, options, next) => {
         })
       }
       // check phone number
-      const exist_phone = await instance.User.findOne({ phone_number: body.phone_number })
+      const exist_phone = await instance.User
+        .findOne({ phone_number: body.phone_number })
+        .lean()
       if (exist_phone) {
         return reply.send({
           statusCode: 411,
@@ -305,7 +314,9 @@ module.exports = (instance, options, next) => {
         })
       }
       // check password
-      const exist_password = await instance.User.findOne({ organization: user.organization, password: body.password })
+      const exist_password = await instance.User
+        .findOne({ organization: user.organization, password: body.password })
+        .lean()
       if (exist_password) {
         return reply.send({
           statusCode: 412,
@@ -313,7 +324,9 @@ module.exports = (instance, options, next) => {
           message: 'Fail'
         })
       }
-      const services = await instance.services.find({ organization: user.organization })
+      const services = await instance.services
+        .find({ organization: user.organization })
+        .lean()
       const serviceObj = {}
       for (const s of body.services) {
         serviceObj[s.service] = s
@@ -504,7 +517,7 @@ module.exports = (instance, options, next) => {
   // update user
 
   const update_user = async (request, reply, user) => {
-    var update = request.body
+    const update = request.body
     if (update.fire_token) {
       if (request.headers['accept-user'] == 'boss' && update.fire_token) {
         update.boss_fire_token = update.fire_token
@@ -541,18 +554,23 @@ module.exports = (instance, options, next) => {
       delete update.password
     }
 
-    if (passwordPattern.test(update.super_password)) {
+    if (update.super_password) {
       query['$or'].push({ password: update.super_password })
       query['$or'].push({ super_password: update.super_password })
     }
-    else {
-      if (update.super_password == '') {
-        update.super_password = ''
-      }
-      else {
-        delete update.super_password
-      }
-    }
+
+    // if (passwordPattern.test(update.super_password)) {
+    //   query['$or'].push({ password: update.super_password })
+    //   query['$or'].push({ super_password: update.super_password })
+    // }
+    // else {
+    //   if (update.super_password == '') {
+    //     update.super_password = ''
+    //   }
+    //   else {
+    //     delete update.super_password
+    //   }
+    // }
     if (update.password && update.password == update.super_password) {
       return reply.send({
         statusCode: 413,
@@ -563,7 +581,7 @@ module.exports = (instance, options, next) => {
 
     if (query['$or'].length > 0) {
       try {
-        const exist_password = await instance.User.findOne(query)
+        const exist_password = await instance.User.findOne(query).lean()
         if (exist_password) {
           return reply.send({
             statusCode: 412,
@@ -582,6 +600,7 @@ module.exports = (instance, options, next) => {
           },
           phone_number: update.phone_number
         })
+          .lean()
         if (exist_phone) {
           return reply.send({
             statusCode: 411,
@@ -614,6 +633,7 @@ module.exports = (instance, options, next) => {
           user.admin_token = undefined
           reply.ok(user)
         })
+          .lean()
       }
       else {
         reply.error('Error on updating')
@@ -641,7 +661,7 @@ module.exports = (instance, options, next) => {
 
   // deleting users
 
-  var delete_users = (request, reply, user) => {
+  const delete_users = (request, reply, user) => {
     instance.User.findOne({
       organization: user.organization,
       role: 'boss'
