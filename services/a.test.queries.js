@@ -81,10 +81,12 @@ module.exports = fp((instance, options, next) => {
         }
     }
 
-    const feko_method = async () => {
+    const feko_method = async (request) => {
+        const start_time = request.query && request.query.start ? request.query.start : new Date().getTime()
+        const end_time = request.query && request.query.end ? request.query.end : new Date().getTime()
         console.log('start..');
-        const startDate = new Date('07.09.2022')//.toISOString()
-        const endDate = new Date('10.09.2022')//.toISOString()
+        const startDate = new Date(start_time)//.toISOString()
+        const endDate = new Date(end_time)//.toISOString()
         console.log(startDate, endDate);
         const inv_histories = await instance.inventoryHistory
             .aggregate([
@@ -153,43 +155,12 @@ module.exports = fp((instance, options, next) => {
         return purchases
     };
     instance.get('/feko/feko', async (request, reply) => {
-        reply.ok(await feko_method())
+        reply.ok(await feko_method(request))
     });
     (async () => {
         console.log('starting...');
         const startDate = new Date('07.09.2022')//.toISOString()
         const endDate = new Date()//.toISOString()
-        const inv_histories = await instance.inventoryHistory
-            .find(
-                {
-                    reason: 'receivedd',
-                },
-            )
-            .lean()
-
-        for (const history of inv_histories) {
-            const purchase = await instance.inventoryPurchase
-                .findOne(
-                    {
-                        organization: history.organization,
-                        p_order: history.unique,
-                    },
-                    {
-                        _id: 1,
-                    }
-                )
-                .lean()
-            history.date = purchase._id.getTimestamp().getTime()
-
-            await instance.inventoryHistory.findByIdAndUpdate(
-                history._id,
-                { date: history.date },
-                { lean: true },
-            )
-        }
-        console.log('end...', inv_histories.length);
-
-        return
         const org_inv_histories = await instance.inventoryHistory
             .aggregate([
                 {
@@ -235,29 +206,15 @@ module.exports = fp((instance, options, next) => {
         console.log(org_inv_histories.length, 'org_inv_histories.length');
         let changed = 0
         for (const org_inv_history of org_inv_histories) {
-            let hours_inc = 0
-            let minut = 0
             org_inv_history.histories.sort((a, b) => a.unique > b.unique ? 1 : -1)
-            // let i = 1
             for (const inv_history of org_inv_history.histories) {
-                // const inv_date = new Date(inv_history._id.getTimestamp())
-                // const inv_date = new Date(inv_history.date)
-                // if (inv_date.getHours() === 0 || inv_date.getHours() === 5) {
-                // inv_date.setHours(9 + hours_inc)
-                // inv_date.setMinutes(minut)
-                // inv_history.date = inv_date.getTime();
                 // inv_history.date = inv_history._id.getTimestamp().getTime()
-
-                // hours_inc += parseInt(11 * (i / org_inv_history.histories.length))
-                // minut += parseInt(50 * (i / org_inv_history.histories.length))
                 changed++
-                // i++
                 await instance.inventoryHistory.findByIdAndUpdate(
                     inv_history._id,
                     { date: inv_history.date },
                     { lean: true },
                 )
-                // }
             }
         }
         console.log('end...', changed);
@@ -277,24 +234,30 @@ module.exports = fp((instance, options, next) => {
         console.log('goods.length', goods.length);
 
         for (const good of goods) {
-            good.cost = Math.abs(good.cost == Infinity ? 0 : good.cost)
+            if (good.cost == Infinity || good.cost == -Infinity || isNaN(good.cost)) {
+                avg = await instance.purchaseItem.aggregate([
+                    {
+                        $match: {
+                            product_id: good._id,
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            cost: {
+                                $avg: "$purchase_cost",
+                            },
+                        }
+                    },
+                ])
+                g.cost = isNaN(avg.cost) ? 0 : avg.cost
+            } else
+                good.cost = Math.abs(good.cost)
+
             await instance.goodsSales.findByIdAndUpdate(good._id, good)
         }
         console.log('update goods end...');
-
-        const categories = await instance.goodsCategory.find(
-            { organization: "5f5641e8dce4e706c062837a", }
-        )
-            .lean()
-        for (const cat of categories) {
-            cat.services = cat.services.map(serv => {
-                serv.available = true
-                return serv
-            })
-            await instance.goodsCategory.findByIdAndUpdate(cat._id, { $set: { services: cat.services } })
-        }
-        console.log('update categories end...');
-    })();
+    });
 
     (async () => {
         console.log('starting...');

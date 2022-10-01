@@ -460,13 +460,8 @@ module.exports = fp((instance, options, next) => {
 
             if (goodsObj[pro_id] == undefined) {
               pro_ids.push(items[i].product_id)
-              // try {
+
               goodsObj[pro_id] = { ...items[i] }
-              // .toObject()
-              // }
-              // catch (error) {
-              //   console.log(error.message)
-              // }
             }
             else {
               goodsObj[pro_id].purchase_cost =
@@ -489,6 +484,7 @@ module.exports = fp((instance, options, next) => {
         check_closed = check_closed && (items[i].received == items[i].quality)
         itemObj[items[i]._id] = items[i]
       }
+      console.log(goodsObj);
       let additional_costObj = {}
       for (const add of request.body.additional_cost) {
         additional_costObj[add._id] = add
@@ -644,6 +640,10 @@ module.exports = fp((instance, options, next) => {
             index = i
           }
         }
+        console.log(g._id);
+        console.log(`in_stock: ${in_stock}`);
+        console.log(`In_STOCK: ${In_STOCK}`);
+        console.log(`+goodsObj[g._id].received: ${+goodsObj[g._id].received}`);
         if (in_stock != null) {
           if (in_stock > 0) {
             if (g.cost_currency == 'usd') {
@@ -652,8 +652,8 @@ module.exports = fp((instance, options, next) => {
             if (goodsObj[g._id].purchase_cost_currency == 'usd') {
               goodsObj[g._id].purchase_cost = (+goodsObj[g._id].purchase_cost) * currency.value
             }
-            g.cost = (g.cost * In_STOCK + (+goodsObj[g._id].purchase_cost) * (+goodsObj[g._id].received))
-              / (In_STOCK + (+goodsObj[g._id].received))
+            g.cost = (g.cost * In_STOCK + (+goodsObj[g._id].purchase_cost) * (+goodsObj[g._id].to_receive))
+              / (In_STOCK + (+goodsObj[g._id].to_receive))
             if (g.max_cost < g.cost || g.max_cost == 0) {
               g.max_cost = g.cost
             }
@@ -680,6 +680,9 @@ module.exports = fp((instance, options, next) => {
           await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].to_receive, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
           g.last_updated = new Date().getTime()
           g.last_stock_updated = new Date().getTime()
+          console.log(`g.cost: ${g.cost}`);
+          if (g.cost == Infinity || g.cost == -Infinity)
+            delete g.cost
           await instance.goodsSales.updateOne({ _id: g._id }, { $set: g })
         }
       }
@@ -770,7 +773,7 @@ module.exports = fp((instance, options, next) => {
               if (request.body.status != 'returned_order' && request.body.status != 'closed') {
                 request.body.status = 'pending'
               }
-         
+
               const purchaseModel = new instance.inventoryPurchase(request.body)
 
               if (purchaseModel.status == 'closed')

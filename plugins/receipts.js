@@ -892,7 +892,7 @@ async function findReceipt(request, reply, instance) {
     const { receipt_no } = request.query;
     const limit = !isNaN(parseInt(request.query.limit))
       ? parseInt(request.query.limit)
-      : 10
+      : 50
     const page = !isNaN(parseInt(request.query.page))
       ? parseInt(request.query.page)
       : 1
