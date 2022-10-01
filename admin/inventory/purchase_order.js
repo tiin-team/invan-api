@@ -640,10 +640,7 @@ module.exports = fp((instance, options, next) => {
             index = i
           }
         }
-        console.log(g._id);
-        console.log(`in_stock: ${in_stock}`);
-        console.log(`In_STOCK: ${In_STOCK}`);
-        console.log(`+goodsObj[g._id].received: ${+goodsObj[g._id].received}`);
+
         if (in_stock != null) {
           if (in_stock > 0) {
             if (g.cost_currency == 'usd') {
