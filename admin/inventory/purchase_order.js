@@ -1827,18 +1827,19 @@ module.exports = fp((instance, options, next) => {
             }
           }
           purch.additional_cost = []
-          for (var add of request.body.additional_cost) {
-            let amount = 0
-            if (parseFloat(add.amount)) {
-              amount += parseFloat(add.amount)
-              add.amount = parseFloat(add.amount)
+          if (request.body && request.body.additional_cost && Array.isArray(request.body.additional_cost))
+            for (var add of request.body.additional_cost) {
+              let amount = 0
+              if (parseFloat(add.amount)) {
+                amount += parseFloat(add.amount)
+                add.amount = parseFloat(add.amount)
+              }
+              if (add.amount_currency == 'usd') {
+                amount = amount * currency.value
+              }
+              total += amount
+              purch.additional_cost.push(add)
             }
-            if (add.amount_currency == 'usd') {
-              amount = amount * currency.value
-            }
-            total += amount
-            purch.additional_cost.push(add)
-          }
           if (request.body.total_currency == 'usd') {
             total = total / currency.value
           }

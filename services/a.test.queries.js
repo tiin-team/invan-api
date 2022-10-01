@@ -157,6 +157,173 @@ module.exports = fp((instance, options, next) => {
     instance.get('/feko/feko', async (request, reply) => {
         reply.ok(await feko_method(request))
     });
+
+    const createHistoryAndUpdateProduct = async (purch, good, received) => {
+        const service = good.services.find(serv => serv.service + '' == purch.service + '' || serv.service_id + '' == purch.service + '')
+
+        const in_stock = service && !isNaN(service.in_stock) ? service.in_stock : 0
+
+        good.services = good.services.map(serv => {
+            if (serv.service + '' == purch.service + '' || serv.service_id + '' == purch.service + '') {
+                serv.in_stock = +in_stock + received
+            }
+
+            return serv
+        })
+
+        await instance.create_inventory_history(
+            {
+                _id: purch.ordered_by_id,
+                name: purch.ordered_by_name,
+                organization: purch.organization,
+            },
+            'received.',
+            purch.p_order,
+            purch.service,
+            good._id ? good._id : product_id,
+            good.cost,
+            received,
+            +in_stock + received,
+            purch._id.getTimestamp().getTime(),
+        )
+
+        return await instance.goodsSales.updateOne({ _id: good._id }, { $set: good }, { lean: true })
+
+    };
+    // insert inv_history and update product which is not inserted till create purchase
+    (async () => {
+        const startDate = new Date("09.09.2022")
+        const endDate = new Date()
+
+        console.log("Start...");
+        console.log(startDate, endDate);
+
+        const inventoryHistories = await instance.inventoryHistory
+            .aggregate([
+                {
+                    $match: {
+                        createdAt: {
+                            $gte: startDate,
+                            $lte: endDate,
+                        },
+                        $or: [
+                            {
+                                reason: 'received',
+                            },
+                            {
+                                reason: 'receivedd',
+                            },
+                            {
+                                reason: 'received.',
+                            },
+                        ]
+                    }
+                }
+            ])
+            .exec();
+
+        console.log(`inventoryHistories.length`, inventoryHistories.length);
+        const purchases = await instance.inventoryPurchase
+            .find(
+                {
+                    createdAt: {
+                        $gte: startDate,
+                        $lte: endDate,
+                    },
+                },
+                {
+                    _id: 1,
+                    p_order: 1,
+                    service: 1,
+                    organization: 1,
+                    purchase_order_date: 1,
+                },
+            )
+            .lean()
+        console.log("purchases.length", purchases.length);
+
+        const purchasesObj = {}
+        for (const purchase of purchases) {
+            purchasesObj[purchase._id] = purchase
+        }
+
+        const purchaseIds = purchases.map(p => p._id)
+
+        const purchaseItems = await instance.purchaseItem.find({
+            purchase_id: { $in: purchaseIds },
+            received: { $gt: 0 },
+
+        })
+            .limit(2)
+            .lean()
+
+        console.log("purchaseItems.length", purchaseItems.length);
+
+        const goods = await instance.goodsSales.find(
+            {
+                _id: { $in: purchaseItems.map(pItem => pItem.product_id) }
+            },
+            {
+                services: 1,
+                cost: 1,
+            }
+        )
+            .lean()
+        const goodsObj = {}
+        for (const good of goods) {
+            goodsObj[good._id] = good
+        }
+
+        console.log("goods.length", goods.length);
+        let i = 0;
+
+        for (const purchaseItem of purchaseItems) {
+            const history = inventoryHistories.find(inv => inv.unique == purchasesObj[purchaseItem.purchase_id].p_order &&
+                inv.organization + '' == '' + purchasesObj[purchaseItem.purchase_id].organization &&
+                inv.service + '' == '' + purchasesObj[purchaseItem.purchase_id].service &&
+                inv.product_id + '' == '' + purchaseItem.product_id
+            )
+
+            if (
+                history && history.adjustment != purchaseItem.received
+                && purchasesObj[purchaseItem.purchase_id]
+                && goodsObj[purchaseItem.product_id]
+            ) {
+                i++
+                await createHistoryAndUpdateProduct(
+                    purchasesObj[purchaseItem.purchase_id],
+                    goodsObj[purchaseItem.product_id],
+                    purchaseItem.received - history.adjustment,
+                )
+            }
+
+            if (
+                !history
+                && purchasesObj[purchaseItem.purchase_id]
+                && goodsObj[purchaseItem.product_id]
+            ) {
+                i++
+                await createHistoryAndUpdateProduct(
+                    purchasesObj[purchaseItem.purchase_id],
+                    goodsObj[purchaseItem.product_id]
+                        ? goodsObj[purchaseItem.product_id]
+                        : {
+                            _id: purchaseItem.product_id,
+                            services: [
+                                {
+                                    service: purchasesObj[purchaseItem.purchase_id].service,
+                                    in_stock: 0,
+                                },
+                            ]
+                        },
+                    purchaseItem.received,
+                )
+            }
+        }
+        console.log(`End... total: ${i}`);
+    })();
+
+    // update inv_history date correct
     (async () => {
         console.log('starting...');
         const startDate = new Date('07.09.2022')//.toISOString()
@@ -219,6 +386,7 @@ module.exports = fp((instance, options, next) => {
         }
         console.log('end...', changed);
     });
+
     //update goods negative cost
     (async () => {
         console.log('start update goods...');
@@ -257,8 +425,9 @@ module.exports = fp((instance, options, next) => {
             await instance.goodsSales.findByIdAndUpdate(good._id, good)
         }
         console.log('update goods end...');
-    })();
+    });
 
+    // update suppliers balance
     (async () => {
         console.log('starting...');
         const organizations = await instance.organizations
@@ -392,6 +561,7 @@ module.exports = fp((instance, options, next) => {
     //     }
     //     console.log('end');
     // })
+
     instance.get('/get/tiin/check-prices', async (request, reply) => {
         const update = request.query.update
         const size = !isNaN(request.query.size) ? parseInt(request.query.size) : 1
