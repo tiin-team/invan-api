@@ -677,9 +677,10 @@ module.exports = fp((instance, options, next) => {
           await instance.create_inventory_history(admin, 'received', purch.p_order, purch.service, g._id, g.cost, +goodsObj[g._id].to_receive, +in_stock + +goodsObj[g._id].to_receive, new Date().getTime())
           g.last_updated = new Date().getTime()
           g.last_stock_updated = new Date().getTime()
-          console.log(`g.cost: ${g.cost}`);
+
           if (g.cost == Infinity || g.cost == -Infinity)
             delete g.cost
+
           await instance.goodsSales.updateOne({ _id: g._id }, { $set: g })
         }
       }
