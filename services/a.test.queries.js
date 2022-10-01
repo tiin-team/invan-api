@@ -257,7 +257,7 @@ module.exports = fp((instance, options, next) => {
             await instance.goodsSales.findByIdAndUpdate(good._id, good)
         }
         console.log('update goods end...');
-    });
+    })();
 
     (async () => {
         console.log('starting...');
