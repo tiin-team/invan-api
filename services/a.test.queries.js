@@ -259,9 +259,14 @@ module.exports = fp((instance, options, next) => {
 
         console.log("purchaseItems.length", purchaseItems.length);
 
+        const productIds = new Set()
+        for (const pItem of purchaseItems) {
+            productIds.add(pItem.product_id)
+        }
+        console.log(productIds);
         const goods = await instance.goodsSales.find(
             {
-                _id: { $in: purchaseItems.map(pItem => pItem.product_id) }
+                _id: { $in: productIds }
             },
             {
                 services: 1,
