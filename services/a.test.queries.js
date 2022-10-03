@@ -212,6 +212,7 @@ module.exports = fp((instance, options, next) => {
                     service: 1,
                     organization: 1,
                     purchase_order_date: 1,
+                    items: 1,
                 },
             )
             .lean()
@@ -234,11 +235,16 @@ module.exports = fp((instance, options, next) => {
 
         console.log("purchaseItems.length", purchaseItems.length);
 
-        const productIds = new Set()
+        const productIds = []
         for (const pItem of purchaseItems) {
-            productIds.add(pItem.product_id)
+            productIds.push(pItem.product_id)
         }
-        console.log(productIds);
+        for (const purchase of purchases) {
+            for (const pItem of purchase.items) {
+                productIds.push(instance.ObjectId(pItem.product_id))
+            }
+        }
+
         const goods = await instance.goodsSales.find(
             {
                 _id: { $in: productIds }
@@ -258,7 +264,7 @@ module.exports = fp((instance, options, next) => {
         let i = 0;
 
         for (const purchaseItem of purchaseItems) {
-            const history = await instance.inventoryHistories.findOne(
+            const history = await instance.inventoryHistory.findOne(
                 {
                     $or: [
                         {
