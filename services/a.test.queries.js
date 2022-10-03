@@ -237,6 +237,8 @@ module.exports = fp((instance, options, next) => {
                     service: 1,
                     organization: 1,
                     purchase_order_date: 1,
+                    ordered_by_id: 1,
+                    ordered_by_name: 1,
                     items: 1,
                 },
             )
@@ -352,7 +354,7 @@ module.exports = fp((instance, options, next) => {
         console.log(`exists_histories: ${exists_histories}`);
         console.log(`not_exists_histories: ${not_exists_histories}`);
         console.log(`End... total: ${i}`);
-    })();
+    });
 
     // update inv_history date correct
     (async () => {
@@ -516,7 +518,7 @@ module.exports = fp((instance, options, next) => {
             }
         }
         console.log('end...');
-    });
+    })();
 
     // (async () => {
     //     const transactions = await instance.supplierTransaction.find(

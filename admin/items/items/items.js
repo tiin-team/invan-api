@@ -426,7 +426,7 @@ module.exports = (instance, options, next) => {
   const get_list_of_items = async (request, reply, admin) => {
     var category_id;
 
-    const admin_service_ids = []
+    const admin_service_ids = admin.services.map(serv => serv.service)
 
     const query = {
       organization: admin.organization,
