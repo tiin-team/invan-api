@@ -198,31 +198,6 @@ module.exports = fp((instance, options, next) => {
         console.log("Start...");
         console.log(startDate, endDate);
 
-        const inventoryHistories = await instance.inventoryHistory
-            .aggregate([
-                {
-                    $match: {
-                        createdAt: {
-                            $gte: startDate,
-                            $lte: endDate,
-                        },
-                        $or: [
-                            {
-                                reason: 'received',
-                            },
-                            {
-                                reason: 'receivedd',
-                            },
-                            {
-                                reason: 'received.',
-                            },
-                        ]
-                    }
-                }
-            ])
-            .exec();
-
-        console.log(`inventoryHistories.length`, inventoryHistories.length);
         const purchases = await instance.inventoryPurchase
             .find(
                 {
@@ -283,46 +258,56 @@ module.exports = fp((instance, options, next) => {
         let i = 0;
 
         for (const purchaseItem of purchaseItems) {
-            const history = inventoryHistories.find(inv => inv.unique == purchasesObj[purchaseItem.purchase_id].p_order &&
-                inv.organization + '' == '' + purchasesObj[purchaseItem.purchase_id].organization &&
-                inv.service + '' == '' + purchasesObj[purchaseItem.purchase_id].service &&
-                inv.product_id + '' == '' + purchaseItem.product_id
-            )
-
-            if (
-                history && history.adjustment != purchaseItem.received
-                && purchasesObj[purchaseItem.purchase_id]
-                && goodsObj[purchaseItem.product_id]
-            ) {
-                i++
-                await createHistoryAndUpdateProduct(
-                    purchasesObj[purchaseItem.purchase_id],
-                    goodsObj[purchaseItem.product_id],
-                    purchaseItem.received - history.adjustment,
-                )
-            }
-
-            if (
-                !history
-                && purchasesObj[purchaseItem.purchase_id]
-                && goodsObj[purchaseItem.product_id]
-            ) {
-                i++
-                await createHistoryAndUpdateProduct(
-                    purchasesObj[purchaseItem.purchase_id],
-                    goodsObj[purchaseItem.product_id]
-                        ? goodsObj[purchaseItem.product_id]
-                        : {
-                            _id: purchaseItem.product_id,
-                            services: [
-                                {
-                                    service: purchasesObj[purchaseItem.purchase_id].service,
-                                    in_stock: 0,
-                                },
-                            ]
+            const history = await instance.inventoryHistories.findOne(
+                {
+                    $or: [
+                        {
+                            reason: 'received',
                         },
-                    purchaseItem.received,
-                )
+                        {
+                            reason: 'receivedd',
+                        },
+                        {
+                            reason: 'received.',
+                        },
+                    ],
+                    unique: purchasesObj[purchaseItem.purchase_id].p_order,
+                    organization: '' + purchasesObj[purchaseItem.purchase_id].organization,
+                    service: '' + purchasesObj[purchaseItem.purchase_id].service,
+                    product_id: '' + purchaseItem.product_id,
+                }
+            )
+                .lean()
+
+            if (purchasesObj[purchaseItem.purchase_id] && goodsObj[purchaseItem.product_id]) {
+                if (!history) {
+                    i++
+                    await createHistoryAndUpdateProduct(
+                        purchasesObj[purchaseItem.purchase_id],
+                        goodsObj[purchaseItem.product_id]
+                            ? goodsObj[purchaseItem.product_id]
+                            : {
+                                _id: purchaseItem.product_id,
+                                services: [
+                                    {
+                                        service: purchasesObj[purchaseItem.purchase_id].service,
+                                        in_stock: 0,
+                                    },
+                                ]
+                            },
+                        purchaseItem.received,
+                    )
+                } else
+                    if (
+                        history && history.adjustment != purchaseItem.received
+                    ) {
+                        i++
+                        await createHistoryAndUpdateProduct(
+                            purchasesObj[purchaseItem.purchase_id],
+                            goodsObj[purchaseItem.product_id],
+                            purchaseItem.received - history.adjustment,
+                        )
+                    }
             }
         }
         console.log(`End... total: ${i}`);

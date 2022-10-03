@@ -425,9 +425,25 @@ module.exports = (instance, options, next) => {
 
   const get_list_of_items = async (request, reply, admin) => {
     var category_id;
+
+    const admin_service_ids = []
+
     const query = {
       organization: admin.organization,
       item_type: { $ne: 'variant' },
+      $and: [
+        {
+          $or: [
+            {
+              'services.service': { $in: admin_service_ids },
+            },
+            {
+              'services.service_id': { $in: admin_service_ids },
+            },
+          ],
+          'services.available': true,
+        }
+      ]
     };
 
     let elemmatch = {};
@@ -1906,7 +1922,10 @@ module.exports = (instance, options, next) => {
                 // } catch (error) {
                 //   instance.send_Error('to Object', error.message);
                 // }
-                if (service_id + '' == ser._id + '' || organization.is_same_service_price) {
+                if (
+                  (service_id + '' == ser._id + '' || organization.is_same_service_price)
+                  || ser.available
+                ) {
                   if (
                     typeof request.body.price == typeof 5 &&
                     request.body.price != serviceMap[ser._id + ''].price
@@ -1958,7 +1977,10 @@ module.exports = (instance, options, next) => {
                   updateItem.services.push(serviceMap[ser._id + '']);
                 }
               } else {
-                if (service_id + '' == ser._id + '' || organization.is_same_service_price) {
+                if (
+                  (service_id + '' == ser._id + '' || organization.is_same_service_price)
+                  || ser.available
+                ) {
                   if (service_id + '' == ser._id + '')
                     updateItem.services.push({
                       service: ser._id,
