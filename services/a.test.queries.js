@@ -190,6 +190,31 @@ module.exports = fp((instance, options, next) => {
         return await instance.goodsSales.updateOne({ _id: good._id }, { $set: good }, { lean: true })
 
     };
+
+    // insert inv_history and update product which is not inserted till create purchase
+    const getPurchaseItems = (purchases, purchaseItems) => {
+        const purchaseItemsRes = []
+
+        for (const pItem of purchaseItems) {
+            purchaseItemsRes.push(pItem)
+        }
+
+        for (const purchase of purchases) {
+            for (const pItem of purchase.items) {
+                if (purchaseItemsRes.find(pItem => pItem)) {
+                    purchaseItemsRes.push({
+                        organization: purchase.organization,
+                        service: purchase.service,
+                        purchase_id: purchase._id,
+                        product_id: pItem.product_id,
+                        received: pItem.quality,
+                    })
+                }
+            }
+        }
+
+        return purchaseItemsRes
+    }
     // insert inv_history and update product which is not inserted till create purchase
     (async () => {
         const startDate = new Date("09.09.2022")
@@ -225,13 +250,15 @@ module.exports = fp((instance, options, next) => {
 
         const purchaseIds = purchases.map(p => p._id)
 
-        const purchaseItems = await instance.purchaseItem.find({
+        const _purchaseItems = await instance.purchaseItem.find({
             purchase_id: { $in: purchaseIds },
             received: { $gt: 0 },
 
         })
             .limit(2)
             .lean()
+
+        const purchaseItems = getPurchaseItems(purchases, _purchaseItems)
 
         console.log("purchaseItems.length", purchaseItems.length);
 
