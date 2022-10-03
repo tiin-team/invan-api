@@ -244,6 +244,7 @@ module.exports = fp((instance, options, next) => {
                 productIds.push(instance.ObjectId(pItem.product_id))
             }
         }
+        console.log("productIds.length", productIds.length);
 
         const goods = await instance.goodsSales.find(
             {
@@ -263,6 +264,8 @@ module.exports = fp((instance, options, next) => {
         console.log("goods.length", goods.length);
         let i = 0;
 
+        let exists_histories = 0
+        let not_exists_histories = 0
         for (const purchaseItem of purchaseItems) {
             const history = await instance.inventoryHistory.findOne(
                 {
@@ -288,6 +291,7 @@ module.exports = fp((instance, options, next) => {
             if (purchasesObj[purchaseItem.purchase_id] && goodsObj[purchaseItem.product_id]) {
                 if (!history) {
                     i++
+                    not_exists_histories++
                     await createHistoryAndUpdateProduct(
                         purchasesObj[purchaseItem.purchase_id],
                         goodsObj[purchaseItem.product_id]
@@ -303,7 +307,8 @@ module.exports = fp((instance, options, next) => {
                             },
                         purchaseItem.received,
                     )
-                } else
+                } else {
+                    exists_histories++
                     if (
                         history && history.adjustment != purchaseItem.received
                     ) {
@@ -314,8 +319,11 @@ module.exports = fp((instance, options, next) => {
                             purchaseItem.received - history.adjustment,
                         )
                     }
+                }
             }
         }
+        console.log(`exists_histories: ${exists_histories}`);
+        console.log(`not_exists_histories: ${not_exists_histories}`);
         console.log(`End... total: ${i}`);
     })();
 
