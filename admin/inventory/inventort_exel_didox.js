@@ -288,7 +288,7 @@ module.exports = fp((instance, _, next) => {
       const goods = await instance.goodsSales
         .find(
           { _id: { $in: product_ids } },
-          { name: 1, barcode: 1, sold_by: 1, item_type: 1, parent_name: 1, barcode: 1, mxik: 1 })
+          { name: 1, barcode: 1, sold_by: 1, item_type: 1, parent_name: 1, barcode: 1, mxik: 1, nds_value: 1 })
         .lean()
       const goodsObj = {}
       for (const g of goods) {
@@ -310,6 +310,8 @@ module.exports = fp((instance, _, next) => {
             it.product_name = `${goodsObj[it.product_id].parent_name} (${goodsObj[it.product_id].name})`
           }
         }
+
+        nds_value = isNaN(parseFloat(goodsObj[it.product_id].nds_value)) ? 15 : parseFloat(goodsObj[it.product_id].nds_value);
 
         exelItems.push([
           '',
@@ -367,10 +369,10 @@ module.exports = fp((instance, _, next) => {
           it.price,
           '',
           '',
-          `${it.cost.toFixed(2)}`,
+          parseFloat((it.total * 100 / (100 + nds_value)).toFixed(2)),
           15,
-          (it.cost * 15 / 100).toFixed(2),
-          (it.cost + it.cost * 15 / 100).toFixed(2),
+          parseFloat((it.total * nds_value / (100 + nds_value)).toFixed(2)),
+          parseFloat(it.total.toFixed(2)),
         ])
         index++
       }
