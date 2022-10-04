@@ -313,6 +313,8 @@ module.exports = fp((instance, _, next) => {
 
         nds_value = isNaN(parseFloat(goodsObj[it.product_id].nds_value)) ? 15 : parseFloat(goodsObj[it.product_id].nds_value);
 
+        it.total = it.value * it.price
+
         exelItems.push([
           '',
           '',
