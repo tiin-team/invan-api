@@ -288,7 +288,7 @@ module.exports = fp((instance, _, next) => {
       const goods = await instance.goodsSales
         .find(
           { _id: { $in: product_ids } },
-          { name: 1, barcode: 1, sold_by: 1, item_type: 1, parent_name: 1, barcode: 1 })
+          { name: 1, barcode: 1, sold_by: 1, item_type: 1, parent_name: 1, barcode: 1, mxik: 1 })
         .lean()
       const goodsObj = {}
       for (const g of goods) {
