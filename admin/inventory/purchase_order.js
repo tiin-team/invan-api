@@ -484,7 +484,7 @@ module.exports = fp((instance, options, next) => {
         check_closed = check_closed && (items[i].received == items[i].quality)
         itemObj[items[i]._id] = items[i]
       }
-      console.log(goodsObj);
+
       let additional_costObj = {}
       for (const add of request.body.additional_cost) {
         additional_costObj[add._id] = add
@@ -566,8 +566,7 @@ module.exports = fp((instance, options, next) => {
             balance: 0,
             balance_usd: 0,
           }]
-        let supp_cur_serv_index = services
-          .findIndex(elem => elem.service + '' == purch.service + '')
+        let supp_cur_serv_index = services.findIndex(elem => elem.service + '' == purch.service + '')
 
         if (supp_cur_serv_index === -1) {
           supp_cur_serv_index = services.length
