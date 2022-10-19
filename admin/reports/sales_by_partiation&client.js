@@ -610,6 +610,12 @@ module.exports = (instance, _, next) => {
     for (const partiation of partiations) {
       partiations_obj[partiation._id] = partiation
     }
+    console.log("=============");
+    console.log({
+      user_id: { $in: result.map(r => r.user_id) },
+      organization: result[0].organization
+    });
+    console.log("=============");
     console.log("result.map(r => r.user_id)", result.map(r => r.user_id));
     console.log("clients", clients);
     console.log("users_obj", users_obj);
