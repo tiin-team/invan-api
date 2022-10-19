@@ -610,9 +610,10 @@ module.exports = (instance, _, next) => {
     for (const partiation of partiations) {
       partiations_obj[partiation._id] = partiation
     }
-
+    console.log("users_obj", users_obj);
     for (let i = 0; i < result.length; i++) {
-      if (users_obj[result[i].user_id])
+      console.log(users_obj[result[i].user_id]);
+      if ("users_obj[result[i].user_id], result[i].user_id",users_obj[result[i].user_id], result[i].user_id)
         result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
       else
         result[i].client_name = ""
@@ -625,7 +626,7 @@ module.exports = (instance, _, next) => {
         result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
       }
       result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
-      result[i].all_group = ""
+      result[i].alt_group = ""
       result[i].size = ""
     }
 

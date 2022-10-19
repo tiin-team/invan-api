@@ -545,7 +545,7 @@ module.exports = (instance, options, next) => {
     }
     query['$or'] = []
 
-    const passwordPattern = /^\d{4}$/
+    const passwordPattern = /^(\d{4})|\d{6}$/
     if (passwordPattern.test(update.password)) {
       query['$or'].push({ password: update.password })
       query['$or'].push({ super_password: update.password })

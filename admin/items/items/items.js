@@ -3064,11 +3064,13 @@ module.exports = (instance, options, next) => {
                   mxik: 1,
                   nds_value: 1,
                   marking: 1,
+                  barcode_by_type: 1,
+                  count_by_type: 1,
                 },
               },
             ],
             async (_, goods) => {
-              // console.log(goods[0], goods.length, 'goods.length');
+
               if (goods == null) {
                 goods = [];
               }
@@ -3104,6 +3106,9 @@ module.exports = (instance, options, next) => {
                 goods[index].sale = discountsObj[goods[index]._id]
                 goods[index].marking = goods[index].marking === true ? true : false;
                 delete goods[index].services;
+
+                goods[index].barcode_by_type = goods[index].barcode_by_type ? goods[index].barcode_by_type : ''
+                goods[index].count_by_type = goods[index].count_by_type ? goods[index].count_by_type : 0
               }
 
               reply.send(goods);
