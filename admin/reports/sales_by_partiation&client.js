@@ -306,6 +306,7 @@ module.exports = (instance, _, next) => {
         date: '$_id.date',
         supplier_name: 1,
         product_name: 1,
+        product_id: 1,
         category_name: 1,
         value: 1,
         p_order: 1,
@@ -509,6 +510,7 @@ module.exports = (instance, _, next) => {
         user_id: 1,
         date: 1,
         supplier_name: 1,
+        product_id: '$sold_item_list.product_id',
         product_name: '$sold_item_list.product_name',
         category_name: '$sold_item_list.category_name',
         p_order: '$sold_item_list.p_order',
@@ -595,11 +597,13 @@ module.exports = (instance, _, next) => {
     for (const user of clients) {
       users_obj[user.user_id] = user
     }
+
     const partiation_ids = []
     for (let i = 0; i < result.length; i++) {
       if (result[i].partiation_id)
         partiation_ids.push(instance.ObjectId(result[i].partiation_id))
     }
+
     const partiations = await instance.goodsSaleQueue
       .find({
         _id: { $in: partiation_ids },
@@ -610,15 +614,22 @@ module.exports = (instance, _, next) => {
     for (const partiation of partiations) {
       partiations_obj[partiation._id] = partiation
     }
-    console.log("=============");
-    console.log("result[0].organization", result);
-    console.log("result[0].organization", result[0].organization);
-    console.log("=============");
-    console.log("result.map(r => r.user_id)", result.map(r => r.user_id));
-    console.log("clients", clients);
-    console.log("users_obj", users_obj);
+
+    const goods = await instance.goodsSales
+      .find(
+        { _id: { $in: [] } },
+        {
+          sold_by: 1,
+        },
+      )
+      .lean()
+    const goods_obj = {}
+    for (const good of goods) {
+      goods_obj[good._id] = good
+    }
+
     for (let i = 0; i < result.length; i++) {
-      console.log("users_obj[result[i].user_id]", users_obj[result[i].user_id]);
+
       if (users_obj[result[i].user_id])
         result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
       else
@@ -631,7 +642,8 @@ module.exports = (instance, _, next) => {
         result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no
         result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
       }
-      result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
+      // result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
+      result[i].qty_box = goods_obj[result[i].product_id] ? goods_obj[result[i].product_id] : "each"
       result[i].alt_group = ""
       result[i].size = ""
     }
