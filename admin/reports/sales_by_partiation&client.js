@@ -643,7 +643,10 @@ module.exports = (instance, _, next) => {
         result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
       }
       // result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
-      result[i].qty_box = goods_obj[result[i].product_id] ? goods_obj[result[i].product_id] : "each"
+      result[i].qty_box = goods_obj[result[i].product_id] && goods_obj[result[i].product_id].sold_by
+        ? goods_obj[result[i].product_id].sold_by
+        : "each"
+
       result[i].alt_group = ""
       result[i].size = ""
     }
