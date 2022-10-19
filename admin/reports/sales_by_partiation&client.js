@@ -610,10 +610,12 @@ module.exports = (instance, _, next) => {
     for (const partiation of partiations) {
       partiations_obj[partiation._id] = partiation
     }
+    console.log("result.map(r => r.user_id)", result.map(r => r.user_id));
+    console.log("clients", clients);
     console.log("users_obj", users_obj);
     for (let i = 0; i < result.length; i++) {
-      console.log("users_obj[result[i].user_id], result[i].user_id", users_obj[result[i].user_id]);
-      if (users_obj[result[i].user_id], result[i].user_id)
+      console.log("users_obj[result[i].user_id]", users_obj[result[i].user_id]);
+      if (users_obj[result[i].user_id])
         result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
       else
         result[i].client_name = ""
