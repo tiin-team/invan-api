@@ -639,11 +639,12 @@ module.exports = (instance, _, next) => {
 
       if (partiations_obj[result[i].partiation_id]) {
         result[i].p_order = partiations_obj[result[i].partiation_id].p_order
-        result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no
+        result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no ?
+          partiations_obj[result[i].partiation_id].partiation_no : result[i].p_order
         result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
       }
-      // result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
-      result[i].qty_box = goods_obj[result[i].product_id] && goods_obj[result[i].product_id].sold_by
+      result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
+      result[i].sold_by = goods_obj[result[i].product_id] && goods_obj[result[i].product_id].sold_by
         ? goods_obj[result[i].product_id].sold_by
         : "each"
 
