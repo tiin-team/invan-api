@@ -551,7 +551,7 @@ module.exports = (instance, _, next) => {
         // cashier_id: 1,
         cashier_name: 1,
         // poss_count: 1,
-        // organization: 1,
+        organization: 1,
       }
     }
 
@@ -611,10 +611,8 @@ module.exports = (instance, _, next) => {
       partiations_obj[partiation._id] = partiation
     }
     console.log("=============");
-    console.log({
-      user_id: { $in: result.map(r => r.user_id) },
-      organization: result[0].organization
-    });
+    console.log("result[0].organization", result);
+    console.log("result[0].organization", result[0].organization);
     console.log("=============");
     console.log("result.map(r => r.user_id)", result.map(r => r.user_id));
     console.log("clients", clients);
