@@ -31,6 +31,7 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
         }
         const projectDebtHistory = {
             $project: {
+                receipt_no: '$debt_pay_history.receipt_no',
                 amount_type: '$debt_pay_history.amount_type',
                 by_id: '$debt_pay_history.by_id',
                 by_name: '$debt_pay_history.by_name',
@@ -69,6 +70,7 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
         const projectItems = {
             $project: {
                 date: '$date',
+                receipt_no: '$receipt_no',
                 product_name: '$sold_item_list.product_name',
                 price: '$sold_item_list.price',
                 value: '$sold_item_list.value',

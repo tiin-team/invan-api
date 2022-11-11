@@ -107,7 +107,7 @@ curl --location --request POST 'http://0.0.0.0:3003/supplier/verify' \
 ```cURL
 curl --location --request GET 'http://0.0.0.0:3003/organizations' \
 --header 'Accept-version: 1.0.0' \
---header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk'
+--header 'Authorization: Bearer ...'
 ```
 
 ## Dashboard
@@ -136,7 +136,7 @@ curl --location --request GET 'http://0.0.0.0:3003/organizations' \
 ```
 curl --location --request POST 'https://dev.in1.uz/api/invan-supplier/dashboard/1546282800000/1652085011829' \
 --header 'Accept-version: 1.0.0' \
---header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk' \
+--header 'Authorization: Bearer ...' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "custom": false,
@@ -171,7 +171,7 @@ curl --location --request POST 'https://dev.in1.uz/api/invan-supplier/dashboard/
 ```cURL
 curl --location --request POST 'https://dev.in1.uz/api/invan-supplier/dashboard/1546282800000/1652085011829/10/1' \
 --header 'Accept-version: 1.0.0' \
---header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk' \
+--header 'Authorization: Bearer ...' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "custom": false,
@@ -194,7 +194,7 @@ curl --location --request POST 'https://dev.in1.uz/api/invan-supplier/dashboard/
 
 ```cURL
 curl --location --request GET 'http://0.0.0.0:3003/supplier/transactions' \
---header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjU2NDNjMWRjZTRlNzA2YzA2Mjg0YWQiLCJwaG9uZV9udW1iZXIiOiIrOTk4OTU0MzM0NTY3Iiwib3JnYW5pemF0aW9uIjoiNWY1NjQxZThkY2U0ZTcwNmMwNjI4MzdhIiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMDgwMzQzfQ.4AKNl4zSHluL9-KQ6WY5XOooHpu7ZTCyyJ1NiblvCqk'
+--header 'Authorization: Bearer ...'
 ```
 
 ## Get purchase pdf
@@ -231,7 +231,7 @@ curl --location --request GET 'https://dev.in1.uz/api/inventory/purchase/pdf/627
 ```cURL
 curl --location --request GET 'https://dev.in1.uz/api/invan-supplier/supplier/valuation?sort_by=name&sort_type=1' \
 --header 'Accept-version: 1.0.0' \
---header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZV9udW1iZXIiOiIrOTk4OTk0MzY0NjE1Iiwicm9sZSI6InN1cHBsaWVyIiwiaWF0IjoxNjUyMTA4ODc5fQ.tzZHrnj6dEC0hUP72O2KVlZYRxIJd6pFkpiIIebdxp8'
+--header 'Authorization: Bearer ...'
 ```
 
 ### Responses

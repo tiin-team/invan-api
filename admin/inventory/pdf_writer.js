@@ -444,6 +444,8 @@ module.exports = fp((instance, _, next) => {
                         width: 510,
                         align: 'right'
                     })
+                    .text(`${instance.i18n.__(`receive`)} _______________________________`)
+                    .text(`${instance.i18n.__(`otpustil`)} _______________________________`)
                 break;
             }
             case 'count': {

@@ -1630,7 +1630,7 @@ module.exports = fp((instance, _, next) => {
             try {
                 const stream = doc.pipe(fs.createWriteStream(`./static/${time}.pdf`));
                 // building pdf
-                const title = `Receipt ${receipt.receipt_no}`;
+                const title = `${instance.i18n.__('receipt_no')} ${receipt.receipt_no}`;
                 const payment = [];
                 for (const p of receipt.payment) {
                     if (p.value) {

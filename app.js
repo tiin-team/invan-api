@@ -235,5 +235,11 @@ module.exports = fp(function (fastify, opts, next) {
     options: Object.assign(options, opts)
   })
 
+  // petronet
+  fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'petronet'),
+    options: Object.assign(options, opts)
+  })
+
   next()
 })

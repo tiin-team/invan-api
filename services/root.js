@@ -7,14 +7,6 @@ const qs = require('qs');
 var FCM = require('fcm-node')
 var serverKey = 'AAAACPKexKE:APA91bHcaxbRaXNjWGaxWglbs0U4OpbI1MLxb1IvF3UY1OZnkllgQ_nizhvVyr9fXv2EBVyZxjb3C9rmrXFDuMap4Z96bgZ_kcVM7YA0kWgvMbpUAisdycuxCdUd_x3ib4gMN0y5Mlml'
 var fcm = new FCM(serverKey)
-var wrong_token = {
-  statusCode: 498,
-  error: "Invalid token",
-  message: "Invalid token"
-}
-var my_headers = {
-  'Authorization': 'Bearer xoxp-705019615312-693631035683-697967001330-e46e7a5503975f8dfd423212c482f6da'
-}
 
 var BASE_URL = 'http://178.218.207.90'
 BASE_URL = 'http://localhost:3000'
@@ -146,9 +138,6 @@ module.exports = (instance, _, next) => {
     reply.ok({ phone_number: phone_number })
     axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.SMSCHANNEL}&parse_mode=html&text=${sms_code} is Sms code of ${phone_number}`)
       .then(function (response) { }).catch(function (err) { }).then(function () { })
-  }
-  var headers = {
-    'Authorization': 'Bearer xoxp-637695996626-649119369920-698642311681-2ee950bb8e6bd82f0a29625456a280ba'
   }
 
   function send_slack(sms_code, phone_number, reply) {

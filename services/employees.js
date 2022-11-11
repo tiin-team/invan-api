@@ -269,10 +269,6 @@ module.exports = (instance, _, next) => {
     reply.ok()
   }
 
-  var headers = {
-    'Authorization': 'Bearer xoxp-637695996626-649119369920-698642311681-2ee950bb8e6bd82f0a29625456a280ba'
-  }
-
   function send_slack(sms_code, phone_number, reply) {
     // axios.post('https://slack.com/api/chat.postMessage', qs.stringify({
     //   channel: "GLDF4580J",

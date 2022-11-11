@@ -1356,6 +1356,7 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('fcmNotification', fcmNotification)
 
   const clients = instance.model('clientsDatabase', {
+    id: { type: String, default: '' },
     user_id: {
       type: String,
       default: ''

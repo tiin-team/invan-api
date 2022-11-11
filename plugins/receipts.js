@@ -74,6 +74,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
     }
 
     const sold_item_ids = new Set()
+    const invalidObjectIds = []
     for (const rr of request.body) {
       if (
         !date_and_numbers.includes(
@@ -81,9 +82,21 @@ const receiptCreateGroup = async (request, reply, instance) => {
         )
       ) {
         rr.sold_item_list = Array.isArray(rr.sold_item_list) ? rr.sold_item_list : []
-        rr.sold_item_list.forEach(item => sold_item_ids.add(item.product_id))
+        rr.sold_item_list.forEach(item => {
+          if (!item.product_id && item.product_id.length != 24)
+            invalidObjectIds.push({
+              product_id: item.product_id,
+              receipt_no: rr.receipt_no,
+              product_name: item.product_name,
+              value: item.value,
+            })
+          sold_item_ids.add(item.product_id)
+        })
       }
     }
+    if (invalidObjectIds.length)
+      instance.send_Error(`receiptCreateGroup, invalidObjectIds:`, JSON.stringify(invalidObjectIds))
+
     const items = await instance.goodsSales
       .find(
         { _id: { $in: [...sold_item_ids] } },
@@ -282,9 +295,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 : []
               prices = prices.sort((a, b) => a.from - b.from)
 
-              for (const f_price_index in prices) {
-                if ($receiptModel.sold_item_list[i].value >= prices[f_price_index].from) {
-                  $receiptModel.sold_item_list[i].price_position = f_price_index
+              for (let z = 0; z < prices.length; z++) {
+                if ($receiptModel.sold_item_list[i].value >= prices[z].from) {
+                  $receiptModel.sold_item_list[i].price_position = z
                 }
               }
 
@@ -347,7 +360,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 }
 
               } catch (error) {
-                instance.send_Error('Solt item partion not found', JSON.stringify(error))
+                instance.send_Error('Sold item partion not found', JSON.stringify(error))
               }
 
               $receiptModel.sold_item_list[i].count_by_type =
@@ -452,7 +465,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
   } catch (error) {
     reply.error(error.message);
     instance.send_Error(`receiptCreateGroup, service_id: ${service_id}, pos_id: ${pos_id}`, error)
-    // instance.send_Error(`receiptCreateGroup..., sold_item_list: ${JSON.stringify(body.map(b => b.sold_item_list))}`, '')
   }
   return reply;
 };
