@@ -5,7 +5,13 @@ const calculateDefaultCash = async (items, percent = 1) => {
   let cash_back = 0;
 
   for (const item of items) {
-    cash_back += item.value * item.price * (percent / 100);
+    cash_back +=
+      item.product_id == '616c5377121b0ff994d9049b' &&
+        body.service == '6358c6721e964d8b7d4ceb28'
+        ? item.price + (item.value - 1) * item.price * (percent / 100)
+        : item.value * item.price * (percent / 100);
+
+    // cash_back += item.value * item.price * (percent / 100);
   }
   return cash_back
 }

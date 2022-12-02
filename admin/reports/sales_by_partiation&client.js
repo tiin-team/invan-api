@@ -392,271 +392,281 @@ module.exports = (instance, _, next) => {
   }
 
   const by_partiation_report_by_item = async (request, reply, admin) => {
-    const { min, max, page } = request.params;
-    let limit = request.params.limit;
-    const { services } = request.body;
+    try {
+      const { min, max, page } = request.params;
+      let limit = request.params.limit;
+      const { services } = request.body;
 
-    const user_available_services = request.user.services.map(serv => serv.service.toString())
+      const user_available_services = request.user.services.map(serv => serv.service.toString())
 
-    const filterReceipts = {
-      organization: admin.organization,
-      receipt_state: {
-        $ne: 'draft'
-      },
-      debt_id: null,
-      service: { $in: user_available_services },
-      date: {
-        // $gte: min - (process.env.TIME_DIFF | 0),
-        // $lte: max - (process.env.TIME_DIFF | 0),
-        $gte: min,
-        $lte: max,
-      }
-    }
-
-    if (services && services.length > 0) {
-      for (const service of services) {
-        if (!user_available_services.includes(service)) {
-          return reply.error('Acces denied')
+      const filterReceipts = {
+        organization: admin.organization,
+        receipt_state: {
+          $ne: 'draft'
+        },
+        debt_id: null,
+        service: { $in: user_available_services },
+        date: {
+          // $gte: min - (process.env.TIME_DIFF | 0),
+          // $lte: max - (process.env.TIME_DIFF | 0),
+          $gte: min,
+          $lte: max,
         }
       }
 
-      filterReceipts.service = {
-        $in: services
-      }
-    }
+      if (services && services.length > 0) {
+        for (const service of services) {
+          if (!user_available_services.includes(service)) {
+            return reply.error('Acces denied')
+          }
+        }
 
-    const projectBeforUnwind = {
-      $project: {
-        date: 1,
-        // date: {
-        //   $multiply: [
-        //     {
-        //       $floor: {
-        //         $divide: [
-        //           {
-        //             $max: [
-        //               0,
-        //               {
-        //                 $add: [
-        //                   '$date',
-        //                   18000000
-        //                 ]
-        //               }
-        //             ]
-        //           },
-        //           86400000
-        //         ],
-        //       },
-        //     },
-        //     86400000,
-        //   ],
-        // },
-        receipt_no: 1,
-        sold_item_list: 1,
-        user_id: 1,
-        cashier_id: 1,
-        cashier_name: 1,
-        organization: 1,
-      }
-    }
-    const unwindSoldItemList = {
-      $unwind: "$sold_item_list"
-    }
-
-    const sortResult = {
-      $sort: {
-        date: -1
-      }
-    }
-
-    const countAllItems = {
-      $group: {
-        _id: null,
-        count: {
-          $sum: 1
+        filterReceipts.service = {
+          $in: services
         }
       }
-    }
 
-    const totalCount = await instance.Receipts.aggregate([
-      {
-        $match: filterReceipts
-      },
-      unwindSoldItemList,
-      countAllItems
-    ])
-      .allowDiskUse(true)
-      .exec();
-
-    const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
-    console.log(total_result, 'total_result');
-    limit = limit == 'all'
-      ? !isNaN(total_result) && total_result > 0
-        ? total_result
-        : 1
-      : limit
-    const skipResult = {
-      $skip: limit * (page - 1)
-    }
-
-    const limitResult = {
-      $limit: limit
-    }
-
-    const projectResult = {
-      $project: {
-        partiation_id: '$sold_item_list.partiation_id',
-        receipt_no: 1,
-        user_id: 1,
-        date: 1,
-        supplier_name: 1,
-        product_id: '$sold_item_list.product_id',
-        product_name: '$sold_item_list.product_name',
-        category_name: '$sold_item_list.category_name',
-        p_order: '$sold_item_list.p_order',
-        value: '$sold_item_list.value',
-        price: '$sold_item_list.price',
-        qty_box: '$sold_item_list.qty_box',
-        avg_qty_box: {
-          $divide: [
-            {
-              $max: [
-                '$sold_item_list.qty_box',
-                0
-              ],
-            },
-            {
-              $cond: [
-                { $isNumber: '$sold_item_list.value' },
-                '$sold_item_list.value',
-                1,
-              ],
-            },
-          ],
-        },
-        tota_price: {
-          $multiply: [
-            {
-              $max: [
-                '$sold_item_list.price',
-                0
-              ],
-            },
-            {
-              $max: [
-                '$sold_item_list.value',
-                0
-              ],
-            },
-          ],
-        },
-        // cashier_id: 1,
-        cashier_name: 1,
-        // poss_count: 1,
-        organization: 1,
+      const projectBeforUnwind = {
+        $project: {
+          date: 1,
+          // date: {
+          //   $multiply: [
+          //     {
+          //       $floor: {
+          //         $divide: [
+          //           {
+          //             $max: [
+          //               0,
+          //               {
+          //                 $add: [
+          //                   '$date',
+          //                   18000000
+          //                 ]
+          //               }
+          //             ]
+          //           },
+          //           86400000
+          //         ],
+          //       },
+          //     },
+          //     86400000,
+          //   ],
+          // },
+          receipt_no: 1,
+          sold_item_list: 1,
+          user_id: 1,
+          cashier_id: 1,
+          cashier_name: 1,
+          organization: 1,
+        }
       }
-    }
+      const unwindSoldItemList = {
+        $unwind: "$sold_item_list"
+      }
 
-    const result = await instance.Receipts.aggregate([
-      {
-        $match: filterReceipts
-      },
-      projectBeforUnwind,
-      unwindSoldItemList,
-      sortResult,
-      skipResult,
-      limitResult,
-      projectResult,
-    ])
-      .allowDiskUse(true)
-      .exec();
+      const sortResult = {
+        $sort: {
+          date: -1
+        }
+      }
 
-    if (result.length <= 0) {
-      return reply.ok({
+      const countAllItems = {
+        $group: {
+          _id: null,
+          count: {
+            $sum: 1
+          }
+        }
+      }
+
+      const totalCount = await instance.Receipts.aggregate([
+        {
+          $match: filterReceipts
+        },
+        unwindSoldItemList,
+        countAllItems
+      ])
+        .allowDiskUse(true)
+        .exec();
+
+      const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
+      console.log(total_result, 'total_result');
+      limit = limit == 'all'
+        ? !isNaN(total_result) && total_result > 0
+          ? total_result
+          : 1
+        : limit
+      const skipResult = {
+        $skip: limit * (page - 1)
+      }
+
+      const limitResult = {
+        $limit: limit
+      }
+
+      const projectResult = {
+        $project: {
+          partiation_id: '$sold_item_list.partiation_id',
+          receipt_no: 1,
+          user_id: 1,
+          date: 1,
+          supplier_name: 1,
+          product_id: '$sold_item_list.product_id',
+          product_name: '$sold_item_list.product_name',
+          category_name: '$sold_item_list.category_name',
+          p_order: '$sold_item_list.p_order',
+          value: '$sold_item_list.value',
+          price: '$sold_item_list.price',
+          qty_box: '$sold_item_list.qty_box',
+          avg_qty_box: {
+            $divide: [
+              {
+                $max: [
+                  '$sold_item_list.qty_box',
+                  0
+                ],
+              },
+              {
+                $cond: [
+                  {
+                    $and: [
+                      { $isNumber: '$sold_item_list.value' },
+                      { $ne: '$sold_item_list.value' },
+                    ],
+                  },
+                  '$sold_item_list.value',
+                  1,
+                ],
+              },
+            ],
+          },
+          tota_price: {
+            $multiply: [
+              {
+                $max: [
+                  '$sold_item_list.price',
+                  0
+                ],
+              },
+              {
+                $max: [
+                  '$sold_item_list.value',
+                  0
+                ],
+              },
+            ],
+          },
+          // cashier_id: 1,
+          cashier_name: 1,
+          // poss_count: 1,
+          organization: 1,
+        }
+      }
+
+      const result = await instance.Receipts.aggregate([
+        {
+          $match: filterReceipts
+        },
+        projectBeforUnwind,
+        unwindSoldItemList,
+        sortResult,
+        skipResult,
+        limitResult,
+        projectResult,
+      ])
+        .allowDiskUse(true)
+        .exec();
+
+      if (result.length <= 0) {
+        return reply.ok({
+          total: total_result,
+          page: Math.ceil(total_result / limit),
+          data: result
+        })
+      }
+
+      const clients = await instance.clientsDatabase
+        .find(
+          {
+            user_id: { $in: result.map(r => r.user_id) },
+            organization: result[0].organization,
+          },
+          {
+            user_id: 1,
+            first_name: 1,
+            last_name: 1,
+          },
+        )
+        .lean()
+
+      const users_obj = {}
+      for (const user of clients) {
+        users_obj[user.user_id] = user
+      }
+
+      const partiation_ids = []
+      for (let i = 0; i < result.length; i++) {
+        if (result[i].partiation_id)
+          partiation_ids.push(instance.ObjectId(result[i].partiation_id))
+      }
+
+      const partiations = await instance.goodsSaleQueue
+        .find({
+          _id: { $in: partiation_ids },
+        })
+        .lean()
+
+      const partiations_obj = {}
+      for (const partiation of partiations) {
+        partiations_obj[partiation._id] = partiation
+      }
+
+      const goods = await instance.goodsSales
+        .find(
+          { _id: { $in: [] } },
+          {
+            sold_by: 1,
+          },
+        )
+        .lean()
+      const goods_obj = {}
+      for (const good of goods) {
+        goods_obj[good._id] = good
+      }
+
+      for (let i = 0; i < result.length; i++) {
+
+        if (users_obj[result[i].user_id])
+          result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
+        else
+          result[i].client_name = ""
+
+        result[i].partiation_no = ""
+
+        if (partiations_obj[result[i].partiation_id]) {
+          result[i].p_order = partiations_obj[result[i].partiation_id].p_order
+          result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no ?
+            partiations_obj[result[i].partiation_id].partiation_no : result[i].p_order
+          result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
+        }
+        result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
+        result[i].sold_by = goods_obj[result[i].product_id] && goods_obj[result[i].product_id].sold_by
+          ? goods_obj[result[i].product_id].sold_by
+          : "each"
+
+        result[i].alt_group = ""
+        result[i].size = ""
+      }
+
+      reply.ok({
         total: total_result,
         page: Math.ceil(total_result / limit),
         data: result
       })
+    } catch (err) {
+      console.log(err);
+      reply.error("internal err");
     }
-
-    const clients = await instance.clientsDatabase
-      .find(
-        {
-          user_id: { $in: result.map(r => r.user_id) },
-          organization: result[0].organization,
-        },
-        {
-          user_id: 1,
-          first_name: 1,
-          last_name: 1,
-        },
-      )
-      .lean()
-
-    const users_obj = {}
-    for (const user of clients) {
-      users_obj[user.user_id] = user
-    }
-
-    const partiation_ids = []
-    for (let i = 0; i < result.length; i++) {
-      if (result[i].partiation_id)
-        partiation_ids.push(instance.ObjectId(result[i].partiation_id))
-    }
-
-    const partiations = await instance.goodsSaleQueue
-      .find({
-        _id: { $in: partiation_ids },
-      })
-      .lean()
-
-    const partiations_obj = {}
-    for (const partiation of partiations) {
-      partiations_obj[partiation._id] = partiation
-    }
-
-    const goods = await instance.goodsSales
-      .find(
-        { _id: { $in: [] } },
-        {
-          sold_by: 1,
-        },
-      )
-      .lean()
-    const goods_obj = {}
-    for (const good of goods) {
-      goods_obj[good._id] = good
-    }
-
-    for (let i = 0; i < result.length; i++) {
-
-      if (users_obj[result[i].user_id])
-        result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
-      else
-        result[i].client_name = ""
-
-      result[i].partiation_no = ""
-
-      if (partiations_obj[result[i].partiation_id]) {
-        result[i].p_order = partiations_obj[result[i].partiation_id].p_order
-        result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no ?
-          partiations_obj[result[i].partiation_id].partiation_no : result[i].p_order
-        result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
-      }
-      result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
-      result[i].sold_by = goods_obj[result[i].product_id] && goods_obj[result[i].product_id].sold_by
-        ? goods_obj[result[i].product_id].sold_by
-        : "each"
-
-      result[i].alt_group = ""
-      result[i].size = ""
-    }
-
-    reply.ok({
-      total: total_result,
-      page: Math.ceil(total_result / limit),
-      data: result
-    })
   }
 
   instance.post(

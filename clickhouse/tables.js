@@ -17,7 +17,7 @@ async function createInventoryTable(clickhouse) {
         \`reason\` String,
         \`type\` String,
         \`adjustment\` Float64,
-        \`stock_after\` Float64,
+        \`stock_after\` Float64
       )
     ENGINE = MergeTree()
     PRIMARY KEY(organization, service, product_id, employee_id, reason, date)
