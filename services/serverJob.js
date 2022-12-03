@@ -697,7 +697,9 @@ module.exports = fp((instance, _, next) => {
   };
 
   /**
- * @param {Date} date
+   * @param {Date} date
+   * @param {boolean} calculate
+   * if calculate equal false, only product sotck update
    */
   const calculateOrganizationsOtchot = async (date) => {
     const month = date.getMonth()
@@ -752,86 +754,329 @@ module.exports = fp((instance, _, next) => {
   }
   // calculateOrganizationsOtchot()
 
-  const cronString_ = '0 01 * * *';
+  const cronString_ = '59 23 * * *';
   if (!cronJob.validate(cronString_)) {
     instance.log.error('Invalid CRON_TIME is specified:', cronString_);
     // process.exit(1);
   } else
     cronJob.schedule(cronString_, async () => {
       const date = new Date()
-      calculateOrganizationsOtchot(date)
-      // const organizations = await instance.organization
-      //   .find(
-      //     { _id: '' },
-      //     { _id: 1 },
-      //   )
-      //   .lean()
-
-      // calculateOrganizationOtchot(organizations[0]._id)
+      calculateOrganizationsOtchot(date, true)
     })
-  const cronStringLastDayOfMonthCalculate = '59 23 * * *';
-  if (!cronJob.validate(cronStringLastDayOfMonthCalculate)) {
-    instance.log.error('Invalid CRON_TIME is specified:', cronStringLastDayOfMonthCalculate);
-    // process.exit(1);
-  } else
-    cronJob.schedule(cronStringLastDayOfMonthCalculate, async () => {
-      const date = new Date();
-      const date_ = date.getDate()
-      const month = date.getMonth()
 
-      const month_name = months[month]
-      let calculate = false
-      switch (month_name) {
-        case 'January':
-          calculate = date_ == 31
-          break;
-        case 'February':
-          calculate = date_ == 28 || date_ == 29
-          break;
-        case 'March':
-          calculate = date_ == 31
-          break;
-        case 'April':
-          calculate = date_ == 30
-          break;
-        case 'May':
-          calculate = date_ == 31
-          break;
-        case 'June':
-          calculate = date_ == 30
-          break;
-        case 'July':
-          calculate = date_ == 31
-          break;
-        case 'August':
-          calculate = date_ == 31
-          break;
-        case 'September':
-          calculate = date_ == 30
-          break;
-        case 'October':
-          calculate = date_ == 31
-          break;
-        case 'November':
-          calculate = date_ == 30
-          break;
-        case 'December':
-          calculate = date_ == 31
-          break;
-        default:
-          break;
+  /**
+   * @param {Date} date
+   */
+  const insertProductsOtchotOnMonthOfFirstDay = async (organization_id, date) => {
+    console.log("starting insertProductsOtchotOnMonthOfFirstDay");
+    const month = date.getMonth()
+    const year = date.getFullYear()
+
+    const month_name = months[month]
+    const start_date = new Date(`${month + 1}.${1}.${year}`)
+    const start_time = start_date.getTime()
+
+    const goods = await instance.goodsSales.aggregate([
+      {
+        $match: {
+          organization: organization_id,
+          updatedAt: { $exists: true }
+        },
+      },
+      {
+        $project: {
+          sku: 1,
+          name: 1,
+          category_id: 1,
+          category_name: 1,
+          sold_by: 1,
+          count_by_type: 1,
+          barcode_by_type: 1,
+          barcode: 1,
+          mxik: 1,
+          cost: 1,
+          services: 1,
+        }
       }
-      if (calculate)
-        calculateOrganizationsOtchot(date)
-      // const organizations = await instance.organization
-      //   .find(
-      //     { _id: '' },
-      //     { _id: 1 },
-      //   )
-      //   .lean()
+    ])
+      .allowDiskUse(true)
+      .exec()
 
-      // calculateOrganizationOtchot(organizations[0]._id)
+    let new_otchots = []
+
+    for (const good of goods) {
+
+      const services_info = []
+      for (const service of good.services) {
+        const service_info = {
+          service_id: service.service,
+          service_name: service.service_name,
+          stock_monthly: {
+            start_stock: service.in_stock,
+            end_stock: service.in_stock,
+            cost: service.cost,
+            price: service.price,
+            prices: service.prices,
+          },
+          sale_monthly_info: {
+            count: 0,
+            cost_amount: 0,
+            sale_amount: 0,
+          },
+          purchase_monthly_info: {
+            count: 0,
+            amount: 0,
+          },
+        }
+
+        services_info.push(service_info)
+      }
+
+      new_otchots.push({
+        organization: good.organization,
+        month: `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`,
+        month_name: month_name,
+        start_time: start_time,
+        end_time: start_time,
+        sku: good.sku,
+        product_id: good._id,
+        product_name: good.name,
+        category_id: good.category_id,
+        category_name: good.category_name,
+        sold_by: good.sold_by,
+        count_by_type: good.count_by_type,
+        barcode_by_type: good.barcode_by_type,
+        barcode: good.barcode,
+        mxik: good.mxik ? good.mxik : '',
+        services: services_info,
+      })
+
+      if (new_otchots.length === 50000) {
+        await new Promise((res, rej) => {
+          instance.goodsOtchot.insertMany(new_otchots, (err) => {
+            if (err) rej(err)
+            else res(true)
+          })
+        })
+          .catch(err => {
+            console.log('saving otchot, oyni boshida', JSON.stringify(err));
+            instance.send_Error('saving otchot, oyni boshida', JSON.stringify(err))
+          })
+
+        new_otchots = []
+      }
+    }
+  }
+
+  // oy boshida stock yozib qo'yish
+  const cronString00_00 = '00 00 * * *';
+  if (!cronJob.validate(cronString00_00)) {
+    instance.log.error('Invalid CRON_TIME is specified:', cronString00_00);
+  } else
+    cronJob.schedule(cronString00_00, async () => {
+      const date = new Date();
+
+      if (date.getDate() == 1) {
+        const organizations = await instance.organizations
+          .find(
+            {},
+            { _id: 1 },
+          )
+          .lean()
+        console.log(organizations.length, 'organizations.length');
+
+        for (const organization of organizations) {
+          insertProductsOtchotOnMonthOfFirstDay(organization._id, date)
+        }
+      }
     })
+
+  // /**
+  //  * @param {Date} date
+  //  * oyni oxirida stockni update qilish
+  //  */
+  // const updateProductsOtchotOnMonthOfLastDay = async (organizatio_id, date) => {
+  //   console.log("starting updateProductsOtchotOnMonthOfLastDay");
+  //   const month = date.getMonth()
+  //   const month_name = months[month]
+  //   const start = new Date().getTime();
+
+  //   const otchotsObj = {}
+
+  //   const otchots = await instance.goodsOtchot
+  //     .find({ month_name: month_name, organization: organizatio_id })
+  //     .lean()
+  //   console.log(new Date().getTime() - start, `otchotsga ketgan vaqt`);
+  //   console.log(otchots.length, `otchots.length`);
+
+  //   for (const otchot of otchots) {
+  //     otchotsObj[otchot.product_id] = otchot
+  //   }
+
+  //   const goods = await instance.goodsSales.aggregate([
+  //     {
+  //       $match: {
+  //         organizatio: organizatio_id,
+  //         $or: [
+  //           { _id: { $in: otchots.map(otchot => instance.ObjectId(otchot.product_id)) } },
+  //           { created_time: { $gte: new Date(`${date.getFullYear()}.${date.getMonth() + 1}.1`).getTime() } },
+  //         ],
+  //       },
+  //     },
+  //     {
+  //       $project: {
+  //         sku: 1,
+  //         name: 1,
+  //         category_id: 1,
+  //         category_name: 1,
+  //         sold_by: 1,
+  //         count_by_type: 1,
+  //         barcode_by_type: 1,
+  //         barcode: 1,
+  //         mxik: 1,
+  //         cost: 1,
+  //         services: 1,
+  //       }
+  //     }
+  //   ])
+  //     .allowDiskUse(true)
+  //     .exec()
+  //   console.log(new Date().getTime() - start, 'boshlanishidan goodsni olguncha ketgan vaqt');
+  //   console.log(goods.length, `otchogoodsts.length`);
+
+  //   let update_otchots = []
+  //   for (const good of goods) {
+
+  //     for (const g_service of good.services) {
+  //       const service_index = otchotsObj[good._id].services.findIndex(serv =>
+  //         serv.service_id + '' === g_service.service_id + ''
+  //         || serv.service_id + '' === g_service.service + ''
+  //       )
+
+  //       const service_info = {
+  //         service_id: g_service.service,
+  //         service_name: "",
+  //         stock_monthly: {
+  //           start_stock: 0,
+  //           end_stock: g_service.in_stock,
+  //           cost: g_service.cost,
+  //           price: g_service.price,
+  //           prices: g_service.prices,
+  //         },
+  //         sale_monthly_info: {
+  //           count: 0,
+  //           cost_amount: 0,
+  //           sale_amount: 0,
+  //         },
+  //         purchase_monthly_info: {
+  //           count: 0,
+  //           amount: 0,
+  //         },
+  //       }
+
+  //       if (service_index >= 0) {
+  //         otchotsObj[good._id].month = `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`
+
+  //         otchotsObj[good._id].services[service_index].end_stock = g_service.in_stock
+  //       } else {
+  //         otchotsObj[good._id].services.push(service_info)
+  //       }
+
+  //       update_otchots.push({
+  //         updateOne: {
+  //           filter: { _id: otchotsObj[good._id]._id },
+  //           update: { $set: otchotsObj[good._id] }
+  //         }
+  //       })
+  //       // await instance.goodsOtchot.findByIdAndUpdate(otchot._id, otchot, { lean: true })
+  //       //   .catch(err => {
+  //       //     instance.send_Error('updating otchot, oyni oxirida', JSON.stringify(err))
+  //       //   })
+  //     }
+
+  //     if (update_otchots.length > 50000) {
+  //       console.log(`update_otchots.length: ${update_otchots.length}`);
+  //       try {
+  //         await instance.goodsOtchot.bulkWrite(update_otchots)
+  //       } catch (err) {
+  //         console.log(`error: ${err}`);
+  //         instance.send_Error('updating otchot, oyni oxirida', JSON.stringify(err))
+  //       }
+
+  //       update_otchots = []
+  //     }
+  //   }
+  //   console.log("the end updateProductsOtchotOnMonthOfLastDay");
+  // }
+
+  // // oy oxirida stock yozib qo'yish
+  // const cronString23_59 = '59 23 * * *';
+  // if (!cronJob.validate(cronString23_59)) {
+  //   instance.log.error('Invalid CRON_TIME is specified:', cronString23_59);
+  // } else
+  //   cronJob.schedule(cronString23_59, async () => {
+  //     const date = new Date();
+  //     const date_ = date.getDate()
+  //     const month = date.getMonth()
+
+  //     const month_name = months[month]
+  //     let calculate = false
+  //     switch (month_name) {
+  //       case 'January':
+  //         calculate = date_ == 31
+  //         break;
+  //       case 'February':
+  //         calculate = date_ == 28 || date_ == 29
+  //         break;
+  //       case 'March':
+  //         calculate = date_ == 31
+  //         break;
+  //       case 'April':
+  //         calculate = date_ == 30
+  //         break;
+  //       case 'May':
+  //         calculate = date_ == 31
+  //         break;
+  //       case 'June':
+  //         calculate = date_ == 30
+  //         break;
+  //       case 'July':
+  //         calculate = date_ == 31
+  //         break;
+  //       case 'August':
+  //         calculate = date_ == 31
+  //         break;
+  //       case 'September':
+  //         calculate = date_ == 30
+  //         break;
+  //       case 'October':
+  //         calculate = date_ == 31
+  //         break;
+  //       case 'November':
+  //         calculate = date_ == 30
+  //         break;
+  //       case 'December':
+  //         calculate = date_ == 31
+  //         break;
+  //       default:
+  //         break;
+  //     }
+
+  //     if (calculate) {
+
+  //       const organizations = await instance.organizations
+  //         .find(
+  //           {},
+  //           { _id: 1 },
+  //         )
+  //         .lean()
+  //       console.log(organizations.length, 'organizations.length');
+
+  //       for (const organization of organizations) {
+  //         updateProductsOtchotOnMonthOfLastDay(organization._id, date)
+  //       }
+  //     }
+  //   })
 
   next();
 });
