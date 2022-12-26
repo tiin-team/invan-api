@@ -237,8 +237,8 @@ module.exports = fp((instance, _, next) => {
       const $match = {
         $match: {
           organization: organization._id + '',
-          month: { $regex: month, $options: 'i' },
-          month_name: month_name,
+          // month: { $regex: month, $options: 'i' },
+          // month_name: month_name,
         }
       }
 
@@ -272,6 +272,178 @@ module.exports = fp((instance, _, next) => {
           },
         }
       }
+      const data = await instance.goodsOtchot
+        .aggregate([$match, $project])
+        .exec()
+
+      // return reply.ok(data)
+      // return reply.code(404).send({ result })
+      // const goodsObj = {}
+      // // for (const purchase of purchases) {
+      //   // goodsObj[purchase.product_id] = purchase
+      // // }
+
+      const exelItems = []
+      let index = 1
+      let ostatok_start_stock = 0
+      let ostatok_start_sum = 0
+      let ostatok_stock = 0
+      let ostatok_sum = 0
+      let prixod_stock = 0
+      let prixod_sum = 0
+      let rasxod_stock = 0
+      let rasxod_sum = 0
+      for (const item of data) {
+        if (item.services) {
+          ostatok_start_stock += item.services.stock_monthly.start_stock
+          ostatok_start_sum += item.services.stock_monthly.start_stock * item.services.cost
+          ostatok_stock += item.services.purchase_monthly_info.count
+          ostatok_sum += item.services.purchase_monthly_info.amount
+          prixod_stock += item.services.sale_monthly_info.count
+          prixod_sum += item.services.sale_monthly_info.sale_amount
+          rasxod_stock += item.services.stock_monthly.end_stock
+          rasxod_sum += item.services.stock_monthly.end_stock * item.services.stock_monthly.cost
+          exelItems.push([
+            index,
+            Array.isArray(item.barcode) ? item.barcode.reduce((a, b) => `${a}${b},`, '') : '',
+            item.product_name,
+            instance.i18n.__(item.sold_by),
+            item.services.cost.toFixed(2),
+            item.services.stock_monthly.start_stock.toFixed(2), // End time count
+            (item.services.stock_monthly.start_stock * item.services.cost).toFixed(2), // End time count
+            item.services.purchase_monthly_info.count.toFixed(2), // Prixod count
+            item.services.purchase_monthly_info.amount.toFixed(2), // Prixod sum
+            item.services.sale_monthly_info.count.toFixed(2), // Rasxod count
+            item.services.sale_monthly_info.sale_amount.toFixed(2), // Rasxod sum
+            item.services.stock_monthly.end_stock.toFixed(2), // End Time sum
+            // item.services.stock_monthly.end_stock * item.services.stock_monthly.cost, // End Time sum
+            (
+              item.services.stock_monthly.end_stock
+              * (item.services.purchase_monthly_info.amount / item.services.purchase_monthly_info.count)
+            ).toFixed(2), // End Time sum
+          ])
+        }
+        index++
+      }
+
+      const headers = [
+        { name: '№', key: '1' },
+        { name: 'A', key: '2' },
+        { name: `A`, key: '3' },
+        { name: 'A', key: '4' },
+        { name: `Итого по ${organization.name}`, key: '5' },
+        { name: `${instance.i18n.__('total')} ${ostatok_start_stock.toFixed(2)}`, key: '6' },
+        { name: `${instance.i18n.__('total')} ${ostatok_start_sum.toFixed(2)}`, key: '7' },
+        { name: `${instance.i18n.__('total')} ${ostatok_stock.toFixed(2)}`, key: '8' },
+        { name: `${instance.i18n.__('total')} ${ostatok_sum.toFixed(2)}`, key: '9' },
+        { name: `${instance.i18n.__('total')} ${prixod_stock.toFixed(2)}`, key: '10' },
+        { name: `${instance.i18n.__('total')} ${prixod_sum.toFixed(2)}`, key: '11' },
+        { name: `${instance.i18n.__('total')} ${rasxod_stock.toFixed(2)}`, key: '12' },
+        { name: `${instance.i18n.__('total')} ${rasxod_sum.toFixed(2)}`, key: '13' },
+      ]
+      const workbook = new ExcelJs.Workbook();
+      const worksheet = workbook.addWorksheet('MyExcel', {
+        pageSetup: { paperSize: 9, orientation: 'landscape' }
+      });
+      if (!data[0]) {
+        data[0] = {}
+      }
+      const start_date = new Date(data[0].start_time)
+      const end_date = new Date(data[0].end_time)
+      makeInventoryOtchotHeader(
+        worksheet,
+        {
+          start_time: `${start_date.getDate()}.${start_date.getMonth() + 1}.${start_date.getFullYear()}`,
+          end_time: `${end_date.getDate()}.${end_date.getMonth() + 1}.${end_date.getFullYear()}`,
+        },
+      )
+      const time = new Date().getTime()
+
+      try {
+        worksheet.addTable({
+          name: 'ItemsTable',
+          ref: 'B7',
+          headerRow: true,
+          // totalsRow: true,
+          columns: headers,
+          rows: exelItems
+        })
+      } catch (error) { }
+
+      const file_dir = path.join(__dirname, `../../static/${time}.xlsx`)
+
+      await workbook.xlsx.writeFile(file_dir);
+      console.log(file_dir);
+      reply.sendFile(`./${time}.xlsx`)
+      setTimeout(() => {
+        fs.unlink(`./static/${time}.xlsx`, (err) => {
+          if (err) {
+            instance.send_Error('exported ' + time + ' file', JSON.stringify(err))
+          }
+        })
+      }, 2000);
+
+    } catch (error) {
+      return reply.send(error.message)
+    }
+  }
+
+  const inventoryOtchotXLSX2 = async (request, reply, user) => {
+    try {
+      const { service_id, min, max } = request.params
+      const min_date = new Date(parseInt(min))
+      const max_date = new Date(parseInt(max))
+      if (min_date.toString() === 'Invalid Date' || max_date.toString() === 'Invalid Date') {
+        return reply.error('Invalid Date')
+      }
+
+      const organization = await instance.organizations
+        .findById(user.organization)
+        .lean()
+      if (!organization) {
+        return reply.fourorfour('Organization')
+      }
+
+      const $match = {
+        $match: {
+          organization: organization._id + '',
+          // month: { $regex: month, $options: 'i' },
+          // month_name: month_name,
+        }
+      }
+
+      const $project = {
+        $project: {
+          organization: 1,
+          month: 1,
+          month_name: 1,
+          start_time: 1,
+          end_time: 1,
+          sku: 1,
+          product_id: 1,
+          product_name: 1,
+          category_id: 1,
+          category_name: 1,
+          sold_by: 1,
+          count_by_type: 1,
+          barcode_by_type: 1,
+          barcode: 1,
+          mxik: 1,
+          services: {
+            $first: {
+              $filter: {
+                input: "$services",
+                as: "service",
+                cond: {
+                  $eq: [{ $toString: "$$service.service_id" }, service_id + ''],
+                },
+              },
+            },
+          },
+        }
+      }
+
+      const $group = {}
       const data = await instance.goodsOtchot
         .aggregate([$match, $project])
         .exec()

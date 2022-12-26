@@ -712,6 +712,7 @@ module.exports = (instance, options, next) => {
         parent_name: 1,
         in_stock: 1,
         mxik: 1,
+        representation: 1,
         services: 1,
         count_by_type: 1,
         variant_items: 1,

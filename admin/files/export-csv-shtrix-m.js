@@ -94,6 +94,111 @@ async function downloadCsv(request, reply, instance) {
     return reply;
 }
 
+async function downloadCsv2(request, reply, instance) {
+    try {
+        const org_id = request.params.organization;
+        const service_id = request.params.service;
+        const organization = await instance.organizations
+            .findById(org_id)
+            .lean();
+        if (!organization) {
+            return reply.fourorfour('Organization')
+        }
+        const service = await instance.services
+            .findById(service_id)
+            .lean();
+        if (!service) {
+            return reply.error('Service')
+        }
+
+        const itemsQuery = {
+            $match: {
+                organization: org_id,
+                sold_by: 'weight'
+            }
+        }
+
+        const unWindServices = {
+            $unwind: {
+                path: '$services'
+            }
+        }
+
+        const serviceMatch = {
+            $match: {
+                $or: [
+                    {
+                        'services.service': {
+                            $eq: instance.ObjectId(service_id + '')
+                        }
+                    },
+                    {
+                        'services.service': {
+                            $eq: service_id + ''
+                        }
+                    }
+                ]
+            }
+        }
+
+        const necessaryFields = {
+            $project: {
+                name: '$name',
+                sku: '$sku',
+                price: '$services.price',
+                prices: '$services.prices',
+                sold_by: '$sold_by'
+            }
+        }
+
+        const items = await instance.goodsSales.aggregate([
+            itemsQuery,
+            unWindServices,
+            serviceMatch,
+            necessaryFields
+        ])
+            .allowDiskUse(true)
+            .exec();
+
+        const timeStamp = new Date().getTime()
+        let itemsText = '';
+
+        for (const index in items) {
+            let price = items[index].price;
+            if (!(items[index].prices instanceof Array)) {
+                items[index].prices = []
+            }
+            if (items[index].prices.length > 0 && items[index].prices[0].price) {
+                price = items[index].prices[0].price
+            }
+            if (!items[index].name) {
+                items[index].name = ''
+            }
+            if (typeof items[index].name == typeof 'invan') {
+                items[index].name = items[index].name.replace(/,/g, '.')
+            }
+
+            // itemsText += `${+index + 1};${items[index].name};;${price};0;0;0;${items[index].sku};0;0;;01.01.01;${items[index].sold_by == 'each' ? '1' : '0'};\n`;
+            itemsText += `${items[index].sku};${items[index].name};;${price};0;0;0;${items[index].sku};0;0;;01.01.01;0;0;0;0;01.01.01\n`;
+        }
+
+        fs.writeFile(`./static/${timeStamp}.txt`, itemsText, function (err, data) {
+            reply.sendFile(`./${timeStamp}.txt`)
+            setTimeout(() => {
+                fs.unlink(`./static/${timeStamp}.txt`, (err) => {
+                    if (err) {
+                        instance.send_Error('exported ' + timeStamp + ' file', JSON.stringify(err))
+                    }
+                })
+            }, 2000);
+        })
+
+    } catch (error) {
+        reply.error(error.message)
+    }
+    return reply;
+}
+
 async function downloadMettletoledoItems(request, reply, instance) {
     try {
         const org_id = request.params.organization;
@@ -306,7 +411,7 @@ module.exports = ((instance, _, next) => {
     instance.get(
         '/items/get/shtrix-m/csv/:organization/:service/:name',
         (request, reply) => {
-            return downloadCsv(request, reply, instance)
+            return downloadCsv2(request, reply, instance)
         }
     )
 

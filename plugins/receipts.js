@@ -869,7 +869,9 @@ const useReceiptDraft = async (request, reply, instance) => {
 const receiptSetClient = async (request, reply, instance) => {
   try {
     const { receipt_id, user_id } = request.body;
-    const receipt = await instance.Receipts.findOne({ _id: receipt_id });
+    const receipt = await instance.Receipts
+      .findOne({ _id: receipt_id })
+      .lean();
     if (!receipt) {
       return reply.fourorfour('Receipt')
     }
@@ -877,11 +879,26 @@ const receiptSetClient = async (request, reply, instance) => {
       return reply.fourorfour('Receipt')
     }
 
-    const client = await instance.clientsDatabase.findOne({ user_id });
+    if (receipt.user_id || receipt.client_id) {
+      return reply.code(400).send({
+        code: 400,
+        message: "Client allready setted",
+        error: "Client allready setted",
+      })
+    }
+
+    const client = await instance.clientsDatabase
+      .findOne({ user_id }, { _id: 1, user_id: 1 })
+      .lean();
     const updated = await instance.Receipts.findOneAndUpdate(
       { _id: receipt._id },
-      { $set: { user_id: client.user_id } },
-      { new: true }
+      {
+        $set: {
+          user_id: client.user_id,
+          client_id: client._id,
+        },
+      },
+      { new: true, lean: true }
     );
     await instance.customer_points([updated]);
     reply.ok(receipt._id)
@@ -952,43 +969,7 @@ async function findReceipt(request, reply, instance) {
 }
 
 module.exports = fp((instance, _, next) => {
-  instance.patch('/update/receipts/:organization', { version: '3.9.9' }, async (request, reply) => {
-    return reply.ok(`ruxsat yo'q`);
 
-    const organization = request.params.organization
-
-    const receipts = await instance.Receipts
-      .find({ organization: organization })
-      .lean()
-    // .limit(1)
-
-    for (const receipt of receipts) {
-      // console.log(receipt._id);
-      for (const [index, item] of receipt.sold_item_list.entries()) {
-        const good = await instance.goodsSales.findById(item.product_id).lean()
-        let cat = await instance.goodsCategory.findById(good.category_id).lean();
-        if (!cat)
-          cat = await instance.goodsCategory.findOne({
-            type: 'top',
-            name: 'Other',
-            organization: organization,
-          }).lean()
-
-        let supplier = await instance.adjustmentSupplier.findById(good.primary_supplier_id).lean();
-        if (!supplier) supplier = { supplier_name: 'unSet', _id: null };
-
-        receipt.sold_item_list[index].category_id = cat._id;
-        receipt.sold_item_list[index].category_name = cat.name;
-        receipt.sold_item_list[index].supplier_id = supplier._id;
-        receipt.sold_item_list[index].supplier_name = supplier.supplier_name;
-      }
-
-      await instance.Receipts
-        .findByIdAndUpdate(receipt._id, { $set: { sold_item_list: receipt.sold_item_list } });
-    }
-
-    return reply.ok(`length: ${receipts.length}`)
-  })
   instance.addSchema({
     $id: "receiptBody",
     type: "object",
@@ -1253,7 +1234,31 @@ module.exports = fp((instance, _, next) => {
         let receipt_no = request.body.receipt_no
         receipt_no = await instance.getReceiptNumber(instance, user.organization, receipt_no);
         request.body.receipt_no = receipt_no;
+
+        const client = await instance.clientsDatabase
+          .findOne({
+            $or: [
+              { user_id: request.body.user_id },
+              { client_id: instance.ObjectId(request.body.client_id) },
+            ]
+          },
+            { _id: 1, first_name: 1, last_name: 1 },
+          )
+          .lean();
+
+        const debt_pay = request.body.payment.find(p => p.name == "debt")
+        if (debt_pay && debt_pay.value > 0 && !client) {
+          return reply.code(400).send({
+            message: "Bad request",
+            error: "client required",
+            code: 400,
+          })
+        }
+
+        request.body.client_id = client._id
+
         request.body = [request.body];
+
         return receiptCreateGroup(request, reply, instance);
       })
     }

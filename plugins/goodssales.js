@@ -357,8 +357,8 @@ module.exports = fp((instance, _, next) => {
               ]
           }`
 
-            var updateQuery1 = JSON.parse(val1)
-            var updateQuery2 = JSON.parse(val2)
+            const updateQuery1 = JSON.parse(val1)
+            const updateQuery2 = JSON.parse(val2)
 
             try {
               await instance.goodsSales.updateOne({ _id: id }, updateQuery1, updateQuery2)

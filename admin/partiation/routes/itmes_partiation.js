@@ -54,7 +54,7 @@ module.exports = fp((instance, options, next) => {
             .findById(instance.ObjectId(id), { queue: 1 })
             .lean()
           const total = await instance.goodsSaleQueue.countDocuments(query);
-          const total_stock = partiations.reduce((total_stock_sum, num) => total_stock_sum + num, 0)
+          const total_stock = partiations.reduce((par, num) => par.quantity_left + num, 0)
 
           return reply.code(200).send({
             error: "Ok",

@@ -353,8 +353,8 @@ module.exports = (instance, options, next) => {
         return reply.ok(customer);
       }
 
-      // request.body.user_id = await get_default_user_id(user.organization)
-      // request.body.organization = user.organization;
+      request.body.user_id = await get_default_user_id(request.body.organization, request.body.phone_number)
+      // request.body.organization = request.body.organization;
       const created_customer = await insert_new_client(request.body);
       return reply.ok(created_customer);
     } catch (error) {
@@ -418,6 +418,7 @@ module.exports = (instance, options, next) => {
           phone_number: phone,
           organization: organizationId,
         })
+        .lean()
         .exec();
     } catch (error) {
       throw UserError("error on client database find by phone number", error);
@@ -448,20 +449,26 @@ module.exports = (instance, options, next) => {
    * @returns {Promise<number|*>} a new user ID
    * @throws UserError on any db errors
    */
-  async function get_default_user_id(organizationId) {
+  async function get_default_user_id(organizationId, phone_number) {
     try {
-      let default_user_id = 10000;
+      const date = new Date()
+      // let default_user_id = 10000;
 
-      const client = await instance.clientsDatabase
-        .findOne({ organization: organizationId }, { user_id: 1 })
-        .sort({ user_id: -1 })
-        .exec();
+      // const client = await instance.clientsDatabase
+      //   .findOne({ organization: organizationId }, { user_id: 1 })
+      //   .sort({ user_id: -1 })
+      //   .lean()
+      //   .exec();
 
-      if (!client || !client.user_id) {
-        return default_user_id;
-      }
+      // if (!client || !client.user_id) {
+      //   return default_user_id;
+      // }
 
-      return client.user_id + 1;
+      // return +client.user_id + 1;
+      return phone_number ?
+        phone_number.replace(/\+/, "") + date.getTime()
+        : date.getTime()
+
     } catch (error) {
       throw UserError("error on getting a default user id", error);
     }
@@ -475,9 +482,9 @@ module.exports = (instance, options, next) => {
    */
   async function insert_new_client(clientData) {
     try {
-      // if (!clientData.user_id) {
-      //   clientData.user_id = clientData.phone_number + new Date().getTime();
-      // }
+      if (!clientData.user_id) {
+        clientData.user_id = clientData.phone_number.replace(/\+/, "") + new Date().getTime();
+      }
       const newClient = new instance.clientsDatabase(clientData);
       const result = await newClient.save();
       if (!result) {
@@ -506,7 +513,7 @@ module.exports = (instance, options, next) => {
         }
       }
 
-      // request.body.user_id = await get_default_user_id(user.organization)
+      request.body.user_id = await get_default_user_id(user.organization, request.body.phone_number)
       request.body.organization = user.organization;
       const created_customer = await insert_new_client(request.body);
       if (is_reply) {
@@ -600,7 +607,9 @@ module.exports = (instance, options, next) => {
     try {
       const id = request.params.id;
       const body = request.body;
-      const customer = await instance.clientsDatabase.findOne({ _id: id });
+      const customer = await instance.clientsDatabase
+        .findOne({ _id: id })
+        .lean();
       if (!customer) {
         return reply.fourorfour("Customer");
       }
@@ -612,9 +621,11 @@ module.exports = (instance, options, next) => {
           customer.debt = 0;
         }
 
-        let current_currency = await instance.Currency.findOne({
-          organization: user.organization,
-        });
+        let current_currency = await instance.Currency
+          .findOne({
+            organization: user.organization,
+          })
+          .lean();
         if (!current_currency) {
           current_currency = {
             value: 1,
@@ -659,9 +670,20 @@ module.exports = (instance, options, next) => {
           date: current_date
         }
         await instance.Safe.updateValue(safe_data, safe_history)
+
+        await instance.clientsDebtPayHistory.create({
+          organization: customer.organization,
+          client_id: customer._id,
+          client_name: customer.name,
+          paid: body.paid,
+          date: new Date().getTime(),
+          comment: body.comment,
+          created_by_name: user.by_name,
+          created_by_id: user._id,
+        })
         /** */
       }
-      await instance.clientsDatabase.updateOne({ _id: id }, { $set: body });
+      await instance.clientsDatabase.updateOne({ _id: id }, { $set: body }, { lean: true });
       return reply.ok({ id });
     } catch (error) {
       return reply.error(error.message);
@@ -792,234 +814,200 @@ module.exports = (instance, options, next) => {
     }
     return total
   }
+  // const get_customer_by_id = async (request, reply, user) => {
+  //   try {
+  //     const id = request.params.id;
+  //     const customer = await instance.clientsDatabase.findOne({ _id: id })
+  //       .lean();
+  //     if (!customer) {
+  //       return reply.fourorfour("Customer");
+  //     }
+  //     // try {
+  //     //   customer = customer.toObject();
+  //     // } catch (error) { }
+  //     const total_paid = customer.debt_pay_history.reduce((a, b) =>
+  //       (!isNaN(a.paid) ? a.paid : 0) + (!isNaN(b.paid) ? b.paid : 0),
+  //       0,
+  //     )
+  //     customer.debt = await calculateDebt(instance, customer, user)
+  //     customer.debt - total_paid
+
+  //     const matchReceipts = {
+  //       $match: {
+  //         organization: user.organization,
+  //         receipt_type: "debt",
+  //         user_id: customer.user_id,
+  //       },
+  //     };
+
+  //     const unwindItems = {
+  //       $unwind: {
+  //         path: "$sold_item_list",
+  //       },
+  //     };
+
+  //     const groupItemsByCategory = {
+  //       $group: {
+  //         _id: "$sold_item_list.category_id",
+  //         category_name: {
+  //           $last: "$sold_item_list.category_name",
+  //         },
+  //         total_debt: {
+  //           $sum: {
+  //             $multiply: [
+  //               { $max: ["$sold_item_list.total_debt", 0] },
+  //               {
+  //                 $cond: [
+  //                   "$is_refund",
+  //                   -1, 1
+  //                 ]
+  //               }
+  //             ]
+  //           },
+  //         },
+  //         /*
+  //         total_debt: {
+  //           $sum: {
+  //             $subtract: [
+  //               {
+  //                 $multiply: [
+  //                   "$sold_item_list.price",
+  //                   {
+  //                     $add: [
+  //                       "$sold_item_list.value",
+  //                       {
+  //                         $cond: [
+  //                           {
+  //                             $gt: ["$sold_item_list.reminder", 0],
+  //                           },
+  //                           {
+  //                             $divide: [
+  //                               "$sold_item_list.reminder",
+  //                               {
+  //                                 $max: ["$sold_item_list.count_by_type", 1],
+  //                               },
+  //                             ],
+  //                           },
+  //                           0,
+  //                         ],
+  //                       },
+  //                     ],
+  //                   },
+  //                 ],
+  //               },
+  //               {
+  //                 $max: ["$sold_item_list.total_discount", 0],
+  //               },
+  //             ],
+  //           },
+  //         },
+  //         */
+  //         paid_debt: {
+  //           $sum: {
+  //             $max: ["$sold_item_list.total_paid_debt", 0],
+  //           },
+  //         },
+  //         /*
+  //         paid_debt: {
+  //           $sum: {
+  //             $multiply: [
+  //               "$sold_item_list.price",
+  //               {
+  //                 $add: [
+  //                   {
+  //                     $max: ["$sold_item_list.paid_value", 0],
+  //                   },
+  //                   {
+  //                     $cond: [
+  //                       {
+  //                         $gt: ["$sold_item_list.paid_reminder", 0],
+  //                       },
+  //                       {
+  //                         $divide: [
+  //                           "$sold_item_list.paid_reminder",
+  //                           {
+  //                             $max: ["$sold_item_list.count_by_type", 1],
+  //                           },
+  //                         ],
+  //                       },
+  //                       0,
+  //                     ],
+  //                   },
+  //                 ],
+  //               },
+  //             ],
+  //           },
+  //         },
+  //         */
+  //         past_debt: {
+  //           $sum: {
+  //             $subtract: [
+  //               {
+  //                 $multiply: [
+  //                   { $max: ["$sold_item_list.total_debt", 0] },
+  //                   {
+  //                     $cond: [
+  //                       "$is_refund",
+  //                       -1, 1
+  //                     ]
+  //                   }
+  //                 ]
+  //               },
+  //               {
+  //                 $max: ["$sold_item_list.total_paid_debt", 0],
+  //               },
+  //             ],
+  //           },
+  //         },
+  //       },
+  //     };
+
+  //     const receiptResult = await instance.Receipts.aggregate([
+  //       matchReceipts,
+  //       unwindItems,
+  //       groupItemsByCategory,
+  //     ])
+  //       .allowDiskUse(true)
+  //       .exec();
+
+  //     return reply.ok({
+  //       ...customer,
+  //       receipts: receiptResult,
+  //     });
+  //   } catch (error) {
+  //     console.log(error.message);
+  //     return reply.fourorfour("Customer");
+  //   }
+  // };
+
   const get_customer_by_id = async (request, reply, user) => {
     try {
       const id = request.params.id;
-      let customer = await instance.clientsDatabase.findOne({ _id: id })
+
+      const customer = await instance.clientsDatabase
+        .findOne(
+          { _id: id },
+          {
+            debt: 1,
+            first_name: 1,
+            last_name: 1,
+            is_minimum_price: 1,
+            organization: 1,
+            percentage: 1,
+            phone_number: 1,
+            point_balance: 1,
+            tariff_id: 1,
+            user_id: 1,
+            visit_counter: 1,
+            createdAt: 1,
+          },
+        )
         .lean();
       if (!customer) {
         return reply.fourorfour("Customer");
       }
-      // try {
-      //   customer = customer.toObject();
-      // } catch (error) { }
-      customer.debt = await calculateDebt(instance, customer, user)
 
-      const matchReceipts = {
-        $match: {
-          organization: user.organization,
-          receipt_type: "debt",
-          user_id: customer.user_id,
-        },
-      };
-
-      const unwindItems = {
-        $unwind: {
-          path: "$sold_item_list",
-        },
-      };
-
-      const groupItemsByCategory = {
-        $group: {
-          _id: "$sold_item_list.category_id",
-          category_name: {
-            $last: "$sold_item_list.category_name",
-          },
-          total_debt: {
-            $sum: {
-              $multiply: [
-                { $max: ["$sold_item_list.total_debt", 0] },
-                {
-                  $cond: [
-                    "$is_refund",
-                    -1, 1
-                  ]
-                }
-              ]
-            },
-          },
-          /*
-          total_debt: {
-            $sum: {
-              $subtract: [
-                {
-                  $multiply: [
-                    "$sold_item_list.price",
-                    {
-                      $add: [
-                        "$sold_item_list.value",
-                        {
-                          $cond: [
-                            {
-                              $gt: ["$sold_item_list.reminder", 0],
-                            },
-                            {
-                              $divide: [
-                                "$sold_item_list.reminder",
-                                {
-                                  $max: ["$sold_item_list.count_by_type", 1],
-                                },
-                              ],
-                            },
-                            0,
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  $max: ["$sold_item_list.total_discount", 0],
-                },
-              ],
-            },
-          },
-          */
-          paid_debt: {
-            $sum: {
-              $max: ["$sold_item_list.total_paid_debt", 0],
-            },
-          },
-          /*
-          paid_debt: {
-            $sum: {
-              $multiply: [
-                "$sold_item_list.price",
-                {
-                  $add: [
-                    {
-                      $max: ["$sold_item_list.paid_value", 0],
-                    },
-                    {
-                      $cond: [
-                        {
-                          $gt: ["$sold_item_list.paid_reminder", 0],
-                        },
-                        {
-                          $divide: [
-                            "$sold_item_list.paid_reminder",
-                            {
-                              $max: ["$sold_item_list.count_by_type", 1],
-                            },
-                          ],
-                        },
-                        0,
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-          */
-          past_debt: {
-            $sum: {
-              $subtract: [
-                {
-                  $multiply: [
-                    { $max: ["$sold_item_list.total_debt", 0] },
-                    {
-                      $cond: [
-                        "$is_refund",
-                        -1, 1
-                      ]
-                    }
-                  ]
-                },
-                {
-                  $max: ["$sold_item_list.total_paid_debt", 0],
-                },
-              ],
-            },
-          },
-          /*
-          past_debt: {
-            $sum: {
-              $subtract: [
-                {
-                  $multiply: [
-                    "$sold_item_list.price",
-                    {
-                      $subtract: [
-                        {
-                          $add: [
-                            "$sold_item_list.value",
-                            {
-                              $cond: [
-                                {
-                                  $gt: ["$sold_item_list.reminder", 0],
-                                },
-                                {
-                                  $divide: [
-                                    "$sold_item_list.reminder",
-                                    {
-                                      $max: [
-                                        "$sold_item_list.count_by_type",
-                                        1,
-                                      ],
-                                    },
-                                  ],
-                                },
-                                0,
-                              ],
-                            },
-                          ],
-                        },
-                        {
-                          $max: [
-                            {
-                              $add: [
-                                "$sold_item_list.paid_value",
-                                {
-                                  $cond: [
-                                    {
-                                      $gt: ["$sold_item_list.paid_reminder", 0],
-                                    },
-                                    {
-                                      $divide: [
-                                        "$sold_item_list.paid_reminder",
-                                        {
-                                          $max: [
-                                            "$sold_item_list.count_by_type",
-                                            1,
-                                          ],
-                                        },
-                                      ],
-                                    },
-                                    0,
-                                  ],
-                                },
-                              ],
-                            },
-                            0,
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  $max: ["$sold_item_list.total_discount", 0],
-                },
-              ],
-            },
-          }
-          */
-        },
-      };
-
-      const receiptResult = await instance.Receipts.aggregate([
-        matchReceipts,
-        unwindItems,
-        groupItemsByCategory,
-      ])
-        .allowDiskUse(true)
-        .exec();
-
-      return reply.ok({
-        ...customer,
-        receipts: receiptResult,
-      });
+      return reply.ok(customer);
     } catch (error) {
       console.log(error.message);
       return reply.fourorfour("Customer");

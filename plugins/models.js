@@ -464,6 +464,7 @@ module.exports = fp((instance, _, next) => {
       type: String,
       default: '0'
     },
+    client_id: mongoose.Types.ObjectId,
     order_id: {
       type: String,
       default: null
@@ -2715,6 +2716,7 @@ module.exports = fp((instance, _, next) => {
     organization: String,
     month: { type: String },
     month_name: { type: String },
+    period_type: { type: String, enum: ['day', 'month', 'year'] },
     start_time: Number,
     end_time: Number,
     sku: Number,
@@ -2727,7 +2729,7 @@ module.exports = fp((instance, _, next) => {
       enum: [
         'each',
         'weight',
-        // 'list',
+        'list',
         // 'karaoke',
         'pcs',
         'box',
@@ -2768,6 +2770,20 @@ module.exports = fp((instance, _, next) => {
     }],
   })
   instance.decorate('goodsOtchot', invanGoodsOtchotSchema);
+
+  const invanClientsDebtPayHistorySchema = instance.model('clientsDebtPayHistory', {
+    organization: String,
+    client_id: mongoose.Types.ObjectId,
+    client_name: String,
+    paid: Number,
+    currency: { type: String, default: "UZS" },
+    currency_value: Number,
+    date: Number,
+    comment: String,
+    created_by_id: mongoose.Types.ObjectId,
+    created_by_name: String,
+  })
+  instance.decorate('clientsDebtPayHistory', invanClientsDebtPayHistorySchema);
 
   next()
 })

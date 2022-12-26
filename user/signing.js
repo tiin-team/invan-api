@@ -367,6 +367,11 @@ module.exports = (instance, options, next) => {
     return Math.floor(Math.random() * Math.floor(max));
   }
 
+  /**
+   * 
+   * @param {string} phone_number 
+   * @returns {Promise<number>}
+   */
   async function getGeneratedOtp(phone_number) {
     const otp = await instance.SuperOtp.getOtp(phone_number);
     if (!otp) {

@@ -1,7 +1,374 @@
 const fp = require('fastify-plugin');
 const fs = require('fs');
+const { insertInvHistory } = require('../clickhouse/insert_inv_history');
 
 module.exports = fp((instance, options, next) => {
+
+
+    /**
+     * 
+     * @param {[{
+     * name: string
+     * product_id: string
+     * receipt_no: string
+     * category_id: string
+     * category_name: string
+     * cost: number
+     * employee_id: string
+     * employee_name: string
+     * value: number
+     * stock_after: number
+     * }]} items 
+     * @param {number} date
+     */
+    const create_inventory_history = async (items, date) => {
+
+        const histories = []
+        for (const item of items) {
+
+            histories.push({
+                organization: '5f5641e8dce4e706c062837a',
+                date: date,
+                unique: item.receipt_no,
+                category_id: item.category_id,
+                category_name: item.category_name,
+                product_id: item.product_id,
+                product_name: item.name,
+                cost: item.cost,
+                service: instance.ObjectId('5f5641e8dce4e706c0628380'),
+                service_name: 'Tiin Market (Sayram)',
+                employee_id: item.employee_id,
+                employee_name: item.employee_name,
+                reason: 'reason',
+                adjustment: item.value,
+                stock_after: item.stock_after,
+            })
+        }
+
+        // const history_model = new instance.inventoryHistory(new_history)
+        // instance.log.info(`Saved history id -> ${id}`);
+
+        await insertInvHistory(instance, histories)
+    }
+
+    const fekoReceipts = async () => {
+        const receipts = await instance.Receipts
+            .find(
+                {
+                    organization: '5f5641e8dce4e706c062837a',
+                    service: '5f5641e8dce4e706c062837a',
+                },
+                {
+                    receipt_no: 1,
+                    pos_name: 1,
+                    service: 1,
+                    pos_id: 1,
+                    sold_item_list: 1,
+                },
+            )
+            .lean()
+
+        const posDevices = await instance.posDevices
+            .find(
+                {
+                    organization: '5f5641e8dce4e706c062837a',
+                    service: '5f5641e8dce4e706c0628380',
+                },
+                {
+                    check_id: 1,
+                    name: 1,
+                },
+            )
+            .lean()
+
+        const posDevicesObj = {}
+
+        for (const posDevice of posDevices) {
+            posDevicesObj[posDevice.check_id] = posDevice
+        }
+
+        const update_receipts = []
+        for (const receipt of receipts) {
+            if (rr.is_refund) {
+                await instance.update_queue_sold_item_refund(receipt._id, receipt.sold_item_list, '5f5641e8dce4e706c0628380')
+            } else {
+                await instance.goods_partiation_sale(receipt.sold_item_list, '5f5641e8dce4e706c0628380', false)
+            }
+
+            for (const s_i of receipt.sold_item_list) {
+                await instance.update_in_stock_of_sold_items(
+                    s_i.product_id,
+                    '5f5641e8dce4e706c0628380',
+                    s_i.value,
+                    user,
+                    receipt,
+                    'other',
+                    null,
+                    sold_by_types[r],
+                )
+            }
+
+
+            if (receipt.receipt_no[0] == 'E') {
+                const pos = posDevices.filter(p => p.check_id == receipt.receipt_no[0])
+                pos_id = pos[0]._id
+                if (parseInt(receipt.receipt_no.slice(1)) > 444)
+                    pos_id = '6390e675c70a07ff397e1469'
+                else
+                    pos_id = '6391ad4265dc92b8be3cee09'
+
+                update_receipts.push({
+                    updateOne: {
+                        filter: { _id: receipt._id },
+                        update: {
+                            $set: {
+                                service: '5f5641e8dce4e706c0628380',
+                                pos_id: pos_id,
+                            }
+                        }
+                    }
+                })
+            } else {
+                update_receipts.push({
+                    updateOne: {
+                        filter: { _id: receipt._id },
+                        update: {
+                            $set: {
+                                service: '5f5641e8dce4e706c0628380',
+                                pos_id: posDevicesObj[receipt.receipt_no[0]],
+                            }
+                        }
+                    }
+                })
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {string} organization_id 
+     */
+    const insertCustomerDebpPayHistoryByOrganizationId = async (organization_id) => {
+        const customers = await instance.clientsDatabase
+            .find({ organization: organization_id })
+            .lean();
+
+        const insertClientDeptPayHistories = []
+        for (const client of customers) {
+            if (Array.isArray(client.debt_pay_history)) {
+                const dept_pay_histories = client.debt_pay_history.filter(dph =>
+                    dph.comment != 'receipt sold' &&
+                    dph.comment != 'receipt refund' &&
+                    (dph.amount_type == 'cash' || dph.amount_type == 'card')
+                )
+
+                for (const dept_pay_history of dept_pay_histories) {
+                    insertClientDeptPayHistories.push({
+                        organization: client.organization,
+                        client_id: client._id,
+                        client_name: client.first_name,
+                        paid: dept_pay_history.paid,
+                        date: dept_pay_history.date,
+                        comment: dept_pay_history.comment,
+                        created_by_name: dept_pay_history.by_name,
+                        // created_by_id,
+                    })
+                }
+            }
+        }
+        if (insertClientDeptPayHistories.length > 0) {
+            await instance.clientsDebtPayHistory.insertMany(insertClientDeptPayHistories, (err, deptPayHistories) => {
+                if (err || deptPayHistories == null) {
+                    console.log(`err: ${err}. deptPayHistories.length: ${deptPayHistories.length}`);
+                }
+            });
+        }
+    }
+
+    /**
+     * 
+     * @param {string} organization_id 
+     */
+    const updateCustomerReceipts = async (organization_id) => {
+        console.log('starting...');
+        const start_time = new Date().getTime()
+        const customers = await instance.clientsDatabase
+            .find({ organization: organization_id })
+            .lean();
+        console.log(`clientlarni olish uchun ketgan vaqt: ${new Date().getTime() - start_time}`);
+
+        // return
+        const customersObj = {}
+        for (const client of customers) {
+            customersObj[client.user_id] = client
+        }
+
+        console.log('getting receipts...');
+        const customer_ids = customers.map(c => c.user_id).filter(user_id => user_id != undefined && user_id != '')
+        // console.log(`customer_ids: ${customer_ids}`);
+        console.log(`customer_ids.length: ${customer_ids.length}`);
+        const receipts = await instance.Receipts.find(
+            {
+                organization: organization_id,
+                user_id: { $in: customer_ids }
+            },
+            {
+                organization: 1,
+                user_id: 1,
+            },
+        )
+            .lean()
+        console.log(`receiptlarni olish uchun ketgan vaqt: ${new Date().getTime() - start_time}`);
+
+        console.log(`receipts.length: ${receipts.length}`);
+        const update_receipts = []
+        const not_found_customers = []
+        for (const receipt of receipts) {
+            const customer = customersObj[receipt.user_id]
+            if (!customer) {
+                not_found_customers.push(receipt.user_id)
+            } else
+                update_receipts.push({
+                    updateOne: {
+                        filter: { _id: receipt._id },
+                        update: { $set: { client_id: customer._id } }
+                    }
+                })
+        }
+        console.log('not_found_customers', not_found_customers, 'not_found_customers');
+        await instance.Receipts.bulkWrite(update_receipts, (err) => {
+            console.log('error on bulkWrite', err);
+        })
+    }
+
+    const insertCustomerDebpPayHistory = async () => {
+        const organizations = await instance.organizations
+            .find(
+                {
+                    _id: '60714ce251f0215b15112f56'
+                },
+                { _id: 1 },
+            )
+            .lean()
+        console.log(organizations.length, 'organizations.length');
+
+        for (const org of organizations) {
+            await updateCustomerReceipts(org._id)
+            await insertCustomerDebpPayHistoryByOrganizationId(org._id)
+        }
+    }
+
+    // insertCustomerDebpPayHistory()
+
+    // update eski goodsOtchot larning oy boshidagi stocklarini
+    /**
+     * 
+     * @param {string} organization_id 
+     */
+    const updateGoodsOtchotByOrganization = async (organization_id) => {
+        const start_time = new Date().getTime()
+        console.log('starting...');
+        const otchots = await instance.goodsOtchot
+            .find(
+                {
+                    organization: organization_id,
+                    month_name: 'December',
+                },
+                {
+                    services: 1,
+                    product_id: 1,
+                }
+            )
+            .lean()
+        console.log(`otchotlarni olish uchun ketgan vaqt: ${new Date().getTime() - start_time}`);
+        // const otchotsObj = {}
+        // for (const otchot of otchots) {
+        // otchotsObj[otchot.product_id + otchot.month_name] = otchot
+        // }
+
+        const goods = await instance.goodsSales
+            .find(
+                { _id: { $in: otchots.map(o => o.product_id) } },
+                { cost: 1, services: 1 },
+            )
+            .lean();
+
+        const goodsObj = {}
+        for (const good of goods) {
+            const services = {}
+            for (const serv of good.services) {
+                services[serv.service_id + ''] = serv
+            }
+
+            goodsObj[good._id + ''] = { cost: good.cost, services: services }
+        }
+
+
+        let update_otchots = []
+        for (const otchot of otchots) {
+
+            const services = otchot.services.map(s => {
+                if (!s.cost)
+                    s.cost = goodsObj[otchot.product_id + ''].services[s.service_id + ''].cost ?
+                        goodsObj[otchot.product_id + ''].services[s.service_id + ''].cost :
+                        goodsObj[otchot.product_id + ''].cost;
+                if (!s.stock_monthly.cost)
+                    s.stock_monthly.cost = goodsObj[otchot.product_id + ''].services[s.service_id + ''].cost ?
+                        goodsObj[otchot.product_id + ''].services[s.service_id + ''].cost :
+                        goodsObj[otchot.product_id + ''].cost;
+
+                return s
+            })
+
+            update_otchots.push({
+                updateOne: {
+                    filter: { _id: otchot._id },
+                    update: {
+                        $set: {
+                            services: services,
+                        }
+                    }
+                }
+            })
+
+            if (update_otchots.length >= 10000) {
+                console.log(`update_otchots.length: ${update_otchots.length}`);
+                await new Promise(res => {
+                    instance.goodsOtchot.bulkWrite(update_otchots, (err) => {
+                        if (err)
+                            console.log('error on bulkWrite', err);
+                        res(true)
+                    })
+                })
+                update_otchots = []
+            }
+        }
+        console.log(`update_otchots.length: ${update_otchots.length}`);
+        await new Promise(res => {
+            instance.goodsOtchot.bulkWrite(update_otchots, (err) => {
+                if (err)
+                    console.log('error on bulkWrite', err);
+                res(true)
+            })
+        })
+        update_otchots = []
+    }
+
+    const updateGoodsOtchot = async () => {
+        const organizations = await instance.organizations
+            .find({ _id: '61ba00594fb2ff720bc8e869' }, { _id: 1 })
+            .lean()
+        console.log(organizations.length, 'organizations.length');
+        for (const org of organizations) {
+            console.log(`org._id: ${org._id} starting...`);
+            await updateGoodsOtchotByOrganization(org._id)
+            console.log(`org._id: ${org._id} tugadi.`);
+        }
+        console.log(`the end`);
+    }
+
+    // updateGoodsOtchot()
+
     async function calculateSupplierBalance(supp, service) {
         console.log('calculateSupplierBalance, starting...');
         const query = {
@@ -355,245 +722,6 @@ module.exports = fp((instance, options, next) => {
         console.log(`not_exists_histories: ${not_exists_histories}`);
         console.log(`End... total: ${i}`);
     });
-
-    // update inv_history date correct
-    (async () => {
-        console.log('starting...');
-        const startDate = new Date('07.09.2022')//.toISOString()
-        const endDate = new Date()//.toISOString()
-        const org_inv_histories = await instance.inventoryHistory
-            .aggregate([
-                {
-                    $match: {
-                        reason: 'receivedd',
-                        // reason: { $in: ['received', 'receivedd'] },
-                        // createdAt: {
-                        //     $gte: startDate,
-                        //     $lte: endDate,
-                        // },
-                    },
-                },
-                // {
-                //     $sort: '$unique'
-                // },
-                // { $limit: 10 },
-                {
-                    $group: {
-                        _id: '$organization',
-                        histories: {
-                            $push: {
-                                _id: '$_id',
-                                unique: '$unique',
-                                date: '$date',
-                            }
-                        },
-                    }
-                },
-                // {
-                //     $project: {
-                //         _id: '$_id',
-                //         histories: {
-                //             $sortArray: {
-                //                 input: "$histories",
-                //                 sortBy: { "histories.unique": -1 }
-                //             },
-                //         },
-                //     },
-                // },
-            ])
-            .allowDiskUse(true)
-            .exec()
-        console.log(org_inv_histories.length, 'org_inv_histories.length');
-        let changed = 0
-        for (const org_inv_history of org_inv_histories) {
-            org_inv_history.histories.sort((a, b) => a.unique > b.unique ? 1 : -1)
-            for (const inv_history of org_inv_history.histories) {
-                // inv_history.date = inv_history._id.getTimestamp().getTime()
-                changed++
-                await instance.inventoryHistory.findByIdAndUpdate(
-                    inv_history._id,
-                    { date: inv_history.date },
-                    { lean: true },
-                )
-            }
-        }
-        console.log('end...', changed);
-    });
-
-    //update goods negative cost
-    (async () => {
-        console.log('start update goods...');
-        const goods = await instance.goodsSales.find(
-            {
-                cost: {
-                    $lt: 0
-                }
-            },
-            { cost: 1 },
-        )
-            .lean()
-        console.log('goods.length', goods.length);
-
-        for (const good of goods) {
-            if (good.cost == Infinity || good.cost == -Infinity || isNaN(good.cost)) {
-                avg = await instance.purchaseItem.aggregate([
-                    {
-                        $match: {
-                            product_id: good._id,
-                        }
-                    },
-                    {
-                        $group: {
-                            _id: null,
-                            cost: {
-                                $avg: "$purchase_cost",
-                            },
-                        }
-                    },
-                ])
-                g.cost = isNaN(avg.cost) ? 0 : avg.cost
-            } else
-                good.cost = Math.abs(good.cost)
-
-            await instance.goodsSales.findByIdAndUpdate(good._id, good)
-        }
-        console.log('update goods end...');
-    });
-
-    // update suppliers balance
-    (async () => {
-        console.log('starting...');
-        const organizations = await instance.organizations
-            .find({})
-            .lean()
-
-        for (const organization of organizations) {
-            const services = await instance.services
-                .find({
-                    organization: organization._id + ''
-                })
-                .lean()
-
-            const suppliers = await instance.adjustmentSupplier
-                .find({ organization: organization._id + '' })
-                .lean()
-            for (const service of services) {
-                for (const supp of suppliers) {
-                    const balance = await calculateSupplierBalance(supp, service).catch(err => {
-                        console.log(err, 'err');
-                    })
-                    console.log(supp._id, service._id, balance);
-                    if (!isNaN(balance)) {
-                        if (!(supp.services && supp.services.length)) {
-                            supp.services = [{
-                                service: service._id,
-                                service_name: service.name,
-                                balance: balance,
-                                balance_usd: 0,
-                                balance_currency: 'uzs',
-                                available: true,
-                                telegram_acces: false,
-                            }]
-                        }
-                        const service_index = supp.services
-                            .findIndex(serv => serv.service + '' == service._id + '')
-
-                        if (service_index == -1)
-                            supp.services.push({
-                                service: service._id,
-                                service_name: service.name,
-                                balance: balance,
-                                balance_usd: 0,
-                                balance_currency: 'uzs',
-                                available: true,
-                                telegram_acces: false,
-                            })
-                        else {
-                            supp.services[service_index].balance = balance;
-                        }
-
-                        await instance.adjustmentSupplier.findByIdAndUpdate(supp._id, supp, { lean: true })
-                    }
-                }
-            }
-        }
-        console.log('end...');
-    });
-
-    // (async () => {
-    //     const transactions = await instance.supplierTransaction.find(
-    //         {
-    //             $and: [
-    //                 { purchase_id: { $exists: true } },
-    //                 {
-    //                     $or: [
-    //                         { service: { $exists: false } },
-    //                         { service_name: { $exists: false } },
-    //                     ]
-    //                 },
-    //             ]
-    //         },
-    //         { _id: 1, service: 1, service_name: 1, supplier_id: 1, purchase_id: 1 },
-    //     ).lean()
-    //     console.log(transactions.length);
-    //     const start_time = new Date().getTime()
-
-    //     for (const tran of transactions) {
-    //         // if (tran.purchase_id) {
-    //         // console.log(tran.purchase_id, tran.service, tran.service_name, 'service service_name');
-    //         const purchase = await instance
-    //             .inventoryPurchase
-    //             .findById(tran.purchase_id)
-    //             .lean()
-
-    //         // const supplier = await instance.adjustmentSupplier
-    //         //     .findById(tran.supplier_id, { organization: 1 })
-    //         //     .lean()
-
-    //         if (purchase && purchase.service && !purchase.service_name) {
-    //             const service = await instance.services.findById(purchase.service, { _id: 1, name: 1 }).lean()
-    //             if (service) {
-    //                 tran.service = tran.service ? tran.service : service._id;
-    //                 tran.service_name = tran.service_name ? tran.service_name : service.service_name;
-
-    //                 await instance.supplierTransaction.findByIdAndUpdate(
-    //                     tran._id,
-    //                     { $set: { service_name: tran.service_name } }
-    //                 )
-    //             }
-    //         }
-    //         if (purchase && purchase.organization && purchase.service && purchase.service_name) {
-    //             tran.service = tran.service ? tran.service : purchase.service;
-    //             tran.service_name = tran.service_name ? tran.service_name : purchase.service_name;
-
-    //             await instance.supplierTransaction.findByIdAndUpdate(
-    //                 tran._id,
-    //                 { $set: { service_name: tran.service_name } }
-    //             )
-    //         }
-    //         // }
-    //     }
-    //     const end_time = new Date().getTime()
-    //     console.log('ketgan vaqt', end_time - start_time);
-    // })
-    // trim feko barcodes    
-    // (async () => {
-    //     const items = await instance.goodsSales.find(
-    //         {
-    //             $or: [
-    //                 { barcode: { $elemMatch: { $regex: / $/, $options: 'i' } } },
-    //                 { barcode: { $elemMatch: { $regex: /^ /, $options: 'i' } } },
-    //             ]
-    //         },
-    //         { barcode: 1 },
-    //     )
-    //         .lean()
-    //     for (const item of items) {
-    //         item.barcode = item.barcode.map(b => b.trim())
-    //         await instance.goodsSales.findByIdAndUpdate(item._id, { $set: item })
-    //     }
-    //     console.log('end');
-    // })
 
     instance.get('/get/tiin/check-prices', async (request, reply) => {
         const update = request.query.update

@@ -714,6 +714,93 @@ async function supplierTransactionsGetExelNew(request, reply, instance) {
     return reply;
 }
 
+async function calculateSuppliersBalance(instance, supplier_ids, user_available_services) {
+    const query = {
+        supplier_id: { $in: supplier_ids },
+        status: { $ne: 'pending' },
+        service: { $in: user_available_services },
+    };
+
+    const transactions = await instance.supplierTransaction.find(query).lean();
+    const transactionsObj = {}
+    const suppliersObj = {}
+
+    for (const transaction of transactions) {
+        if (transactionsObj[transaction.supplier_id])
+            transactionsObj[transaction.supplier_id].push(transaction)
+        else
+            transactionsObj[transaction.supplier_id] = [transaction]
+    }
+    const data = transactions
+
+    allSum = 0
+    const getFloat = num => isNaN(parseFloat(num)) ? 0 : parseFloat(num)
+
+    const purChase = await instance.inventoryPurchase.find(query).lean();
+
+    const purchasesObj = {}
+    for (const purchase of purChase) {
+        if (purchasesObj[purchase.supplier_id])
+            purchasesObj[purchase.supplier_id].push(purchase)
+        else
+            purchasesObj[purchase.supplier_id] = [purchase]
+    }
+    console.log(suppliersObj['5f5643c1dce4e706c06284a8']);
+
+    for (const transaction of transactions) {
+        if (suppliersObj[transaction.supplier_id])
+            suppliersObj[transaction.supplier_id].total_balance +=
+                transaction.status == 'pending'
+                    ? 0
+                    : getFloat(transaction.balance)
+        else
+            suppliersObj[transactions.supplier_id] = {
+                total_balance: transaction.status == 'pending'
+                    ? 0
+                    : getFloat(transaction.balance)
+            }
+
+        // allSum += transactions[i].status == 'pending'
+        //     ? 0
+        //     : getFloat(transactions[i].balance)
+    }
+    console.log(suppliersObj['5f5643c1dce4e706c06284a8']);
+
+    for (const [index, item] of purChase.entries()) {
+        if (transactionsObj[item.supplier_id]) {
+            if (!transactionsObj[item.supplier_id].find(x => x.document_id == item.p_order) && item.status != 'pending') {
+
+                if (suppliersObj[item.supplier_id]) {
+                    if (item.type == 'coming')
+                        suppliersObj[item.supplier_id].total_balance -=
+                            item.status == 'pending'
+                                ? 0
+                                : getFloat(item.total)
+                    else
+                        if (item.type == 'refund')
+                            suppliersObj[item.supplier_id].total_balance +=
+                                item.status == 'pending'
+                                    ? 0
+                                    : getFloat(item.total)
+                }
+                else
+                    if (item.type == 'coming')
+                        suppliersObj[item.supplier_id] = {
+                            total_balance: -item.status == 'pending' ? 0 : getFloat(item.total)
+                        }
+                    else
+                        if (item.type == 'refund')
+                            suppliersObj[item.supplier_id] = {
+                                total_balance: +item.status == 'pending' ? 0 : getFloat(item.total)
+                            }
+            }
+        }
+    }
+
+    console.log(suppliersObj['5f5643c1dce4e706c06284a8']);
+    return suppliersObj
+}
+
 async function supplierTransactionsGetExelFromDB(request, reply, instance) {
     try {
         const { limit, page, supplier_name, service } = request.body;
@@ -827,6 +914,13 @@ async function supplierTransactionsGetExelFromDB(request, reply, instance) {
         const suppliers_excel = []
         let index = 1;
 
+        const suppsObj = await calculateSuppliersBalance(instance, suppliers.map(s => s._id), user_available_services)
+
+        for (const supp of suppliers) {
+            supp.balance = suppsObj[supp._id] && !isNaN(suppsObj[supp._id].total_balance)
+                ? suppsObj[supp._id].total_balance
+                : supp.balance
+        }
 
         for (const s of suppliers) {
             // s.balance = await calculateSupplierBalance(instance, s)

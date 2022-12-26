@@ -234,11 +234,13 @@ module.exports = ((instance, _, next) => {
       try {
         const org_id = request.params.organization;
         const service_id = request.params.service;
-        const organization = await instance.organizations.findById(org_id);
+        const organization = await instance.organizations
+          .findById(org_id)
+          .lean();
         if (!organization) {
           return reply.fourorfour('Organization')
         }
-        const service = await instance.services.findById(service_id);
+        const service = await instance.services.findById(service_id).lean();
         if (!service) {
           return reply.error('Service')
         }
@@ -302,7 +304,8 @@ module.exports = ((instance, _, next) => {
             price = it.prices[0].price
           }
 
-          itemsText += `${it.sku};${it.name};;${price};0;0;0;${it.sku};0;0;;01.01.1999;0;7;11;0;01.01.2001\n`;
+          // itemsText += `${it.sku};${it.name};;${price};0;0;0;${it.sku};0;0;;01.01.1999;0;7;11;0;01.01.2001\n`;
+          itemsText += `${it.sku};${it.name};;${price};0;0;0;${it.sku};0;0;;01.01.01;0;0;0;0;01.01.01\n`;
         }
 
         fs.writeFile(`./static/${timeStamp}.txt`, itemsText, function (err, data) {
@@ -823,7 +826,8 @@ module.exports = ((instance, _, next) => {
             items[index].name = items[index].name.replace(/,/g, '.')
           }
 
-          itemsText += `${+index + 1};${items[index].name};;${price};0;0;0;${items[index].sku};0;0;;01.01.01;${items[index].sold_by == 'each' ? '1' : '0'};\n`;
+          // itemsText += `${+index + 1};${items[index].name};;${price};0;0;0;${items[index].sku};0;0;;01.01.01;${items[index].sold_by == 'each' ? '1' : '0'};\n`;
+          itemsText += `${items[index].sku};${items[index].name};;${price};0;0;0;${items[index].sku};0;0;;01.01.01;0;0;0;0;01.01.01\r\n`;
         }
 
         fs.writeFile(`./static/${timeStamp}.txt`, itemsText, function (err, data) {
