@@ -382,7 +382,7 @@ module.exports = fp((instance, _, next) => {
         // month_name: month_name,
       })
       .lean()
-
+    console.log(start_date.getTime(), end_date.getTime());
     let
       index = 1,
       ostatok_start_stock = 0,
@@ -418,6 +418,7 @@ module.exports = fp((instance, _, next) => {
           reportsObj[doc.product_id].services.stock_monthly.end_stock = services.stock_monthly.end_stock
           reportsObj[doc.product_id].services.stock_monthly.end_cost = services.stock_monthly.cost
         }
+
         reportsObj[doc.product_id].services.purchase_monthly_info.count += services.purchase_monthly_info.count
         reportsObj[doc.product_id].services.purchase_monthly_info.amount += services.purchase_monthly_info.amount
         reportsObj[doc.product_id].services.sale_monthly_info.count += services.sale_monthly_info.count
@@ -440,8 +441,6 @@ module.exports = fp((instance, _, next) => {
             stock_monthly: {
               start_stock: doc.month == min_date_month ? services.stock_monthly.start_stock : 0,
               end_stock: doc.month == max_date_month ? services.stock_monthly.end_stock : 0,
-              // start_stock: services.stock_monthly.start_stock,
-              // end_stock: services.stock_monthly.end_stock,
               start_cost: services.stock_monthly.cost,
               end_cost: services.stock_monthly.cost,
             },
@@ -485,6 +484,7 @@ module.exports = fp((instance, _, next) => {
         end_stock.toFixed(2), // End Time sum
         end_stock * services_end_cost,
       ])
+      index++
     }
 
     console.log('Done')
@@ -785,7 +785,8 @@ module.exports = fp((instance, _, next) => {
     try {
       const { service_id, min, max } = request.params
       const min_date = new Date(parseInt(+min - 18000000))
-      const max_date = new Date(parseInt(+max))
+      const max_date = new Date(parseInt(+max - 18000000))
+
       if (min_date.toString() === 'Invalid Date' || max_date.toString() === 'Invalid Date') {
         return reply.error('Invalid Date')
       }
@@ -822,8 +823,8 @@ module.exports = fp((instance, _, next) => {
       });
 
       console.log(
-        'min_date', reports.min_date, '\n',
-        'max_date', reports.max_date, '\n',
+        'min_date', min_date, '\n',
+        'max_date', max_date, '\n',
       );
 
       makeInventoryOtchotHeader(
