@@ -450,6 +450,23 @@ module.exports = fp((instance, _, next) => {
         return reply;
     })
 
+    instance.get('/inventory/purchase/pdf_for_supplier/:id/:name', async (request, reply) => {
+        const { id } = request.params
+
+        const purchase = await instance.inventoryPurchase.findById(id, { _id: 1, status: 1 }).lean()
+        if (!purchase) {
+            return reply.send('Purchase not found')
+        }
+        if (purchase.status !== 'pending') {
+            return reply.status(421).send({ message: 'Not allowed' })
+        }
+
+        request.query.type = 'pdf'
+
+        getPurchasePdfNewUmar(request, reply)
+        return reply;
+    })
+
     const getTransferPdf = async (request, reply) => {
         try {
             const id = request.params.id

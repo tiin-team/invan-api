@@ -133,12 +133,32 @@ module.exports = fp((instance, options, next) => {
     // LIMIT ${(page - 1) * limit}, ${limit}
     // service IN ${user_available_services}
 
+    const product_ids = new Set()
+
+    for (const item of c_data) {
+      product_ids.add(item.product_id)
+    }
+
+    const items = await instance.goodsSales
+      .find(
+        { _id: { $in: [...product_ids] } },
+        { sku: 1 },
+      )
+      .lean()
+
+    const itemsObj = {}
+    for (const item of items) {
+      itemsObj[item._id] = item
+    }
+
     const result = {}
     for (const item of c_data) {
       if (!result[item.product_id]) {
         result[item.product_id] = {
           product_id: item.product_id,
           product_name: item.product_name,
+          sku: itemsObj[item.product_id] && itemsObj[item.product_id].sku ?
+            itemsObj[item.product_id].sku : '',
           sold: 0,
           returned: 0,
           received: 0,

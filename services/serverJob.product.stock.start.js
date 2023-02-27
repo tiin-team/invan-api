@@ -1,7 +1,5 @@
 const cronJob = require("node-cron");
-const axios = require("axios");
 const fp = require("fastify-plugin");
-const os = require("os");
 
 /**
  * @param {number | string} month
@@ -26,6 +24,34 @@ const months = [
 
 module.exports = fp((instance, _, next) => {
 
+  async function insertGoodsOtchot(new_otchots) {
+    console.log('goodsOtchot inserting...');
+    await new Promise((res, rej) => {
+      instance.goodsOtchot.insertMany(new_otchots, (err) => {
+        if (err) rej(err)
+        else res(true)
+      })
+    })
+      .catch(err => {
+        console.log('saving otchot, kun boshida', JSON.stringify(err));
+        instance.send_Error('saving otchot, kun boshida', JSON.stringify(err))
+      })
+  }
+
+  async function insertGoodsDailyReport(new_goods_daily_reports) {
+    console.log('GoodsDailyStock inserting...');
+    await new Promise((res, rej) => {
+      instance.GoodsDailyStock.insertMany(new_goods_daily_reports, (err) => {
+        if (err) rej(err)
+        else res(true)
+      })
+    })
+      .catch(err => {
+        console.log('saving new_goods_daily_reports, kun boshida', JSON.stringify(err));
+        instance.send_Error('saving new_goods_daily_reports, kun boshida', JSON.stringify(err))
+      })
+  }
+
   /**
    * ******************************************************
    * *                                                    *
@@ -43,7 +69,7 @@ module.exports = fp((instance, _, next) => {
     const year = date.getFullYear()
 
     const month_name = months[month]
-    const start_date = new Date(`${month + 1}.${1}.${year}`)
+    const start_date = new Date(`${month + 1}.${date.getDate()}.${year}`)
     const start_time = start_date.getTime()
 
     const goods = await instance.goodsSales.aggregate([
@@ -73,7 +99,9 @@ module.exports = fp((instance, _, next) => {
       .allowDiskUse(true)
       .exec()
 
-    let new_otchots = []
+    let new_otchots = [],
+      new_goods_daily_reports = []
+
     console.log(`goods.length: ${goods.length}`);
     for (const good of goods) {
 
@@ -106,6 +134,36 @@ module.exports = fp((instance, _, next) => {
         services_info.push(service_info)
       }
 
+      new_goods_daily_reports.push({
+        organization: organization_id,
+        month: date_string,
+        month_name: time.month_name,
+        sku: good.sku,
+        product_id: good._id,
+        product_name: good.name,
+        category_id: good.category_id,
+        category_name: good.category_name,
+        sold_by: good.sold_by,
+        count_by_type: good.count_by_type,
+        barcode_by_type: good.barcode_by_type,
+        barcode: good.barcode,
+        mxik: good.mxik,
+        services: good.services.map(serv => {
+          return {
+            service_id: serv.service,
+            service_name: serv.service_name,
+            start_price: serv.price,
+            start_cost: serv.cost,
+            end_price: serv.price,
+            end_cost: serv.cost,
+            start_stock: serv.in_stock,
+            end_stock: serv.in_stock,
+            start_prices: serv.prices,
+            end_prices: serv.prices,
+          }
+        })
+      })
+
       new_otchots.push({
         organization: good.organization,
         month: `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`,
@@ -126,18 +184,14 @@ module.exports = fp((instance, _, next) => {
         services: services_info,
       })
 
-      if (new_otchots.length >= 50000) {
-        console.log('inserting...');
-        await new Promise((res, rej) => {
-          instance.goodsOtchot.insertMany(new_otchots, (err) => {
-            if (err) rej(err)
-            else res(true)
-          })
-        })
-          .catch(err => {
-            console.log('saving otchot, kun boshida', JSON.stringify(err));
-            instance.send_Error('saving otchot, kun boshida', JSON.stringify(err))
-          })
+      if (new_goods_daily_reports.length >= 20000) {
+        await insertGoodsDailyReport(new_goods_daily_reports)
+
+        new_goods_daily_reports = []
+      }
+
+      if (new_otchots.length >= 20000) {
+        await insertGoodsOtchot(new_otchots)
 
         new_otchots = []
       }
@@ -146,19 +200,9 @@ module.exports = fp((instance, _, next) => {
 
     // await instance.goodsOtchot.deleteMany({})
 
-    console.log('inserting...');
-    await new Promise((res, rej) => {
-      instance.goodsOtchot.insertMany(new_otchots, (err) => {
-        if (err) rej(err)
-        else res(true)
-      })
-    })
-      .catch(err => {
-        console.log('saving otchot, kun boshida', JSON.stringify(err));
-        instance.send_Error('saving otchot, kun boshida', JSON.stringify(err))
-      })
-
+    await insertGoodsOtchot(new_otchots)
     new_otchots = []
+
     console.log('the end!');
   }
 

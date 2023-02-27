@@ -836,6 +836,17 @@ module.exports = fp((instance, options, next) => {
                     instance.send_Error('saving purchase', JSON.stringify(err))
                   }
                   else {
+                    if (request.body.send_message_to_supplier) {
+                      instance.i18n.setLocale('ru')
+                      const message_to_supplier = `
+                        Sizga ${service.name}dan yangi buyurtma keldi.
+                        Buyurtmani ko'rish uchun quyidagi link ustiga bosing!
+                        URL: ${process.env.PROJECT_BASE_URL}inventory/purchase/pdf_for_supplier/${purch._id}/${p_order}
+                      `
+
+                      instance.sendMessageToSupplier(supp.phone_number, message_to_supplier)
+                    }
+
                     instance.purchaseItem.insertMany(purchase_items, (err, purchaseitems) => {
                       if (err || purchaseitems == null) {
                         reply.error('Error on saving purchase items')
@@ -1413,6 +1424,8 @@ module.exports = fp((instance, options, next) => {
           supplier_name: 1,
           service_name: 1,
           p_order: 1,
+          cost: 1,
+          default_purchase_cost: 1,
           purchase_order_date: 1,
           supplier_id: 1,
           status: 1,

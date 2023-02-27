@@ -289,6 +289,10 @@ const receiptCreateGroup = async (request, reply, instance) => {
               const serv = item.services
                 .find(serv => serv.service + '' == service_id)
 
+              if (serv && serv.cost) {
+                $receiptModel.sold_item_list[i].cost = serv.cost
+              }
+
               // const prices = serv && serv.prices ? serv.prices.filter(a => a.from !== 0) : []
               let prices = serv && Array.isArray(serv.prices)
                 ? serv.prices.filter(a => a.from !== 0 && a.price !== 0)
@@ -391,9 +395,67 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
     // let result = instance.Receipts.insertMany(need_to_save);
     let result = []
+
+    const users_donate = []
+    const clientsObj = {}
+    const anonymous = 'anonymous'
+    const clients = await instance.clientsDatabase
+      .find(
+        {
+          phone_number: {
+            $in: need_to_save.filter(r => r.phone_number != '').map(r => r.phone_number),
+          },
+          organization: need_to_save[0].organization,
+        },
+        {
+          first_name: 1,
+          last_name: 1,
+          phone_number: 1,
+          organization: 1,
+        },
+      )
+      .lean();
+
+    for (const client of clients) {
+      clientsObj[client.phone_number] = client
+    }
+
     for (const r of need_to_save) {
       try {
         const check = await new instance.Receipts(r).save();
+
+        // donate for Turkey
+        if (check.is_donate) {
+          const client = clientsObj[r.cashback_phone]
+          const total_donate = check.sold_item_list.reduce(
+            (sum, sold_item) => {
+              return sum + ((sold_item.price - sold_item.cost) * sold_item.value)
+            },
+            0,
+          )
+
+          const data = {
+            organization: check.organization,
+            service_id: check.service,
+            client_phone_number: anonymous,
+            client_name: anonymous,
+            client_id: anonymous,
+            receipt_id: check._id,
+            receipt_no: check.receipt_no,
+            total_price: check.total_price,
+            total_donate: total_donate,
+            create_time: check.date,
+          }
+
+          if (client && client.phone_number == check.cashback_phone) {
+            data.client_phone_number = client.phone_number
+            data.client_name = `${client.first_name} ${client.last_name}`
+            data.client_id = client._id
+          }
+
+          users_donate.push(data)
+        }
+
         // save agent transaction
         console.log('save agent transaction')
         console.log(r.order_id)
@@ -401,7 +463,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
           await instance.save_agent_transaction(instance, check);
         }
         // cashbackni hisoblash
-        if (r.cashback_phone) {
+        if (r.cashback_phone && !check.is_donate) {
           console.log('save cashback')
 
           cash_back = await instance.CashBackClientUpdate(
@@ -420,6 +482,14 @@ const receiptCreateGroup = async (request, reply, instance) => {
         )
       }
     }
+
+    // insert donates for Turkey
+    try {
+      await instance.UsersDonate.insertMany(users_donate)
+    } catch (error) {
+      instance.send_Error(`Error while insertMany donates, service_id: ${service_id}, pos_id: ${pos_id}`, error)
+    }
+
     for (const r of result) {
       if (!r.refund_not_stock && r.is_refund || !r.is_refund) {
         await instance.forReceiptToWorkCreate(request, user, r, r.is_refund);
@@ -1145,6 +1215,7 @@ module.exports = fp((instance, _, next) => {
       cashback_phone: { type: "string" },
       zdachi_to_cashback: { type: "number", default: 0 },
       comment: { type: "string" },
+      is_donate: { type: "boolean", default: false },
     },
   });
 

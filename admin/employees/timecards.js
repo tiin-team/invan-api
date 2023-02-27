@@ -1,18 +1,30 @@
+const mongoose = require("mongoose")
+
 module.exports = (instance, options, next) => {
 
 
   // get timecards
 
-  var get_timecards = (request, relpy, admin) => {
-    var min = parseInt(request.params.min)
-    var max = parseInt(request.params.max)
-    var query = {
+  const get_timecards = async (request, relpy, admin) => {
+    const min = parseInt(request.params.min)
+    const max = parseInt(request.params.max)
+
+    const limit = Number.isFinite(request.params.limit)
+      ? parseInt(request.params.limit)
+      : 10
+
+    const page = Number.isFinite(request.params.page) && request.params.page > 1
+      ? parseInt(request.params.page)
+      : 1
+
+    const query = {
       organization: admin.organization,
       created_time: {
         $gte: min,
         $lte: max
       }
     }
+
     if (request.body) {
       if (request.body.services) {
         if (request.body.services.length > 0) {
@@ -38,10 +50,24 @@ module.exports = (instance, options, next) => {
           }
         }
       }
+
+      if (request.body.search) {
+        query.employee_name = {
+          $regex: request.body.search,
+          $options: "i",
+        }
+      }
     }
-    instance.timecard.aggregate([
+
+    const tcards = await instance.timecard.aggregate([
       {
         $match: query
+      },
+      {
+        $limit: limit
+      },
+      {
+        $skip: (page - 1) * limit
       },
       {
         $lookup: {
@@ -59,29 +85,26 @@ module.exports = (instance, options, next) => {
           as: 'EMPLOYEE'
         }
       }
-    ], (err, tcards) => {
-      if (tcards == null) {
-        tcards = []
+    ])
+
+    const total = await instance.timecard.countDocuments(query)
+
+
+    for (let i = 0; i < tcards.length; i++) {
+      if (tcards[i].SERVICE.length > 0) {
+        tcards[i].service_name = tcards[i].SERVICE[0].name
       }
-      var total = tcards.length
-      var page = parseInt(request.params.page)
-      var limit = parseInt(request.params.limit)
-      tcards = tcards.slice((page - 1) * limit, page * limit)
-      for (let i = 0; i < tcards.length; i++) {
-        if (tcards[i].SERVICE.length > 0) {
-          tcards[i].service_name = tcards[i].SERVICE[0].name
-        }
-        tcards[i].SERVICE = undefined
-        if (tcards[i].EMPLOYEE.length > 0) {
-          tcards[i].employee_name = tcards[i].EMPLOYEE[0].name
-        }
-        tcards[i].EMPLOYEE = undefined
+      tcards[i].SERVICE = undefined
+      if (tcards[i].EMPLOYEE.length > 0) {
+        tcards[i].employee_name = tcards[i].EMPLOYEE[0].name
       }
-      relpy.ok({
-        total: total,
-        page: Math.ceil(total / limit),
-        data: tcards
-      })
+      tcards[i].EMPLOYEE = undefined
+    }
+
+    relpy.ok({
+      total: total,
+      page: Math.ceil(total / limit),
+      data: tcards
     })
     // instance.timecard.find(query, (err, cards) => {
     //   if(cards == null) {
@@ -99,7 +122,7 @@ module.exports = (instance, options, next) => {
 
   // create timecard
 
-  var timecard_create = (request, relpy, user) => {
+  const timecard_create = (request, relpy, user) => {
     var timecard = request.body
     timecard.organization = user.organization
     timecard.created_time = new Date().getTime()
@@ -115,7 +138,7 @@ module.exports = (instance, options, next) => {
           if (emp) {
             timecard.employee_id = instance.ObjectId(emp._id)
             timecard.employee_name = emp.name
-            timecard.total_hours = (timecard.clock_out - timecard.clock_in) / 3600000
+            timecard.total_hours = (timecard.clock_out - timecard.clock_in) / 60000
             instance.timecard.findOne({
               employee_id: timecard.employee_id,
               $and: [
@@ -147,17 +170,20 @@ module.exports = (instance, options, next) => {
             }, (_, tcard) => {
               if (tcard && request.body.check == true) {
                 relpy.ok({
+                  _id: tcard._id,
                   overflow: true
                 })
               }
               else {
                 var timecardM = new instance.timecard(timecard)
+                timecardM._id = new mongoose.Types.ObjectId()
                 timecardM.save((err) => {
                   if (err) {
                     relpy.error('Error on saving timecard')
                   }
                   else {
                     relpy.ok({
+                      _id: timecardM._id,
                       overflow: false
                     })
                     var timecard_history = new instance.timecardHistory({
@@ -196,7 +222,7 @@ module.exports = (instance, options, next) => {
 
   // get by id
 
-  var get_timecard_by_id = (request, relpy, admin) => {
+  const get_timecard_by_id = (request, relpy, admin) => {
     instance.timecard.findOne({
       _id: request.params.id
     }, (_, timecard) => {
@@ -231,7 +257,7 @@ module.exports = (instance, options, next) => {
 
   // update timecard
 
-  var update_timecard = (request, relpy, admin) => {
+  const update_timecard = (request, relpy, admin) => {
     instance.timecard.findOne({
       _id: request.params.id
     }, (err, timecard) => {
@@ -241,9 +267,9 @@ module.exports = (instance, options, next) => {
             _id: request.params.id
           }, {
             $set: {
-              clock_in: request.body.clock_in,
-              clock_out: request.body.clock_out,
-              total_hours: (request.body.clock_out - request.body.clock_in) / 3600000
+              clock_in: request.body.clock_in ? request.body.clock_in : timecard.clock_in,
+              clock_out: request.body.clock_out ? request.body.clock_out : timecard.clock_out,
+              total_hours: (request.body.clock_out - request.body.clock_in) / 60000
             }
           }, (err) => {
             if (err) {
@@ -251,11 +277,11 @@ module.exports = (instance, options, next) => {
               instance.send_Error('update timecard', JSON.stringify(err))
             }
             else {
-              var timecard_history = new instance.timecardHistory({
+              const timecard_history = new instance.timecardHistory({
                 timecard_id: request.params.id,
                 date: new Date().getTime(),
-                clock_in: request.body.clock_in,
-                clock_out: request.body.clock_out,
+                clock_in: request.body.clock_in ? request.body.clock_in : timecard.clock_in,
+                clock_out: request.body.clock_out ? request.body.clock_out : timecard.clock_out,
                 event: 'edited'
               })
               timecard_history.save((err) => {
@@ -284,7 +310,7 @@ module.exports = (instance, options, next) => {
   })
 
   // delete timecard
-  var delete_timecard = (request, relpy, admin) => {
+  const delete_timecard = (request, relpy, admin) => {
     instance.timecard.deleteMany({
       _id: {
         $in: request.body.indexes
@@ -315,7 +341,7 @@ module.exports = (instance, options, next) => {
   })
 
   // clock in out
-  var clock_in_out = (request, relpy, employee) => {
+  const clock_in_out = (request, relpy, employee) => {
     var service_id = request.headers['accept-service']
     instance.services.findOne({
       _id: service_id
@@ -340,7 +366,7 @@ module.exports = (instance, options, next) => {
                 if (has_clock_in && t) {
                   if (t.type == 'clock_out') {
                     tim.clock_out = t.created_time
-                    tim.total_hours = (tim.clock_out - tim.clock_in) / 3600000
+                    tim.total_hours = (tim.clock_out - tim.clock_in) / 60000
                   }
                   else {
                     tim.clock_out = null
@@ -370,7 +396,7 @@ module.exports = (instance, options, next) => {
                       if (clock_data[clock_data.length - 1].clock_out == 0) {
                         clock_data[clock_data.length - 1].clock_out = t.created_time
                         clock_data[clock_data.length - 1].created_time = t.created_time
-                        clock_data[clock_data.length - 1].total_hours = (clock_data[clock_data.length - 1].clock_out - clock_data[clock_data.length - 1].clock_in) / 3600000
+                        clock_data[clock_data.length - 1].total_hours = (clock_data[clock_data.length - 1].clock_out - clock_data[clock_data.length - 1].clock_in) / 60000
                       }
                       else {
                         clock_data.push(Object.assign(assign, {

@@ -280,6 +280,14 @@ module.exports = fp((instance, options, next) => {
       inv_inventory_valuation: true,
       workgroup: true,
       workgroup_edit_cost: true,
+      finance_account_create: true,
+      finance_account_read: true,
+      finance_account_update: true,
+      finance_account_delete: true,
+      finance_category_create: true,
+      finance_category_read: true,
+      finance_category_update: true,
+      finance_category_delete: true,
     })
 
     boss.save((err) => {

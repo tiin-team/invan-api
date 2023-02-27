@@ -2,7 +2,7 @@ Arguments:
   /Users/umarakbarov/.nvm/versions/node/v16.17.0/bin/node /Users/umarakbarov/.nvm/versions/node/v16.17.0/bin/yarn add @types/fastify-file-upload
 
 PATH: 
-  /opt/homebrew/bin:/opt/homebrew/sbin:/Users/umarakbarov/.nvm/versions/node/v16.17.0/bin:/Users/umarakbarov/go/bin:/usr/local/go/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/usr/local/go/bin:/Users/umarakbarov/go/go:/usr/local/opt/mongodb-community@5.0/bin
+  /Users/umarakbarov/.nvm/versions/node/v16.17.0/bin:/Users/umarakbarov/go/bin:/usr/local/go/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/Users/umarakbarov/.nvm/versions/node/v16.17.0/bin:/Users/umarakbarov/go/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/umarakbarov/.cargo/bin:/Users/umarakbarov/go/go:/usr/local/opt/mongodb-community@5.0/bin:/usr/local/go/bin:/Users/umarakbarov/go/go:/usr/local/opt/mongodb-community@5.0/bin
 
 Yarn version: 
   1.22.19
@@ -14,17 +14,10 @@ Platform:
   darwin arm64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@types%2ffastify-file-upload: Not found
-      at Request.params.callback [as _callback] (/Users/umarakbarov/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:66145:18)
-      at Request.self.callback (/Users/umarakbarov/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:140890:22)
-      at Request.emit (node:events:513:28)
-      at Request.<anonymous> (/Users/umarakbarov/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:141862:10)
-      at Request.emit (node:events:513:28)
-      at IncomingMessage.<anonymous> (/Users/umarakbarov/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:141784:12)
-      at Object.onceWrapper (node:events:627:28)
-      at IncomingMessage.emit (node:events:525:35)
-      at endReadableNT (node:internal/streams/readable:1358:12)
-      at processTicksAndRejections (node:internal/process/task_queues:83:21)
+  Error: https://registry.yarnpkg.com/@types%2ffastify-file-upload: ETIMEDOUT
+      at Timeout._onTimeout (/Users/umarakbarov/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:141550:19)
+      at listOnTimeout (node:internal/timers:559:17)
+      at processTimers (node:internal/timers:502:7)
 
 npm manifest: 
   {

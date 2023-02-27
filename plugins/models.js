@@ -277,6 +277,7 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('Passwords', Passwords)
 
   const Receipts = instance.model('Receipts', {
+    is_donate: { type: Boolean, default: false },
     organization: String,
     service: String,
     workgroup_order_id: String,
@@ -2259,6 +2260,15 @@ module.exports = fp((instance, _, next) => {
     inv_inventory_valuation: boolean,
     workgroup: boolean,
     workgroup_edit_cost: boolean,
+    // finance
+    finance_account_create: boolean,
+    finance_account_read: boolean,
+    finance_account_update: boolean,
+    finance_account_delete: boolean,
+    finance_category_create: boolean,
+    finance_category_read: boolean,
+    finance_category_update: boolean,
+    finance_category_delete: boolean,
   })
 
   instance.decorate('AccessRights', AccessRights)

@@ -28,6 +28,16 @@ module.exports = (instance, options, next) => {
           },
         ]
       }
+      const search = request.body.search
+      if (search)
+        query['$and'] = [
+          {
+            $or: [
+              { name: { $regex: search, $options: "i" } },
+              { phone_number: { $regex: search, $options: "i" } },
+            ]
+          }
+        ]
     }
     const page = parseInt(request.params.page)
     const limit = parseInt(request.params.limit)

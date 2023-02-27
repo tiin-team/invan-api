@@ -487,6 +487,15 @@ module.exports = (instance, options, next) => {
           inv_inventory_valuation: true,
           workgroup_edit_cost: true,
           workgroup: true,
+          // finance
+          finance_account_create: true,
+          finance_account_read: true,
+          finance_account_update: true,
+          finance_account_delete: true,
+          finance_category_create: true,
+          finance_category_read: true,
+          finance_category_update: true,
+          finance_category_delete: true,
         };
       }
       const unique = await instance.AccessRights.findOne({

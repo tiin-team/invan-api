@@ -44,7 +44,7 @@ module.exports = fp((instance, _, next) => {
       }
     }
 
-    try  {
+    try {
       const tgText = `<b>${sms_code}</b> is Sms code of ${phone_number} ${user}\n\nOrganization: ${organization.name}`
       const URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`
         + `/sendMessage?chat_id=${process.env.SMSCHANNEL}&parse_mode=html&text=${tgText}`
@@ -117,5 +117,30 @@ module.exports = fp((instance, _, next) => {
       } catch (error) { }
     }
   })
+
+  instance.decorate('sendMessageToSupplier', async (phone_number, message) => {
+    const sms_id = await instance.CounterModel.getValue('invan_sms');
+    const data = {
+      messages: [
+        {
+          recipient: `${phone_number}`,
+          'message-id': `invan${sms_id}`,
+          sms: {
+            originator: "3700",
+            content: {
+              text: message,
+            }
+          }
+        }
+      ]
+    }
+    const username = process.env.PLAY_MOBILE_USERNAME;
+    const password = process.env.PLAY_MOBILE_PASSWORD;
+    const token = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
+
+    const headers = { headers: { Authorization: 'Basic ' + token } }
+    return await axios.post(process.env.PLAY_MOBILE_URL, data, headers);
+  })
+
   next()
 })

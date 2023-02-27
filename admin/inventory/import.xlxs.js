@@ -8,7 +8,7 @@ const { insertInvHistory } = require('../../clickhouse/insert_inv_history');
 /**
  * @param {string} path
  * @return {Promise<{
- * _id: string,
+ *  _id: string,
  *  sku: number,
  *  name: string,
  *  in_stock: number,
@@ -114,8 +114,11 @@ module.exports = fp((instance, _, next) => {
 
       const query = {
         organization: user.organization,
-        _id: {
-          $in: items.map(e => e._id)
+        // _id: {
+        //   $in: items.map(e => e._id)
+        // }
+        sku: {
+          $in: items.map(e => e.sku)
         }
       }
 
@@ -139,7 +142,8 @@ module.exports = fp((instance, _, next) => {
       for (const g of goods) {
         serv = g.services.find(s => s.service + '' === service._id + '' || s.service_id + '' === service._id + '')
         g.in_stock = serv && serv.in_stock ? serv.in_stock : 0
-        gObj[g._id] = g
+        // gObj[g._id] = g
+        gObj[g.sku] = g
       }
 
       const invCount = new instance.inventoryCount(invcount)
@@ -153,49 +157,50 @@ module.exports = fp((instance, _, next) => {
       const invCountHistoryItems = []
       const inventoryHistories = []
       for (const item of items) {
-        if (gObj[item._id] != undefined) {
+        // if (gObj[item._id] != undefined) {
+        if (gObj[item.sku] != undefined) {
           invCountItems.push({
             organization: user.organization,
             service: instance.ObjectId(service),
             service_name: service.name,
             count_id: instance.ObjectId(invCount._id),
-            product_id: gObj[item._id]._id,
-            barcode: gObj[item._id].barcode,
-            product_name: gObj[item._id].name,
-            sku: gObj[item._id].sku,
-            exp_in_stock: gObj[item._id].in_stock,
-            cost: gObj[item._id].cost,
+            product_id: gObj[item.sku]._id,
+            barcode: gObj[item.sku].barcode,
+            product_name: gObj[item.sku].name,
+            sku: gObj[item.sku].sku,
+            exp_in_stock: gObj[item.sku].in_stock,
+            cost: gObj[item.sku].cost,
             cost_currency: 'uzs',
             counted: item.in_stock,
-            difference: item.in_stock - gObj[item._id].in_stock,
-            cost_difference: (item.in_stock - gObj[item._id].in_stock) * gObj[item._id].cost
+            difference: item.in_stock - gObj[item.sku].in_stock,
+            cost_difference: (item.in_stock - gObj[item.sku].in_stock) * gObj[item.sku].cost
           })
-          total.total_difference += item.in_stock - gObj[item._id].in_stock
-          total.total_cost_difference += (item.in_stock - gObj[item._id].in_stock) * gObj[item._id].cost
+          total.total_difference += item.in_stock - gObj[item.sku].in_stock
+          total.total_cost_difference += (item.in_stock - gObj[item.sku].in_stock) * gObj[item.sku].cost
 
-          if (item.in_stock - gObj[item._id].in_stock !== 0) {
+          if (item.in_stock - gObj[item.sku].in_stock !== 0) {
             invCountHistoryItems.push({
               count_id: instance.ObjectId(invCount._id),
-              product_id: gObj[item._id]._id,
-              product_name: gObj[item._id].name,
-              value: item.in_stock - gObj[item._id].in_stock
+              product_id: gObj[item.sku]._id,
+              product_name: gObj[item.sku].name,
+              value: item.in_stock - gObj[item.sku].in_stock
             })
             inventoryHistories.push({
               organization: user.organization,
               date: date.getTime(),
               unique: p_order,
-              category_id: gObj[item._id].category_id,
-              category_name: gObj[item._id].category_name,
-              product_id: gObj[item._id]._id,
-              product_name: gObj[item._id].name,
-              cost: gObj[item._id].cost,
+              category_id: gObj[item.sku].category_id,
+              category_name: gObj[item.sku].category_name,
+              product_id: gObj[item.sku].sku,
+              product_name: gObj[item.sku].name,
+              cost: gObj[item.sku].cost,
               service: service._id,
               service_name: service.name,
               employee_id: user._id,
               employee_name: user.name,
               reason: 'recounted',
               type: 'item',
-              adjustment: gObj[item._id].in_stock,
+              adjustment: gObj[item.sku].in_stock,
               stock_after: item.in_stock,
             })
           }
@@ -208,15 +213,33 @@ module.exports = fp((instance, _, next) => {
       await invCount.save();
       await insertInvHistory(instance, invCountItems)
 
-      await instance.inventoryCountItem.insertMany(invCountItems);
+      // await instance.inventoryCountItem.insertMany(invCountItems);
+      res = await new Promise(res =>
+        instance.inventoryCountItem.insertMany(invCountItems, (err) => {
+          if (err)
+            res(err)
+          res(false)
+        })
+      );
       // await instance.inventoryHistory.insertMany(inventoryHistories);
 
-      if (invCountHistoryItems.length)
-        await instance.inventoryCountHistory.insertMany(invCountHistoryItems);
+      // if (invCountHistoryItems.length)
+      //   await instance.inventoryCountHistory.insertMany(invCountHistoryItems);
+      if (invCountHistoryItems.length) {
+        const a = await new Promise(res => {
+          instance.inventoryCountHistory.insertMany(invCountHistoryItems, (err) => {
+            if (err)
+              res(err)
+            res(false)
+          });
+        })
+        if (a)
+          res += a
+      }
 
       return {
         _id: invCount._id,
-        error: '',
+        error: res ? res : '',
       }
     } catch (er) {
       return {
@@ -252,9 +275,9 @@ module.exports = fp((instance, _, next) => {
       const itemsSchema = joi
         .array()
         .items({
-          _id: joi.string().length(24).required(),
+          // _id: joi.string().length(24).required(),
           // name: joi.string().required(),
-          // sku: joi.number(),
+          sku: joi.number().required(),
           in_stock: joi.number().required(),
         })
         .options({ allowUnknown: true })
@@ -270,7 +293,7 @@ module.exports = fp((instance, _, next) => {
 
       // tovarlarni update qilish
       // const not_updated = await updateGoods(data, service)
-      const not_updated = items.length
+      const not_updated = invCount.error ? items.length : 0
 
       reply.ok({
         inv_count_id: invCount._id,

@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@clickhouse/client": "^0.0.12",
     "@fastify/swagger": "^6.0.0",
     "@vitalets/google-translate-api": "^3.0.0",
     "clickhouse": "^2.6.0",

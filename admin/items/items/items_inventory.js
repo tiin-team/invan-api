@@ -40,6 +40,8 @@ module.exports = fp((instance, options, next) => {
           name: 1,
           sku: 1,
           barcode: 1,
+          cost: 1,
+          default_purchase_cost: 1,
           service: {
             $filter: {
               input: "$services",
@@ -65,6 +67,8 @@ module.exports = fp((instance, options, next) => {
           sku: 1,
           barcode: 1,
           in_stock: { $first: '$service.in_stock' },
+          cost: 1,
+          default_purchase_cost: 1,
         }
       }
 

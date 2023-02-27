@@ -626,7 +626,6 @@ module.exports = (instance, _, next) => {
 
       const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
 
-      const categoryMap = {}
       const items = await instance.goodsSales
         .find(
           { _id: { $in: result.map(i => i.id) } },
@@ -642,27 +641,57 @@ module.exports = (instance, _, next) => {
         itemsObj[item._id] = item
       }
 
+      const cat_ids = new Set()
+
+      items.forEach((item) => {
+        if (item.category.length === 24)
+          cat_ids.add(item.category)
+        if (item.category_id.length === 24)
+          cat_ids.add(item.category_id)
+      })
+
+      const categories = await instance.goodsCategory
+        .find(
+          {
+            $or: [
+              { _id: { $in: [...cat_ids] } },
+              { type: { $in: [...cat_ids] } },
+            ]
+          },
+          { type: 1, name: 1 },
+        )
+        .lean()
+
+      const categoriesObj = {}
+      for (const category of categories) {
+        category.parent_id = category._id
+        category.parent_name = category.name
+
+        categoriesObj[category._id] = category
+      }
+
+      for (const category of categories) {
+        if (categoriesObj[category.type]) {
+          categoriesObj[category._id].parent_id = categoriesObj[category.type]._id
+          categoriesObj[category._id].parent_name = categoriesObj[category.type].name
+        }
+      }
+
       for (const index in result) {
         try {
-          // const item = await instance.goodsSales.findById(result[index].id).lean();
           if (itemsObj[result[index].id]) {
             const cat_id = itemsObj[result[index].id].category
               ? itemsObj[result[index].id].category
               : itemsObj[result[index].id].category_id;
-            if (itemsObj[result[index].id] && cat_id) {
-              if (!categoryMap[cat_id]) {
-                try {
-                  const category = await instance.goodsCategory
-                    .findById(itemsObj[result[index].id].category, { name: 1 })
-                    .lean();
-                  if (category) {
-                    categoryMap[cat_id] = category.name
-                  }
-                } catch (error) { }
-              }
-              result[index].category = categoryMap[cat_id] ? categoryMap[cat_id] : ''
-              result[index].barcode = itemsObj[result[index].id].barcode ? itemsObj[result[index].id].barcode : []
+
+            if (cat_id && categoriesObj[cat_id]) {
+              result[index].category_id = categoriesObj[cat_id]._id
+              result[index].category = categoriesObj[cat_id].name
+              result[index].category_parent_id = categoriesObj[cat_id].parent_id
+              result[index].category_parent_name = categoriesObj[cat_id].parent_name
             }
+
+            result[index].barcode = itemsObj[result[index].id].barcode ? itemsObj[result[index].id].barcode : []
           }
         } catch (error) { }
       }

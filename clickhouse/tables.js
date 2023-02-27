@@ -1,5 +1,11 @@
+const { ClickHouse } = require("clickhouse")
+
+/**
+ * 
+ * @param {ClickHouse} clickhouse 
+ */
 async function createInventoryTable(clickhouse) {
-    clickhouse.query(`
+  clickhouse.query(`
     CREATE TABLE IF NOT EXISTS inventory_history
       (
         \`organization\` String,

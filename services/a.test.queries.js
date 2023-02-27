@@ -258,6 +258,83 @@ module.exports = fp((instance, options, next) => {
         }
     }
 
+    /**
+     * 
+     * @param {string} organization_id 
+     */
+    const updateGoodsOtchotCreatedTimeByOrganization = async (organization_id) => {
+        const start_time = new Date().getTime()
+        console.log('starting...');
+        const otchots = await instance.goodsOtchot
+            .find(
+                {
+                    organization: organization_id,
+                    month_name: { $in: ['December', 'January'], },
+                    // month_name: { $in: ['January'], },
+                },
+                { _id: 1, product_id: 1 },
+            )
+            .lean()
+        console.log(`otchotlarni olish uchun ketgan vaqt: ${new Date().getTime() - start_time}`);
+        const goods = []
+        const step = 100000
+        for (let i = 0; i < otchots.length; i = i + step) {
+
+            const pgoods = await instance.goodsSales
+                .find(
+                    {
+                        // organization: organization_id,
+                        _id: { $in: otchots.slice(i, i + step).map(o => o.product_id) },
+                    },
+                    { organization: 1 },
+                )
+                .lean()
+
+            goods.push(...pgoods)
+        }
+        console.log('goods.length', goods.length);
+        const goodsObj = {}
+        for (const good of goods) {
+            goodsObj[good._id + ''] = good
+        }
+        let update_otchots = []
+        for (const otchot of otchots) {
+
+            if (goodsObj[otchot.product_id + ''])
+                update_otchots.push({
+                    updateOne: {
+                        filter: { _id: otchot._id },
+                        update: {
+                            $set: {
+                                organization: goodsObj[otchot.product_id + ''].organization,
+                            }
+                        }
+                    }
+                })
+
+            if (update_otchots.length >= 50000) {
+                console.log(`update_otchots.length: ${update_otchots.length}`);
+                await new Promise(res => {
+                    instance.goodsOtchot.bulkWrite(update_otchots, (err) => {
+                        if (err)
+                            console.log('error on bulkWrite', err);
+                        res(true)
+                    })
+                })
+                update_otchots = []
+            }
+        }
+        console.log(`update_otchots.length: ${update_otchots.length}`);
+        await new Promise(res => {
+            instance.goodsOtchot.bulkWrite(update_otchots, (err) => {
+                if (err)
+                    console.log('error on bulkWrite', err);
+                res(true)
+            })
+        })
+        update_otchots = []
+    }
+
     // insertCustomerDebpPayHistory()
 
     // update eski goodsOtchot larning oy boshidagi stocklarini
@@ -356,13 +433,16 @@ module.exports = fp((instance, options, next) => {
 
     const updateGoodsOtchot = async () => {
         const organizations = await instance.organizations
-            .find({ _id: '61ba00594fb2ff720bc8e869' }, { _id: 1 })
+            .find({}, { _id: 1 })
             .lean()
         console.log(organizations.length, 'organizations.length');
+        let i = 1
         for (const org of organizations) {
-            console.log(`org._id: ${org._id} starting...`);
-            await updateGoodsOtchotByOrganization(org._id)
-            console.log(`org._id: ${org._id} tugadi.`);
+            console.log(`org._id: ${org._id} starting... i = ${i}, ${(i / organizations.length) * 100}%`);
+            // await updateGoodsOtchotByOrganization(org._id)
+            await updateGoodsOtchotCreatedTimeByOrganization(org._id + '')
+            console.log(`org._id: ${org._id} tugadi. i = ${i}, ${(i / organizations.length) * 100}%`);
+            i++
         }
         console.log(`the end`);
     }
@@ -1180,7 +1260,171 @@ module.exports = fp((instance, options, next) => {
         const data = await instance.goodsSales.aggregate(aggregate).exec()
 
         reply.ok(data)
+    });
+
+    // (async () => {
+    //     const organizations = await instance.organizations
+    //         .find(
+    //             {},
+    //             { _id: 1 },
+    //         )
+    //         .lean()
+    //     console.log(organizations.length, 'organizations.length');
+
+    //     /**
+    //      * @type { Record<string, { org_id: String, user_id: String, user_name: String }> }
+    //      */
+    //     const orgsObj = {}
+    //     for (const org of organizations) {
+    //         const user = await instance.User
+    //             .findOne(
+    //                 {
+    //                     organization: org._id,
+    //                     role: 'boss',
+    //                 },
+    //                 { name: 1 },
+    //             )
+    //             .lean();
+
+    //         orgsObj[org._id] = {
+    //             org_id: org._id,
+    //             user_id: user && user._id ? user._id : '',
+    //             user_name: user && user.name ? user.name : '',
+    //         }
+    //     }
+
+    //     const cats = []
+    //     const accounts = []
+
+    //     for (const org of organizations) {
+    //         cats.push(
+    //             {
+    //                 organization: orgsObj[org._id].org_id,
+    //                 name: 'fees',
+    //                 is_active: true,
+    //                 disbursement: true,
+    //                 created_by: orgsObj[org._id].user_name,
+    //                 created_by_id: orgsObj[org._id].org_id,
+    //             },
+    //             {
+    //                 organization: orgsObj[org._id].org_id,
+    //                 name: 'one_time_fees',
+    //                 is_active: true,
+    //                 disbursement: true,
+    //                 created_by: orgsObj[org._id].user_name,
+    //                 created_by_id: orgsObj[org._id].org_id,
+    //             },
+    //             {
+    //                 organization: orgsObj[org._id].org_id,
+    //                 name: 'salary',
+    //                 is_active: true,
+    //                 disbursement: true,
+    //                 created_by: orgsObj[org._id].user_name,
+    //                 created_by_id: orgsObj[org._id].org_id,
+    //             },
+    //             {
+    //                 organization: orgsObj[org._id].org_id,
+    //                 name: 'company_to_fees',
+    //                 is_active: true,
+    //                 disbursement: true,
+    //                 created_by: orgsObj[org._id].user_name,
+    //                 created_by_id: orgsObj[org._id].org_id,
+    //             },
+    //         )
+
+    //         accounts.push({
+    //             organization: orgsObj[org._id].org_id,
+    //             name: 'cash',
+    //             balance: 0,
+    //             created_by: orgsObj[org._id].user_name,
+    //             created_by_id: orgsObj[org._id].org_id,
+    //         })
+    //     }
+
+    //     const catsRes = await instance.financeCategory.create(cats)
+    //     console.log(catsRes.length);
+    //     const accRes = await instance.financeAccount.create(accounts)
+    //     console.log(accRes.length);
+    // })()
+
+    (async () => {
+        await new Promise(res => setTimeout(() => res(), 2000))
+
+        let goodsDailyStock = []
+
+        const cursor = instance.goodsOtchot.find({
+            createdAt: { $gte: new Date('02.01.2023') },
+            organization: '5f5641e8dce4e706c062837a',
+        }).cursor()
+
+        cursor.on('end', () => {
+            console.log(`The end`);
+        })
+
+        for (let chunk = await cursor.next(); !!chunk; chunk = await cursor.next()) {
+
+            const services = chunk.services.map(serv => {
+                return {
+                    service_id: serv.service_id,
+                    service_name: serv.service_name,
+                    start_price: serv.stock_monthly.price,
+                    start_cost: serv.stock_monthly.cost,
+                    end_price: serv.stock_monthly.price,
+                    end_cost: serv.stock_monthly.cost,
+                    start_stock: serv.stock_monthly.start_stock,
+                    end_stock: serv.stock_monthly.end_stock,
+                    start_prices: serv.stock_monthly.prices,
+                    end_prices: serv.stock_monthly.prices,
+                }
+            })
+
+            const data = {
+                organization: chunk.organization,
+                month: chunk.month,
+                month_name: chunk.month_name,
+                sku: chunk.sku,
+                product_id: chunk.product_id,
+                product_name: chunk.product_name,
+                category_id: chunk.category_id,
+                category_name: chunk.category_name,
+                sold_by: chunk.sold_by,
+                count_by_type: chunk.count_by_type,
+                barcode_by_type: chunk.barcode_by_type,
+                barcode: chunk.barcode,
+                mxik: chunk.mxik,
+                services: services,
+            }
+
+            goodsDailyStock.push({
+                updateOne: {
+                    filter: {
+                        organization: data.organization,
+                        month: data.month,
+                        product_id: data.product_id,
+                    },
+                    update: {
+                        $set: data
+                    },
+                    upsert: true,
+                }
+            })
+
+            if (goodsDailyStock.length >= 10000) {
+
+                await insertManyGoodsDailyStock(goodsDailyStock)
+                goodsDailyStock = []
+            }
+        }
+
+        await insertManyGoodsDailyStock(goodsDailyStock)
+        goodsDailyStock = []
+
     })
+
+    async function insertManyGoodsDailyStock(data) {
+        console.log(data.length, 'data.length');
+        await instance.GoodsDailyStock.bulkWrite(data)
+    }
 
     next()
 })

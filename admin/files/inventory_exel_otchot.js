@@ -384,7 +384,6 @@ module.exports = fp((instance, _, next) => {
       .lean()
     console.log(start_date.getTime(), end_date.getTime());
     let
-      index = 1,
       ostatok_start_stock = 0,
       ostatok_start_sum = 0,
       ostatok_stock = 0,
@@ -409,22 +408,23 @@ module.exports = fp((instance, _, next) => {
         continue
       }
 
-      if (reportsObj[doc.product_id]) {
+      if (reportsObj[doc.product_id + '']) {
         if (doc.month == min_date_month) {
-          reportsObj[doc.product_id].services.stock_monthly.start_stock = services.stock_monthly.start_stock
-          reportsObj[doc.product_id].services.stock_monthly.start_cost = services.stock_monthly.cost
+          reportsObj[doc.product_id + ''].services.stock_monthly.start_stock = services.stock_monthly.start_stock
+          reportsObj[doc.product_id + ''].services.stock_monthly.start_cost = services.stock_monthly.cost
         }
         if (doc.month == max_date_month) {
-          reportsObj[doc.product_id].services.stock_monthly.end_stock = services.stock_monthly.end_stock
-          reportsObj[doc.product_id].services.stock_monthly.end_cost = services.stock_monthly.cost
+          reportsObj[doc.product_id + ''].services.stock_monthly.end_stock = services.stock_monthly.end_stock
+          reportsObj[doc.product_id + ''].services.stock_monthly.end_cost = services.stock_monthly.cost
         }
 
-        reportsObj[doc.product_id].services.purchase_monthly_info.count += services.purchase_monthly_info.count
-        reportsObj[doc.product_id].services.purchase_monthly_info.amount += services.purchase_monthly_info.amount
-        reportsObj[doc.product_id].services.sale_monthly_info.count += services.sale_monthly_info.count
-        reportsObj[doc.product_id].services.sale_monthly_info.sale_amount += services.sale_monthly_info.sale_amount
+        reportsObj[doc.product_id + ''].services.purchase_monthly_info.count += services.purchase_monthly_info.count
+        reportsObj[doc.product_id + ''].services.purchase_monthly_info.amount += services.purchase_monthly_info.amount
+        reportsObj[doc.product_id + ''].services.sale_monthly_info.count += services.sale_monthly_info.count
+        reportsObj[doc.product_id + ''].services.sale_monthly_info.sale_amount += services.sale_monthly_info.sale_amount
       } else {
-        reportsObj[doc.product_id] = {
+        reportsObj[doc.product_id + ''] = {
+          sku: doc.sku,
           product_name: doc.product_name,
           barcode: doc.barcode,
           sold_by: doc.sold_by,
@@ -470,7 +470,7 @@ module.exports = fp((instance, _, next) => {
       rasxod_sum += end_stock * services_end_cost
 
       exelItems.push([
-        index,
+        doc.sku,
         Array.isArray(doc.barcode) ? doc.barcode.reduce((a, b) => `${a}${b},`, '') : '',
         doc.product_name,
         instance.i18n.__(doc.sold_by),
@@ -484,7 +484,6 @@ module.exports = fp((instance, _, next) => {
         end_stock.toFixed(2), // End Time sum
         end_stock * services_end_cost,
       ])
-      index++
     }
 
     console.log('Done')
@@ -783,6 +782,8 @@ module.exports = fp((instance, _, next) => {
   // }
   const inventoryOtchotXLSX = async (request, reply, user) => {
     try {
+      instance.i18n.setLocale(user.ui_language.value)
+
       const { service_id, min, max } = request.params
       const min_date = new Date(parseInt(+min - 18000000))
       const max_date = new Date(parseInt(+max - 18000000))
@@ -798,14 +799,21 @@ module.exports = fp((instance, _, next) => {
         return reply.fourorfour('Organization')
       }
 
+      const service = await instance.services
+        .findById(service_id, { name: 1 })
+        .lean();
+      if (!service) {
+        return reply.error('Service')
+      }
+
       const reports = await getReports(organization._id, service_id, min_date, max_date)
 
       const headers = [
-        { name: '№', key: '1' },
+        { name: instance.i18n.__('sku'), key: '1' },
         { name: 'A', key: '2' },
         { name: `A`, key: '3' },
         { name: 'A', key: '4' },
-        { name: `Итого по ${organization.name}`, key: '5' },
+        { name: `Итого по ${service.name}`, key: '5' },
         // { name: `${instance.i18n.__('total')} ${ostatok_start_stock.toFixed(2)}`, key: '6' },
         { name: reports.ostatok_start_stock.toFixed(2), key: '6' },
         { name: reports.ostatok_start_sum.toFixed(2), key: '7' },
@@ -864,7 +872,23 @@ module.exports = fp((instance, _, next) => {
       return reply.send(error.message)
     }
   }
-  instance.get('/inventory/otchot/excel/:service_id/:min/:max', version, (request, reply) => {
+  instance.get('/inventory/otchot/excel/:service_id/:min/:max', {
+    ...version,
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          service_id: {
+            type: 'string',
+            minLength: 24,
+            maxLength: 24,
+          },
+          min: { type: 'number', maximum: 100000000000000, minimum: 1262286000000 },
+          max: { type: 'number', maximum: 100000000000000, minimum: 1262286000000 }
+        }
+      }
+    }
+  }, (request, reply) => {
     // user
     instance.authorization(request, reply, (user) => {
       inventoryOtchotXLSX(request, reply, user)

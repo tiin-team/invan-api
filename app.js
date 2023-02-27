@@ -111,6 +111,31 @@ module.exports = fp(function (fastify, opts, next) {
   })
 
   fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/donate'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/invan-telegram/bot'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/invan-telegram/chat'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/finance/account'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/finance/category'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'admin/customers'),
     options: Object.assign(options, opts)
   })

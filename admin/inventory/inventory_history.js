@@ -163,11 +163,38 @@ module.exports = (instance, options, next) => {
       skipAll,
       limitAll,
       lookupItems,
+      {
+        $project: {
+          organization: 1,
+          date: 1,
+          unique: 1,
+          category_id: 1,
+          category_name: 1,
+          product_id: 1,
+          product_name: 1,
+          cost: 1,
+          service: 1,
+          service_name: 1,
+          employee_id: 1,
+          employee_name: 1,
+          reason: 1,
+          type: 1,
+          adjustment: 1,
+          stock_after: 1,
+          product: {
+            name: { $first: '$product.name' },
+            category: { $first: '$product.category' },
+            barcode: { $first: '$product.barcode' },
+            item_type: { $first: '$product.item_type' },
+          },
+        }
+      },
       // lookupService,
       // lookupEmployees,
     ])
       .allowDiskUse(true)
       .exec();
+
     const parents = await instance.goodsSales
       .find(
         {
@@ -184,49 +211,61 @@ module.exports = (instance, options, next) => {
     for (const parent_item of parents) {
       parentsObj[parent_item._id] = parent_item
     }
-    for (const index in histories) {
-      if (histories[index].product.length > 0) {
-        if (histories[index].product[0].item_type == 'variant') {
-          let current_item = histories[index].product[0]
-          try {
-            // const parent = await instance.goodsSales
-            //   .findOne(
-            //     {
-            //       variant_items: {
-            //         $elemMatch: {
-            //           $eq: current_item._id
-            //         }
-            //       },
-            //     },
-            //     { name: 1 }
-            //   )
-            //   .lean()
 
-            // if (parent) {
-            if (parentsObj[current_item._id]) {
-              // histories[index].product_name = `${parent.name} ( ${current_item.name} )`
-              histories[index].product_name = `${parentsObj[current_item._id].name} ( ${current_item.name} )`
-            }
-          }
-          catch (err) { }
+    const categories = await instance.goodsCategory
+      .find(
+        {
+          $or: [
+            {
+              _id: {
+                $in: histories.map(h => instance.ObjectId(h.product.category)).filter(c_id => c_id !== ''),
+              },
+            },
+            { type: { $in: histories.map(h => h.product.category) } },
+          ]
+        },
+        { type: 1, name: 1 },
+      )
+      .lean()
+
+    const categoriesObj = {}
+    for (const category of categories) {
+      category.parent_id = category._id
+      category.parent_name = category.name
+
+      categoriesObj[category._id] = category
+    }
+
+    for (const category of categories) {
+      if (category.type && categoriesObj[category.type]) {
+        categoriesObj[category._id].parent_id = categoriesObj[category.type]._id
+        categoriesObj[category._id].parent_name = categoriesObj[category.type].name
+      }
+    }
+
+    for (const index in histories) {
+      const current_item = histories[index].product[0]
+
+      if (current_item && current_item.item_type == 'variant') {
+        if (parentsObj[current_item._id] && current_item) {
+          histories[index].product_name = `${parentsObj[current_item._id].name} ( ${current_item.name} )`
         }
-        else {
-          histories[index].barcode = histories[index].product[0].barcode
-          histories[index].product_name = histories[index].product[0].name
-        }
+      } else {
+        histories[index].barcode = current_item.barcode
+        histories[index].product_name = current_item.name
       }
       delete histories[index].product
 
-      // if (histories[index].service.length > 0) {
-      //   histories[index].service_name = histories[index].service[0].name
-      // }
-      // delete histories[index].service
-      // if (histories[index].employee.length > 0) {
-      //   histories[index].employee_name = histories[index].employee[0].name
-      // }
-      // delete histories[index].employee;
       histories[index].adjustment = Math.round(histories[index].adjustment * 100) / 100
       histories[index].stock_after = Math.round(histories[index].stock_after * 100) / 100
+
+      if (categoriesObj[histories[index].category_id]) {
+        histories[index].category_name = categoriesObj[histories[index].category_id].name
+        histories[index].category_parent_name = categoriesObj[histories[index].category_id].parent_name
+      } else {
+        histories[index].category_name = ''
+        histories[index].category_parent_name = ''
+      }
     }
 
     reply.ok({

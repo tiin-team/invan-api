@@ -716,6 +716,9 @@ module.exports = (instance, options, next) => {
         services: 1,
         count_by_type: 1,
         variant_items: 1,
+        nds_value: 1,
+        created_by: 1,
+        created_by_id: 1,
       },
     };
 
@@ -858,6 +861,10 @@ module.exports = (instance, options, next) => {
       pipeline.push(calculateStockProject);
     }
 
+    const organization = await instance.organizations
+      .findById(admin.organization, { nds_value: 1 })
+      .lean()
+
     const org_services = await instance.services
       .find({ organization: admin.organization }, { _id: 1 })
       .lean();
@@ -960,7 +967,15 @@ module.exports = (instance, options, next) => {
           }
         }
 
-        goods[i].services = undefined;
+        // goods[i].services = undefined;
+        goods[i].services = goods[i].services.map(s => ({
+          in_stock: s.in_stock,
+          service_name: s.service_name,
+          available: s.available,
+        }));
+
+        goods[i].nds_value = Number.isFinite(goods[i].nds_value) ? goods[i].nds_value : organization.nds_value
+
         if (
           !(
             goods[i].is_track_stock ||
@@ -1048,7 +1063,7 @@ module.exports = (instance, options, next) => {
       query.price = 1;
       query.services = 1;
     }
-    var find = {
+    const find = {
       organization: admin.organization,
       has_variants: {
         $ne: true,
@@ -2419,6 +2434,7 @@ module.exports = (instance, options, next) => {
       'category_id',
       'sku',
       'name',
+      'parent_category',
       'category',
       'sold_by',
       'option_name1',
@@ -2441,6 +2457,7 @@ module.exports = (instance, options, next) => {
       'supplier',
       'default_purchase_cost',
       'mxik',
+      'nds_value',
     ];
     instance.organizations.findOne({ _id: admin.organization }, (err, org) => {
       instance.services.find(
@@ -2472,13 +2489,41 @@ module.exports = (instance, options, next) => {
                   },
                 },
               },
+              // {
+              //   $lookup: {
+              //     from: 'goodscategory',
+              //     localField: 'category',
+              //     foreignField: '_id',
+              //     as: 'categObj',
+              //   },
+              // },
               {
-                $lookup: {
-                  from: 'goodscategory',
-                  localField: 'category',
-                  foreignField: '_id',
-                  as: 'categObj',
-                },
+                $project: {
+                  name: 1,
+                  price: 1,
+                  cost: 1,
+                  mxik: 1,
+                  sku: 1,
+                  barcode: 1,
+                  nds_value: 1,
+                  category: 1,
+                  category_id: 1,
+                  category_name: 1,
+                  sold_by: 1,
+                  has_variants: 1,
+                  variant_options: 1,
+                  count_by_type: 1,
+                  barcode_by_type: 1,
+                  representation: 1,
+                  is_composite_item: 1,
+                  composite_items: 1,
+                  is_track_stock: 1,
+                  use_production: 1,
+                  default_purchase_cost: 1,
+                  services: 1,
+                  primary_supplier_name: 1,
+                  primary_supplier_id: 1,
+                }
               },
             ],
             async (_, goods) => {
@@ -2490,6 +2535,46 @@ module.exports = (instance, options, next) => {
               for (const g of goods) {
                 skuObj[g._id] = g.sku;
               }
+
+              const suppliers = await instance.adjustmentSupplier
+                .find(
+                  {
+                    _id: { $in: goods.map(g => g.primary_supplier_id) },
+                  },
+                  { supplier_name: 1 },
+                )
+                .lean();
+
+              const suppliersObj = {}
+              for (const supplier of suppliers) {
+                suppliersObj[supplier._id + ''] = supplier
+              }
+
+              const categories = await instance.goodsCategory
+                .find(
+                  {
+                    _id: { $in: goods.map(g => instance.ObjectId(g.category)).filter(g => g !== '') },
+                    type: { $in: goods.map(g => g.category) },
+                  },
+                  { type: 1, name: 1 },
+                )
+                .lean()
+
+              const categoriesObj = {}
+              for (const category of categories) {
+                category.parent_id = category._id
+                category.parent_name = category.name
+
+                categoriesObj[category._id] = category
+              }
+
+              for (const category of categories) {
+                if (categoriesObj[category.type]) {
+                  categoriesObj[category._id.toString()].parent_id = categoriesObj[category.type]._id
+                  categoriesObj[category._id.toString()].parent_name = categoriesObj[category.type].name
+                }
+              }
+
               for (const g of goods) {
                 const good = [];
                 good.push(g._id);
@@ -2500,17 +2585,35 @@ module.exports = (instance, options, next) => {
                 }
                 good.push(g.name);
 
-                if (g.categObj && g.categObj.length > 0) {
-                  if (typeof g.categObj[0].name == typeof 'invan') {
-                    g.categObj[0].name.replace(',', '.');
-                  }
-                  good.push(g.categObj[0].name);
+                if (categoriesObj[g.category]) {
+                  categoriesObj[g.category].name.replace(',', '.');
+                  if (categoriesObj[g.category].parent_name)
+                    categoriesObj[g.category].parent_name.replace(',', '.');
+
+                  if (categoriesObj[g.category].name)
+                    categoriesObj[g.category].name.replace(',', '.');
+
+                  good.push(categoriesObj[g.category].parent_name);
+                  good.push(categoriesObj[g.category].name);
                 } else {
                   if (typeof g.category_name == typeof 'invan') {
                     g.category_name.replace(',', '.');
                   }
+                  good.push('');
                   good.push(g.category_name);
                 }
+
+                // if (g.categObj && g.categObj.length > 0) {
+                //   if (typeof g.categObj[0].name == typeof 'invan') {
+                //     g.categObj[0].name.replace(',', '.');
+                //   }
+                //   good.push(g.categObj[0].name);
+                // } else {
+                //   if (typeof g.category_name == typeof 'invan') {
+                //     g.category_name.replace(',', '.');
+                //   }
+                //   good.push(g.category_name);
+                // }
 
                 if (typeof g.sold_by == typeof 'invan') {
                   g.sold_by.replace(',', '.');
@@ -2535,8 +2638,8 @@ module.exports = (instance, options, next) => {
                   good.push('');
                 }
 
-                good.push(g.price);
-                good.push(Math.round(g.cost * p) / p);
+                good.push(Number(g.price));
+                good.push(Number(Math.round(g.cost * p) / p));
                 if (typeof g.barcode == typeof []) {
                   let barcode = '';
                   for (const b of g.barcode) {
@@ -2582,15 +2685,11 @@ module.exports = (instance, options, next) => {
                   (g.primary_supplier_id + '').length > 0
                 ) {
                   try {
-                    const supplier = await instance.adjustmentSupplier.findOne({
-                      _id: g.primary_supplier_id + '',
-                    });
 
-                    if (supplier) {
-                      g.primary_supplier_name = supplier.supplier_name.replace(
-                        ',',
-                        '.'
-                      );
+                    if (suppliersObj[g.primary_supplier_id + '']) {
+                      g.primary_supplier_name = suppliersObj[g.primary_supplier_id + '']
+                        .supplier_name
+                        .replace(',', '.');
                     } else {
                       g.primary_supplier_name = '';
                     }
@@ -2600,14 +2699,17 @@ module.exports = (instance, options, next) => {
                 }
 
                 good.push(g.primary_supplier_name);
-                good.push(g.default_purchase_cost);
+                good.push(Number(g.default_purchase_cost));
                 good.push(g.mxik ? g.mxik + ';' : '')
+                good.push(Number(g.nds_value ? g.nds_value : org.nds_value ? org.nds_value : 0))
+                good.push(Number.isFinite(g.nds_value) ? g.nds_value : Number.isFinite(org.nds_value) ? org.nds_value : 0)
+
                 if (typeof g.services == typeof [] && !g.has_variants) {
-                  for (var s of g.services) {
+                  for (const s of g.services) {
                     if (serviceObj[s.service + '']) {
                       if (s.available) good.push('Y');
                       else good.push('N');
-                      good.push(s.price);
+                      good.push(Number(s.price));
                       let ind = 0;
                       let prices = '';
                       if (typeof s.prices == typeof []) {
@@ -2624,9 +2726,9 @@ module.exports = (instance, options, next) => {
                       }
 
                       good.push(prices);
-                      good.push(s.in_stock);
-                      good.push(s.low_stock);
-                      good.push(s.optimal_stock);
+                      good.push(Number(s.in_stock));
+                      good.push(Number(s.low_stock));
+                      good.push(Number(s.optimal_stock));
                     }
                   }
                 }
@@ -2646,11 +2748,13 @@ module.exports = (instance, options, next) => {
                     my_array.push(a);
                   }
                 } else if (g.has_variants) {
-                  const items = await instance.goodsSales.find({
-                    _id: {
-                      $in: g.variant_items,
-                    },
-                  });
+                  const items = await instance.goodsSales
+                    .find({
+                      _id: {
+                        $in: g.variant_items,
+                      },
+                    })
+                    .lean();
                   for (const it of items) {
                     const good = [];
                     good.push(it.sku);
@@ -2716,14 +2820,13 @@ module.exports = (instance, options, next) => {
               const CSVString = my_array.join('\n');
               const file = new Date().getTime() + '_ITEMS.csv';
               const file_path = join(__dirname, '../../../static/')
-              try {
-                fs.writeFile(file_path + file, CSVString, (err) => {
+
+              fs.writeFile(file_path + file, CSVString, (err) => {
+                try {
                   if (err) {
                     instance.send_Error('writing to file', JSON.stringify(err));
                   }
-                  reply.sendFile(`./${file}`, (err) => {
-                    instance.send_Error('on sending file', JSON.stringify(err));
-                  });
+
                   setTimeout(() => {
                     fs.unlink(file_path + file, (err) => {
                       if (err) {
@@ -2734,11 +2837,16 @@ module.exports = (instance, options, next) => {
                       }
                     });
                   }, 10000);
-                });
-              }
-              catch (er) {
-                reply.error(er)
-              }
+
+                  reply.sendFile(file, file_path, (err) => {
+                    instance.send_Error('on sending file', JSON.stringify(err));
+                  });
+                }
+                catch (er) {
+                  console.log(er);
+                  reply.error(er)
+                }
+              });
             }
           );
         }
@@ -2931,9 +3039,9 @@ module.exports = (instance, options, next) => {
                 good.push('')
                 good.push('')
                 good.push('')
-
+  
                 const item_names = it.name.split(' / ')
-
+  
                 for (let i = 0; i < 3; i++) {
                   good.push('')
                   if (item_names[i]) {
@@ -2943,7 +3051,7 @@ module.exports = (instance, options, next) => {
                     good.push('')
                   }
                 }
-
+  
                 good.push(it.price)
                 good.push(it.cost)
                 good.push('')
@@ -2955,7 +3063,7 @@ module.exports = (instance, options, next) => {
                 good.push('')
                 good.push('')
                 good.push(it.default_purchase_cost)
-
+  
                 if (typeof it.services == typeof []) {
                   for (var s of it.services) {
                     if (serviceObj[s.service + '']) {
@@ -3103,7 +3211,12 @@ module.exports = (instance, options, next) => {
                 goods[index].mxik = good.mxik && good.mxik.length === 17
                   ? good.mxik
                   : randimMxik();
-                goods[index].nds_value = isNaN(parseFloat(good.nds_value)) ? 15 : parseFloat(good.nds_value);
+                goods[index].nds_value = Number.isFinite(good.nds_value) ?
+                  good.nds_value :
+                  Number.isFinite(org.nds_value) ?
+                    org.nds_value :
+                    15
+
                 goods[index].sale = discountsObj[goods[index]._id]
                 goods[index].marking = goods[index].marking === true ? true : false;
                 delete goods[index].services;
