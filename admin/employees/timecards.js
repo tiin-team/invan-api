@@ -64,10 +64,10 @@ module.exports = (instance, options, next) => {
         $match: query
       },
       {
-        $limit: limit
+        $skip: (page - 1) * limit
       },
       {
-        $skip: (page - 1) * limit
+        $limit: limit
       },
       {
         $lookup: {
