@@ -74,11 +74,11 @@ module.exports = fp((instance, _, next) => {
  */
   const getFinanceAccounts = async (request, reply, user) => {
     try {
-      const limit = Number.isFinite(request.query.limit)
+      const limit = Number.isFinite(parseInt(request.query.limit))
         ? parseInt(request.query.limit)
         : 10
 
-      const page = Number.isFinite(request.query.page) && request.query.page > 1
+      const page = Number.isFinite(parseInt(request.query.page)) && request.query.page > 1
         ? parseInt(request.query.page)
         : 1
 

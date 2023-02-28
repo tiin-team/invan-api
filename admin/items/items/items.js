@@ -975,7 +975,7 @@ module.exports = (instance, options, next) => {
           available: s.available,
         }));
 
-        goods[i].nds_value = Number.isFinite(goods[i].nds_value) ? goods[i].nds_value : organization.nds_value
+        goods[i].nds_value = Number.isFinite(parseInt(goods[i].nds_value)) ? goods[i].nds_value : organization.nds_value
 
         if (
           !(
@@ -2716,7 +2716,7 @@ module.exports = (instance, options, next) => {
                 good.push(Number(g.default_purchase_cost));
                 good.push(g.mxik ? g.mxik + ';' : '')
                 good.push(Number(g.nds_value ? g.nds_value : org.nds_value ? org.nds_value : 0))
-                good.push(Number.isFinite(g.nds_value) ? g.nds_value : Number.isFinite(org.nds_value) ? org.nds_value : 0)
+                good.push(Number.isFinite(parseInt(g.nds_value)) ? g.nds_value : Number.isFinite(parseInt(org.nds_value)) ? org.nds_value : 0)
 
                 if (typeof g.services == typeof [] && !g.has_variants) {
                   for (const s of g.services) {
@@ -3225,9 +3225,9 @@ module.exports = (instance, options, next) => {
                 goods[index].mxik = good.mxik && good.mxik.length === 17
                   ? good.mxik
                   : randimMxik();
-                goods[index].nds_value = Number.isFinite(good.nds_value) ?
+                goods[index].nds_value = Number.isFinite(parseInt(good.nds_value)) ?
                   good.nds_value :
-                  Number.isFinite(org.nds_value) ?
+                  Number.isFinite(parseInt(org.nds_value)) ?
                     org.nds_value :
                     15
 
