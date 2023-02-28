@@ -9,11 +9,11 @@ module.exports = (instance, options, next) => {
     const min = parseInt(request.params.min)
     const max = parseInt(request.params.max)
 
-    const limit = Number.isFinite(request.params.limit)
+    const limit = Number.isFinite(parseInt(request.params.limit))
       ? parseInt(request.params.limit)
       : 10
 
-    const page = Number.isFinite(request.params.page) && request.params.page > 1
+    const page = Number.isFinite(parseInt(request.params.page)) && request.params.page > 1
       ? parseInt(request.params.page)
       : 1
 
