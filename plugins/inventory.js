@@ -10,14 +10,14 @@ module.exports = fp((instance, _, next) => {
       if (adjustment == 0) return;
 
       const service = await instance.services
-        .findById(service_id)
+        .findById(service_id, { name: 1 })
         .lean();
       if (!service) {
         instance.log.error('Service not found');
         return;
       }
       const item = await instance.goodsSales
-        .findById(product_id)
+        .findById(product_id, { name: 1, category: 1, item_type: 1 })
         .lean();
       if (!item) {
         instance.log.error('Item not found')
@@ -26,7 +26,7 @@ module.exports = fp((instance, _, next) => {
 
       let category = {}
       try {
-        category = await instance.goodsCategory.findById(item.category).lean();
+        category = await instance.goodsCategory.findById(item.category, { name: 1 }).lean();
       } catch (error) { }
       if (!category) {
         category = {}
@@ -34,11 +34,14 @@ module.exports = fp((instance, _, next) => {
 
       if (item.item_type == 'variant') {
         try {
-          const parent = await instance.goodsSales.findOne({
-            variant_items: {
-              $elemMatch: { $eq: item._id }
-            }
-          })
+          const parent = await instance.goodsSales.findOne(
+            {
+              variant_items: {
+                $elemMatch: { $eq: item._id }
+              }
+            },
+            { name: 1 }
+          )
             .lean();
 
           if (parent) item.name = `${parent.name} ( ${item.name} )`

@@ -70,6 +70,7 @@ module.exports = fp((instance, _, next) => {
 
     const month_name = months[month]
     const start_date = new Date(`${month + 1}.${date.getDate()}.${year}`)
+    const date_string = `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`
     const start_time = start_date.getTime()
 
     const goods = await instance.goodsSales.aggregate([
@@ -137,7 +138,7 @@ module.exports = fp((instance, _, next) => {
       new_goods_daily_reports.push({
         organization: organization_id,
         month: date_string,
-        month_name: time.month_name,
+        month_name: month_name,
         sku: good.sku,
         product_id: good._id,
         product_name: good.name,
@@ -166,7 +167,7 @@ module.exports = fp((instance, _, next) => {
 
       new_otchots.push({
         organization: good.organization,
-        month: `${date.getDate()}.${correctMonth(date.getMonth() + 1)}.${date.getFullYear()}`,
+        month: date_string,
         period_type: 'day',
         month_name: month_name,
         start_time: start_time,

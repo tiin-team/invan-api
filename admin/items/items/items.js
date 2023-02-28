@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { Types } = require('mongoose');
 const { join } = require('path');
 
 module.exports = (instance, options, next) => {
@@ -2427,6 +2428,10 @@ module.exports = (instance, options, next) => {
   };
 
   const get_file = async (request, reply, admin) => {
+    if (admin.ui_language && admin.ui_language.value != undefined) {
+      instance.i18n.setLocale(admin.ui_language.value)
+    }
+
     const service = request.params.service;
     const category = request.params.category;
     const titles = [
@@ -2550,11 +2555,16 @@ module.exports = (instance, options, next) => {
                 suppliersObj[supplier._id + ''] = supplier
               }
 
+              /**
+               * @type {{_id: Types.ObjectId, name: string, type: string}[]}
+               */
               const categories = await instance.goodsCategory
                 .find(
                   {
-                    _id: { $in: goods.map(g => instance.ObjectId(g.category)).filter(g => g !== '') },
-                    type: { $in: goods.map(g => g.category) },
+                    // $or: [
+                    //   { _id: { $in: goods.map(g => instance.ObjectId(g.category)).filter(g => g !== '') } },
+                    //   { type: { $in: goods.map(g => g.category) } },
+                    // ]
                   },
                   { type: 1, name: 1 },
                 )
@@ -2562,8 +2572,13 @@ module.exports = (instance, options, next) => {
 
               const categoriesObj = {}
               for (const category of categories) {
-                category.parent_id = category._id
-                category.parent_name = category.name
+                if (category.type == 'top') {
+                  category.parent_id = category._id
+                  category.parent_name = category.name
+                } else {
+                  category.parent_id = ''
+                  category.parent_name = ''
+                }
 
                 categoriesObj[category._id] = category
               }
@@ -2586,7 +2601,6 @@ module.exports = (instance, options, next) => {
                 good.push(g.name);
 
                 if (categoriesObj[g.category]) {
-                  categoriesObj[g.category].name.replace(',', '.');
                   if (categoriesObj[g.category].parent_name)
                     categoriesObj[g.category].parent_name.replace(',', '.');
 
@@ -2618,7 +2632,7 @@ module.exports = (instance, options, next) => {
                 if (typeof g.sold_by == typeof 'invan') {
                   g.sold_by.replace(',', '.');
                 }
-                good.push(g.sold_by);
+                good.push(instance.i18n.__(g.sold_by));
 
                 for (let i = 0; i < 3; i++) {
                   if (
@@ -3541,9 +3555,27 @@ module.exports = (instance, options, next) => {
         .lean();
     });
   };
-  instance.get('/goods/sales/export/:organization/:name', (request, reply) => {
+  instance.get('/goods/sales/export/:organization/:name', async (request, reply) => {
     // instance.authorization(request, reply, (admin) => {
-    get_file(request, reply, { organization: request.params.organization });
+    var user = { organization: request.params.organization }
+
+    const acceptUser = request.headers['accept-user']
+
+    const token = request.headers['authorization']
+
+    if (token) {
+      const query = {
+        [`${acceptUser}_token`]: token,
+        organization: user.organization,
+      }
+
+      const resUser = await instance.User.findOne(query).lean()
+      if (resUser) {
+        user = resUser
+      }
+    }
+
+    get_file(request, reply, user);
     // })
   });
   instance.get(
