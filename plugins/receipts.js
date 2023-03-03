@@ -405,7 +405,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
           phone_number: {
             $in: need_to_save.filter(r => r.phone_number != '').map(r => r.phone_number),
           },
-          organization: need_to_save[0].organization,
+          organization: user.organization,
         },
         {
           first_name: 1,
