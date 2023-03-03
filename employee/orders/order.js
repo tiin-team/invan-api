@@ -52,6 +52,14 @@ module.exports = fp((instance, options, next) => {
                 },
                 order_quantity: { type: 'number' },
                 note: { type: 'string' },
+                category: {
+                  type:"object",
+                  required:["id", "name"],
+                  properties:{
+                    id:{type:"string"},
+                    name:{type:"string"}
+                  }
+                }
               },
             },
           },

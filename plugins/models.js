@@ -2718,6 +2718,10 @@ module.exports = fp((instance, _, next) => {
       order_quantity: Number,
       note: String,
       is_accept: { type: Boolean, default: false },
+      category:{
+        id:{type:mongoose.Types.ObjectId},
+        name:{type:String}
+      }
     }]
   });
   instance.decorate('employeesOrder', employeesOrdersSchema);
