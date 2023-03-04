@@ -174,7 +174,7 @@ module.exports = fp((instance, options, next) => {
 
 
         for (const orderItem of order.items) {
-            const product = productsMap.get(orderItem.product_id)
+            const product = await productsMap.get(orderItem.product_id)
             console.log(orderItem.product_id, product)
             if (product) {
                 orderItem.category = {
