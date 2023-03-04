@@ -1,4 +1,5 @@
 const fp = require('fastify-plugin');
+const { formText } = require('pdfkit');
 
 module.exports = fp((instance, options, next) => {
   const version = { version: '2.0.0' }
@@ -173,6 +174,9 @@ module.exports = fp((instance, options, next) => {
             console.log(typeof product.id)
             productsMap.set(product.id, product)
         })
+
+
+        console.log(productsMap)
 
         for (const orderItem of order.items) {
             const product = await productsMap.get(orderItem.product_id)
