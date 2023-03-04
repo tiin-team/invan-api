@@ -51,15 +51,7 @@ module.exports = fp((instance, options, next) => {
                   default: [],
                 },
                 order_quantity: { type: 'number' },
-                note: { type: 'string' },
-                category: {
-                  type:"object",
-                  required:["id", "name"],
-                  properties:{
-                    id:{type:"string"},
-                    name:{type:"string"}
-                  }
-                }
+                note: { type: 'string' }
               },
             },
           },
@@ -160,11 +152,31 @@ module.exports = fp((instance, options, next) => {
           })
           .lean()
         i = 0
+        let productIds = []
         for (const item of order.items) {
-          if (item.is_accept === true) {
-            i++
-          } else item.is_accept = false
+            productIds.push(item.product_id)
+            if (item.is_accept === true) {
+                i++
+            } else {
+                item.is_accept = false
+            }
         }
+
+        const products = instance.goodsSales.find({_id:{$in:productIds}})
+
+        const productsMap = new Map(arr.map((product) => [product._id, product]));
+
+
+        for (const orderItem of order.items) {
+            const product = productsMap.get(orderItem.product_id)
+            if (product) {
+                orderItem.category = {
+                    id:product.category_id,
+                    name:product.category_name
+                }
+            }
+        }
+
         order.accept_items_count = i
         order.items_count = order && order.items ? order.items.length : 0
 
