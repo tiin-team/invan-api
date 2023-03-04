@@ -172,7 +172,7 @@ module.exports = fp((instance, options, next) => {
 
             products.forEach(product=>{
                 console.log(typeof product._id)
-                productsMap.set(product._id, product)
+                productsMap.set(product._id.toString(), product)
             })
 
             console.log(productsMap)
