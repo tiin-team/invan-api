@@ -170,6 +170,9 @@ module.exports = fp((instance, options, next) => {
         const productsMap = new Map(products.map((product) => [product._id, product]));
 
 
+        console.log(productsMap)
+
+
         for (const orderItem of order.items) {
             const product = productsMap.get(orderItem.product_id)
             console.log(orderItem.product_id, product)
