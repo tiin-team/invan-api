@@ -162,7 +162,11 @@ module.exports = fp((instance, options, next) => {
             }
         }
 
+        console.log(productIds)
+
         const products = instance.goodsSales.find({_id:{$in:productIds}})
+
+        console.log(products)
 
         const productsMap = new Map(products.map((product) => [product._id, product]));
 
