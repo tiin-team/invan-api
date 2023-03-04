@@ -178,8 +178,8 @@ module.exports = fp((instance, options, next) => {
             console.log(productsMap)
 
             for (const orderItem of order.items) {
-                const item = productsMap.get(orderItem.product_id)
-                console.log(orderItem.product_id, item)
+                const item = productsMap.get(orderItem.product_id.toString())
+                console.log(typeof orderItem.product_id,orderItem.product_id, item)
                 if (item) {
                     orderItem.category = {
                         id:item.category_id,
