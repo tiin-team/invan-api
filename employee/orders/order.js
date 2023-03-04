@@ -171,15 +171,13 @@ module.exports = fp((instance, options, next) => {
             const productsMap = new Map();
 
             products.forEach(product=>{
-                console.log(typeof product.id)
-                productsMap.set(product.id, product)
+                productsMap.set(product._id, product)
             })
 
 
 
             for (const orderItem of order.items) {
-                const item = await productsMap.get(orderItem.product_id)
-                console.log(orderItem.product_id, item)
+                const item = productsMap.get(orderItem.product_id)
                 if (item) {
                     orderItem.category = {
                         id:item.category_id,
