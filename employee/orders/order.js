@@ -171,6 +171,7 @@ module.exports = fp((instance, options, next) => {
             const productsMap = new Map();
 
             products.forEach(product=>{
+                console.log(typeof product._id)
                 productsMap.set(product._id, product)
             })
 
