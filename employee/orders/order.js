@@ -163,28 +163,28 @@ module.exports = fp((instance, options, next) => {
             }
         }
 
-        console.log(productIds)
 
-        const products = await instance.goodsSales.find({_id:{$in:productIds}})
-
-
-        const productsMap = new Map();
-
-        products.forEach(product=>{
-            console.log(typeof product.id)
-            productsMap.set(product.id, product)
-        })
+        if (productIds.length > 0) {
+            const products = await instance.goodsSales.find({_id:{$in:productIds}})
 
 
-        console.log(productsMap)
+            const productsMap = new Map();
 
-        for (const orderItem of order.items) {
-            const product = await productsMap.get(orderItem.product_id)
-            console.log(orderItem.product_id, product)
-            if (product) {
-                orderItem.category = {
-                    id:product.category_id,
-                    name:product.category_name
+            products.forEach(product=>{
+                console.log(typeof product.id)
+                productsMap.set(product.id, product)
+            })
+
+
+
+            for (const orderItem of order.items) {
+                const item = await productsMap.get(orderItem.product_id)
+                console.log(orderItem.product_id, item)
+                if (item) {
+                    orderItem.category = {
+                        id:item.category_id,
+                        name:item.category_name
+                    }
                 }
             }
         }
