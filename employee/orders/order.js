@@ -164,7 +164,7 @@ module.exports = fp((instance, options, next) => {
 
         const products = instance.goodsSales.find({_id:{$in:productIds}})
 
-        const productsMap = new Map(arr.map((product) => [product._id, product]));
+        const productsMap = new Map(products.map((product) => [product._id, product]));
 
 
         for (const orderItem of order.items) {
