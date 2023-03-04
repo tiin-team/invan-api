@@ -166,13 +166,13 @@ module.exports = fp((instance, options, next) => {
 
         const products = await instance.goodsSales.find({_id:{$in:productIds}})
 
-        console.log(products)
 
         const productsMap = new Map(products.map((product) => [product._id, product]));
 
 
         for (const orderItem of order.items) {
             const product = productsMap.get(orderItem.product_id)
+            console.log(orderItem.product_id, product)
             if (product) {
                 orderItem.category = {
                     id:product.category_id,
