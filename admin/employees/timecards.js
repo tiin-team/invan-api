@@ -9,13 +9,20 @@ module.exports = (instance, options, next) => {
     const min = parseInt(request.params.min)
     const max = parseInt(request.params.max)
 
-    const limit = Number.isFinite(request.params.limit)
-      ? parseInt(request.params.limit)
-      : 10
 
-    const page = Number.isFinite(request.params.page) && request.params.page > 1
-      ? parseInt(request.params.page)
-      : 1
+    console.log(request.params)
+
+    let limit = parseInt(request.params.limit)
+
+    if (!limit || limit < 0) {
+      limit = 10
+    }
+
+    let page = parseInt(request.params.page)
+    if (!page || page < 1) {
+      page = 1
+    }
+
 
     const query = {
       organization: admin.organization,
@@ -59,15 +66,21 @@ module.exports = (instance, options, next) => {
       }
     }
 
+
+    console.log(limit, page)
+
     const tcards = await instance.timecard.aggregate([
       {
         $match: query
       },
       {
-        $limit: limit
+        $limit: page * limit
       },
       {
         $skip: (page - 1) * limit
+      },
+      {
+        $sort:{clock_in:1}
       },
       {
         $lookup: {
