@@ -9,6 +9,9 @@ module.exports = (instance, options, next) => {
     const min = parseInt(request.params.min)
     const max = parseInt(request.params.max)
 
+
+    console.log(request.params)
+
     let limit = parseInt(request.params.limit)
 
     if (!limit || limit < 0) {
