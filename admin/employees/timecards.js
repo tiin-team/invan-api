@@ -59,6 +59,10 @@ module.exports = (instance, options, next) => {
       }
     }
 
+
+
+    console.log(limit, page)
+
     const tcards = await instance.timecard.aggregate([
       {
         $match: query
