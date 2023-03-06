@@ -15,8 +15,6 @@ module.exports = (instance, options, next) => {
       limit = 10
     }
 
-    console.log(request.params)
-
     let page = parseInt(request.params.page)
     if (!page || page < 0) {
       page = 1
@@ -64,7 +62,6 @@ module.exports = (instance, options, next) => {
         }
       }
     }
-
 
 
     console.log(limit, page)
