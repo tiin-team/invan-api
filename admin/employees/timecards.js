@@ -74,7 +74,7 @@ module.exports = (instance, options, next) => {
         $match: query
       },
       {
-        $limit: limit
+        $limit: page * limit
       },
       {
         $skip: (page - 1) * limit
