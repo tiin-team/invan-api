@@ -9,16 +9,19 @@ module.exports = (instance, options, next) => {
     const min = parseInt(request.params.min)
     const max = parseInt(request.params.max)
 
-    const limit = Number.isFinite(request.params.limit)
-      ? parseInt(request.params.limit)
-      : 10
+    let limit = parseInt(request.params.limit)
 
+    if (!limit || limit < 0) {
+      limit = 10
+    }
 
     console.log(request.params)
 
-    const page = Number.isFinite(request.params.page)
-      ? parseInt(request.params.page)
-      : 1
+    let page = parseInt(request.params.page)
+    if (!page || page < 0) {
+      page = 1
+    }
+
 
     const query = {
       organization: admin.organization,
