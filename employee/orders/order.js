@@ -1,4 +1,5 @@
 const fp = require('fastify-plugin');
+const { formText } = require('pdfkit');
 
 module.exports = fp((instance, options, next) => {
   const version = { version: '2.0.0' }
@@ -51,15 +52,7 @@ module.exports = fp((instance, options, next) => {
                   default: [],
                 },
                 order_quantity: { type: 'number' },
-                note: { type: 'string' },
-                category: {
-                  type:"object",
-                  required:["id", "name"],
-                  properties:{
-                    id:{type:"string"},
-                    name:{type:"string"}
-                  }
-                }
+                note: { type: 'string' }
               },
             },
           },
@@ -160,11 +153,39 @@ module.exports = fp((instance, options, next) => {
           })
           .lean()
         i = 0
+        let productIds = []
         for (const item of order.items) {
-          if (item.is_accept === true) {
-            i++
-          } else item.is_accept = false
+            productIds.push(item.product_id)
+            if (item.is_accept === true) {
+                i++
+            } else {
+                item.is_accept = false
+            }
         }
+
+
+        if (productIds.length > 0) {
+            const products = await instance.goodsSales.find({_id:{$in:productIds}})
+
+
+            const productsMap = new Map();
+
+            products.forEach(product=>{
+                console.log(typeof product._id)
+                productsMap.set(product._id.toString(), product)
+            })
+
+            for (const orderItem of order.items) {
+                const item = productsMap.get(orderItem.product_id.toString())
+                if (item) {
+                    orderItem.category = {
+                        id:item.category_id,
+                        name:item.category_name
+                    }
+                }
+            }
+        }
+
         order.accept_items_count = i
         order.items_count = order && order.items ? order.items.length : 0
 
