@@ -16,7 +16,7 @@ module.exports = (instance, options, next) => {
     }
 
     let page = parseInt(request.params.page)
-    if (!page || page < 0) {
+    if (!page || page < 1) {
       page = 1
     }
 
