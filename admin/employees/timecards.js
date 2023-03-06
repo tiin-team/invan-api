@@ -16,7 +16,7 @@ module.exports = (instance, options, next) => {
 
     console.log(request.params)
 
-    const page = Number.isFinite(request.params.page) && request.params.page > 1
+    const page = Number.isFinite(request.params.page)
       ? parseInt(request.params.page)
       : 1
 
