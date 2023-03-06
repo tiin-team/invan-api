@@ -80,6 +80,9 @@ module.exports = (instance, options, next) => {
         $skip: (page - 1) * limit
       },
       {
+        $sort:{clock_in:1}
+      },
+      {
         $lookup: {
           from: 'inoneservices',
           localField: 'service',
