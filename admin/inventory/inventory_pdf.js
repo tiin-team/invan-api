@@ -249,6 +249,7 @@ module.exports = ((instance, _, next) => {
                         }
                     } catch (error) { }
                     pdfItems.push({
+                        barcode:it.barcode,
                         product_name: it.product_name + '',
                         quality: it.quality + '',
                         purchase_cost: (it.purchase_cost ? (Math.round(it.purchase_cost * 100) / 100).toLocaleString() : (it.purchase_cost + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : ''),
@@ -394,12 +395,11 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 260,
+                                width: 250,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
                                     doc.fontSize(10)
-                                    console.log(data)
                                     return data.product_name;
                                 }
                             },
@@ -417,7 +417,7 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'QUANTITY',
                                 id: 'quality',
-                                width: 40,
+                                width: 50,
                                 align: 'right'
                             },
                             {
