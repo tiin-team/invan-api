@@ -279,7 +279,6 @@ module.exports = ((instance, _, next) => {
             }
             else {
                 for (const it of purchase.additional_cost) {
-                    console.log("it", it)
                     pdfItems.push({
                         barcode:it.barcode,
                         product_name: it.name + '',
