@@ -445,6 +445,7 @@ module.exports = fp((instance, _, next) => {
                         align: 'right'
                     })
                     .text(`${instance.i18n.__(`receive`)} _______________________________`)
+                    .text("\n")
                     .text(`${instance.i18n.__(`otpustil`)} _______________________________`)
                 break;
             }

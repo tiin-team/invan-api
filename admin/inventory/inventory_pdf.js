@@ -242,6 +242,8 @@ module.exports = ((instance, _, next) => {
                     try {
                         const good = await instance.goodsSales.findById(it.product_id)
                         if (good) {
+                            console.log("good", good)
+                            it.barcode = good.barcode
                             it.product_name = good.name
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
@@ -249,6 +251,7 @@ module.exports = ((instance, _, next) => {
                         }
                     } catch (error) { }
                     pdfItems.push({
+                        barcode:it.barcode,
                         product_name: it.product_name + '',
                         quality: it.quality + '',
                         purchase_cost: (it.purchase_cost ? (Math.round(it.purchase_cost * 100) / 100).toLocaleString() : (it.purchase_cost + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : ''),
@@ -277,6 +280,7 @@ module.exports = ((instance, _, next) => {
             else {
                 for (const it of purchase.additional_cost) {
                     pdfItems.push({
+                        barcode:it.barcode,
                         product_name: it.name + '',
                         quality: '1',
                         purchase_cost: (it.amount ? (Math.round(it.amount * 100) / 100).toLocaleString() : (it.amount + '')) + (it.amount_currency == 'usd' ? ' $' : ''),
@@ -394,18 +398,30 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 300,
+                                width: 230,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
-                                    doc.fontSize(11)
+                                    doc.fontSize(10)
                                     return data.product_name;
                                 }
                             },
                             {
-                                header: 'QUANTITY',
+                                header: 'BARCODE',
+                                id: 'barcode',
+                                width: 100,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(10)
+                                    console.log(data)
+                                    return data.barcode;
+                                }
+                            },
+                            {
+                                header: 'QTY',
                                 id: 'quality',
-                                width: 70,
+                                width: 40,
                                 align: 'right'
                             },
                             {
@@ -555,6 +571,7 @@ module.exports = ((instance, _, next) => {
                         }
                     } catch (error) { }
                     pdfItems.push({
+                        barcode:it.barcode,
                         product_name: it.product_name + '',
                         quality: it.quality + '',
                         price: it.price ? it.price.toLocaleString() : ''
