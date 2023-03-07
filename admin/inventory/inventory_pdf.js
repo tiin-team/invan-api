@@ -420,9 +420,9 @@ module.exports = ((instance, _, next) => {
                                 }
                             },
                             {
-                                header: 'QUANTITY',
+                                header: 'QTY',
                                 id: 'quality',
-                                width: 70,
+                                width: 40,
                                 align: 'right'
                             },
                             {
