@@ -242,6 +242,8 @@ module.exports = ((instance, _, next) => {
                     try {
                         const good = await instance.goodsSales.findById(it.product_id)
                         if (good) {
+                            console.log("good", good)
+                            it.barcode = good.barcode
                             it.product_name = good.name
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
@@ -570,6 +572,7 @@ module.exports = ((instance, _, next) => {
                         }
                     } catch (error) { }
                     pdfItems.push({
+                        barcode:it.barcode,
                         product_name: it.product_name + '',
                         quality: it.quality + '',
                         price: it.price ? it.price.toLocaleString() : ''
