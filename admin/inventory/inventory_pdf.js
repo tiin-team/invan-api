@@ -394,11 +394,12 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 300,
+                                width: 260,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
                                     doc.fontSize(10)
+                                    console.log(data)
                                     return data.product_name;
                                 }
                             },
@@ -416,7 +417,7 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'QUANTITY',
                                 id: 'quality',
-                                width: 70,
+                                width: 40,
                                 align: 'right'
                             },
                             {
