@@ -565,6 +565,7 @@ module.exports = ((instance, _, next) => {
                         const good = await instance.goodsSales.findById(it.product_id).lean()
                         if (good) {
                             it.product_name = good.name
+                            it.barcode = good.barcode
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
                             }
@@ -687,12 +688,23 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 370,
+                                width: 270,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
-                                    doc.fontSize(12)
+                                    doc.fontSize(10)
                                     return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'BARCODE',
+                                id: 'barcode',
+                                width: 100,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(10)
+                                    return data.barcode;
                                 }
                             },
                             {
