@@ -277,7 +277,9 @@ module.exports = ((instance, _, next) => {
             }
             else {
                 for (const it of purchase.additional_cost) {
+                    console.log("it", it)
                     pdfItems.push({
+                        barcode:it.barcode,
                         product_name: it.name + '',
                         quality: '1',
                         purchase_cost: (it.amount ? (Math.round(it.amount * 100) / 100).toLocaleString() : (it.amount + '')) + (it.amount_currency == 'usd' ? ' $' : ''),
@@ -395,7 +397,7 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 250,
+                                width: 230,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
@@ -418,7 +420,7 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'QUANTITY',
                                 id: 'quality',
-                                width: 50,
+                                width: 70,
                                 align: 'right'
                             },
                             {
