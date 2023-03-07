@@ -398,8 +398,19 @@ module.exports = ((instance, _, next) => {
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
-                                    doc.fontSize(11)
+                                    doc.fontSize(10)
                                     return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'BARCODE',
+                                id: 'barcode',
+                                width: 70,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(10)
+                                    return data.barcode;
                                 }
                             },
                             {
