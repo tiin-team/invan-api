@@ -411,6 +411,7 @@ module.exports = ((instance, _, next) => {
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
                                     doc.fontSize(10)
+                                    console.log(data)
                                     return data.barcode;
                                 }
                             },
