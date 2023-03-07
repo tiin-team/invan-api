@@ -410,7 +410,7 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'BARCODE',
                                 id: 'barcode',
-                                width: 70,
+                                width: 100,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
