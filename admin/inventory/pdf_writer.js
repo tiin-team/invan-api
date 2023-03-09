@@ -115,7 +115,7 @@ module.exports = fp((instance, _, next) => {
 
             case 'internal_order': {
                 doc
-                    .fontSize(12)
+                    .fontSize(9)
                     .font('NotoSansBold')
                     .text('IO date: ', col1LeftPos, colTop, {
                         continued: true

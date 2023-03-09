@@ -2029,7 +2029,7 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 240,
+                                width: 230,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
@@ -2046,7 +2046,7 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'BARCODE',
                                 id: 'barcode',
-                                width: 40,
+                                width: 50,
                                 align: 'right',
                             },
                             {
