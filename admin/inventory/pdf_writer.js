@@ -9,7 +9,7 @@ module.exports = fp((instance, _, next) => {
      * @param {any} data 
      */
     const inventoryPdf = function (doc, data) {
-        let col1LeftPos = 30;
+        let col1LeftPos = 20;
         let colTop = 70;
         let colWidth = 100;
         let col2LeftPos = colWidth + col1LeftPos + 160;

@@ -1912,6 +1912,7 @@ module.exports = ((instance, _, next) => {
                             .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1, sku: 1 })
                             .lean()
                         if (good) {
+                            console.log(good)
                             it.barcode = good.barcode
                             it.product_name = good.name
                             if (good.item_type == 'variant') {
