@@ -1909,9 +1909,11 @@ module.exports = ((instance, _, next) => {
                 for (const it of items) {
                     try {
                         const good = await instance.goodsSales
-                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1, sku: 1 })
+                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1, sku: 1, barcode:1 })
                             .lean()
                         if (good) {
+                            console.log("good",good)
+                            it.barcode = good.barcode
                             it.product_name = good.name
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
@@ -1922,6 +1924,7 @@ module.exports = ((instance, _, next) => {
                     pdfItems.push({
                         index,
                         product_name: it.product_name + '',
+                        barcode:it.barcode,
                         sku: it.sku,
                         real_stock: it.real_stock,
                         in_stock: it.in_stock,
@@ -2027,25 +2030,25 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 280,
+                                width: 270,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
-                                    doc.fontSize(11)
+                                    doc.fontSize(9)
                                     return data.product_name;
                                 }
+                            },
+                            {
+                                header: 'BARCODE',
+                                id: 'barcode',
+                                width: 100,
+                                align: 'right',
                             },
                             {
                                 header: 'SKU',
                                 id: 'sku',
                                 width: 40,
                                 align: 'right',
-                            },
-                            {
-                                header: 'REAL STOCK',
-                                id: 'real_stock',
-                                width: 70,
-                                align: 'right'
                             },
                             {
                                 header: 'IN STOCK',
