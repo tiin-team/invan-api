@@ -160,7 +160,7 @@ module.exports = fp((instance, _, next) => {
                 colTop += 20
 
                 doc
-                    .fontSize(12)
+                    .fontSize(9)
                     .font('NotoSansBold')
                     .text('Store: ', col1LeftPos, colTop, { continued: true })
                     .font('NotoSansRegular')
