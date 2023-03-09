@@ -2039,15 +2039,15 @@ module.exports = ((instance, _, next) => {
                                 }
                             },
                             {
-                                header: 'SKU',
-                                id: 'sku',
-                                width: 40,
+                                header: 'BARCODE',
+                                id: 'barcode',
+                                width: 100,
                                 align: 'right',
                             },
                             {
-                                header: 'BARCODE',
-                                id: 'barcode',
-                                width: 50,
+                                header: 'SKU',
+                                id: 'sku',
+                                width: 40,
                                 align: 'right',
                             },
                             {
