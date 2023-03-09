@@ -2030,7 +2030,7 @@ module.exports = ((instance, _, next) => {
                             {
                                 header: 'ITEM NAME',
                                 id: 'product_name',
-                                width: 250,
+                                width: 280,
                                 align: 'left',
                                 renderer: function (tb, data) {
                                     doc.font('NotoSansRegular')
