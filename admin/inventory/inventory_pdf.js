@@ -1909,7 +1909,7 @@ module.exports = ((instance, _, next) => {
                 for (const it of items) {
                     try {
                         const good = await instance.goodsSales
-                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1, sku: 1 })
+                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1, sku: 1, barcode:1 })
                             .lean()
                         if (good) {
                             console.log(good)
