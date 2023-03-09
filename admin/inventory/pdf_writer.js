@@ -469,7 +469,7 @@ module.exports = fp((instance, _, next) => {
 
         if (typeof data.notes == typeof 'invan' && data.notes != '') {
             doc
-                .fontSize(9)
+                .fontSize(12)
                 .font('NotoSansBold')
                 .text('Notes:')
                 .font('NotoSansRegular')
