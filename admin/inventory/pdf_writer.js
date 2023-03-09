@@ -392,13 +392,13 @@ module.exports = fp((instance, _, next) => {
             .setColumnsDefaults(tableSettings)
             .addColumns(data.headers)
             .onPageAdded(function (tb) {
-                doc.font('NotoSansBold').fontSize(10);
+                doc.font('NotoSansBold').fontSize(9);
                 if (data.inv_type == 'receipt') {
                     doc.font('NotoSansBold').fontSize(8);
                 }
                 doc.text('', col1LeftPos, 50)
                 tb.addHeader();
-                doc.font('NotoSansRegular').fontSize(12);
+                doc.font('NotoSansRegular').fontSize(9);
                 if (data.inv_type == 'receipt') {
                     doc.font('NotoSansRegular').fontSize(8);
                 }
@@ -433,7 +433,7 @@ module.exports = fp((instance, _, next) => {
 
         // table footer
         doc
-            .fontSize(12)
+            .fontSize(9)
             .font('NotoSansBold')
             .text('', 50, doc.y + 10, 50)
 
@@ -469,7 +469,7 @@ module.exports = fp((instance, _, next) => {
 
         if (typeof data.notes == typeof 'invan' && data.notes != '') {
             doc
-                .fontSize(12)
+                .fontSize(9)
                 .font('NotoSansBold')
                 .text('Notes:')
                 .font('NotoSansRegular')
