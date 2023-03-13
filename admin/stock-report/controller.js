@@ -549,8 +549,9 @@ module.exports = fp((instance, _, next) => {
       }
 
       const reports = await getReports(organization._id, service_id, min_date, max_date)
-
-      // return reply.ok(reports)
+      if (!reports) {
+        return reply.error("no reports")
+      }
 
       const headers = [
         { name: instance.i18n.__('sku'), key: '1' },
