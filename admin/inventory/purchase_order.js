@@ -869,7 +869,7 @@ module.exports = fp((instance, options, next) => {
                       }
 
                       console.log("-------------------------------------–– 004 ––-------------------------------------––––");
-                      console.log("message_to_supplier - ", message_to_supplier);
+                      console.log("message_to_supplier - ", );
                       console.log(Date.now());
                       console.log("-------------------------------------–– 004 -------------------------------------––--––");
                   
