@@ -717,7 +717,7 @@ module.exports = fp((instance, options, next) => {
       request.body = {}
     }
     console.log("-------------------------------------–– 001 ––-------------------------------------––––");
-    console.log("req body - ", req.body);
+    console.log("req body - ", request.body);
     console.log(Date.now());
     console.log("-------------------------------------–– 001 -------------------------------------––--––");
 
