@@ -919,7 +919,17 @@ module.exports = fp((instance, options, next) => {
 
   instance.post('/inventory/create_purchase_order', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
+      console.log("-------------------------------------–– 006 ––-------------------------------------––––");
+      console.log("out ");
+      console.log(Date.now());
+      console.log("-------------------------------------–– 006 -------------------------------------––--––");
+  
       if (admin) {
+        console.log("-------------------------------------–– 006 ––-------------------------------------––––");
+        console.log("in ");
+        console.log(Date.now());
+        console.log("-------------------------------------–– 006 -------------------------------------––--––");
+    
         create_purchase_order(request, reply, admin)
       }
     })
