@@ -9,7 +9,7 @@ module.exports = fp((instance, _, next) => {
      * @param {any} data 
      */
     const inventoryPdf = function (doc, data) {
-        let col1LeftPos = 50;
+        let col1LeftPos = 20;
         let colTop = 70;
         let colWidth = 100;
         let col2LeftPos = colWidth + col1LeftPos + 160;
@@ -115,7 +115,7 @@ module.exports = fp((instance, _, next) => {
 
             case 'internal_order': {
                 doc
-                    .fontSize(12)
+                    .fontSize(9)
                     .font('NotoSansBold')
                     .text('IO date: ', col1LeftPos, colTop, {
                         continued: true
@@ -160,7 +160,7 @@ module.exports = fp((instance, _, next) => {
                 colTop += 20
 
                 doc
-                    .fontSize(12)
+                    .fontSize(9)
                     .font('NotoSansBold')
                     .text('Store: ', col1LeftPos, colTop, { continued: true })
                     .font('NotoSansRegular')
@@ -392,13 +392,13 @@ module.exports = fp((instance, _, next) => {
             .setColumnsDefaults(tableSettings)
             .addColumns(data.headers)
             .onPageAdded(function (tb) {
-                doc.font('NotoSansBold').fontSize(10);
+                doc.font('NotoSansBold').fontSize(9);
                 if (data.inv_type == 'receipt') {
                     doc.font('NotoSansBold').fontSize(8);
                 }
                 doc.text('', col1LeftPos, 50)
                 tb.addHeader();
-                doc.font('NotoSansRegular').fontSize(12);
+                doc.font('NotoSansRegular').fontSize(9);
                 if (data.inv_type == 'receipt') {
                     doc.font('NotoSansRegular').fontSize(8);
                 }
@@ -433,7 +433,7 @@ module.exports = fp((instance, _, next) => {
 
         // table footer
         doc
-            .fontSize(12)
+            .fontSize(9)
             .font('NotoSansBold')
             .text('', 50, doc.y + 10, 50)
 
@@ -445,6 +445,7 @@ module.exports = fp((instance, _, next) => {
                         align: 'right'
                     })
                     .text(`${instance.i18n.__(`receive`)} _______________________________`)
+                    .text("\n")
                     .text(`${instance.i18n.__(`otpustil`)} _______________________________`)
                 break;
             }

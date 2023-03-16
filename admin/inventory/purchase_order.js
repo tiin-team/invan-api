@@ -716,6 +716,11 @@ module.exports = fp((instance, options, next) => {
     if (!request.body) {
       request.body = {}
     }
+    console.log("-------------------------------------–– 001 ––-------------------------------------––––");
+    console.log("req body - ", request.body);
+    console.log(Date.now());
+    console.log("-------------------------------------–– 001 -------------------------------------––--––");
+
     request.body.type = 'coming'
     const id = request.body.supplier_id
     const service = await instance.services
@@ -785,6 +790,12 @@ module.exports = fp((instance, options, next) => {
             if (request.body.items != undefined) {
               if (request.body.items.length > 0) {
                 for (let i = 0; i < request.body.items.length; i++) {
+
+                  console.log("-------------------------------------–– 002 ––-------------------------------------––––");
+                  console.log("request.body.items - ", request.body.items[i]);
+                  console.log(Date.now());
+                  console.log("-------------------------------------–– 002 -------------------------------------––--––");
+              
                   delete request.body.items[i]._id
                   request.body.items[i].purchase_id = instance.ObjectId(purchaseModel._id)
                   request.body.items[i].ordered = request.body.items[i].quality
@@ -806,7 +817,11 @@ module.exports = fp((instance, options, next) => {
                     await instance.goodsSales.updateOne({ _id: request.body.items[i].product_id }, { default_purchase_cost: request.body.items[i].purchase_cost })
                   }
                   purchase_items.push(request.body.items[i])
-
+                  console.log("-------------------------------------–– 003 ––-------------------------------------––––");
+                  console.log("updated - ", request.body.items[i].product_id);
+                  console.log(Date.now());
+                  console.log("-------------------------------------–– 003 -------------------------------------––--––");
+              
                 }
                 if (request.body.additional_cost == undefined) {
                   request.body.additional_cost = []
@@ -853,6 +868,12 @@ module.exports = fp((instance, options, next) => {
                         instance.sendMessageToSupplier(supp.phone_number, message_to_supplier)
                       }
 
+                      console.log("-------------------------------------–– 004 ––-------------------------------------––––");
+                      console.log("message_to_supplier - ", );
+                      console.log(Date.now());
+                      console.log("-------------------------------------–– 004 -------------------------------------––--––");
+                  
+
                       purchaseitems = purchaseitems.map(p => p._doc)
                       if (request.body.status == 'returned_order') {
                         reply.ok(purch)
@@ -898,7 +919,17 @@ module.exports = fp((instance, options, next) => {
 
   instance.post('/inventory/create_purchase_order', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
+      console.log("-------------------------------------–– 006 ––-------------------------------------––––");
+      console.log("out ");
+      console.log(Date.now());
+      console.log("-------------------------------------–– 006 -------------------------------------––--––");
+  
       if (admin) {
+        console.log("-------------------------------------–– 006 ––-------------------------------------––––");
+        console.log("in ");
+        console.log(Date.now());
+        console.log("-------------------------------------–– 006 -------------------------------------––--––");
+    
         create_purchase_order(request, reply, admin)
       }
     })
