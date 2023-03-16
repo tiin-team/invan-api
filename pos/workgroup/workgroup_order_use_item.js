@@ -95,7 +95,7 @@ const useWorkgroupOrder = async (request, reply, instance) => {
         stock_after: (+body.quantity) * (-1) + +item_in_stock
       }
 
-      await insertInvHistory(instance, [new_history])
+      // await insertInvHistory(instance, [new_history])
 
       await new instance.inventoryHistory(new_history).save()
     }

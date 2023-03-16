@@ -28,7 +28,7 @@ module.exports = fp((instance, _, next) => {
             if (item) {
                 historyModel.product_name = item.name
             }
-            await insertInvHistory(instance, [historyModel])
+            // await insertInvHistory(instance, [historyModel])
             await new instance.inventoryHistory(historyModel).save()
         } catch (error) {
             instance.log.error(error.message)
