@@ -206,7 +206,7 @@ module.exports = fp((instance, _, next) => {
       invCount.total_cost_difference = total.total_cost_difference
 
       await invCount.save();
-      await insertInvHistory(instance, invCountItems)
+      // await insertInvHistory(instance, invCountItems)
 
       await instance.inventoryCountItem.insertMany(invCountItems);
       // await instance.inventoryHistory.insertMany(inventoryHistories);
