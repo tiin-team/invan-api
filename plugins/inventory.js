@@ -68,7 +68,7 @@ module.exports = fp((instance, _, next) => {
       const { _id: id } = await history_model.save();
       instance.log.info(`Saved history id -> ${id}`);
       
-      // await insertInvHistory(instance, [new_history])
+      await insertInvHistory(instance, [new_history])
     } catch (error) {
       instance.log.error(error.message)
       instance.send_Error(
