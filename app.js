@@ -4,8 +4,9 @@ require('dotenv').config()
 const path = require('path')
 const AutoLoad = require('fastify-autoload')
 const Cors = require('fastify-cors')
+const fp = require('fastify-plugin')
 console.log('app.js running');
-module.exports = function (fastify, opts, next) {
+module.exports = fp(function (fastify, opts, next) {
 
   const options = {
     version: { version: '1.0.0' },
@@ -25,13 +26,12 @@ module.exports = function (fastify, opts, next) {
   }
 
   fastify.register(Cors, { origin: true })
-
+  // fastify.register(require('fastify-formbody'));
   fastify.register(require('fastify-file-upload'))
   fastify.register(require('fastify-static'), {
     root: path.join(__dirname, 'static'),
     prefix: '/static/'
   })
-
   // fastify.register(require('fastify-socket.io'))
 
   // fastify.register(AutoLoad, {
@@ -122,6 +122,16 @@ module.exports = function (fastify, opts, next) {
 
   fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'admin/invan-telegram/chat'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/finance/account'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/finance/category'),
     options: Object.assign(options, opts)
   })
 
@@ -257,4 +267,4 @@ module.exports = function (fastify, opts, next) {
   })
 
   next()
-}
+})
