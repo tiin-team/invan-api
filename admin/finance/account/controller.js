@@ -109,9 +109,10 @@ module.exports = fp((instance, _, next) => {
       const total = await instance.financeAccount.countDocuments(query)
 
       return reply.ok({
-        data: res.map(r => {
-          r.name
-        }),
+        // data: res.map(r => {
+        //   r.name
+        // }),
+        data: res,
         limit: limit,
         current_page: page,
         page: Math.ceil(total / limit),
