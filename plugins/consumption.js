@@ -174,12 +174,54 @@ module.exports = fp(function (instance, _, next) {
 
   const createConsumption = async (request, reply) => {
     try {
+      const user = request.user
+
+      const financeCategory = await instance.financeCategory
+        .findOne(
+          {
+            _id: request.body.category_id,
+            organization: user.organization,
+            deleted_at: null,
+          },
+          {
+            organization: 1,
+            name: 1,
+            disbursement: 1,
+            income: 1,
+            is_active: 1,
+          },
+        )
+        .lean()
+      if (!financeCategory)
+        return reply.fourorfour('Finance category')
+
+      const account = await instance.financeAccount
+        .findOne(
+          {
+            _id: request.body.account_id,
+            organization: user.organization,
+            deleted_at: null,
+          },
+          {
+            organization: 1,
+            name: 1,
+          },
+        )
+        .lean()
+      if (!account)
+        return reply.fourorfour('Finance account')
+
+      request.body.finance_category_id = financeCategory._id
+      request.body.finance_category_name = financeCategory.name
+      request.body.type = financeCategory.name
+      request.body.account_id = account._id
+      request.body.account_name = account.name
+
       const { body: body } = await checkBody(request, reply)
 
       if (!body) {
         return
       }
-      const user = request.user
       body.organization = user.organization
       body.by = user._id
       body.by_name = user.name
@@ -201,6 +243,7 @@ module.exports = fp(function (instance, _, next) {
       if (body.type === 'company_to_fees') {
         const supplierTransaction = {
           service: body.service,
+          service_name: body.service_name,
           supplier_id: body.supplier,
           document_id: body.comment,
           currency: body.currency,
@@ -214,6 +257,44 @@ module.exports = fp(function (instance, _, next) {
         }
         const { _id: transaction_id } = await new instance.supplierTransaction(supplierTransaction).save()
         body.transaction_id = transaction_id;
+
+        const supplier = await instance.adjustmentSupplier
+          .findOne({ _id: body.supplier })
+          .lean()
+
+        const services = Array.isArray(supplier.services)
+          && supplier.services
+            .find(elem => elem.service + '' == service._id + '')
+          ? supplier.services
+          : [{
+            service: service._id,
+            service_name: service.name,
+            balance: 0,
+            balance_usd: 0,
+          }]
+        let supp_serv_index = services
+          .findIndex(elem => elem.service + '' == service._id + '')
+
+        if (supp_serv_index === -1) {
+          supp_serv_index = services.length
+          services.push({
+            service: service._id,
+            service_name: service.name,
+            balance: 0,
+            balance_usd: 0,
+          })
+        }
+        services[supp_serv_index].balance += balance_uzs
+        services[supp_serv_index].balance_usd += balance_usd
+        await instance.adjustmentSupplier.updateOne(
+          { _id: supplier._id },
+          {
+            $set: {
+              // balance: supplier.balance,
+              // balance_usd: supplier.balance_usd,
+              services: services,
+            }
+          })
       }
       const { _id: id } = await new instance.consumptionModel(body).save();
 
@@ -232,6 +313,18 @@ module.exports = fp(function (instance, _, next) {
       }
       await instance.Safe.updateValue(safe_data, safe_history);
       /** */
+
+      await instance.financeAccount
+        .findOneAndUpdate(
+          { _id: body.account_id },
+          {
+
+            $inc: {
+              balance: financeCategory.income ? body.amount : (-1 * body.amount),
+            },
+          },
+          { lean: true },
+        )
 
       return reply.ok({ id: id })
     } catch (error) {
