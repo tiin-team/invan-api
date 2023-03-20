@@ -8,9 +8,11 @@ module.exports = fp(function (instance, _, next) {
       organization: String,
       type: {
         type: String,
-        enum: ['fees', 'one_time_fees', 'salary', 'company_to_fees'],
-        default: 'fees'
+        // enum: ['fees', 'one_time_fees', 'salary', 'company_to_fees'],
+        // default: 'fees'
       },
+      finance_category_name: String,
+      finance_category_id: mongoose.Types.ObjectId,
       service: String,
       service_name: String,
       employee: String,
@@ -38,6 +40,8 @@ module.exports = fp(function (instance, _, next) {
         type: String,
         enum: ['cash', 'card']
       },
+      account_name: String,
+      account_id: mongoose.Types.ObjectId,
       currency: {
         type: String,
         default: 'uzs'
