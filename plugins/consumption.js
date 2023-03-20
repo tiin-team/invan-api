@@ -88,7 +88,17 @@ module.exports = fp(function (instance, _, next) {
           },
           option_id: {
             type: 'string'
-          }
+          },
+          account_id: {
+            type: 'string',
+            maxLength: 24,
+            minLength: 24,
+          },
+          category_id: {
+            type: 'string',
+            maxLength: 24,
+            minLength: 24,
+          },
         }
       }
     },
@@ -168,6 +178,7 @@ module.exports = fp(function (instance, _, next) {
         default: {
           reply.error('Failed')
           return { body: null }
+          // return { body: body }
         }
       }
     } catch (error) {
@@ -226,6 +237,7 @@ module.exports = fp(function (instance, _, next) {
       if (!body) {
         return
       }
+
       body.organization = user.organization
       body.by = user._id
       body.by_name = user.name
@@ -370,7 +382,20 @@ module.exports = fp(function (instance, _, next) {
         type: 'object',
         required: ['startDate', 'endDate'],
         properties: {
+          type: { type: 'string', default: '' },
           amount_type: { type: 'string', enum: ['cash', 'card', ''] },
+          account_id: {
+            oneOf: [
+              { type: 'string', minLength: 24, maxLength: 24 },
+              { type: 'string', minLength: 0, maxLength: 0 },
+            ],
+          },
+          category_id: {
+            oneOf: [
+              { type: 'string', minLength: 24, maxLength: 24 },
+              { type: 'string', minLength: 0, maxLength: 0 },
+            ],
+          },
           service: {
             oneOf: [
               { type: 'string', minLength: 24, maxLength: 24 },
@@ -383,12 +408,11 @@ module.exports = fp(function (instance, _, next) {
               { type: 'string', minLength: 0, maxLength: 0 },
             ],
           },
-          type: { type: 'string', default: '' },
           startDate: { type: 'integer', minimum: 1 },
           endDate: { type: 'integer', minimum: 1 },
-        }
-      }
-    }
+        },
+      },
+    },
   }
 
   instance.post(
@@ -404,8 +428,10 @@ module.exports = fp(function (instance, _, next) {
           const {
             startDate,
             endDate,
-            type,
-            amount_type,
+            category_id,
+            account_id,
+            // type,
+            // amount_type,
             service,
             supplier,
             fee_type,
@@ -418,11 +444,13 @@ module.exports = fp(function (instance, _, next) {
               $lte: endDate
             }
           }
-          if (amount_type) query.amount_type = amount_type
+          // if (amount_type) query.amount_type = amount_type
+          if (category_id) query.finance_category_id = category_id
+          if (account_id) query.account_id = account_id
           if (service) query.service = service;
           if (supplier) query.supplier = supplier;
 
-          if (type != '') query.type = type
+          // if (type != '') query.type = type
 
           if (filter) {
             switch (fee_type) {
@@ -445,7 +473,7 @@ module.exports = fp(function (instance, _, next) {
             query.type = fee_type
           }
 
-          const total = await instance.consumptionModel.countDocuments(query)
+          const total = await instance.consumptionModel.countDocuments(query);
 
           const limit = request.params.limit == 'all' ? (total == 0 ? 1 : total) : request.params.limit
           const fees = await instance.consumptionModel
