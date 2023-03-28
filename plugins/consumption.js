@@ -344,6 +344,7 @@ module.exports = fp(function (instance, _, next) {
 
       return reply.ok({ id: id })
     } catch (error) {
+      console.log(error);
       return reply.error(error.message)
     }
   }
