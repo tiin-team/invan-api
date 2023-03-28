@@ -59,7 +59,7 @@ module.exports = fp(function (instance, _, next) {
         type: 'object',
         additionalProperties: false,
         required: [
-          'type', 'currency_amount', 'amount_type', 'service'
+          'currency_amount', 'amount_type', 'service'
         ],
         properties: {
           type: {
