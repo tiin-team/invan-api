@@ -190,7 +190,7 @@ module.exports = fp(function (instance, _, next) {
   const createConsumption = async (request, reply) => {
     try {
       const user = request.user
-
+console.log('here');
       const financeCategory = await instance.financeCategory
         .findOne(
           {
@@ -233,7 +233,7 @@ module.exports = fp(function (instance, _, next) {
       request.body.account_name = account.name
 
       const { body: body } = await checkBody(request, reply)
-
+      console.log(body, 'body');
       if (!body) {
         return
       }
