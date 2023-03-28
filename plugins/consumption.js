@@ -176,9 +176,9 @@ module.exports = fp(function (instance, _, next) {
           }
         }
         default: {
-          reply.error('Failed')
-          return { body: null }
-          // return { body: body }
+          // reply.error('Failed')
+          // return { body: null }
+          return { body: body }
         }
       }
     } catch (error) {
@@ -186,11 +186,11 @@ module.exports = fp(function (instance, _, next) {
       return { body: null }
     }
   }
-
+  
   const createConsumption = async (request, reply) => {
     try {
       const user = request.user
-console.log('here');
+
       const financeCategory = await instance.financeCategory
         .findOne(
           {
@@ -233,9 +233,9 @@ console.log('here');
       request.body.account_name = account.name
 
       const { body: body } = await checkBody(request, reply)
-      console.log(body, 'body');
+
       if (!body) {
-        return
+        return reply.error('invalid body')
       }
 
       body.organization = user.organization
@@ -344,7 +344,7 @@ console.log('here');
 
       return reply.ok({ id: id })
     } catch (error) {
-      console.log(error);
+
       return reply.error(error.message)
     }
   }
