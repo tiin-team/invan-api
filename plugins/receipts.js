@@ -354,6 +354,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 }
 
                 if (queue) {
+                  $receiptModel.sold_item_list[i].cost = queue.cost
                   $receiptModel.sold_item_list[i].queue_id = queue._id
                   $receiptModel.sold_item_list[i].partiation_id = queue._id
                   $receiptModel.sold_item_list[i].p_order = queue.p_order
