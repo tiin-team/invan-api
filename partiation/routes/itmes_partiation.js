@@ -200,6 +200,7 @@ module.exports = fp((instance, options, next) => {
               queue: 1,
               date: 1,
               organization_id: 1,
+              barcode: 1,
             }
           }
 
