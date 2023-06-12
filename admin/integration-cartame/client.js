@@ -8,7 +8,7 @@ module.exports = fp((instance, options, next) => {
     search = search.replace('+', '')
 
     const query = {
-      organization_id: '5f5641e8dce4e706c062837a',
+      organization: '5f5641e8dce4e706c062837a',
     }
 
     if (search) {
