@@ -2,13 +2,13 @@ const fp = require('fastify-plugin');
 
 module.exports = fp((instance, options, next) => {
   const version = { version: '2.0.0' };
-  const tiinOrganizationId = ''
+  const tiinOrganizationId = '5f5641e8dce4e706c062837a'
 
   async function findClient(search) {
     search = search.replace('+', '')
 
     const query = {
-      organization: '5f5641e8dce4e706c062837a',
+      organization: tiinOrganizationId,
     }
 
     if (search) {
@@ -37,9 +37,6 @@ module.exports = fp((instance, options, next) => {
         },
       )
       .lean(true);
-
-    console.log(query);
-    console.log(client);
 
     return client;
   }
@@ -178,7 +175,7 @@ module.exports = fp((instance, options, next) => {
       schema: {
         body: {
           type: 'object',
-          required: [],
+          required: ['phoneNumber'],
           properties: {
             cartameId: {
               type: 'string',
