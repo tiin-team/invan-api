@@ -151,6 +151,12 @@ module.exports = fp(function (fastify, opts, next) {
   })
 
   fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/integration-cartame'),
+    options: Object.assign(options, opts)
+  })
+
+
+  fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'admin/inventory'),
     options: Object.assign(options, opts)
   })
