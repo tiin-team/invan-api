@@ -25,7 +25,7 @@ module.exports = fp((instance, options, next) => {
       ];
     }
 
-    const clients = await instance.clientsDatabase
+    const client = await instance.clientsDatabase
       .findOne(
         query,
         {
@@ -38,7 +38,7 @@ module.exports = fp((instance, options, next) => {
       )
       .lean(true);
 
-    return clients[0];
+    return client;
   }
 
   instance.post('/cartame/client',
