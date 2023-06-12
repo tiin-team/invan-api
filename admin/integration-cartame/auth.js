@@ -6,8 +6,8 @@ module.exports = fp((instance, _, next) => {
   instance.decorate('authorization_cartaMe', async (request, reply, next) => {
     try {
       const token = request.headers['authorization']
-      const username = '';
-      const password = '';
+      const username = 'cartaMe';
+      const password = 'CMJrpeAB';
 
       // Buffer.from(`${username}:${password}`, 'utf8').toString('base64')
       if (!token || token !== Buffer.from(`${username}:${password}`, 'utf8').toString('base64')) {
