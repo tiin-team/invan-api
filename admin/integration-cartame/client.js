@@ -155,7 +155,7 @@ module.exports = fp((instance, options, next) => {
           const id = request.params.id
 
           const client = await findClient(id)
-
+console.log(client);
           if (!client) {
             return reply.fourorfour('Client')
           }
