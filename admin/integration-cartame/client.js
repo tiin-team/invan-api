@@ -34,9 +34,12 @@ module.exports = fp((instance, options, next) => {
           lastName: '$last_name',
           phoneNumber: '$phone_number',
           pointBalance: '$point_balance'
-        }
+        },
       )
       .lean(true);
+
+    console.log(query);
+    console.log(client);
 
     return client;
   }
@@ -155,7 +158,7 @@ module.exports = fp((instance, options, next) => {
           const id = request.params.id
 
           const client = await findClient(id)
-console.log(client);
+
           if (!client) {
             return reply.fourorfour('Client')
           }
