@@ -100,7 +100,7 @@ module.exports = fp((instance, _, next) => {
     })
   })
 
-  instance.decorateReply('allready_exist', function (name, code = 411, data=null) {
+  instance.decorateReply('allready_exist', function (name, code = 411, data = null) {
     this.send({
       statusCode: code,
       message: name,
@@ -113,6 +113,14 @@ module.exports = fp((instance, _, next) => {
     var response = {
       statusCode: 412,
       message: 'could not delete ' + name
+    }
+    this.send(response)
+  })
+
+  instance.decorateReply('server_error', function () {
+    const response = {
+      statusCode: 500,
+      message: 'Internal server error',
     }
     this.send(response)
   })

@@ -1359,6 +1359,7 @@ module.exports = fp((instance, _, next) => {
 
   const clients = instance.model('clientsDatabase', {
     id: { type: String, default: '' },
+    cartame_id: { type: String },
     user_id: {
       type: String,
       default: ''
@@ -2718,9 +2719,9 @@ module.exports = fp((instance, _, next) => {
       order_quantity: Number,
       note: String,
       is_accept: { type: Boolean, default: false },
-      category:{
-        id:{type:mongoose.Types.ObjectId},
-        name:{type:String}
+      category: {
+        id: { type: mongoose.Types.ObjectId },
+        name: { type: String }
       }
     }]
   });
