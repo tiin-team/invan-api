@@ -1359,7 +1359,7 @@ module.exports = fp((instance, _, next) => {
 
   const clients = instance.model('clientsDatabase', {
     id: { type: String, default: '' },
-    cartame_id: { type: String },
+    cartame_id: { type: String, unique: true },
     user_id: {
       type: String,
       default: ''
@@ -1426,6 +1426,20 @@ module.exports = fp((instance, _, next) => {
     },
   })
   instance.decorate('clientsDatabase', clients)
+
+  instance.clientsDatabase.schema.index(
+    {
+      cartame_id: 1
+    },
+    {
+      name: 'CartaMe unique id',
+      unique: true,
+      background: true,
+      partialFilterExpression: {
+        cartame_id: { $exists: true },
+      }
+    },
+  )
 
   instance.decorate('clientstariffes',
     instance.model('clientstariffes', {
