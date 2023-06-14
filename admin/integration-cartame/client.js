@@ -180,7 +180,7 @@ module.exports = fp((instance, options, next) => {
       schema: {
         body: {
           type: 'object',
-          required: ['phoneNumber'],
+          required: ['phoneNumber', 'cartameId'],
           properties: {
             cartameId: {
               type: 'string',
@@ -213,9 +213,14 @@ module.exports = fp((instance, options, next) => {
             return reply.fourorfour('Client')
           }
 
-          client = await instance.clientsDatabase.findOneAndUpdate(
-            { phone_number: body.phoneNumber },
-            body,
+          client = await instance.clientsDatabase.findByIdAndUpdate(
+            client._id,
+            {
+              cartame_id: body.cartameId,
+              first_name: body.firstName ? body.firstName : client.first_name,
+              last_name: body.lastName ? body.lastName : client.last_name,
+              gender: body.gender ? body.gender : client.gender,
+            },
             {
               lean: true,
               new: true,
@@ -224,7 +229,8 @@ module.exports = fp((instance, options, next) => {
                 firstName: '$first_name',
                 lastName: '$last_name',
                 phoneNumber: '$phone_number',
-                pointBalance: '$point_balance'
+                pointBalance: '$point_balance',
+                gender: '$gender',
               }
             },
           )
