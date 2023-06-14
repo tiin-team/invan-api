@@ -28,6 +28,19 @@ module.exports = fp((instance, _, next) => {
     this.send(response)
   })
 
+
+  instance.decorateReply('created', function (data = undefined) {
+    const response = {
+      statusCode: 201,
+      error: 'Ok',
+      message: 'Success'
+    }
+    if (data) {
+      response.data = data
+    }
+    this.status(201).send(response)
+  })
+
   instance.decorateReply('error', function (name) {
     var response = {
       statusCode: 422,

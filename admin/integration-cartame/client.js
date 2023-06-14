@@ -75,6 +75,11 @@ module.exports = fp((instance, options, next) => {
         try {
           const body = request.body
 
+          const phoneNumber = body.phoneNumber
+
+          if (!/^\+998[0-9]{9}$/.test(phoneNumber))
+            return reply.error('Invalid phoneNumber validation error')
+
           const client = await findClient(body.phoneNumber)
 
           if (client) {
@@ -92,7 +97,7 @@ module.exports = fp((instance, options, next) => {
             note: 'Added by cartaMe',
           })
 
-          return reply.ok({ _id: res._id })
+          return reply.created({ _id: res._id })
         } catch (error) {
           instance.log.error(error.message)
           return reply.server_error();
