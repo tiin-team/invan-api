@@ -215,7 +215,7 @@ module.exports = fp((instance, options, next) => {
 
           client = await instance.clientsDatabase.findOneAndUpdate(
             { phone_number: body.phoneNumber },
-            data,
+            body,
             {
               lean: true,
               new: true,
