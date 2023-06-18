@@ -16,7 +16,7 @@ module.exports = fp((instance, _, next) => {
     this.send(response)
   })
 
-  instance.decorateReply('ok', function (data = undefined) {
+  instance.decorateReply('ok', function (data = undefined, meta = undefined) {
     var response = {
       statusCode: 200,
       error: 'Ok',
@@ -25,6 +25,11 @@ module.exports = fp((instance, _, next) => {
     if (data) {
       response.data = data
     }
+
+    if (meta) {
+      response.meta = meta
+    }
+
     this.send(response)
   })
 

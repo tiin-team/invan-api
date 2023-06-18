@@ -4,6 +4,17 @@ module.exports = fp((instance, options, next) => {
   const version = { version: '2.0.0' };
   const tiinOrganizationId = '5f5641e8dce4e706c062837a'
 
+  const clientProjection = {
+    cartameId: '$cartame_id',
+    firstName: '$first_name',
+    lastName: '$last_name',
+    phoneNumber: '$phone_number',
+    pointBalance: '$point_balance',
+    gender: '$gender',
+    email: '$email',
+    birthday: '$birthday',
+  };
+
   async function findClient(search) {
     search = search.replace('+', '')
 
@@ -26,16 +37,7 @@ module.exports = fp((instance, options, next) => {
     }
 
     const client = await instance.clientsDatabase
-      .findOne(
-        query,
-        {
-          cartameId: '$cartame_id',
-          firstName: '$first_name',
-          lastName: '$last_name',
-          phoneNumber: '$phone_number',
-          pointBalance: '$point_balance'
-        },
-      )
+      .findOne(query, clientProjection)
       .lean(true);
 
     return client;
@@ -71,7 +73,7 @@ module.exports = fp((instance, options, next) => {
       },
     },
     (request, reply) => {
-      instance.authorization_cartaMe(request, reply, async () => {
+      instance.authorizationCartaMe(request, reply, async () => {
         try {
           const body = request.body
 
@@ -120,7 +122,7 @@ module.exports = fp((instance, options, next) => {
   //     }
   //   },
   //   (request, reply) => {
-  //     instance.authorization_cartaMe(request, reply, async () => {
+  //     instance.authorizationCartaMe(request, reply, async () => {
   //       try {
   //         const { search } = request.query
 
@@ -155,7 +157,7 @@ module.exports = fp((instance, options, next) => {
       }
     },
     (request, reply) => {
-      instance.authorization_cartaMe(request, reply, async () => {
+      instance.authorizationCartaMe(request, reply, async () => {
         try {
           const id = request.params.id
 
@@ -203,7 +205,7 @@ module.exports = fp((instance, options, next) => {
       }
     },
     (request, reply) => {
-      instance.authorization_cartaMe(request, reply, async () => {
+      instance.authorizationCartaMe(request, reply, async () => {
         try {
           const body = request.body;
 
@@ -224,21 +226,15 @@ module.exports = fp((instance, options, next) => {
             {
               lean: true,
               new: true,
-              projection: {
-                cartameId: '$cartame_id',
-                firstName: '$first_name',
-                lastName: '$last_name',
-                phoneNumber: '$phone_number',
-                pointBalance: '$point_balance',
-                gender: '$gender',
-              }
+              projection: clientProjection,
             },
           )
 
           return reply.ok(client);
         } catch (error) {
           instance.log.error(error.message)
-          return reply.error(error.message);
+          return reply.allready_exist('Client cartameId')
+          // return reply.error(error.message);
         }
 
       });

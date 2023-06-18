@@ -1408,7 +1408,10 @@ module.exports = fp((instance, _, next) => {
       type: String,
       enum: ['male', 'female', 'not_set']
     },
-    birthday: String,
+    birthday: {
+      type: String,
+      validate: /^([012][1-9]|10|20|30|31)\-(0[1-9]|10|11|12)\-([2-9][0-9][0-9][0-9])$/,
+    },
     debt: Number,
     debt_pay_history: {
       type: Array,
@@ -1427,6 +1430,7 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('clientsDatabase', clients)
 
+  instance.clientsDatabase.schema.path('brithday').validate()
   instance.clientsDatabase.schema.index(
     {
       cartame_id: 1

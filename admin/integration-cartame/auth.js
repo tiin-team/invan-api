@@ -3,7 +3,7 @@ const fp = require('fastify-plugin')
 module.exports = fp((instance, _, next) => {
   // check all
 
-  instance.decorate('authorization_cartaMe', async (request, reply, next) => {
+  instance.decorate('authorizationCartaMe', async (request, reply, next) => {
     try {
       const token = request.headers['authorization']
       const username = 'cartaMe';
