@@ -29,12 +29,12 @@ module.exports = fp((instance, options, next) => {
     }
 
     const [stores, total] = await Promise.all([
-      instance.inoneServices
+      instance.services
         .find(query, storeProjection)
         .limit(limit)
         .skip((page - 1) * limit)
         .lean(true),
-      instance.inoneServices.countDocuments(query),
+      instance.services.countDocuments(query),
     ]);
 
     return { data: stores, total: total };
@@ -110,7 +110,7 @@ module.exports = fp((instance, options, next) => {
         try {
           const id = request.params.id
 
-          const store = await instance.inoneServices
+          const store = await instance.services
             .findById(request.params.id, storeProjection)
             .lean(true);
           if (!store) {
