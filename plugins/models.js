@@ -1430,7 +1430,6 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('clientsDatabase', clients)
 
-  instance.clientsDatabase.schema.path('brithday').validate()
   instance.clientsDatabase.schema.index(
     {
       cartame_id: 1
