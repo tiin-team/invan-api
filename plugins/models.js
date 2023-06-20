@@ -1013,6 +1013,7 @@ module.exports = fp((instance, _, next) => {
     brand: String,
     description: String,
     mxik: String,
+    package_code: String,
     nds_value: Number,
     marking: { type: Boolean, default: false },
     created_by: String,
