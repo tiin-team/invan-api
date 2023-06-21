@@ -1014,6 +1014,7 @@ module.exports = fp((instance, _, next) => {
     description: String,
     mxik: String,
     package_code: String,
+    package_name: String,
     nds_value: Number,
     marking: { type: Boolean, default: false },
     created_by: String,
