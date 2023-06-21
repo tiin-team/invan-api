@@ -2926,6 +2926,8 @@ module.exports = (instance, options, next) => {
               "category": 1,
               "price": 1,
               "category_name": 1,
+              "package_code": 1,
+              "package_name": 1,
               // "categObj": 1,
               // "has_variants": 1,
               // "variant_options": 1,
