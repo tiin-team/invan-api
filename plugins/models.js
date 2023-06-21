@@ -85,6 +85,23 @@ module.exports = fp((instance, _, next) => {
       default: ''
     },
     low_stock_date: { type: Number, default: 7 },
+    wort_time: [{
+      day: {
+        type: String,
+        required: true,
+        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+      },
+      from: {
+        type: String,
+        required: true,
+        validate: /^([01][1-9]|20|21|22|23|24)\:([0-5][0-9])$/
+      },
+      to: {
+        type: String,
+        required: true,
+        validate: /^([01][1-9]|20|21|22|23|24)\:([0-5][0-9])$/
+      },
+    }]
   })
   instance.decorate('services', services)
   instance.generate('/services', services, { public_search: true })
