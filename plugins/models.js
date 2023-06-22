@@ -85,7 +85,7 @@ module.exports = fp((instance, _, next) => {
       default: ''
     },
     low_stock_date: { type: Number, default: 7 },
-    wort_time: [{
+    work_time: [{
       day: {
         type: String,
         required: true,
