@@ -1431,6 +1431,7 @@ module.exports = fp((instance, _, next) => {
       type: String,
       validate: /^([012][1-9]|10|20|30|31)\-(0[1-9]|10|11|12)\-([2-9][0-9][0-9][0-9])$/,
     },
+    city: { type: String, default: '' },
     debt: Number,
     debt_pay_history: {
       type: Array,

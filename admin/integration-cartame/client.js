@@ -13,6 +13,7 @@ module.exports = fp((instance, options, next) => {
     gender: '$gender',
     email: '$email',
     birthday: '$birthday',
+    city: '$city'
   };
 
   async function findClient(search) {

@@ -13,6 +13,7 @@ module.exports = fp((instance, options, next) => {
     location: '$location',
     locationName: '$location_name',
     imageUrl: '$image_url',
+    workTime: '$work_time',
   };
 
   async function getAllStores(search, limit = 10, page = 1) {
