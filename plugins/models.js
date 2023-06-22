@@ -101,7 +101,7 @@ module.exports = fp((instance, _, next) => {
         required: true,
         validate: /^([01][1-9]|20|21|22|23|24)\:([0-5][0-9])$/
       },
-    }]
+    }],
   })
   instance.decorate('services', services)
   instance.generate('/services', services, { public_search: true })
