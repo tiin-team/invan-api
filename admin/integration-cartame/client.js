@@ -69,6 +69,9 @@ module.exports = fp((instance, options, next) => {
               enum: ['male', 'female', 'not_set'],
               default: 'not_set',
             },
+            city: { type: 'string', default: '' },
+            birthday: { type: 'string', default: '' },
+            email: { type: 'string', default: '' },
           }
         }
       },
@@ -95,9 +98,12 @@ module.exports = fp((instance, options, next) => {
             organization: tiinOrganizationId,
             first_name: body.firstName,
             last_name: body.lastName,
-            email: '',
+            email: body.email,
             phone_number: body.phoneNumber,
             note: 'Added by cartaMe',
+            city: body.city,
+            gender: body.gender,
+            birthday: body.birthday,
           })
 
           return reply.created({ _id: res._id })
