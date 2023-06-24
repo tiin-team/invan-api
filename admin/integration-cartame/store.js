@@ -7,7 +7,7 @@ module.exports = fp((instance, options, next) => {
   const storeProjection = {
     type: '$type',
     name: '$name',
-    organization_id: '$organization',
+    organizationId: '$organization',
     phoneNumber: '$phone_number',
     address: '$address',
     location: '$location',
