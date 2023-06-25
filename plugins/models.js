@@ -730,6 +730,7 @@ module.exports = fp((instance, _, next) => {
       type: Array,
       default: []
     },
+    sku: String, 
     quantity: Number,
     quantity_left: Number,
     queue: Number,
@@ -1986,6 +1987,7 @@ module.exports = fp((instance, _, next) => {
     category_id: String,
     category_name: String,
     product_id: mongoose.Schema.Types.ObjectId,
+    sku: String,
     product_name: String,
     cost: {
       type: Number,

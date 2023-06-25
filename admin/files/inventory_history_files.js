@@ -104,7 +104,8 @@ async function getExcelFile(request, reply, instance) {
                 adjustment: 1,
                 stock_after: 1,
                 employee_name: 1,
-                date: 1
+                date: 1,
+                sku: 1,
             }
         }
         const col_name = `inv_files_to_download`;
@@ -296,7 +297,8 @@ async function getExcelFileNew(request, reply, instance) {
                 barcode: {
                     $first: "$product.barcode"
                 },
-                date: 1
+                date: 1,
+                sku: 1,
             }
         }
         const col_name = `inv_files_to_download`;
