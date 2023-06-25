@@ -2,37 +2,6 @@ const fp = require('fastify-plugin')
 
 module.exports = fp((instance, _, next) => {
 
-  (async () => {
-    const productIds = await instance.goodsSaleQueue.aggregate([
-      {
-        $match: {}
-      },
-      {
-        $group: {
-          _id: '$good_id'
-        }
-      }
-    ])
-    const queues = await instance.goodsSaleQueue.find({}, { _id: 1, good_id: 1 }).lean();
-
-    const goods = await instance.goodsSales
-      .find(
-        { _id: { $in: productIds.map(productId => productId._id) } },
-        { sku: 1 },
-      )
-      .lean()
-
-    const goodsObj = {}
-
-    for (const good of goods) {
-      goodsObj[good._id] = good.sku
-    }
-    for (const queue of queues) {
-      console.log(goodsObj[queue.good_id]);
-      // await instance.goodsSaleQueue.findByIdAndUpdate(queue._id, { $set: { sku: goodsObj[queue.good_id] } })
-    }
-  })()
-
   const ObjectIdReturned = (id) => {
     try {
       return require('mongodb').ObjectID(id)
