@@ -457,6 +457,7 @@ module.exports = (instance, _, next) => {
         cashier_id: 1,
         cashier_name: 1,
         organization: 1,
+        service: 1,
       }
     }
     const unwindSoldItemList = {
@@ -555,6 +556,7 @@ module.exports = (instance, _, next) => {
         cashier_name: 1,
         // poss_count: 1,
         organization: 1,
+        service: 1,
       }
     }
 
@@ -601,6 +603,7 @@ module.exports = (instance, _, next) => {
 
     const partiation_ids = new Set();
     const product_ids = new Set();
+    const service_ids = new Set();
     for (let i = 0; i < result.length; i++) {
       if (result[i].partiation_id) {
         partiation_ids.add(instance.ObjectId(result[i].partiation_id))
@@ -608,7 +611,21 @@ module.exports = (instance, _, next) => {
       if (result[i].product_id) {
         product_ids.add(result[i].product_id)
       }
+      if (result[i].service) {
+        service_ids.add(result[i].service)
+      }
     }
+
+    const stores = await instance.services
+      .find({
+        _id: { $in: [...service_ids] },
+      })
+      .lean()
+    const stores_obj = {}
+    for (const store of stores) {
+      stores_obj[store._id] = store
+    }
+
 
     const partiations = await instance.goodsSaleQueue
       .find({
@@ -651,10 +668,10 @@ module.exports = (instance, _, next) => {
           ? partiations_obj[result[i].partiation_id].partiation_no
           : result[i].p_order
         result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
-
-        result[i].service_id = partiations_obj[result[i].partiation_id].service_id
-        result[i].service_name = partiations_obj[result[i].partiation_id].service_name
       }
+
+      result[i].service_id = stores_obj[result[i].service]._id
+      result[i].service_name = stores_obj[result[i].service].name
 
       result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
       if (goods_obj[result[i].product_id]) {
