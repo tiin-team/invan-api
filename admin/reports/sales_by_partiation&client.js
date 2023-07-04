@@ -599,15 +599,20 @@ module.exports = (instance, _, next) => {
       users_obj[user.user_id] = user
     }
 
-    const partiation_ids = []
+    const partiation_ids = new Set();
+    const product_ids = new Set();
     for (let i = 0; i < result.length; i++) {
-      if (result[i].partiation_id)
-        partiation_ids.push(instance.ObjectId(result[i].partiation_id))
+      if (result[i].partiation_id) {
+        partiation_ids.add(instance.ObjectId(result[i].partiation_id))
+      }
+      if (result[i].product_id) {
+        product_ids.add(result[i].product_id)
+      }
     }
 
     const partiations = await instance.goodsSaleQueue
       .find({
-        _id: { $in: partiation_ids },
+        _id: { $in: [...partiation_ids] },
       })
       .lean()
 
@@ -618,7 +623,7 @@ module.exports = (instance, _, next) => {
 
     const goods = await instance.goodsSales
       .find(
-        { _id: { $in: [] } },
+        { _id: { $in: [...product_ids] } },
         {
           sold_by: 1,
         },
@@ -631,10 +636,11 @@ module.exports = (instance, _, next) => {
 
     for (let i = 0; i < result.length; i++) {
 
-      if (users_obj[result[i].user_id])
+      if (users_obj[result[i].user_id]) {
         result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
-      else
+      } else {
         result[i].client_name = ""
+      }
 
       result[i].partiation_no = ""
 
@@ -651,6 +657,8 @@ module.exports = (instance, _, next) => {
 
       result[i].alt_group = ""
       result[i].size = ""
+
+      result[i].sku = 1;
     }
 
     reply.ok({
