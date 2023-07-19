@@ -492,6 +492,7 @@ module.exports = (instance, options, next) => {
       }
       return result;
     } catch (error) {
+      console.log("error on creating a customer", error, "error on creating a customer");
       throw UserError("error on creating a customer", error);
     }
   }
