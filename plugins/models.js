@@ -1430,7 +1430,7 @@ module.exports = fp((instance, _, next) => {
     },
     birthday: {
       type: String,
-      validate: /^$|^([012][1-9]|10|20|30|31)\-(0[1-9]|10|11|12)\-([2-9][0-9][0-9][0-9])$/,
+      validate: /^$|^([012][1-9]|10|20|30|31)\-(0[1-9]|10|11|12)\-([1-9][0-9][0-9][0-9])$/,
     },
     city: { type: String, default: '' },
     debt: Number,

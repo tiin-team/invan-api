@@ -485,6 +485,7 @@ module.exports = (instance, options, next) => {
       if (!clientData.user_id) {
         clientData.user_id = clientData.phone_number.replace(/\+/, "") + new Date().getTime();
       }
+      clientData.gender = ['male', 'female', 'not_set'].includes(clientData.gender) ? clientData.gender : 'not_set'
       const newClient = new instance.clientsDatabase(clientData);
       const result = await newClient.save();
       if (!result) {
@@ -492,9 +493,6 @@ module.exports = (instance, options, next) => {
       }
       return result;
     } catch (error) {
-      console.log("======================================================================");
-      console.log(error);
-      console.log("======================================================================");
       throw UserError("error on creating a customer", error);
     }
   }
