@@ -196,24 +196,33 @@ module.exports = (instance, options, next) => {
       },
     )
       .lean()
-
+    console.log('================');
+    console.log(returnedOrders.map(o => o.supplier_id));
+    console.log('================');
     const suppliers = await instance.adjustmentSupplier.find(
       { id: { $in: returnedOrders.map(o => o.supplier_id) } },
       { supplier_name: 1 },
     )
       .lean()
 
+    console.log('=======suppliers.length=========');
+    console.log(suppliers.length);
+    console.log('================');
     const suppliersObj = {}
     for (const supplier of suppliers) {
       suppliersObj[supplier.id] = supplier
     }
-
+    console.log('======returnedOrders==========');
+    console.log(returnedOrders.length);
+    console.log('================');
     /** @type Record<string, string> */
     const returnedOrdersObj = {}
     for (const returnedOrder of returnedOrders) {
-      returnedOrdersObj[returnedOrder.p_order] = {
-        id: suppliersObj[returnedOrder.supplier_id].id,
-        name: suppliersObj[returnedOrder.supplier_id].supplier_name,
+      if (suppliersObj[returnedOrder.supplier_id]) {
+        returnedOrdersObj[returnedOrder.p_order] = {
+          id: suppliersObj[returnedOrder.supplier_id].id,
+          name: suppliersObj[returnedOrder.supplier_id].supplier_name,
+        }
       }
     }
 
