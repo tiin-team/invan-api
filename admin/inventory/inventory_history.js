@@ -200,7 +200,7 @@ module.exports = (instance, options, next) => {
     console.log(returnedOrders.map(o => o.supplier_id));
     console.log('================');
     const suppliers = await instance.adjustmentSupplier.find(
-      { id: { $in: returnedOrders.map(o => o.supplier_id) } },
+      { id: { $in: returnedOrders.map(o => instance.ObjectId(o.supplier_id)) } },
       { supplier_name: 1 },
     )
       .lean()
