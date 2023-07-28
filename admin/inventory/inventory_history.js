@@ -210,7 +210,7 @@ module.exports = (instance, options, next) => {
     console.log('================');
     const suppliersObj = {}
     for (const supplier of suppliers) {
-      suppliersObj[supplier.id] = supplier
+      suppliersObj[supplier._id] = supplier
     }
     console.log('======returnedOrders==========');
     console.log(returnedOrders.length);
@@ -220,7 +220,7 @@ module.exports = (instance, options, next) => {
     for (const returnedOrder of returnedOrders) {
       if (suppliersObj[returnedOrder.supplier_id]) {
         returnedOrdersObj[returnedOrder.p_order] = {
-          id: suppliersObj[returnedOrder.supplier_id].id,
+          _id: suppliersObj[returnedOrder.supplier_id]._id,
           name: suppliersObj[returnedOrder.supplier_id].supplier_name,
         }
       }
@@ -228,7 +228,7 @@ module.exports = (instance, options, next) => {
 
     for (const index in histories) {
       if (returnedOrdersObj[histories[index].unique]) {
-        histories[index].supplier_id = returnedOrdersObj[histories[index].unique].id
+        histories[index].supplier_id = returnedOrdersObj[histories[index].unique]._id
         histories[index].supplier_name = returnedOrdersObj[histories[index].unique].name
       }
 
