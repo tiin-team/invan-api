@@ -184,6 +184,12 @@ module.exports = (instance, options, next) => {
             },
           },
           {
+            cartame_id: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
             last_name: {
               $regex: search,
               $options: "i",
