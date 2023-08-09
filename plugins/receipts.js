@@ -402,6 +402,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     $receiptModel.sold_item_list[i].partitions = [{
                       partition_id: queue._id,
                       count: $receiptModel.sold_item_list[i].value,
+                      cost: queue.cost,
                       p_order: queue.p_order,
                       queue: queue.queue,
                       supplier_id: queue.supplier_id,
@@ -415,7 +416,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                   console.log(filteredQueues);
                   console.log('====================filteredQueues====================================');
 
-                  if (filteredQueues.length) {
+                  if (filteredQueues.length > 0) {
                     $receiptModel.sold_item_list[i].queue_id = filteredQueues[0]._id
                     $receiptModel.sold_item_list[i].partiation_id = filteredQueues[0]._id
                     $receiptModel.sold_item_list[i].p_order = filteredQueues[0].p_order
@@ -431,20 +432,22 @@ const receiptCreateGroup = async (request, reply, instance) => {
                       if ($receiptModel.sold_item_list[i].value - diff <= queue.quantity_left) {
                         $receiptModel.sold_item_list[i].partitions.push({
                           partition_id: queue._id,
-                          count: $receiptModel.sold_item_list[i].value,
+                          count: $receiptModel.sold_item_list[i].value - diff,
+                          cost: queue.cost,
                           p_order: queue.p_order,
                           queue: queue.queue,
                           supplier_id: queue.supplier_id,
                           supplier_name: queue.supplier_name,
                         })
-                        totalCost += $receiptModel.sold_item_list[i].value * queue.cost
-                        diff += $receiptModel.sold_item_list[i].value
-                        queue.quantity_left -= $receiptModel.sold_item_list[i].value
+                        totalCost += ($receiptModel.sold_item_list[i].value - diff) * queue.cost
+                        diff += $receiptModel.sold_item_list[i].value - diff
+                        queue.quantity_left -= ($receiptModel.sold_item_list[i].value - diff)
                         break
                       } else {
                         $receiptModel.sold_item_list[i].partitions.push({
                           partition_id: queue._id,
                           count: queue.quantity_left,
+                          cost: queue.cost,
                           p_order: queue.p_order,
                           queue: queue.queue,
                           supplier_id: queue.supplier_id,
@@ -463,6 +466,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                       $receiptModel.sold_item_list[i].partitions.push({
                         partition_id: filteredQueues[filteredQueues.length - 1]._id,
                         count: mod,
+                        cost: filteredQueues[filteredQueues.length - 1].cost,
                         p_order: filteredQueues[filteredQueues.length - 1].p_order,
                         queue: filteredQueues[filteredQueues.length - 1].queue,
                         supplier_id: filteredQueues[filteredQueues.length - 1].supplier_id,

@@ -373,6 +373,7 @@ module.exports = fp((instance, _, next) => {
       partitions: [{
         partition_id: mongoose.Types.ObjectId,
         count: Number,
+        cost: Number,
         p_order: String,
         queue: Number,
         supplier_id: mongoose.Types.ObjectId,
