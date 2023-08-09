@@ -160,7 +160,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
           {
             good_id: { $in: [...sold_item_ids].map(id => instance.ObjectId(id)) },
             service_id: instance.ObjectId(service_id),
-            quantity_left: { $ne: 0 },
+            quantity_left: { $gt: 0 },
           },
         ]
       })
@@ -354,20 +354,20 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 // if (item.queue) queue_query.queue = item.queue
                 // else queue_query = { queue: -1 }
                 //xatolik bor
-                const partiation_query = $receiptModel.sold_item_list[i].partiation_id
-                  ? ({ _id: $receiptModel.sold_item_list[i].partiation_id })
-                  : ({
-                    good_id: instance.ObjectId(item._id),
-                    service_id: instance.ObjectId(service_id),
-                    // queue: item.queue,
-                    quantity_left: { $ne: 0 },
-                  })
-                const queueById = $receiptModel.sold_item_list[i].partiation_id
-                  ? queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
-                  : undefined
-                const queue = $receiptModel.sold_item_list[i].partiation_id && queueById && queueById.quantity_left > 0
-                  ? queueById
-                  : queues.find(q => q.good_id == item._id && q.quantity_left > 0)
+                // const partiation_query = $receiptModel.sold_item_list[i].partiation_id
+                //   ? ({ _id: $receiptModel.sold_item_list[i].partiation_id })
+                //   : ({
+                //     good_id: instance.ObjectId(item._id),
+                //     service_id: instance.ObjectId(service_id),
+                //     // queue: item.queue,
+                //     quantity_left: { $ne: 0 },
+                //   })
+                // const queueById = $receiptModel.sold_item_list[i].partiation_id
+                //   ? queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
+                //   : undefined
+                // const queue = $receiptModel.sold_item_list[i].partiation_id && queueById && queueById.quantity_left > 0
+                //   ? queueById
+                //   : queues.find(q => q.good_id == item._id && q.quantity_left > 0)
                 // const queue = await instance.goodsSaleQueue
                 //   .findOne(partiation_query)
                 //   .sort({ queue: 1 })
@@ -423,6 +423,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                           supplier_name: queue.supplier_name,
                         })
                         totalCost += $receiptModel.sold_item_list[i].value * queue.cost
+                        diff += $receiptModel.sold_item_list[i].value
                         queue.quantity_left -= $receiptModel.sold_item_list[i].value
                         break
                       } else {
@@ -437,7 +438,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
                         diff += queue.quantity_left
                         totalCost += queue.quantity_left * queue.cost
                         queue.quantity_left = 0
-                        break
                       }
                     }
 
@@ -446,18 +446,19 @@ const receiptCreateGroup = async (request, reply, instance) => {
                       diff += mod
                       totalCost += mod * queue.cost
                       $receiptModel.sold_item_list[i].partitions.push({
-                        partition_id: filteredQueues[filteredQueues.length -1]._id,
+                        partition_id: filteredQueues[filteredQueues.length - 1]._id,
                         count: mod,
-                        p_order: filteredQueues[filteredQueues.length -1].p_order,
-                        queue: filteredQueues[filteredQueues.length -1].queue,
-                        supplier_id: filteredQueues[filteredQueues.length -1].supplier_id,
-                        supplier_name: filteredQueues[filteredQueues.length -1].supplier_name,
+                        p_order: filteredQueues[filteredQueues.length - 1].p_order,
+                        queue: filteredQueues[filteredQueues.length - 1].queue,
+                        supplier_id: filteredQueues[filteredQueues.length - 1].supplier_id,
+                        supplier_name: filteredQueues[filteredQueues.length - 1].supplier_name,
                       })
                     }
                   }
                 }
-
-                $receiptModel.sold_item_list[i].cost = totalCost / $receiptModel.sold_item_list[i].value
+                if (totalCost > 0) {
+                  $receiptModel.sold_item_list[i].cost = totalCost / $receiptModel.sold_item_list[i].value
+                }
               } catch (error) {
                 instance.send_Error('Sold item partion not found', JSON.stringify(error))
               }
