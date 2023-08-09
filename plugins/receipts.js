@@ -412,6 +412,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     $receiptModel.sold_item_list[i].partitions = []
 
                     let diff = 0;
+                    console.log('========================================================');
+                    console.log(filteredQueues);
+                    console.log('========================================================');
                     for (const queue of filteredQueues) {
                       if ($receiptModel.sold_item_list[i].value - diff <= queue.quantity_left) {
                         $receiptModel.sold_item_list[i].partitions.push({
@@ -444,7 +447,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     if (diff < $receiptModel.sold_item_list[i].value) {
                       const mod = $receiptModel.sold_item_list[i].value - diff
                       diff += mod
-                      totalCost += mod * queue.cost
+                      totalCost += mod * filteredQueues[filteredQueues.length - 1].cost
                       $receiptModel.sold_item_list[i].partitions.push({
                         partition_id: filteredQueues[filteredQueues.length - 1]._id,
                         count: mod,
