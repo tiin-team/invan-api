@@ -357,10 +357,12 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     // queue: item.queue,
                     quantity_left: { $ne: 0 },
                   })
-
-                const queue = $receiptModel.sold_item_list[i].partiation_id
+                const queueById = $receiptModel.sold_item_list[i].partiation_id
                   ? queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
-                  : queues.find(q => q.good_id == item._id)
+                  : undefined
+                const queue = $receiptModel.sold_item_list[i].partiation_id && queueById && queueById.quantity_left > 0
+                  ? queueById
+                  : queues.find(q => q.good_id == item._id && q.quantity_left > 0)
                 // const queue = await instance.goodsSaleQueue
                 //   .findOne(partiation_query)
                 //   .sort({ queue: 1 })
@@ -384,6 +386,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                   // partiali tovar bo'yicha supplierni olish
                   $receiptModel.sold_item_list[i].supplier_id = queue.supplier_id;
                   $receiptModel.sold_item_list[i].supplier_name = queue.supplier_name;
+                  queue.quantity_left -= $receiptModel.sold_item_list[i].value
                 }
 
               } catch (error) {
