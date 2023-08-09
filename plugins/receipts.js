@@ -409,7 +409,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     }]
                   }
                 } else {
-                  const filteredQueues = queues.filter(q => q.good_id == item._id && q.quantity_left > 0)
+                  const filteredQueues = queues.filter(q => q.good_id + '' == $receiptModel.sold_item_list[i].product_id + '' + '' && q.quantity_left > 0)
                   console.log('====================filteredQueues====================================');
                   console.log(filteredQueues);
                   console.log('====================filteredQueues====================================');
