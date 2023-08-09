@@ -316,6 +316,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
               if (serv && serv.cost) {
                 $receiptModel.sold_item_list[i].cost = serv.cost
+                $receiptModel.sold_item_list[i].total_cost = $receiptModel.sold_item_list[i].value * serv.cost
               }
 
               // const prices = serv && serv.prices ? serv.prices.filter(a => a.from !== 0) : []
@@ -382,9 +383,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 // bu keyinchalik olib tashlanadi
 
                 let totalCost = 0;
-                console.log('======================queues======================================');
-                console.log(queues);
-                console.log('======================queues==================================');
                 if ($receiptModel.sold_item_list[i].partiation_id) {
                   const queue = queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
                   if (queue) {
@@ -411,10 +409,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
                   }
                 } else {
                   const filteredQueues = queues.filter(q => q.good_id + '' == $receiptModel.sold_item_list[i].product_id + '' + '' && q.quantity_left > 0)
-                  console.log($receiptModel.sold_item_list[i].product_id);
-                  console.log('====================filteredQueues====================================');
-                  console.log(filteredQueues);
-                  console.log('====================filteredQueues====================================');
 
                   if (filteredQueues.length > 0) {
                     $receiptModel.sold_item_list[i].queue_id = filteredQueues[0]._id
@@ -477,6 +471,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 }
                 if (totalCost > 0) {
                   $receiptModel.sold_item_list[i].cost = totalCost / $receiptModel.sold_item_list[i].value
+                  $receiptModel.sold_item_list[i].total_cost = totalCost
                 }
               } catch (error) {
                 instance.send_Error('Sold item partion not found', JSON.stringify(error))

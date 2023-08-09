@@ -398,6 +398,7 @@ module.exports = fp((instance, _, next) => {
         default: false
       },
       cost: Number,
+      total_cost: Number,
       price: Number,
       price_currency: String,
       currency: String,
