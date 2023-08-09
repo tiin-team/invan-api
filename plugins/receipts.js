@@ -75,6 +75,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
     const sold_item_ids = new Set()
     const invalidObjectIds = []
+    const partiation_ids = new Set()
     for (const rr of request.body) {
       if (
         !date_and_numbers.includes(
@@ -91,6 +92,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
               value: item.value,
             })
           sold_item_ids.add(item.product_id)
+          if (item.partiation_id) {
+            partiation_ids.add(item.partiation_id)
+          }
         })
       }
     }
@@ -148,6 +152,20 @@ const receiptCreateGroup = async (request, reply, instance) => {
     const other_category = await instance.goodsCategory
       .findOne({ organization: user.organization, is_other: true })
       .lean();
+
+    const queues = await instance.goodsSaleQueue
+      .find({
+        $or: [
+          { _id: { $in: [...partiation_ids].map(id => instance.ObjectId(id)) } },
+          {
+            good_id: { $in: [...sold_item_ids].map(id => instance.ObjectId(id)) },
+            service_id: instance.ObjectId(service_id),
+            quantity_left: { $ne: 0 },
+          },
+        ]
+      })
+      .sort({ queue: 1 })
+      .lean()
 
     for (const rr of request.body) {
       console.log('Order id')
@@ -339,10 +357,14 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     // queue: item.queue,
                     quantity_left: { $ne: 0 },
                   })
-                const queue = await instance.goodsSaleQueue
-                  .findOne(partiation_query)
-                  .sort({ queue: 1 })
-                  .lean()
+
+                const queue = $receiptModel.sold_item_list[i].partiation_id
+                  ? queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
+                  : queues.find(q => q.good_id == item._id)
+                // const queue = await instance.goodsSaleQueue
+                //   .findOne(partiation_query)
+                //   .sort({ queue: 1 })
+                //   .lean()
                 // bu keyinchalik olib tashlanadi
                 if (item.primary_supplier_id) {
                   // const supplier = await instance.adjustmentSupplier
