@@ -345,6 +345,11 @@ const receiptCreateGroup = async (request, reply, instance) => {
               } catch (error) { }
 
               try {
+                if (item.primary_supplier_id) {
+                  $receiptModel.sold_item_list[i].supplier_id = suppliersObj[item.primary_supplier_id]._id;
+                  $receiptModel.sold_item_list[i].supplier_name = suppliersObj[item.primary_supplier_id].supplier_name;
+                }
+
                 // const queue_query = {}
                 // if (item.queue) queue_query.queue = item.queue
                 // else queue_query = { queue: -1 }
@@ -368,27 +373,91 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 //   .sort({ queue: 1 })
                 //   .lean()
                 // bu keyinchalik olib tashlanadi
-                if (item.primary_supplier_id) {
-                  // const supplier = await instance.adjustmentSupplier
-                  //   .findById(item.primary_supplier_id)
-                  //   .lean();
-                  $receiptModel.sold_item_list[i].supplier_id = suppliersObj[item.primary_supplier_id]._id;
-                  $receiptModel.sold_item_list[i].supplier_name =
-                    suppliersObj[item.primary_supplier_id].supplier_name;
+
+                let totalCost = 0;
+                if ($receiptModel.sold_item_list[i].partiation_id) {
+                  const queue = queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
+                  if (queue) {
+                    totalCost = $receiptModel.sold_item_list[i].value * queue.cost
+                    $receiptModel.sold_item_list[i].queue_id = queue._id
+                    $receiptModel.sold_item_list[i].partiation_id = queue._id
+                    $receiptModel.sold_item_list[i].p_order = queue.p_order
+                    $receiptModel.sold_item_list[i].queue = queue.queue
+                    // partiali tovar bo'yicha supplierni olish
+                    $receiptModel.sold_item_list[i].supplier_id = queue.supplier_id;
+                    $receiptModel.sold_item_list[i].supplier_name = queue.supplier_name;
+
+                    queue.quantity_left -= $receiptModel.sold_item_list[i].value
+
+                    $receiptModel.sold_item_list[i].partitions = [{
+                      partition_id: queue._id,
+                      count: $receiptModel.sold_item_list[i].value,
+                      p_order: queue.p_order,
+                      queue: queue.queue,
+                      supplier_id: queue.supplier_id,
+                      supplier_name: queue.supplier_name,
+                    }]
+                  }
+                } else {
+                  const filteredQueues = queues.filter(q => q.good_id == item._id && q.quantity_left > 0)
+                  if (filteredQueues.length) {
+                    $receiptModel.sold_item_list[i].queue_id = filteredQueues[0]._id
+                    $receiptModel.sold_item_list[i].partiation_id = filteredQueues[0]._id
+                    $receiptModel.sold_item_list[i].p_order = filteredQueues[0].p_order
+                    $receiptModel.sold_item_list[i].queue = filteredQueues[0].queue
+
+                    $receiptModel.sold_item_list[i].supplier_id = filteredQueues[0].supplier_id;
+                    $receiptModel.sold_item_list[i].supplier_name = filteredQueues[0].supplier_name;
+
+                    $receiptModel.sold_item_list[i].partitions = []
+
+                    let diff = 0;
+                    for (const queue of filteredQueues) {
+                      if ($receiptModel.sold_item_list[i].value - diff <= queue.quantity_left) {
+                        $receiptModel.sold_item_list[i].partitions.push({
+                          partition_id: queue._id,
+                          count: $receiptModel.sold_item_list[i].value,
+                          p_order: queue.p_order,
+                          queue: queue.queue,
+                          supplier_id: queue.supplier_id,
+                          supplier_name: queue.supplier_name,
+                        })
+                        totalCost += $receiptModel.sold_item_list[i].value * queue.cost
+                        queue.quantity_left -= $receiptModel.sold_item_list[i].value
+                        break
+                      } else {
+                        $receiptModel.sold_item_list[i].partitions.push({
+                          partition_id: queue._id,
+                          count: queue.quantity_left,
+                          p_order: queue.p_order,
+                          queue: queue.queue,
+                          supplier_id: queue.supplier_id,
+                          supplier_name: queue.supplier_name,
+                        })
+                        diff += queue.quantity_left
+                        totalCost += queue.quantity_left * queue.cost
+                        queue.quantity_left = 0
+                        break
+                      }
+                    }
+
+                    if (diff < $receiptModel.sold_item_list[i].value) {
+                      const mod = $receiptModel.sold_item_list[i].value - diff
+                      diff += mod
+                      totalCost += mod * queue.cost
+                      $receiptModel.sold_item_list[i].partitions.push({
+                        partition_id: filteredQueues[filteredQueues.length -1]._id,
+                        count: mod,
+                        p_order: filteredQueues[filteredQueues.length -1].p_order,
+                        queue: filteredQueues[filteredQueues.length -1].queue,
+                        supplier_id: filteredQueues[filteredQueues.length -1].supplier_id,
+                        supplier_name: filteredQueues[filteredQueues.length -1].supplier_name,
+                      })
+                    }
+                  }
                 }
 
-                if (queue) {
-                  $receiptModel.sold_item_list[i].cost = queue.cost
-                  $receiptModel.sold_item_list[i].queue_id = queue._id
-                  $receiptModel.sold_item_list[i].partiation_id = queue._id
-                  $receiptModel.sold_item_list[i].p_order = queue.p_order
-                  $receiptModel.sold_item_list[i].queue = queue.queue
-                  // partiali tovar bo'yicha supplierni olish
-                  $receiptModel.sold_item_list[i].supplier_id = queue.supplier_id;
-                  $receiptModel.sold_item_list[i].supplier_name = queue.supplier_name;
-                  queue.quantity_left -= $receiptModel.sold_item_list[i].value
-                }
-
+                $receiptModel.sold_item_list[i].cost = totalCost / $receiptModel.sold_item_list[i].value
               } catch (error) {
                 instance.send_Error('Sold item partion not found', JSON.stringify(error))
               }

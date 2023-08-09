@@ -370,6 +370,14 @@ module.exports = fp((instance, _, next) => {
       queue_id: mongoose.Types.ObjectId,
       queue: Number,
       partiation_id: mongoose.Types.ObjectId,
+      partitions: [{
+        partition_id: mongoose.Types.ObjectId,
+        count: Number,
+        p_order: String,
+        queue: Number,
+        supplier_id: mongoose.Types.ObjectId,
+        supplier_name: String,
+      }],
       p_order: String,
       qty_box: Number,
       receipt_id: String,
@@ -730,7 +738,7 @@ module.exports = fp((instance, _, next) => {
       type: Array,
       default: []
     },
-    sku: String, 
+    sku: String,
     quantity: Number,
     quantity_left: Number,
     queue: Number,
