@@ -375,6 +375,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
                 // bu keyinchalik olib tashlanadi
 
                 let totalCost = 0;
+                console.log('======================queues======================================');
+                console.log(queues);
+                console.log('======================queues==================================');
                 if ($receiptModel.sold_item_list[i].partiation_id) {
                   const queue = queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
                   if (queue) {
@@ -400,6 +403,10 @@ const receiptCreateGroup = async (request, reply, instance) => {
                   }
                 } else {
                   const filteredQueues = queues.filter(q => q.good_id == item._id && q.quantity_left > 0)
+                  console.log('====================filteredQueues====================================');
+                  console.log(filteredQueues);
+                  console.log('====================filteredQueues====================================');
+
                   if (filteredQueues.length) {
                     $receiptModel.sold_item_list[i].queue_id = filteredQueues[0]._id
                     $receiptModel.sold_item_list[i].partiation_id = filteredQueues[0]._id
@@ -412,9 +419,6 @@ const receiptCreateGroup = async (request, reply, instance) => {
                     $receiptModel.sold_item_list[i].partitions = []
 
                     let diff = 0;
-                    console.log('========================================================');
-                    console.log(filteredQueues);
-                    console.log('========================================================');
                     for (const queue of filteredQueues) {
                       if ($receiptModel.sold_item_list[i].value - diff <= queue.quantity_left) {
                         $receiptModel.sold_item_list[i].partitions.push({
