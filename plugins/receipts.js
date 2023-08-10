@@ -152,14 +152,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
     const other_category = await instance.goodsCategory
       .findOne({ organization: user.organization, is_other: true })
       .lean();
-    console.log('========================Filter========================');
-    console.log([...partiation_ids].map(id => instance.ObjectId(id)));
-    console.log({
-      good_id: { $in: [...sold_item_ids].map(id => instance.ObjectId(id)) },
-      service_id: instance.ObjectId(service_id),
-      quantity_left: { $gt: 0 },
-    });
-    console.log('========================Filter========================');
+
     const queues = await instance.goodsSaleQueue
       .find({
         $or: [
