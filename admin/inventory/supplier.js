@@ -198,7 +198,7 @@ module.exports = (instance, options, next) => {
       }
       console.log('/inventory/get_suppliers');
       console.log(admin, 'admin');
-      return instance.unauthorized(reply)
+      // return instance.unauthorized(reply)
     })
   })
 
