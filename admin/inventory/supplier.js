@@ -136,8 +136,6 @@ module.exports = (instance, options, next) => {
   // get suppliers
 
   const get_suppliers = (request, reply, admin) => {
-    console.log('=======get_suppliers==============================');
-    console.log('=======get_suppliers==============================');
     var page = parseInt(request.params.page)
     var limit = parseInt(request.params.limit)
     if (request.body == undefined) {
@@ -194,6 +192,9 @@ module.exports = (instance, options, next) => {
 
   instance.get('/inventory/get_suppliers', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
+      console.log('=======get_suppliers==============================');
+      console.log(admin);
+      console.log('=======get_suppliers==============================');
       if (admin) { get_suppliers(request, reply, admin) }
     })
   })
