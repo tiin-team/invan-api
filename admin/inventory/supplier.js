@@ -196,7 +196,7 @@ module.exports = (instance, options, next) => {
       if (admin) {
         get_suppliers(request, reply, admin)
       }
-      return reply.unauthorized()
+      return reply.status(401).send('Unauthorized')
     })
   })
 
