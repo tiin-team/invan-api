@@ -182,6 +182,7 @@ module.exports = (instance, options, next) => {
         reply.ok(suppliers)
       }
     })
+      .lean()
   }
 
   instance.post('/inventory/get_suppliers/:limit/:page', options.version, (request, reply) => {
@@ -192,10 +193,10 @@ module.exports = (instance, options, next) => {
 
   instance.get('/inventory/get_suppliers', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
-      console.log('=======get_suppliers==============================');
-      console.log(admin);
-      console.log('=======get_suppliers==============================');
-      if (admin) { get_suppliers(request, reply, admin) }
+      if (admin) {
+        get_suppliers(request, reply, admin)
+      }
+      return reply.unauthorized()
     })
   })
 
