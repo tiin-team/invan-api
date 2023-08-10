@@ -196,9 +196,8 @@ module.exports = (instance, options, next) => {
       if (admin) {
         return get_suppliers(request, reply, admin)
       }
-      console.log('/inventory/get_suppliers');
-      console.log(admin, 'admin');
-      // return instance.unauthorized(reply)
+
+      return instance.unauthorized(reply)
     })
   })
 
