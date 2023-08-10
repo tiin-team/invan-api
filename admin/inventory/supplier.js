@@ -194,7 +194,7 @@ module.exports = (instance, options, next) => {
   instance.get('/inventory/get_suppliers', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
       if (admin) {
-        get_suppliers(request, reply, admin)
+        return get_suppliers(request, reply, admin)
       }
       console.log('/inventory/get_suppliers');
       console.log(admin, 'admin');
