@@ -228,6 +228,8 @@ module.exports = (instance, _, next) => {
           total_price: 1,
           is_refund: 1,
           service: 1,
+          pos_name: 1,
+          pos_id: 1,
           cashier_id: 1,
           user_id: 1
         }
