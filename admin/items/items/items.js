@@ -2535,7 +2535,7 @@ module.exports = (instance, options, next) => {
               if (goods == null) {
                 goods = [];
               }
-              var my_array = [titles];
+              const my_array = [titles];
               var skuObj = {};
               for (const g of goods) {
                 skuObj[g._id] = g.sku;
