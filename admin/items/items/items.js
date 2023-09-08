@@ -2315,7 +2315,7 @@ module.exports = (instance, options, next) => {
           if (goods == null) {
             goods = []
           }
-          var my_array = [
+          const my_array = [
             titles
           ]
           var skuObj = {}
