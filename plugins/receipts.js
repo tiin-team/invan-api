@@ -575,7 +575,13 @@ const receiptCreateGroup = async (request, reply, instance) => {
             user
           )
           cash_back = !isNaN(cash_back) ? cash_back : 0;
-          await instance.Receipts.findByIdAndUpdate(r._id, { $set: { cash_back: cash_back } });
+          await instance.Receipts.findByIdAndUpdate(r._id, {
+            $set: {
+              cash_back: cash_back,
+              client_id: clientsObj[r.cashback_phone]._id,
+              user_id: clientsObj[r.cashback_phone].user_id,
+            },
+          });
         }
         result.push(check)
       } catch (error) {

@@ -1701,6 +1701,8 @@ module.exports = fp((instance, _, next) => {
     supplier_name: String,
     contact: String,
     email: String,
+    inn: String,
+    contract_numbers: [String],
     phone_number: String,
     website: String,
     address_first: String,
