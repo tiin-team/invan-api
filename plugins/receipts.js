@@ -511,10 +511,12 @@ const receiptCreateGroup = async (request, reply, instance) => {
           organization: user.organization,
         },
         {
+          _id: 1,
           first_name: 1,
           last_name: 1,
           phone_number: 1,
           organization: 1,
+          user_id: 1,
         },
       )
       .lean();
@@ -525,6 +527,10 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
     for (const r of need_to_save) {
       try {
+        if (clientsObj[r.cashback_phone]) {
+          r.client_id = clientsObj[r.cashback_phone]._id
+          r.user_id = clientsObj[r.cashback_phone].user_id
+        }
         const check = await new instance.Receipts(r).save();
 
         // donate for Turkey
@@ -575,13 +581,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
             user
           )
           cash_back = !isNaN(cash_back) ? cash_back : 0;
-          await instance.Receipts.findByIdAndUpdate(r._id, {
-            $set: {
-              cash_back: cash_back,
-              client_id: clientsObj[r.cashback_phone]._id,
-              user_id: clientsObj[r.cashback_phone].user_id,
-            },
-          });
+          await instance.Receipts.findByIdAndUpdate(r._id, { $set: { cash_back: cash_back } });
         }
         result.push(check)
       } catch (error) {
