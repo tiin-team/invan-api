@@ -529,7 +529,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
       try {
         if (clientsObj[r.cashback_phone]) {
           r.client_id = clientsObj[r.cashback_phone]._id
-          r.user_id = clientsObj[r.cashback_phone].user_id
+          //! r.user_id = clientsObj[r.cashback_phone].user_id // agar buni qo'shsa customer_points da ham client update bo'ladi!
         }
         const check = await new instance.Receipts(r).save();
 
