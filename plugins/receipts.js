@@ -525,8 +525,8 @@ const receiptCreateGroup = async (request, reply, instance) => {
       clientsObj[client.phone_number] = client
     }
 
-    const isDebtSaleLogic = r.organization === '64d2419da645877ca6a57dcf'
     for (const r of need_to_save) {
+      const isDebtSaleLogic = r.organization === '64d2419da645877ca6a57dcf'
       try {
         if (clientsObj[r.cashback_phone] && isDebtSaleLogic) {
           r.client_id = clientsObj[r.cashback_phone]._id
