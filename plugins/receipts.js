@@ -525,11 +525,12 @@ const receiptCreateGroup = async (request, reply, instance) => {
       clientsObj[client.phone_number] = client
     }
 
+    const isDebtSaleLogic = r.organization === '64d2419da645877ca6a57dcf'
     for (const r of need_to_save) {
       try {
-        if (clientsObj[r.cashback_phone]) {
+        if (clientsObj[r.cashback_phone] && isDebtSaleLogic) {
           r.client_id = clientsObj[r.cashback_phone]._id
-          //! r.user_id = clientsObj[r.cashback_phone].user_id // agar buni qo'shsa customer_points da ham client update bo'ladi!
+          r.user_id = clientsObj[r.cashback_phone].user_id
         }
         const check = await new instance.Receipts(r).save();
 
@@ -572,7 +573,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
           await instance.save_agent_transaction(instance, check);
         }
         // cashbackni hisoblash
-        if (r.cashback_phone && !check.is_donate) {
+        if (r.cashback_phone && !check.is_donate && !isDebtSaleLogic) {
           console.log('save cashback')
 
           cash_back = await instance.CashBackClientUpdate(
