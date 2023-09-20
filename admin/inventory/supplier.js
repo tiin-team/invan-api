@@ -109,7 +109,8 @@ module.exports = (instance, options, next) => {
         // supp.transactions = data;
         const total = data.length;
 
-        supp.transactions = data.slice((page - 1) * limit, limit * page);;
+        supp.transactions = data.slice((page - 1) * limit, limit * page);
+        supp.contract_numbers = supp.contract_numbers && supp.contract_numbers.length ? supp.contract_numbers : []
         //       supp.transactions = transactions;
         // Calculate supplier balance
         // const $match = { $match: { supplier_id: supp._id } }
