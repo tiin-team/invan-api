@@ -1950,7 +1950,7 @@ module.exports = fp((instance, _, next) => {
                     if (name == undefined) {
                       name = "NAME"
                     }
-                    instance.send_Error('receipt allready exist', name)
+                    instance.send_Error('receipt already exist', name)
                   }
                   else {
                     forReceiptToWorkCreate(request, user, request.body, IS_R)

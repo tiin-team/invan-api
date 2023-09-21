@@ -123,7 +123,7 @@ module.exports = fp((instance, _, next) => {
       statusCode: code,
       message: name,
       data: data,
-      error: name + ' allready exist'
+      error: name + ' already exist'
     })
   })
 
@@ -155,7 +155,7 @@ module.exports = fp((instance, _, next) => {
     function () {
       const response = {
         statusCode: 50000,
-        message: "TechMap allready exist"
+        message: "TechMap already exist"
       }
       this.send(response)
     }

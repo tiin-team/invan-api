@@ -880,7 +880,7 @@ const useReceiptDraft = async (request, reply, instance) => {
     if (receipt.receipt_state != 'draft') {
       return reply.send({
         statusCode: 402,
-        message: 'Receipt Draft allready used'
+        message: 'Receipt Draft already used'
       })
     }
 
@@ -1062,8 +1062,8 @@ const receiptSetClient = async (request, reply, instance) => {
     if (receipt.user_id || receipt.client_id) {
       return reply.code(400).send({
         code: 400,
-        message: "Client allready setted",
-        error: "Client allready setted",
+        message: "Client already setted",
+        error: "Client already setted",
       })
     }
 

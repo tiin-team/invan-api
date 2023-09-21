@@ -141,7 +141,7 @@ module.exports = (instance, _, next) => {
                 if (admin) {
                   reply.send({
                     statusCode: 420,
-                    message: 'Admin allready exist'
+                    message: 'Admin already exist'
                   })
                 } else {
                   Admin_model.save((error) => {

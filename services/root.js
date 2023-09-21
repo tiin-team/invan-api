@@ -946,7 +946,7 @@ module.exports = (instance, _, next) => {
                     }
                   }
                   if (Pass_all_exist) {
-                    reply.error('Password allready exist')
+                    reply.error('Password already exist')
                   }
                   else {
                     axios.defaults.headers.common['Authorization'] = bos.token
