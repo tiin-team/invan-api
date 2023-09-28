@@ -691,6 +691,26 @@ module.exports = fp((instance, _, next) => {
       taxes: {
         type: Number,
         default: 0
+      },
+      gift: {
+        type: Number,
+        default: 0
+      },
+      qr_code: {
+        type: Number,
+        default: 0
+      },
+      nfc: {
+        type: Number,
+        default: 0
+      },
+      online_payment: {
+        type: Number,
+        default: 0
+      },
+      transfer_pay: {
+        type: Number,
+        default: 0
       }
     },
     Pays: {
