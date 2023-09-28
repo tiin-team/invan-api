@@ -147,13 +147,15 @@ module.exports = fp((instance, _, next) => {
         gift: 0,
         debt: 0,
         qr_code: 0,
-        nfc: 0
+        nfc: 0,
+        online_payment: 0,
+        transfer_pay: 0,
       }
       var taxes = 0.0;
       var cash_payment = 0.0;
       var cash_refund = 0.0;
-      for (var rec of receipts) {
-        for (var p of rec.payment) {
+      for (const rec of receipts) {
+        for (const p of rec.payment) {
           if (p.name == 'cash') {
             if (rec.is_refund == false) {
               cash_payment += p.value
@@ -169,8 +171,8 @@ module.exports = fp((instance, _, next) => {
             Payment[p.name] += p.value
           }
         }
-        for (var item of rec.sold_item_list) {
-          for (var tax of item.taxes) {
+        for (const item of rec.sold_item_list) {
+          for (const tax of item.taxes) {
             if (tax.type == 'include') {
               if (rec.is_refund == false) {
                 taxes += item.value * item.price * tax.tax / (100 + tax.tax)
@@ -198,7 +200,7 @@ module.exports = fp((instance, _, next) => {
         if (rec.discounts == undefined) {
           rec.discounts = []
         }
-        for (var dic of rec.discounts) {
+        for (const dic of rec.discounts) {
           if (rec.is_refund == false) {
             if (dic.type == 'percentage') {
               discounts += rec.total_price * dic.value

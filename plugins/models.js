@@ -185,6 +185,18 @@ module.exports = fp((instance, _, next) => {
           title: 'NFC',
           enable: true,
           status: true
+        },
+        {
+          name: 'online_payment',
+          title: 'Online payment',
+          enable: true,
+          status: true
+        },
+        {
+          name: 'transfer_pay',
+          title: 'TRANSFER',
+          enable: true,
+          status: true
         }
       ]
     },

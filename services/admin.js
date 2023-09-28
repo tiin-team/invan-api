@@ -351,15 +351,15 @@ module.exports = (instance, _, next) => {
         items.sort((a, b) => (a.date > b.date) ? -1 : ((b.date > a.date) ? 1 : 0));
         //cash card gift debt qr_code nfc
         var payment_type = {}
-        var names = ['cash', 'card', 'gift', 'debt', 'qr_code', 'nfc']
-        for (var name of names) {
+        var names = ['cash', 'card', 'gift', 'debt', 'qr_code', 'nfc', 'online_payment', 'transfer_pay']
+        for (const name of names) {
           payment_type[name] = {
             payment_amount: 0,
             refund_amount: 0
           }
         }
-        for (var rec of items) {
-          for (var pay of rec.payment) {
+        for (const rec of items) {
+          for (const pay of rec.payment) {
             if (rec.is_refund == false) {
               if (payment_type[pay.name].payment_transaction) {
                 payment_type[pay.name].payment_transaction++
