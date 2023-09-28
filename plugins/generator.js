@@ -3139,7 +3139,19 @@ module.exports = fp((instance, _, next) => {
                   catch (error) { }
                   if (model.collection.name == 'receipts' && item.user_id) {
                     try {
-                      const client = await instance.clientsDatabase.findOne({ user_id: item.user_id })
+                      const client = await instance.clientsDatabase.findOne(
+                        {
+                          organization: item.organization,
+                          $or: [
+                            { user_id: item.user_id },
+                            { client_id: instance.ObjectId(item.client_id) },
+                            { phone_number: instance.ObjectId(item.cashback_phone) },
+                          ],
+                          user_id: item.user_id
+                        },
+                        { first_name: 1 },
+                      )
+                        .lean()
                       if (client) {
                         item.client_name = client.first_name
                       }
