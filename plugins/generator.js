@@ -3137,7 +3137,7 @@ module.exports = fp((instance, _, next) => {
                     }
                   }
                   catch (error) { }
-                  if (model.collection.name == 'receipts' && item.user_id) {
+                  if (model.collection.name == 'receipts') {
                     try {
                       const client = await instance.clientsDatabase.findOne(
                         {
