@@ -341,6 +341,7 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
                 $or: [
                     { client_id: customer._id },
                     { user_id: customer.user_id },
+                    { cashback_phone: customer.phone_number },
                 ],
                 organization: customer.organization,
                 date: {
