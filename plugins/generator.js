@@ -3147,7 +3147,6 @@ module.exports = fp((instance, _, next) => {
                             { client_id: instance.ObjectId(item.client_id) },
                             { phone_number: item.cashback_phone },
                           ],
-                          user_id: item.user_id
                         },
                         { first_name: 1 },
                       )
