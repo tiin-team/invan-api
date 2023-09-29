@@ -3145,7 +3145,7 @@ module.exports = fp((instance, _, next) => {
                           $or: [
                             { user_id: item.user_id },
                             { client_id: instance.ObjectId(item.client_id) },
-                            { phone_number: instance.ObjectId(item.cashback_phone) },
+                            { phone_number: item.cashback_phone },
                           ],
                           user_id: item.user_id
                         },
