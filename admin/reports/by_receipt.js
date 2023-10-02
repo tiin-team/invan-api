@@ -257,9 +257,17 @@ module.exports = (instance, _, next) => {
       .lean()
     const customers = await instance.clientsDatabase.find(
       {
-        _id: { $in: receipts.map(receipt => receipt.client_id) },
-        user_id: { $in: receipts.map(receipt => receipt.user_id) },
-        phone_number: { $in: receipts.map(receipt => receipt.cashback_phone) },
+        $or: [
+          {
+            _id: { $in: receipts.map(receipt => receipt.client_id) },
+          },
+          {
+            user_id: { $in: receipts.map(receipt => receipt.user_id) },
+          },
+          {
+            phone_number: { $in: receipts.map(receipt => receipt.cashback_phone) },
+          },
+        ]
       },
       { name: 1, user_id: 1, phone_number: 1 },
     )
