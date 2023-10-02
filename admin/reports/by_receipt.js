@@ -257,17 +257,19 @@ module.exports = (instance, _, next) => {
       .lean()
     const customers = await instance.clientsDatabase.find(
       {
+        _id: { $in: receipts.map(receipt => receipt.client_id) },
         user_id: { $in: receipts.map(receipt => receipt.user_id) },
-        client_id: { $in: receipts.map(receipt => receipt.client_id) },
         phone_number: { $in: receipts.map(receipt => receipt.cashback_phone) },
       },
-      { name: 1 },
+      { name: 1, user_id: 1, phone_number: 1 },
     )
       .lean()
 
     const serviceMap = {}
     const employeeMap = {}
     const customerMap = {}
+    const customerUserIdMap = {}
+    const customerPhoneNumberMap = {}
 
     for (const receiptService of receiptServices) {
       serviceMap[receiptService._id + ''] = receiptService
@@ -279,6 +281,8 @@ module.exports = (instance, _, next) => {
 
     for (const customer of customers) {
       customerMap[customer._id + ''] = customer
+      customerUserIdMap = [customer.user_id + ''] = customer
+      customerPhoneNumberMap = [customer.phone_number + ''] = customer
     }
 
     for (const index in receipts) {
@@ -293,13 +297,16 @@ module.exports = (instance, _, next) => {
       if (employeeMap[receipts[index].cashier_id]) {
         receipts[index].cashier_name = employeeMap[receipts[index].cashier_id].name
       }
+      client_id
+      phone_number
+      receipts[index].customer_name = receipts[index].user_id && customerUserIdMap[receipts[index].user_id] ?
+        customerUserIdMap[receipts[index].user_id].name :
+        receipts[index].cashback_phone && customerPhoneNumberMap[receipts[index].cashback_phone] ?
+          customerPhoneNumberMap[receipts[index].cashback_phone].name :
+          receipts[index].client_id && customerMap[receipts[index].client_id] ?
+            customerMap[receipts[index].client_id].name :
+            '-'
 
-      if (receipts[index].user_id && customerMap[receipts[index].user_id]) {
-        receipts[index].customer_name = customerMap[receipts[index].user_id].name
-      }
-      else {
-        receipts[index].customer_name = '-'
-      }
     }
 
     reply.ok({
