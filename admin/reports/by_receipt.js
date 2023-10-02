@@ -241,54 +241,57 @@ module.exports = (instance, _, next) => {
       { $limit: limit }
     ])
 
+    const receiptServices = await instance.services.find(
+      {
+        _id: { $in: receipts.map(receipt => instance.ObjectId(receipt.service)) },
+      },
+      { name: 1 },
+    )
+      .lean()
+    const cashiers = await instance.User.find(
+      {
+        _id: { $in: receipts.map(receipt => instance.ObjectId(receipt.cashier_id)) },
+      },
+      { name: 1 },
+    )
+      .lean()
+    const customers = await instance.clientsDatabase.find(
+      {
+        user_id: { $in: receipts.map(receipt => receipt.user_id) },
+        client_id: { $in: receipts.map(receipt => receipt.client_id) },
+        phone_number: { $in: receipts.map(receipt => receipt.cashback_phone) },
+      },
+      { name: 1 },
+    )
+      .lean()
+
     const serviceMap = {}
     const employeeMap = {}
     const customerMap = {}
 
-    for (const index in receipts) {
-      try {
-        receipts[index] = receipts[index].toObject()
-      } catch (error) { }
+    for (const receiptService of receiptServices) {
+      serviceMap[receiptService._id + ''] = receiptService
+    }
 
-      // service
-      if (!serviceMap[receipts[index].service]) {
-        try {
-          const service = await instance.services.findById(receipts[index].service)
-          if (service) {
-            serviceMap[service._id] = service
-          }
-        }
-        catch (error) { }
-      }
+    for (const cashier of cashiers) {
+      employeeMap[cashier._id + ''] = cashier
+    }
+
+    for (const customer of customers) {
+      customerMap[customer._id + ''] = customer
+    }
+
+    for (const index in receipts) {
+      // try {
+      //   receipts[index] = receipts[index].toObject()
+      // } catch (error) { }
 
       if (serviceMap[receipts[index].service]) {
         receipts[index].service_name = serviceMap[receipts[index].service].name
       }
 
-      // employee
-      if (!employeeMap[receipts[index].cashier_id]) {
-        try {
-          const cashier = await instance.User.findById(receipts[index].cashier_id)
-          if (cashier) {
-            employeeMap[cashier._id] = cashier
-          }
-        }
-        catch (error) { }
-      }
-
       if (employeeMap[receipts[index].cashier_id]) {
         receipts[index].cashier_name = employeeMap[receipts[index].cashier_id].name
-      }
-
-      // customer
-      if (receipts[index].user_id && !customerMap[receipts[index].user_id]) {
-        try {
-          const customer = await instance.clientsDatabase.findOne({ user_id: receipts[index].user_id })
-          if (customer) {
-            customerMap[customer._id] = customer
-          }
-        }
-        catch (error) { }
       }
 
       if (receipts[index].user_id && customerMap[receipts[index].user_id]) {
