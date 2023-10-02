@@ -231,7 +231,9 @@ module.exports = (instance, _, next) => {
           pos_name: 1,
           pos_id: 1,
           cashier_id: 1,
-          user_id: 1
+          user_id: 1,
+          client_id: 1,
+          cashback_phone: 1,
         }
       },
       {
@@ -269,7 +271,12 @@ module.exports = (instance, _, next) => {
           },
         ]
       },
-      { name: 1, user_id: 1, phone_number: 1 },
+      {
+        first_name: 1,
+        last_name: 1,
+        user_id: 1,
+        phone_number: 1,
+      },
     )
       .lean()
 
@@ -288,6 +295,7 @@ module.exports = (instance, _, next) => {
     }
 
     for (const customer of customers) {
+      customer.name = `${customer.first_name} ${customer.last_name}`
       customerMap[customer._id + ''] = customer
       customerUserIdMap[customer.user_id + ''] = customer
       customerPhoneNumberMap[customer.phone_number + ''] = customer
