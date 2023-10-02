@@ -281,8 +281,8 @@ module.exports = (instance, _, next) => {
 
     for (const customer of customers) {
       customerMap[customer._id + ''] = customer
-      customerUserIdMap = [customer.user_id + ''] = customer
-      customerPhoneNumberMap = [customer.phone_number + ''] = customer
+      customerUserIdMap[customer.user_id + ''] = customer
+      customerPhoneNumberMap[customer.phone_number + ''] = customer
     }
 
     for (const index in receipts) {
