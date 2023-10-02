@@ -231,6 +231,7 @@ module.exports = (instance, _, next) => {
           pos_name: 1,
           pos_id: 1,
           cashier_id: 1,
+          payment: 1,
           user_id: 1,
           client_id: 1,
           cashback_phone: 1,
