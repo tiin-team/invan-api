@@ -297,8 +297,7 @@ module.exports = (instance, _, next) => {
       if (employeeMap[receipts[index].cashier_id]) {
         receipts[index].cashier_name = employeeMap[receipts[index].cashier_id].name
       }
-      client_id
-      phone_number
+
       receipts[index].customer_name = receipts[index].user_id && customerUserIdMap[receipts[index].user_id] ?
         customerUserIdMap[receipts[index].user_id].name :
         receipts[index].cashback_phone && customerPhoneNumberMap[receipts[index].cashback_phone] ?
