@@ -738,7 +738,9 @@ module.exports = (instance, options, next) => {
             maxLength: 24
           },
           tariff_name: { type: "string" },
-          is_minimum_price: { type: "boolean" }
+          is_minimum_price: { type: "boolean" },
+          user_type: { type: "string", enum: ["", "legal", "natural"] },
+          inn: { type: "string" },
         },
       },
     },
