@@ -1077,6 +1077,8 @@ module.exports = (instance, options, next) => {
             user_id: 1,
             visit_counter: 1,
             createdAt: 1,
+            user_type: 1,
+            inn: 1,
           },
         )
         .lean();
