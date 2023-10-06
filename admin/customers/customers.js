@@ -207,6 +207,9 @@ module.exports = (instance, options, next) => {
               $options: "i",
             },
           },
+          {
+            inn: search,
+          },
         ];
       }
       const $project = {
