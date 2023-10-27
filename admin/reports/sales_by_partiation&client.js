@@ -455,6 +455,8 @@ module.exports = (instance, _, next) => {
         is_refund: 1,
         sold_item_list: 1,
         user_id: 1,
+        client_id: 1,
+        cashback_phone: 1,
         cashier_id: 1,
         cashier_name: 1,
         organization: 1,
@@ -511,6 +513,8 @@ module.exports = (instance, _, next) => {
         partiation_id: '$sold_item_list.partiation_id',
         receipt_no: 1,
         user_id: 1,
+        client_id: 1,
+        cashback_phone: 1,
         date: 1,
         supplier_name: 1,
         is_refund: 1,
@@ -590,8 +594,19 @@ module.exports = (instance, _, next) => {
     const clients = await instance.clientsDatabase
       .find(
         {
-          user_id: { $in: result.map(r => r.user_id) },
+          // user_id: { $in: result.map(r => r.user_id) },
           organization: result[0].organization,
+          $or: [
+            {
+              _id: { $in: result.map(r => r.client_id) },
+            },
+            {
+              user_id: { $in: result.map(r => r.user_id) },
+            },
+            {
+              phone_number: { $in: result.map(r => r.cashback_phone) },
+            },
+          ]
         },
         {
           user_id: 1,
@@ -602,8 +617,12 @@ module.exports = (instance, _, next) => {
       .lean()
 
     const users_obj = {}
+    const users_user_id_obj = {}
+    const users_phone_number_obj = {}
     for (const user of clients) {
-      users_obj[user.user_id] = user
+      users_obj[user._id] = user
+      users_user_id_obj[user.user_id + ''] = user
+      users_phone_number_obj[user.phone_number + ''] = user
     }
 
     const partiation_ids = new Set();
@@ -659,8 +678,12 @@ module.exports = (instance, _, next) => {
 
     for (let i = 0; i < result.length; i++) {
 
-      if (users_obj[result[i].user_id]) {
-        result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
+      if (users_obj[result[i].client_id]) {
+        result[i].client_name = users_obj[result[i].client_id + ''].first_name + users_obj[result[i].client_id + ''].last_name
+      } else if (users_user_id_obj[result[i].user_id]) {
+        result[i].client_name = users_user_id_obj[result[i].user_id].first_name + users_user_id_obj[result[i].user_id].last_name
+      } else if (users_phone_number_obj[result[i].phone_number]) {
+        result[i].client_name = users_phone_number_obj[result[i].phone_number].first_name + users_phone_number_obj[result[i].phone_number].last_name
       } else {
         result[i].client_name = ""
       }
