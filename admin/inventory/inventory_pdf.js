@@ -206,9 +206,10 @@ module.exports = ((instance, _, next) => {
                 for (const it of items) {
                     let amount = it.quality * it.purchase_cost
                     try {
-                        const good = await instance.goodsSales.findById(it.product_id)
+                        const good = await instance.goodsSales.findById(it.product_id).lean()
 
                         if (good) {
+                            it.sku = good.sku
                             it.sold_by = good.sold_by
                             it.barcode = good.barcode
                             it.product_name = good.name
@@ -228,6 +229,7 @@ module.exports = ((instance, _, next) => {
                     exelItems.push([
                         index,
                         it.product_name + '',
+                        it.sku ? it.sku : '',
                         barcode,
                         it.sold_by,
                         it.quality,
@@ -240,9 +242,10 @@ module.exports = ((instance, _, next) => {
                 for (const it of items) {
                     let amount = it.quality * it.purchase_cost
                     try {
-                        const good = await instance.goodsSales.findById(it.product_id)
+                        const good = await instance.goodsSales.findById(it.product_id).lean()
                         if (good) {
                             console.log("good", good)
+                            it.sku = good.sku
                             it.barcode = good.barcode
                             it.product_name = good.name
                             if (good.item_type == 'variant') {
@@ -251,7 +254,8 @@ module.exports = ((instance, _, next) => {
                         }
                     } catch (error) { }
                     pdfItems.push({
-                        barcode:it.barcode,
+                        sku: it.sku,
+                        barcode: it.barcode,
                         product_name: it.product_name + '',
                         quality: it.quality + '',
                         purchase_cost: (it.purchase_cost ? (Math.round(it.purchase_cost * 100) / 100).toLocaleString() : (it.purchase_cost + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : ''),
@@ -270,6 +274,7 @@ module.exports = ((instance, _, next) => {
                         it.name + '',
                         '',
                         '',
+                        '',
                         1,
                         price,
                         amount
@@ -280,7 +285,8 @@ module.exports = ((instance, _, next) => {
             else {
                 for (const it of purchase.additional_cost) {
                     pdfItems.push({
-                        barcode:it.barcode,
+                        sku: '',
+                        barcode: it.barcode,
                         product_name: it.name + '',
                         quality: '1',
                         purchase_cost: (it.amount ? (Math.round(it.amount * 100) / 100).toLocaleString() : (it.amount + '')) + (it.amount_currency == 'usd' ? ' $' : ''),
@@ -295,6 +301,7 @@ module.exports = ((instance, _, next) => {
                 const headers = [
                     { name: ' № п.п.', key: 'id', width: 10 },
                     { name: 'Наименование', key: 'id', width: 300 },
+                    { name: 'Sku', key: 'sku', width: 4000 },
                     { name: 'Штрих код', key: 'barcode', width: 5000 },
                     { name: 'Ед. изм.', key: 'type', width: 1000 },
                     { name: 'Кол-во', key: 'quantity', width: 100 },
@@ -572,7 +579,7 @@ module.exports = ((instance, _, next) => {
                         }
                     } catch (error) { }
                     pdfItems.push({
-                        barcode:it.barcode,
+                        barcode: it.barcode,
                         product_name: it.product_name + '',
                         quality: it.quality + '',
                         price: it.price ? it.price.toLocaleString() : ''
@@ -1909,10 +1916,10 @@ module.exports = ((instance, _, next) => {
                 for (const it of items) {
                     try {
                         const good = await instance.goodsSales
-                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1, sku: 1, barcode:1 })
+                            .findById(it.product_id, { name: 1, parent_name: 1, item_type: 1, sku: 1, barcode: 1 })
                             .lean()
                         if (good) {
-                            console.log("good",good)
+                            console.log("good", good)
                             it.barcode = good.barcode
                             it.product_name = good.name
                             if (good.item_type == 'variant') {
@@ -1924,7 +1931,7 @@ module.exports = ((instance, _, next) => {
                     pdfItems.push({
                         index,
                         product_name: it.product_name + '',
-                        barcode:it.barcode,
+                        barcode: it.barcode,
                         sku: it.sku,
                         real_stock: it.real_stock,
                         in_stock: it.in_stock,
