@@ -459,6 +459,7 @@ module.exports = (instance, _, next) => {
         cashier_name: 1,
         organization: 1,
         service: 1,
+        payment: 1,
       }
     }
     const unwindSoldItemList = {
@@ -519,6 +520,8 @@ module.exports = (instance, _, next) => {
         p_order: '$sold_item_list.p_order',
         value: '$sold_item_list.value',
         price: '$sold_item_list.price',
+        discount: '$sold_item_list.discount',
+        payment: 1,
         qty_box: '$sold_item_list.qty_box',
         avg_qty_box: {
           $divide: [
