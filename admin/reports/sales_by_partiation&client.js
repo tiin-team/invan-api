@@ -408,8 +408,8 @@ module.exports = (instance, _, next) => {
       date: {
         // $gte: min - (process.env.TIME_DIFF | 0),
         // $lte: max - (process.env.TIME_DIFF | 0),
-        $gte: min,
-        $lte: max,
+        $gte: min - 5 * 60 * 60 * 1000,
+        $lte: max - 5 * 60 * 60 * 1000,
       }
     }
 
