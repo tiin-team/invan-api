@@ -1209,6 +1209,9 @@ module.exports = (instance, _, next) => {
             cost_of_goods: 1,
             refunds: 1,
             discounts: 1,
+            debt: {
+              $sum: '$debt'
+            },
             date: 1,
             cash_back: '$used_cashback',
             net_sales: {
