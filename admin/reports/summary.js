@@ -708,6 +708,7 @@ module.exports = (instance, _, next) => {
               "gross_sales",
               "refunds",
               "discounts",
+              "debt",
               "net_sales",
               "gross_profit"
             ]
