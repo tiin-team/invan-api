@@ -1086,6 +1086,7 @@ module.exports = (instance, _, next) => {
               },
               gross_sales: "$gross_sales",
               discounts: "$discounts",
+              debt: "$debt",
               refunds: "$refunds",
               net_sales: {
                 $subtract: ["$gross_sales", { $add: ["$discounts", "$refunds"] }]
