@@ -235,6 +235,7 @@ module.exports = (instance, _, next) => {
           user_id: 1,
           client_id: 1,
           cashback_phone: 1,
+          cash_back: 1,
           comment: 1,
         }
       },
