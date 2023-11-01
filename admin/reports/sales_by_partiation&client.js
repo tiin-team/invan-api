@@ -621,8 +621,12 @@ module.exports = (instance, _, next) => {
     const users_phone_number_obj = {}
     for (const user of clients) {
       users_obj[user._id] = user
-      users_user_id_obj[user.user_id + ''] = user
-      users_phone_number_obj[user.phone_number + ''] = user
+      if (user.user_id) {
+        users_user_id_obj[user.user_id + ''] = user
+      }
+      if (user.phone_number) {
+        users_phone_number_obj[user.phone_number + ''] = user
+      }
     }
 
     const partiation_ids = new Set();
@@ -682,10 +686,10 @@ module.exports = (instance, _, next) => {
       console.log('client_id', result[i].client_id);
       console.log(users_obj[result[i].client_id]);
 
-      if (users_phone_number_obj[result[i].phone_number]) {
+      if (result[i].phone_number && users_phone_number_obj[result[i].phone_number]) {
         result[i].client_name = `${users_phone_number_obj[result[i].phone_number].first_name.trim()} ${users_phone_number_obj[result[i].phone_number].last_name}`
         result[i].inn = users_phone_number_obj[result[i].phone_number].inn
-      } else if (users_obj[result[i].client_id]) {
+      } else if (result[i].client_id && users_obj[result[i].client_id]) {
         result[i].client_name = `${users_obj[result[i].client_id + ''].first_name.trim()} ${users_obj[result[i].client_id + ''].last_name}`
         result[i].inn = users_obj[result[i].client_id + ''].inn
       }
