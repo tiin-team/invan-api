@@ -324,7 +324,7 @@ module.exports = (instance, _, next) => {
           {}
 
       receipts[index].customer_name = client.name;
-      receipts[index].customer_name = client.inn;
+      receipts[index].inn = client.inn;
     }
 
     reply.ok({
