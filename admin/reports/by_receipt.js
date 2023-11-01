@@ -317,13 +317,11 @@ module.exports = (instance, _, next) => {
         receipts[index].cashier_name = employeeMap[receipts[index].cashier_id].name
       }
 
-      const client = receipts[index].user_id && customerUserIdMap[receipts[index].user_id] ?
-        customerUserIdMap[receipts[index].user_id].name :
+      const client = receipts[index].client_id && customerMap[receipts[index].client_id] ?
+        customerMap[receipts[index].client_id] :
         receipts[index].cashback_phone && customerPhoneNumberMap[receipts[index].cashback_phone] ?
           customerPhoneNumberMap[receipts[index].cashback_phone] :
-          receipts[index].client_id && customerMap[receipts[index].client_id] ?
-            customerMap[receipts[index].client_id] :
-            {}
+          {}
 
       receipts[index].customer_name = client.name;
       receipts[index].customer_name = client.inn;
