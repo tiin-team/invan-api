@@ -682,11 +682,10 @@ module.exports = (instance, _, next) => {
 
     for (let i = 0; i < result.length; i++) {
       if(result[i]._id == '65414e3aca565de735d87c4e') {
+        console.log('users_phone_number_obj', users_phone_number_obj);
         console.log(result[i]);
         console.log('phone_number', result[i].phone_number);
         console.log(users_phone_number_obj[result[i].phone_number]);
-        console.log('client_id', result[i].client_id);
-        console.log(users_obj[result[i].client_id]);
       }
 
       if (result[i].phone_number && users_phone_number_obj[result[i].phone_number]) {
