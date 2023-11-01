@@ -680,14 +680,18 @@ module.exports = (instance, _, next) => {
 
       if (users_phone_number_obj[result[i].phone_number]) {
         result[i].client_name = `${users_phone_number_obj[result[i].phone_number].first_name.trim()} ${users_phone_number_obj[result[i].phone_number].last_name}`
+        result[i].inn = users_phone_number_obj[result[i].phone_number].inn
       } else if (users_obj[result[i].client_id]) {
         result[i].client_name = `${users_obj[result[i].client_id + ''].first_name.trim()} ${users_obj[result[i].client_id + ''].last_name}`
+        result[i].inn = users_obj[result[i].client_id + ''].inn
       }
       // else if (users_user_id_obj[result[i].user_id]) {
       //   result[i].client_name = `${users_user_id_obj[result[i].user_id].first_name.trim()} ${users_user_id_obj[result[i].user_id].last_name}`
+      //   result[i].inn = users_user_id_obj[result[i].user_id].inn
       // } 
       else {
         result[i].client_name = ""
+        result[i].inn = ""
       }
 
       result[i].partiation_no = ""
