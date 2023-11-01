@@ -12,7 +12,8 @@ module.exports = fp((instance, _, next) => {
             const used_memory = Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100;
             console.log('total_memory', total_memory)
             console.log('used_memory ', used_memory)
-            console.log('Accept-Version: ', req.headers['Accept-Version'])
+            console.log('Accept-Version: ', req.headers)
+            console.log('Accept-User: ', req.headers['Accept-User'])
             console.log('Accept-User: ', req.headers['Accept-User'])
             console.log('Authorization: ', req.headers['Authorization'])
             const totalRAM = Math.round(os.totalmem() / 1024 / 1024 * 100) / 100;

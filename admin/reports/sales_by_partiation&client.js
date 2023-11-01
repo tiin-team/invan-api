@@ -514,7 +514,7 @@ module.exports = (instance, _, next) => {
         receipt_no: 1,
         user_id: 1,
         client_id: 1,
-        cashback_phone: 1,
+        phone_number: '$cashback_phone',
         date: 1,
         supplier_name: 1,
         is_refund: 1,
