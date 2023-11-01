@@ -795,7 +795,7 @@ module.exports = fp((instance, options, next) => {
                   console.log("request.body.items - ", request.body.items[i]);
                   console.log(Date.now());
                   console.log("-------------------------------------–– 002 -------------------------------------––--––");
-              
+
                   delete request.body.items[i]._id
                   request.body.items[i].purchase_id = instance.ObjectId(purchaseModel._id)
                   request.body.items[i].ordered = request.body.items[i].quality
@@ -821,7 +821,7 @@ module.exports = fp((instance, options, next) => {
                   console.log("updated - ", request.body.items[i].product_id);
                   console.log(Date.now());
                   console.log("-------------------------------------–– 003 -------------------------------------––--––");
-              
+
                 }
                 if (request.body.additional_cost == undefined) {
                   request.body.additional_cost = []
@@ -869,10 +869,10 @@ module.exports = fp((instance, options, next) => {
                       }
 
                       console.log("-------------------------------------–– 004 ––-------------------------------------––––");
-                      console.log("message_to_supplier - ", );
+                      console.log("message_to_supplier - ",);
                       console.log(Date.now());
                       console.log("-------------------------------------–– 004 -------------------------------------––--––");
-                  
+
 
                       purchaseitems = purchaseitems.map(p => p._doc)
                       if (request.body.status == 'returned_order') {
@@ -923,13 +923,13 @@ module.exports = fp((instance, options, next) => {
       console.log("out ");
       console.log(Date.now());
       console.log("-------------------------------------–– 006 -------------------------------------––--––");
-  
+
       if (admin) {
         console.log("-------------------------------------–– 006 ––-------------------------------------––––");
         console.log("in ");
         console.log(Date.now());
         console.log("-------------------------------------–– 006 -------------------------------------––--––");
-    
+
         create_purchase_order(request, reply, admin)
       }
     })
@@ -1484,6 +1484,22 @@ module.exports = fp((instance, options, next) => {
       },
       {
         $limit: limit
+      },
+      {
+        $lookup: {
+          from: 'purchaseitems',
+          let: { purchaseId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ['$purchase_id', '$$purchaseId'],
+                },
+              },
+            },
+          ],
+          as: 'items',
+        }
       }
     ], async (err, orders) => {
       if (err || orders == null) {
