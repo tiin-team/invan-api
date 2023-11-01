@@ -612,6 +612,7 @@ module.exports = (instance, _, next) => {
           user_id: 1,
           first_name: 1,
           last_name: 1,
+          phone_number: 1,
         },
       )
       .lean()
@@ -681,7 +682,8 @@ module.exports = (instance, _, next) => {
     }
 
     for (let i = 0; i < result.length; i++) {
-      if(result[i]._id == '65414e3aca565de735d87c4e') {
+      if (result[i]._id == '65414e3aca565de735d87c4e') {
+        console.log('clients', clients);
         console.log('users_phone_number_obj', users_phone_number_obj);
         console.log(result[i]);
         console.log('phone_number', result[i].phone_number);
