@@ -278,6 +278,7 @@ module.exports = (instance, _, next) => {
         last_name: 1,
         user_id: 1,
         phone_number: 1,
+        inn: 1,
       },
     )
       .lean()
@@ -316,14 +317,16 @@ module.exports = (instance, _, next) => {
         receipts[index].cashier_name = employeeMap[receipts[index].cashier_id].name
       }
 
-      receipts[index].customer_name = receipts[index].user_id && customerUserIdMap[receipts[index].user_id] ?
+      const client = receipts[index].user_id && customerUserIdMap[receipts[index].user_id] ?
         customerUserIdMap[receipts[index].user_id].name :
         receipts[index].cashback_phone && customerPhoneNumberMap[receipts[index].cashback_phone] ?
-          customerPhoneNumberMap[receipts[index].cashback_phone].name :
+          customerPhoneNumberMap[receipts[index].cashback_phone] :
           receipts[index].client_id && customerMap[receipts[index].client_id] ?
-            customerMap[receipts[index].client_id].name :
-            '-'
+            customerMap[receipts[index].client_id] :
+            {}
 
+      receipts[index].customer_name = client.name;
+      receipts[index].customer_name = client.inn;
     }
 
     reply.ok({
