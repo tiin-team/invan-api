@@ -678,13 +678,15 @@ module.exports = (instance, _, next) => {
 
     for (let i = 0; i < result.length; i++) {
 
-      if (users_obj[result[i].client_id]) {
-        result[i].client_name = users_obj[result[i].client_id + ''].first_name + users_obj[result[i].client_id + ''].last_name
-      } else if (users_user_id_obj[result[i].user_id]) {
-        result[i].client_name = users_user_id_obj[result[i].user_id].first_name + users_user_id_obj[result[i].user_id].last_name
-      } else if (users_phone_number_obj[result[i].phone_number]) {
-        result[i].client_name = users_phone_number_obj[result[i].phone_number].first_name + users_phone_number_obj[result[i].phone_number].last_name
-      } else {
+      if (users_phone_number_obj[result[i].phone_number]) {
+        result[i].client_name = `${users_phone_number_obj[result[i].phone_number].first_name.trim()} ${users_phone_number_obj[result[i].phone_number].last_name}`
+      } else if (users_obj[result[i].client_id]) {
+        result[i].client_name = `${users_obj[result[i].client_id + ''].first_name.trim()} ${users_obj[result[i].client_id + ''].last_name}`
+      }
+      // else if (users_user_id_obj[result[i].user_id]) {
+      //   result[i].client_name = `${users_user_id_obj[result[i].user_id].first_name.trim()} ${users_user_id_obj[result[i].user_id].last_name}`
+      // } 
+      else {
         result[i].client_name = ""
       }
 
