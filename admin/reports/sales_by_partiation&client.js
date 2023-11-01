@@ -677,6 +677,10 @@ module.exports = (instance, _, next) => {
     }
 
     for (let i = 0; i < result.length; i++) {
+      console.log('phone_number', result[i].phone_number);
+      console.log(users_phone_number_obj[result[i].phone_number]);
+      console.log('client_id', result[i].client_id);
+      console.log(users_obj[result[i].client_id]);
 
       if (users_phone_number_obj[result[i].phone_number]) {
         result[i].client_name = `${users_phone_number_obj[result[i].phone_number].first_name.trim()} ${users_phone_number_obj[result[i].phone_number].last_name}`
