@@ -433,7 +433,7 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
         $expr: {
           $and: [
             { organization: organization },
-            { $or: filter_goods_service.$expr.$or },
+            { $or: filter_goods_service.$expr.$or.map(or => ({ $in: [or.$eq[1], or.$eq[0]] })) },
           ]
         }
       }
