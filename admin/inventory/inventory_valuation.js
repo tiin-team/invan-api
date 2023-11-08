@@ -436,6 +436,12 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
   //       $expr: {
   //         $and: [
   //           { organization: organization },
+  //           {
+  //             $eq: [
+  //               { $type: '$primary_supplier_id' },
+  //               'objectId'
+  //             ],
+  //           },
   //           { $or: filter_goods_service.$expr.$or.map(or => ({ $in: [or.$eq[1], or.$eq[0]] })) },
   //         ]
   //       }
