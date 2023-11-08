@@ -375,41 +375,105 @@ async function inventoryValuationResultByPrimarySupplier({ limit, page, organiza
       },
     })
 
-  const suppliers = await instance.adjustmentSupplier.aggregate([
-    { $match: query },
+  // const suppliers = await instance.adjustmentSupplier.aggregate([
+  //   { $match: query },
+  //   { $skip: (page - 1) * limit },
+  //   { $limit: limit },
+  //   {
+  //     $lookup: {
+  //       from: 'goodssales',
+  //       let: { supplier_id: '$_id', organization: organization },
+  //       pipeline: [
+  //         {
+  //           $match: filter_goods,
+  //         },
+  //         unwindServices,
+  //         { $match: filter_goods_service },
+  //         projectPrimaryFields,
+  //         calculateTotal,
+  //       ],
+  //       as: 'goods'
+  //     }
+  //   },
+  //   {
+  //     $project: {
+  //       _id: 1,
+  //       organization: 1,
+  //       supplier_name: 1,
+  //       phone_number: 1,
+  //       website: 1,
+  //       email: 1,
+  //       contact: 1,
+  //       balance: 1,
+  //       balance_usd: 1,
+  //       balance_currency: 1,
+  //       inventory: { $first: '$goods.inventory' },
+  //       retail: { $first: '$goods.retail' },
+  //       potential: { $first: '$goods.potential' },
+  //     }
+  //   }
+  // ])
+
+  calculateTotal.$group._id = '$primary_supplier_id';
+  const supplierMatch = {
+    $eq: ['$_id', '$$supplier_id'],
+  }
+  if (search) {
+    supplierMatch.$regexMatch = {
+      "input": "$supplier_name",
+      "regex": search,
+      "options": "i",
+    }
+  }
+
+  const suppliers = await instance.goodsSales.aggregate([
+    {
+      // $match: filter_goods,
+      $match: {
+        $expr: {
+          $and: [
+            { organization: organization },
+            { $or: filter_goods_service.$expr.$or },
+          ]
+        }
+      }
+    },
+    unwindServices,
+    // { $match: filter_goods_service },
+    projectPrimaryFields,
+    calculateTotal,
+    { $sort: { inventory: 1 } },
+    {
+      $lookup: {
+        from: 'adjustmentsuppliers',
+        let: { supplier_id: '$primary_supplier_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: supplierMatch,
+            },
+          },
+        ],
+        as: 'suppliers'
+      }
+    },
     { $skip: (page - 1) * limit },
     { $limit: limit },
     {
-      $lookup: {
-        from: 'goodssales',
-        let: { supplier_id: '$_id', organization: organization },
-        pipeline: [
-          {
-            $match: filter_goods,
-          },
-          unwindServices,
-          { $match: filter_goods_service },
-          projectPrimaryFields,
-          calculateTotal,
-        ],
-        as: 'goods'
-      }
-    },
-    {
       $project: {
-        _id: 1,
-        organization: 1,
-        supplier_name: 1,
-        phone_number: 1,
-        website: 1,
-        email: 1,
-        contact: 1,
-        balance: 1,
-        balance_usd: 1,
-        balance_currency: 1,
-        inventory: { $first: '$goods.inventory' },
-        retail: { $first: '$goods.retail' },
-        potential: { $first: '$goods.potential' },
+        _id: { $first: '$suppliers._id' },
+        organization: { $first: '$suppliers.organization' },
+        supplier_name: { $first: '$suppliers.supplier_name' },
+        phone_number: { $first: '$suppliers.phone_number' },
+        website: { $first: '$suppliers.website' },
+        email: { $first: '$suppliers.email' },
+        contact: { $first: '$suppliers.contact' },
+        balance: { $first: '$suppliers.balance' },
+        balance_usd: { $first: '$suppliers.balance_usd' },
+        balance_currency: { $first: '$suppliers.balance_currency' },
+        inventory: 1,
+        retail: 1,
+        potential: 1,
       }
     }
   ])
