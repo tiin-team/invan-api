@@ -16,7 +16,7 @@ module.exports = fp(function (fastify, opts, next) {
       return reply.fourorfour('organization')
     }
 
-    const clientPhone = receipt.phone_number.replace('+', '')
+    const clientPhone = receipt.cashback_phone.replace('+', '')
     const client = await fastify.clientsDatabase
       .findOne({
         organization: organization._id,
