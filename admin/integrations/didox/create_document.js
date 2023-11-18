@@ -229,7 +229,9 @@ module.exports = fp(function (fastify, opts, next) {
           }
         }
       )
+      console.log(reqBody);
       console.log(res.data);
+      console.log(res.status);
       return res.status == 200 ?
         reply.ok({ didoxId: res.data._id }) :
         reply.error(res.data)
