@@ -90,7 +90,7 @@ module.exports = fp(function (fastify, opts, next) {
         "committentvatregcode": "",
         "committentvatregstatus": null,
         "name": sold_item.product_name,
-        "catalogcode": "", // 08471011002000000
+        "catalogcode": goodsObj[sold_item.product_id] && goodsObj[sold_item.product_id].mxik ? goodsObj[sold_item.product_id].mxik : '', // 08471011002000000
         "catalogname": "", // Электронная книга
         "marks": null,
         "barcode": sold_item.barcode,
@@ -104,7 +104,7 @@ module.exports = fp(function (fastify, opts, next) {
         "vatsum": parseFloat((sold_item.total * 100 / (100 + nds_value)).toFixed(2)),
         "exciserate": 0,
         "excisesum": 0,
-        "deliverysumwithvat": "",
+        "deliverysumwithvat": sold_item.total,
         "withoutvat": false,
         "withoutexcise": true,
         "warehouseid": null,
