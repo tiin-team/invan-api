@@ -69,9 +69,9 @@ module.exports = fp(function (fastify, opts, next) {
         }
       }
       sold_item.total = sold_item.value * sold_item.price
-      nds_value = isNaN(parseFloat(goodsObj[it.product_id].nds_value)) ?
+      nds_value = isNaN(parseFloat(goodsObj[sold_item.product_id].nds_value)) ?
         organization.nds_value :
-        parseFloat(goodsObj[it.product_id].nds_value);
+        parseFloat(goodsObj[sold_item.product_id].nds_value);
 
       didoxProducts[index] = {
         "id": "",
@@ -93,7 +93,7 @@ module.exports = fp(function (fastify, opts, next) {
         "summa": sold_item.total,
         "deliverysum": "",
         "vatrate": nds_value,
-        "vatsum": parseFloat((it.total * 100 / (100 + nds_value)).toFixed(2)),
+        "vatsum": parseFloat((sold_item.total * 100 / (100 + nds_value)).toFixed(2)),
         "exciserate": 0,
         "excisesum": 0,
         "deliverysumwithvat": "",
