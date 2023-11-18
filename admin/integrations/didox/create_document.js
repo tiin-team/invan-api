@@ -61,7 +61,7 @@ module.exports = fp(function (fastify, opts, next) {
 
 
     index = 0
-    const didoxProducts = Array(receipt.sold_item_list.length)
+    const didoxProducts = []
     for (const sold_item of receipt.sold_item_list) {
       // let amount = sold_item.quality * sold_item.purchase_cost
       if (goodsObj[sold_item.product_id]) {
@@ -81,7 +81,7 @@ module.exports = fp(function (fastify, opts, next) {
         organization.nds_value :
         parseFloat(goodsObj[sold_item.product_id].nds_value);
 
-      didoxProducts[index] = {
+      didoxProducts.push({
         "id": "",
         "ordno": index + 1,
         "lgotaid": null,
@@ -112,7 +112,7 @@ module.exports = fp(function (fastify, opts, next) {
         // "lgotaname": null,
         // "lgotavatsum": 0,
         // "lgotatype": null
-      }
+      })
       index++
     }
 
