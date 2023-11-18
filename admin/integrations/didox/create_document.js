@@ -15,8 +15,8 @@ module.exports = fp(function (fastify, opts, next) {
     if (!organization) {
       return reply.fourorfour('organization')
     }
-    console.log(organization.didox, 'organization.didox');
-    if (!organization.didox || organization.didox.inn || organization.didox.password) {
+
+    if (!organization.didox || !organization.didox.inn || !organization.didox.password) {
       return reply.status(400).send({
         statusCode: 400,
         error: "Invalid didox inn or password",
