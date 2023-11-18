@@ -150,8 +150,8 @@ module.exports = fp(function (fastify, opts, next) {
           "facturaproductid": ""
         },
         "facturadoc": {
-          "facturano": `${receipt.receipt_no} ${fastify.date_ddmmyy_hhmm(receipt.date)}`,
-          "facturadate": fastify.date_ddmmyy_hhmm(receipt.date)
+          "facturano": receipt.receipt_no,
+          "facturadate": fastify.date_ddmmyy(receipt.date)
         },
         "contractdoc": {
           "contractno": clientContract.contractNo,
@@ -227,10 +227,8 @@ module.exports = fp(function (fastify, opts, next) {
           }
         }
       )
-      console.log(reqBody);
-      console.log(res.data);
-      console.log(res.status);
-      return res.status == 200 ?
+
+      return res.status == 200 && !res.data.error ?
         reply.ok({ didoxId: res.data._id }) :
         reply.error(res.data)
 
