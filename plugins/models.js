@@ -1490,7 +1490,7 @@ module.exports = fp((instance, _, next) => {
       type: Boolean,
       default: false,
     },
-    user_type: { type: String, enum: ['', 'natural', 'legal'] },
+    user_type: { type: String, enum: ['natural', 'legal'] },
     inn: String,
     contract_numbers: [{
       isDefault: { type: Boolean, required: true, trim: true },

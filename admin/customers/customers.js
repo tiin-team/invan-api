@@ -742,8 +742,25 @@ module.exports = (instance, options, next) => {
           },
           tariff_name: { type: "string" },
           is_minimum_price: { type: "boolean" },
-          user_type: { type: "string", enum: ["", "legal", "natural"] },
+          user_type: { type: "string", enum: ["legal", "natural"] },
           inn: { type: "string" },
+          contract_numbers: {
+            type: "array",
+            items: {
+              type: "object",
+              required: [
+                "isDefault",
+                "contractNo",
+                "contractDate",
+              ],
+              additionalProperties: false,
+              properties: {
+                isDefault: { type: "boolean" },
+                contractNo: { type: "string" },
+                contractDate: { type: "string" },
+              },
+            },
+          }
         },
       },
     },
