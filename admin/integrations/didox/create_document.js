@@ -16,10 +16,12 @@ module.exports = fp(function (fastify, opts, next) {
       return reply.fourorfour('organization')
     }
 
+    const clientPhone = receipt.phone_number.replace('+', '')
     const client = await fastify.clientsDatabase
       .findOne({
         organization: organization._id,
         $or: [
+          { phone_number: { $in: [clientPhone, `+${clientPhone}`] } },
           { user_id: receipt.user_id },
           { client_id: fastify.ObjectId(receipt.client_id) },
         ]
