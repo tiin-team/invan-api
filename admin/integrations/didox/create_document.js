@@ -3,8 +3,7 @@ const axios = require("axios");
 
 module.exports = fp(function (fastify, opts, next) {
 
-
-  fastify.post('/integrations/didox/create-receipt-document/:receipt_id', opts, async (req, reply) => {
+  fastify.post('/integrations/didox/create-receipt-document/:receipt_id', opts.version, async (req, reply) => {
     const { receipt_id } = request.params
 
     const receipt = await fastify.Receipts.findById(receipt_id).lean();
