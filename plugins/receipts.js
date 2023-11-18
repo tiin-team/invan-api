@@ -649,6 +649,95 @@ const receiptCreateGroup = async (request, reply, instance) => {
   return reply;
 };
 
+// Shift ni update qilish
+// async function updateShift(receipts, Taxes) {
+//   let gross_sales = 0.0
+//   let refunds = 0.0
+//   let refunds_cash = 0.0
+//   let discounts = 0.0
+//   let net_sales = 0.0
+//   let cash = 0.0
+//   let taxes = 0.0
+
+//   for (const receipt of receipts) {
+//     for (const sold_item of receipt.sold_item_list) {
+//       if (Array.isArray(sold_item.taxes)) {
+//         for (const tax of sold_item.taxes) {
+//           if (Taxes[tax] != null || Taxes[tax] != undefined) {
+//             if (Taxes[tax].type == 'include') {
+//               taxes += (sold_item.value * sold_item.price) / (1 + Taxes[tax].tax / 100.0) * Taxes[tax].tax / 100.0
+//             }
+//             else {
+//               taxes += (sold_item.value * sold_item.price) * (Taxes[tax].tax / 100.0)
+//             }
+//           }
+//         }
+//       }
+//     }
+
+//     if (receipt.is_refund == false || receipt.is_refund == undefined) {
+//       gross_sales += receipt.total_price;
+//       if (receipt.discount)
+//         for (const __dis of receipt.discount) {
+//           if (__dis.type == 'percentage') {
+//             discounts += __dis.value * receipt.total_price / 100;
+//           }
+//           else {
+//             discounts += __dis.value;
+//           }
+//         }
+//     } else {
+//       refunds += receipt.total_price;
+//       if (receipt.discount)
+//         for (const __dis of receipt.discount) {
+//           if (__dis.type == 'percentage') {
+//             discounts -= __dis.value * receipt.total_price / 100;
+//           }
+//           else {
+//             discounts -= __dis.value;
+//           }
+//         }
+//     }
+//     for (const pay of receipt.payment) {
+//       if (pay.name == 'cash' && receipt.is_refund == false) {
+//         cash += pay.value
+//       } else if (pay.name == 'cash') {
+//         refunds_cash += pay.value
+//       }
+//     }
+//     if (receipt.is_refund) {
+//       refunds += receipt.total_price
+//     }
+//   }
+
+//   if (taxes > 0) {
+//     const n = Math.round(Math.log10(taxes))
+//     taxes = parseFloat(taxes.toPrecision(n + 2))
+//   }
+
+//   net_sales = gross_sales - (refunds + discounts)
+
+//   instance.Shifts.findOne({ organization: user.organization, service: user.service, closing_time: 0 }, (err, shift) => {
+//     if (shift) {
+//       shift.cash_drawer.cash_payment += cash
+//       shift.cash_drawer.cash_refund += refunds_cash
+//       shift.cash_drawer.exp_cash_amount = shift.cash_drawer.starting_cash + shift.cash_drawer.cash_payment - shift.cash_drawer.cash_refund + shift.cash_drawer.paid_in - shift.cash_drawer.paid_out
+//       shift.cash_drawer.act_cash_amount = shift.cash_drawer.exp_cash_amount
+//       shift.sales_summary.gross_sales += gross_sales
+//       shift.sales_summary.refunds += refunds
+//       shift.sales_summary.discounts += discounts
+//       shift.sales_summary.net_sales += net_sales
+//       shift.sales_summary.cash += cash
+//       shift.sales_summary.taxes += taxes
+//       instance.Shifts.updateOne({ _id: shift._id }, { $set: shift }, (err, doc) => {
+//         if (err) {
+//           instance.send_Error('update shift', JSON.stringify(err))
+//         }
+//       })
+//     }
+//   })
+// }
+
 const receiptsSaveAsDraft = async (request, reply, instance) => {
   try {
     const user = request.user;

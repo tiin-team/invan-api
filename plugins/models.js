@@ -1492,6 +1492,11 @@ module.exports = fp((instance, _, next) => {
     },
     user_type: { type: String, enum: ['', 'natural', 'legal'] },
     inn: String,
+    contract_numbers: [{
+      isDefault: { type: Boolean, required: true, trim: true },
+      contractNo: { type: String, required: true, trim: true },
+      contractDate: { type: String, required: true, trim: true },
+    }]
   })
   instance.decorate('clientsDatabase', clients)
 
