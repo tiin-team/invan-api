@@ -15,7 +15,7 @@ module.exports = fp(function (fastify, opts, next) {
     if (!organization) {
       return reply.fourorfour('organization')
     }
-
+    console.log(organization.didox, 'organization.didox');
     if (!organization.didox || organization.didox.inn || organization.didox.password) {
       return reply.status(400).send({
         statusCode: 400,
@@ -118,7 +118,16 @@ module.exports = fp(function (fastify, opts, next) {
 
     const docType = '002'
     try {
-      const { data: token } = await fastify.didoxGetToken(organization.didox.inn, organization.didox.password)
+      const { data: token, error } = await fastify.didoxGetToken(organization.didox.inn, organization.didox.password)
+      console.log(token, 'token');
+      console.log(error, 'error');
+      if (error) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: "Error while login didox",
+          message: "Invalid didox inn or password"
+        })
+      }
       if (!token) {
         return reply.status(400).send({
           statusCode: 400,

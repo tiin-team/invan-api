@@ -12,13 +12,13 @@ module.exports = fp(function (fastify, opts, next) {
       return {
         success: true,
         data: res.data.token,
-        err: null,
+        error: null,
       }
     } catch (err) {
       return {
         success: false,
         data: null,
-        err: err,
+        error: err,
       }
     }
   })
