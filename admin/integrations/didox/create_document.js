@@ -41,7 +41,7 @@ module.exports = fp(function (fastify, opts, next) {
 
 
     const product_ids = receipt.sold_item_list.map(e => e.product_id)
-    const goods = await instance.goodsSales
+    const goods = await fastify.goodsSales
       .find(
         { _id: { $in: product_ids } },
         { name: 1, barcode: 1, sold_by: 1, item_type: 1, parent_name: 1, barcode: 1, mxik: 1, nds_value: 1 })
