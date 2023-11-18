@@ -16,6 +16,14 @@ module.exports = fp(function (fastify, opts, next) {
       return reply.fourorfour('organization')
     }
 
+    if (!organization.didox || organization.didox.inn || organization.didox.password) {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "Invalid didox inn or password",
+        message: "Invalid didox inn or password"
+      })
+    }
+
     const clientPhone = receipt.cashback_phone.replace('+', '')
     const client = await fastify.clientsDatabase
       .findOne({
@@ -110,7 +118,7 @@ module.exports = fp(function (fastify, opts, next) {
 
     const docType = '002'
     try {
-      const { data: token } = await fastify.didoxGetToken()
+      const { data: token } = await fastify.didoxGetToken(organization.didox.inn, organization.didox.password)
       if (!token) {
         return reply.status(400).send({
           statusCode: 400,

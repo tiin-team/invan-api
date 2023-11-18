@@ -2,11 +2,11 @@ const fp = require('fastify-plugin')
 const axios = require("axios");
 
 module.exports = fp(function (fastify, opts, next) {
-  fastify.decorate('didoxGetToken', async () => {
+  fastify.decorate('didoxGetToken', async (didoxINN, didoxPassword) => {
     try {
       const res = await axios.default.post(
-        `https://api.didox.uz/v1/auth/${process.env('didoxINN')}/password/uz)`,
-        { password: process.env("didoxPassword") },
+        `https://api.didox.uz/v1/auth/${didoxINN}/password/uz)`,
+        { password: didoxPassword },
       )
 
       return {

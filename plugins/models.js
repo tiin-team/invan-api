@@ -235,6 +235,10 @@ module.exports = fp((instance, _, next) => {
       type: String,
       default: "",
     },
+    didox: {
+      inn: { type: String, trim: true },
+      password: { type: String, trim: true },
+    }
   })
 
   instance.decorate('organizations', organizations)
