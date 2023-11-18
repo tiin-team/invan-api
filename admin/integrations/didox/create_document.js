@@ -119,8 +119,6 @@ module.exports = fp(function (fastify, opts, next) {
     const docType = '002'
     try {
       const { data: token, error } = await fastify.didoxGetToken(organization.didox.inn, organization.didox.password)
-      console.log(token, 'token');
-      console.log(error, 'error');
       if (error) {
         return reply.status(400).send({
           statusCode: 400,
@@ -231,7 +229,7 @@ module.exports = fp(function (fastify, opts, next) {
           }
         }
       )
-
+      console.log(res.data);
       return res.status == 200 ?
         reply.ok({ didoxId: res.data._id }) :
         reply.error(res.data)
