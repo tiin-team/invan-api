@@ -1082,6 +1082,7 @@ module.exports = (instance, options, next) => {
             createdAt: 1,
             user_type: 1,
             inn: 1,
+            contract_numbers: 1,
           },
         )
         .lean();
