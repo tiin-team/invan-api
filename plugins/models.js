@@ -1627,6 +1627,7 @@ module.exports = fp((instance, _, next) => {
     purchase_order_date: Number,
     supplier_id: mongoose.Schema.Types.ObjectId,
     supplier_name: String,
+    supplier_contract: { type: String, trim: true, default: null },
     service_name: String,
     type: {
       type: String,

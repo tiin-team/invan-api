@@ -1456,6 +1456,7 @@ module.exports = fp((instance, options, next) => {
           // service_name: { $first: "$serviceObj.service_name" },
           supplier_name: 1,
           service_name: 1,
+          supplier_contract: 1,
           p_order: 1,
           cost: 1,
           default_purchase_cost: 1,
@@ -1510,6 +1511,27 @@ module.exports = fp((instance, options, next) => {
       //   await instance.inventoryPurchase.findByIdAndUpdate(order._id, { supplier_name: order.supplier_name, service_name: order.service_name }).lean()
       // }
       const total = await instance.inventoryPurchase.countDocuments(query);
+
+      const suppliers = await instance.adjustmentSupplier.find(
+        {
+          _id: { $in: orders.map(order => order.supplier_id) }
+        },
+        {
+          inn: 1
+        }
+      )
+        .lean()
+
+      const suppliersObj = {}
+      for (const supplier of suppliers) {
+        suppliersObj[supplier._id] = supplier
+      }
+
+      for (const order of orders) {
+        order.supplier_inn = suppliersObj[order.supplier_id] && suppliersObj[order.supplier_id].inn ?
+          suppliersObj[order.supplier_id].inn :
+          ''
+      }
 
       reply.ok({
         total: total,

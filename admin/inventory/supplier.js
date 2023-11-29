@@ -136,21 +136,20 @@ module.exports = (instance, options, next) => {
 
   // get suppliers
 
-  const get_suppliers = (request, reply, admin) => {
-    var page = parseInt(request.params.page)
-    var limit = parseInt(request.params.limit)
+  const get_suppliers = async (request, reply, admin) => {
+    const page = parseInt(request.params.page)
+    const limit = parseInt(request.params.limit)
     if (request.body == undefined) {
       request.body = {}
     }
-    var supplier_name = request.body.supplier_name
-    if (typeof supplier_name != typeof 'invan') {
+
+    let supplier_name = request.body.supplier_name
+    if (typeof supplier_name != 'string') {
       supplier_name = ''
     }
 
-    instance.adjustmentSupplier.find({
-      is_deleted: {
-        $ne: true
-      },
+    const query = {
+      is_deleted: { $ne: true },
       organization: admin.organization,
       $or: [
         {
@@ -166,24 +165,27 @@ module.exports = (instance, options, next) => {
           }
         }
       ]
-    }, (err, suppliers) => {
-      if (err || suppliers == null) {
-        suppliers = []
-      }
-      if (page) {
-        var total = suppliers.length
-        suppliers = suppliers.splice(limit * (page - 1), limit)
-        reply.ok({
-          total: total,
-          page: Math.ceil(total / limit),
-          data: suppliers
-        })
-      }
-      else {
-        reply.ok(suppliers)
-      }
-    })
+    }
+
+    if (page) {
+      const suppliers = await instance.adjustmentSupplier.find(query)
+        .skip(limit * (page - 1))
+        .limit(limit)
+        .lean()
+
+      const total = instance.adjustmentSupplier.countDocuments(query)
+
+      return reply.ok({
+        total: total,
+        page: Math.ceil(total / limit),
+        data: suppliers,
+      })
+    }
+
+    const suppliers = await instance.adjustmentSupplier.find(query)
       .lean()
+
+    reply.ok(suppliers)
   }
 
   instance.post('/inventory/get_suppliers/:limit/:page', options.version, (request, reply) => {
