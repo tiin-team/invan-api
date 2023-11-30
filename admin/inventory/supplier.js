@@ -197,11 +197,7 @@ module.exports = fp((instance, options, next) => {
       console.log("===================================");
       console.log(suppliers, 'suppliers');
       return reply.ok(
-        {
-          total: total,
-          page: totalPagesCount,
-          data: suppliers,
-        },
+        suppliers,
         {
           total: total,
           limit: limit,
