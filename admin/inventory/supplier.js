@@ -192,10 +192,9 @@ module.exports = fp((instance, options, next) => {
         .limit(limit)
         .lean()
 
-      const total = instance.adjustmentSupplier.countDocuments(query)
+      const total = await instance.adjustmentSupplier.countDocuments(query)
       const totalPagesCount = Math.ceil(total / limit)
-      console.log("===================================");
-      console.log(suppliers, 'suppliers');
+
       return reply.ok(
         suppliers,
         {
