@@ -17,7 +17,7 @@ module.exports = fp((instance, _, next) => {
   })
 
   instance.decorateReply('ok', function (data = undefined, meta = undefined) {
-    var response = {
+    const response = {
       statusCode: 200,
       error: 'Ok',
       message: 'Success'

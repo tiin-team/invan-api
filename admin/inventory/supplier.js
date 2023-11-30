@@ -1,5 +1,6 @@
+const fp = require('fastify-plugin')
 
-module.exports = (instance, options, next) => {
+module.exports = fp((instance, options, next) => {
 
   // get supplier by id
 
@@ -135,7 +136,13 @@ module.exports = (instance, options, next) => {
   })
 
   // get suppliers
-
+  /**
+   * 
+   * @param {import('fastify').FastifyRequest<IncomingMessage, DefaultQuery, DefaultParams, DefaultHeaders, any>} request 
+   * @param {import('fastify').FastifyReply<ServerResponse<IncomingMessage>>} reply 
+   * @param {*} admin 
+   * @returns 
+   */
   const get_suppliers = async (request, reply, admin) => {
     const page = parseInt(request.params.page)
     const limit = parseInt(request.params.limit)
@@ -143,24 +150,22 @@ module.exports = (instance, options, next) => {
       request.body = {}
     }
 
-    let supplier_name = request.body.supplier_name
-    if (typeof supplier_name != 'string') {
-      supplier_name = ''
-    }
-
     const query = {
       is_deleted: { $ne: true },
       organization: admin.organization,
-      $or: [
+    }
+
+    if (request.body.supplier_name && typeof request.body.supplier_name === 'string') {
+      query['$or'] = [
         {
           supplier_name: {
-            $regex: supplier_name,
+            $regex: request.body.supplier_name,
             $options: 'i'
           }
         },
         {
           supplier_name: {
-            $regex: instance.converter(supplier_name),
+            $regex: instance.converter(request.body.supplier_name),
             $options: 'i'
           }
         }
@@ -174,12 +179,22 @@ module.exports = (instance, options, next) => {
         .lean()
 
       const total = instance.adjustmentSupplier.countDocuments(query)
-
-      return reply.ok({
-        total: total,
-        page: Math.ceil(total / limit),
-        data: suppliers,
-      })
+      const totalPagesCount = Math.ceil(total / limit)
+      console.log("===================================");
+      console.log(suppliers, 'suppliers');
+      return reply.ok(
+        {
+          total: total,
+          page: totalPagesCount,
+          data: suppliers,
+        },
+        {
+          total: total,
+          limit: limit,
+          currentPage: page,
+          pageCount: totalPagesCount,
+        }
+      )
     }
 
     const suppliers = await instance.adjustmentSupplier.find(query)
@@ -679,4 +694,4 @@ module.exports = (instance, options, next) => {
   })
 
   next()
-}
+})
