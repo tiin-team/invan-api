@@ -173,7 +173,21 @@ module.exports = fp((instance, options, next) => {
     }
 
     if (page) {
-      const suppliers = await instance.adjustmentSupplier.find(query)
+      const suppliers = await instance.adjustmentSupplier.find(
+        query,
+        {
+          _id: 1,
+          is_deleted: 1,
+          balance: 1,
+          balance_currency: 1,
+          balance_usd: 1,
+          telegram_acces: 1,
+          supplier_name: 1,
+          organization: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        }
+      )
         .skip(limit * (page - 1))
         .limit(limit)
         .lean()
