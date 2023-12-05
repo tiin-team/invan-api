@@ -2187,6 +2187,7 @@ module.exports = fp((instance, _, next) => {
       default: true
     },
     phone_number: String,
+    tin: { type: String, trim: true },
     token: {
       type: String,
       default: ""
