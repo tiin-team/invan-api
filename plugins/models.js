@@ -1058,6 +1058,11 @@ module.exports = fp((instance, _, next) => {
       type: Array,
       default: []
     },
+    is_active: {
+      type: Boolean,
+      default: true,
+
+    },
     show_on_bot: {
       type: Boolean,
       default: false
