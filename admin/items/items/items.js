@@ -415,7 +415,7 @@ module.exports = (instance, options, next) => {
   const get_list_of_items = async (request, reply, admin) => {
 
     var category_id;
-    var query = {
+    const query = {
       organization: admin.organization,
       item_type: { $ne: 'variant' }
     }
@@ -529,6 +529,15 @@ module.exports = (instance, options, next) => {
       if (typeof request.body.composite_item === 'boolean') {
         query.composite_item = request.body.composite_item
       }
+
+      if (typeof request.body.is_active === 'string' && request.body.is_active !== 'all') {
+        if (request.body.is_active === 'active') {
+          query.is_active = true
+        } else if (request.body.is_active === 'inactive') {
+          query.is_active = false
+        }
+      }
+
     }
 
     var name = instance.make_regexable_text(request.body.name)
