@@ -50,6 +50,10 @@ module.exports = fp((instance, _, next) => {
       type: Boolean,
       default: false
     },
+    is_active: {
+      type: Boolean,
+      default: true
+    },
     phone_number: {
       type: String,
       default: ""
