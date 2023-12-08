@@ -57,6 +57,7 @@ module.exports = (instance, options, next) => {
         phone_number: 1,
         role: 1,
         is_active: 1,
+        tin: 1,
       }
     )
       .limit(limit)

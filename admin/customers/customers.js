@@ -222,7 +222,6 @@ module.exports = (instance, options, next) => {
         sales: 1,
         refunds: 1,
         debt: 1,
-        tin: 1,
         first_visit: 1,
         last_visit: 1,
         point_balance: 1,
