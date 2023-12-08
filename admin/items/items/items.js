@@ -960,8 +960,8 @@ module.exports = (instance, options, next) => {
         }));
 
         goods[i].nds_value = Number.isFinite(Number(goods[i].nds_value))
-          ? Number(goods[i].nds_value)
-          : Number(organization.nds_value)
+          ? goods[i].nds_value
+          : organization.nds_value
 
         if (!(goods[i].is_track_stock || (goods[i].use_production && goods[i].is_composite_item))) {
           delete goods[i].in_stock
@@ -2503,9 +2503,9 @@ module.exports = (instance, options, next) => {
             good.push(g.mxik ? g.mxik + ';' : '')
             good.push(
               Number.isFinite(Number(g.nds_value))
-                ? Number(g.nds_value)
+                ? g.nds_value
                 : Number.isFinite(Number(org.nds_value))
-                  ? Number(org.nds_value)
+                  ? org.nds_value
                   : 0
             );
 
@@ -2987,9 +2987,9 @@ module.exports = (instance, options, next) => {
               : randimMxik();
 
             goods[index].nds_value = Number.isFinite(Number(good.nds_value))
-              ? Number(good.nds_value)
+              ? good.nds_value
               : Number.isFinite(Number(org.nds_value))
-                ? Number(org.nds_value)
+                ? org.nds_value
                 : 15
 
             goods[index].sale = discountsObj[goods[index]._id]
@@ -3140,9 +3140,9 @@ module.exports = (instance, options, next) => {
               good.push(g.representation)
               good.push(g.mxik && g.mxik.length ? g.mxik : randimMxik())
               good.push(Number.isFinite(Number(g.nds_value))
-                ? Number(g.nds_value)
+                ? g.nds_value
                 : Number.isFinite(Number(org.nds_value))
-                  ? Number(org.nds_value)
+                  ? org.nds_value
                   : 15
               );
 
