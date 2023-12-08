@@ -3,11 +3,11 @@ module.exports = (instance, options, next) => {
   const get_worked_hours = (request, reply, admin) => {
     const min = parseInt(request.params.min)
     const max = parseInt(request.params.max)
-    const limit = Number.isFinite(request.params.limit)
+    const limit = Number.isFinite(Number(request.params.limit))
       ? parseInt(request.params.limit)
       : 10
 
-    const page = Number.isFinite(request.params.page) && request.params.page > 1
+    const page = Number.isFinite(Number(request.params.page)) && request.params.page > 1
       ? parseInt(request.params.page)
       : 1
 
