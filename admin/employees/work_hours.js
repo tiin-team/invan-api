@@ -61,7 +61,7 @@ module.exports = (instance, options, next) => {
         const employeeObj = {}
         const emplotimeObj = {}
         const emplohourObj = {}
-        const total_hours = 0
+        let total_hours = 0
         const ids = []
         for (const user of users) {
           ids.push(user._id)
