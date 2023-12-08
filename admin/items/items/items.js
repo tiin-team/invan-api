@@ -959,7 +959,9 @@ module.exports = (instance, options, next) => {
           available: s.available,
         }));
 
-        goods[i].nds_value = Number.isFinite(Number(goods[i].nds_value)) ? goods[i].nds_value : organization.nds_value
+        goods[i].nds_value = Number.isFinite(Number(goods[i].nds_value))
+          ? String(goods[i].nds_value)
+          : String(organization.nds_value)
 
         if (!(goods[i].is_track_stock || (goods[i].use_production && goods[i].is_composite_item))) {
           delete goods[i].in_stock
@@ -2501,10 +2503,10 @@ module.exports = (instance, options, next) => {
             good.push(g.mxik ? g.mxik + ';' : '')
             good.push(
               Number.isFinite(Number(g.nds_value))
-                ? Number(g.nds_value) 
+                ? String(g.nds_value)
                 : Number.isFinite(Number(org.nds_value))
-                  ? Number(org.nds_value)
-                  : 0
+                  ? String(org.nds_value)
+                  : '0'
             );
 
             if (typeof g.services == typeof [] && !g.has_variants) {
@@ -2984,11 +2986,11 @@ module.exports = (instance, options, next) => {
               ? good.mxik
               : randimMxik();
 
-            goods[index].nds_value = Number.isFinite(Number(good.nds_value)) ?
-              good.nds_value :
-              Number.isFinite(Number(org.nds_value)) ?
-                org.nds_value :
-                15
+            goods[index].nds_value = Number.isFinite(Number(good.nds_value))
+              ? String(good.nds_value)
+              : Number.isFinite(Number(org.nds_value))
+                ? String(org.nds_value)
+                : '15'
 
             goods[index].sale = discountsObj[goods[index]._id]
             goods[index].marking = goods[index].marking === true ? true : false;
@@ -3137,7 +3139,12 @@ module.exports = (instance, options, next) => {
               }
               good.push(g.representation)
               good.push(g.mxik && g.mxik.length ? g.mxik : randimMxik())
-              good.push(Number.isFinite(Number(g.nds_value)) ? g.nds_value : Number.isFinite(Number(org.nds_value)) ? org.nds_value : 15);
+              good.push(Number.isFinite(Number(g.nds_value))
+                ? g.nds_value
+                : Number.isFinite(Number(org.nds_value))
+                  ? String(org.nds_value)
+                  : '15'
+              );
 
               my_array.push(good)
             }
