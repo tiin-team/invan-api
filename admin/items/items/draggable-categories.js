@@ -373,11 +373,13 @@ module.exports = (instance, options, next) => {
                 reply.ok(categories.map(category => ({
                     ...category,
                     image: category.image
-                        .replace('http://api.invan.uz/static/', realStaticApi)
-                        .replace('https://api.invan.uz/static/', realStaticApi)
-                        .replace('http://pos.in1.uz/api/static/', realStaticApi)
-                        .replace('http://pos.inone.uz/api/static/', realStaticApi)
-                        .replace('https://pos.inone.uz/api/static/', realStaticApi)
+                        ? category.image
+                            .replace('http://api.invan.uz/static/', realStaticApi)
+                            .replace('https://api.invan.uz/static/', realStaticApi)
+                            .replace('http://pos.in1.uz/api/static/', realStaticApi)
+                            .replace('http://pos.inone.uz/api/static/', realStaticApi)
+                            .replace('https://pos.inone.uz/api/static/', realStaticApi)
+                        : ''
                 })))
                 // {
                 //     success: true,
