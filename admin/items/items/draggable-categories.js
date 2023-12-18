@@ -350,25 +350,42 @@ module.exports = (instance, options, next) => {
             // foreignField: 'type',
         }
 
-        instance.goodsCategory.aggregate([
-            { $match: $match },
-            { $lookup: $lookup },
-            { $project: $project },
-            { $sort: { draggable_position: -1 } }
-        ],
+        instance.goodsCategory.aggregate(
+            [
+                { $match: $match },
+                { $lookup: $lookup },
+                { $project: $project },
+                { $sort: { draggable_position: -1 } }
+            ],
+            /**
+             * 
+             * @param {Error} err 
+             * @param {any[]} categories 
+             */
             (err, categories) => {
                 // console.log(err, categories);
                 if (err || categories == null) {
                     categories = []
                 }
 
-                reply.ok(categories)
+                const realStaticApi = 'https://pos.in1.uz/api/static/'
+
+                reply.ok(categories.map(category => ({
+                    ...category,
+                    image: category.image
+                        .replace('http://api.invan.uz/static/', realStaticApi)
+                        .replace('https://api.invan.uz/static/', realStaticApi)
+                        .replace('http://pos.in1.uz/api/static/', realStaticApi)
+                        .replace('http://pos.inone.uz/api/static/', realStaticApi)
+                        .replace('https://pos.inone.uz/api/static/', realStaticApi)
+                })))
                 // {
                 //     success: true,
                 //     total: categories.length,
                 //     data: categories
                 // })
-            })
+            }
+        )
     }
 
     const moderator_list_of_categories_update = async (request, reply, admin) => {
