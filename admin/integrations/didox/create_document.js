@@ -98,7 +98,7 @@ module.exports = fp(function (fastify, opts, next) {
         "packagecode": "",
         "packagename": "",
         "count": sold_item.value,
-        "summa": sold_item.price,
+        "summa": (sold_item.price * 100 / (100 + nds_value)).toFixed(3),
         "deliverysum": parseFloat((sold_item.total * 100 / (100 + nds_value)).toFixed(2)),
         "vatrate": nds_value,
         "vatsum": parseFloat(sold_item.total - (sold_item.total * 100 / (100 + nds_value)).toFixed(2)),
