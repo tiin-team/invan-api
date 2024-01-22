@@ -226,9 +226,9 @@ module.exports = fp((instance, options, next) => {
             client._id,
             {
               cartame_id: body.cartameId,
-              first_name: body.firstName ? body.firstName : client.first_name,
-              last_name: body.lastName ? body.lastName : client.last_name,
-              gender: body.gender ? body.gender : client.gender,
+              // first_name: body.firstName ? body.firstName : client.first_name,
+              // last_name: body.lastName ? body.lastName : client.last_name,
+              // gender: body.gender ? body.gender : client.gender,
             },
             {
               lean: true,
