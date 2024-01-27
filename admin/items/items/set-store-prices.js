@@ -239,7 +239,7 @@ async function updateItemPrice(
             return await instance.ProcessModel.setProcessing({ organization: user.organization }, false);
         }
 
-        return updateItemPrice(instance, user, first_service, second_service._id, page + 1);
+        return updateItemPrice(instance, user, first_service, second_service, page + 1);
     } catch (error) {
         console.log(error.message)
         await instance.ProcessModel.setProcessing(
