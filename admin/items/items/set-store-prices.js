@@ -1,12 +1,20 @@
-
-
+/**
+ * 
+ * @param {import("fastify").FastifyInstance} instance 
+ * @param {{_id: string; name: string; organization: string}} user 
+ * @param {{_id: string; name: string}} first_service 
+ * @param {{_id: string; name: string}} second_service 
+ * @param {*} page 
+ * @returns 
+ */
 async function updateItemPrices(
-    instance, organization, first_service_id, second_service_id, page = 1
+    instance, user,
+    first_service, second_service, page = 1
 ) {
     try {
         console.log('On page', page);
         const $match = {
-            $match: { organization }
+            $match: { organization: user.organization }
         }
         const limit = 50;
         const $sort = {
@@ -27,12 +35,18 @@ async function updateItemPrices(
             $skip,
             $limit
         ]).allowDiskUse(true).exec();
-
+        const priceChangeHistories = []
         for (const item of items) {
             let price, prices = [];
+            let old_price, old_prices = [];
             let is_all_zero = true;
             for (const s of item.services) {
-                if (s.service + '' == first_service_id + '') {
+                if (s.service + '' == second_service._id + '') {
+                    old_price = s.price
+                    old_prices = s.prices
+                }
+
+                if (s.service + '' == first_service._id + '') {
                     price = s.price;
                     prices = s.prices;
                     if (prices instanceof Array) {
@@ -56,10 +70,10 @@ async function updateItemPrices(
                         $elemMatch: {
                             $or: [
                                 {
-                                    service: instance.ObjectId(second_service_id)
+                                    service: instance.ObjectId(second_service._id)
                                 },
                                 {
-                                    service: second_service_id + ''
+                                    service: second_service._id + ''
                                 }
                             ]
                         }
@@ -75,32 +89,60 @@ async function updateItemPrices(
                 },
                 () => { }
             );
-        }
 
+            if (old_price != price || old_prices.length >= 1) {
+                priceChangeHistories.push({
+                    organization: user.organization,
+                    service: second_service._id,
+                    service_name: second_service.name,
+                    date: Date.now(),
+                    product_id: item._id,
+                    product_name: item.name,
+                    old_price: old_price,
+                    new_price: price,
+                    old_prices: old_prices,
+                    new_prices: prices,
+                    employee_id: user._id,
+                    employee_name: user.name,
+                    type: 'price'
+                })
+            }
+        }
+        await new instance.itemPriceChangeHistory.insertMany(priceChangeHistories)
+
+        console.log('Processing items finished on page', page);
         if (items.length < limit) {
-            console.log('Processing items finished on page', page);
-            return await instance.ProcessModel.setProcessing({ organization: organization }, false);
+            return await instance.ProcessModel.setProcessing({ organization: user.organization }, false);
         }
 
-        return updateItemPrices(instance, organization, first_service_id, second_service_id, page + 1);
+        return updateItemPrices(instance, user, first_service, second_service, page + 1);
     } catch (error) {
         console.log(error.message)
         await instance.ProcessModel.setProcessing(
             {
-                organization: organization
+                organization: user.organization
             },
             false
         )
     }
 }
 
+/**
+ * 
+ * @param {import("fastify").FastifyInstance} instance 
+ * @param {{_id: string; name: string; organization: string}} user 
+ * @param {{_id: string; name: string}} first_service 
+ * @param {{_id: string; name: string}} second_service 
+ * @param {*} page 
+ * @returns 
+ */
 async function updateItemPrice(
-    instance, organization, first_service_id, second_service_id, page = 1, limit = 50
+    instance, user, first_service, second_service, page = 1, limit = 50
 ) {
     try {
         console.log('On page', page);
         const $match = {
-            $match: { organization }
+            $match: { organization: user.organization }
         }
 
         const $sort = {
@@ -120,11 +162,19 @@ async function updateItemPrice(
             $limit
         ]).allowDiskUse(true).exec();
 
+        const priceChangeHistories = []
+
         for (const item of items) {
             let price, prices = [];
+            let old_price, old_prices = [];
             let is_all_zero = true;
             for (const s of item.services) {
-                if (s.service + '' == first_service_id + '') {
+                if (s.service + '' == second_service._id + '') {
+                    old_price = s.price
+                    old_prices = s.prices
+                }
+
+                if (s.service + '' == first_service._id + '') {
                     price = s.price;
                     prices = s.prices;
                     if (price > 0) {
@@ -144,10 +194,10 @@ async function updateItemPrice(
                         $elemMatch: {
                             $or: [
                                 {
-                                    service: instance.ObjectId(second_service_id)
+                                    service: instance.ObjectId(second_service._id)
                                 },
                                 {
-                                    service: second_service_id + ''
+                                    service: second_service._id + ''
                                 }
                             ]
                         }
@@ -163,19 +213,38 @@ async function updateItemPrice(
                 },
                 () => { }
             );
-        }
 
+            if (old_price != price || old_prices.length >= 1) {
+                priceChangeHistories.push({
+                    organization: user.organization,
+                    service: second_service._id,
+                    service_name: second_service.name,
+                    date: Date.now(),
+                    product_id: item._id,
+                    product_name: item.name,
+                    old_price: old_price,
+                    new_price: price,
+                    old_prices: old_prices,
+                    new_prices: prices,
+                    employee_id: user._id,
+                    employee_name: user.name,
+                    type: 'price'
+                })
+            }
+        }
+        await new instance.itemPriceChangeHistory.insertMany(priceChangeHistories)
+
+        console.log('Processing items finished on page', page);
         if (items.length < limit) {
-            console.log('Processing items finished on page', page);
-            return await instance.ProcessModel.setProcessing({ organization: organization }, false);
+            return await instance.ProcessModel.setProcessing({ organization: user.organization }, false);
         }
 
-        return updateItemPrice(instance, organization, first_service_id, second_service_id, page + 1);
+        return updateItemPrice(instance, user, first_service_id, second_service._id, page + 1);
     } catch (error) {
         console.log(error.message)
         await instance.ProcessModel.setProcessing(
             {
-                organization: organization
+                organization: user.organization
             },
             false
         )
@@ -207,9 +276,9 @@ async function itemsPricesSet(request, reply, instance, multi_price = true) {
 
         await instance.ProcessModel.setProcessing({ organization: process.organization }, true);
         if (multi_price)
-            await updateItemPrices(instance, user.organization, first_service_id, second_service_id, 1, 100);
+            await updateItemPrices(instance, user, first_service_id, second_service_id, 1, 100);
         else
-            await updateItemPrice(instance, user.organization, first_service_id, second_service_id, 1, 100);
+            await updateItemPrice(instance, user, first_service_id, second_service_id, 1, 100);
 
         reply.ok();
     } catch (error) {
