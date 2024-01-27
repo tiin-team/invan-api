@@ -104,7 +104,7 @@ async function updateItemPrices(
                     new_prices: prices,
                     employee_id: user._id,
                     employee_name: user.name,
-                    type: 'price'
+                    type: old_price != price ? 'price' : 'prices',
                 })
             }
         }
@@ -228,7 +228,7 @@ async function updateItemPrice(
                     new_prices: prices,
                     employee_id: user._id,
                     employee_name: user.name,
-                    type: 'price'
+                    type: old_price != price ? 'price' : 'prices',
                 })
             }
         }
@@ -258,11 +258,13 @@ async function itemsPricesSet(request, reply, instance, multi_price = true) {
         const first_service = await instance.services.findOne({
             _id: first_service_id,
             organization: user.organization
-        });
+        })
+            .lean();
         const second_service = await instance.services.findById({
             _id: second_service_id,
             organization: user.organization
-        });
+        })
+            .lean();
         if (!first_service || !second_service) {
             return reply.fourorfour('store')
         }
@@ -276,9 +278,9 @@ async function itemsPricesSet(request, reply, instance, multi_price = true) {
 
         await instance.ProcessModel.setProcessing({ organization: process.organization }, true);
         if (multi_price)
-            await updateItemPrices(instance, user, first_service_id, second_service_id, 1, 100);
+            await updateItemPrices(instance, user, first_service, second_service, 1, 100);
         else
-            await updateItemPrice(instance, user, first_service_id, second_service_id, 1, 100);
+            await updateItemPrice(instance, user, first_service, second_service, 1, 100);
 
         reply.ok();
     } catch (error) {
