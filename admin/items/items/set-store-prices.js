@@ -108,7 +108,7 @@ async function updateItemPrices(
                 })
             }
         }
-        await new instance.itemPriceChangeHistory.insertMany(priceChangeHistories)
+        await instance.itemPriceChangeHistory.insertMany(priceChangeHistories)
 
         console.log('Processing items finished on page', page);
         if (items.length < limit) {
@@ -232,7 +232,7 @@ async function updateItemPrice(
                 })
             }
         }
-        await new instance.itemPriceChangeHistory.insertMany(priceChangeHistories)
+        await instance.itemPriceChangeHistory.insertMany(priceChangeHistories)
 
         console.log('Processing items finished on page', page);
         if (items.length < limit) {
