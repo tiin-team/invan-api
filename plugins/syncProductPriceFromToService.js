@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 module.exports = fp((instance, _, next) => {
 
     instance.get(
-        'sync-product-price/:organizationId/:fromStoreId/:toStoreId',
+        '/sync-product-price/:organizationId/:fromStoreId/:toStoreId',
         {
             schema: {
                 params: {
