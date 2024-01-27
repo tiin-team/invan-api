@@ -1,5 +1,31 @@
 /**
  * 
+ * @param {[{from: number; price: number}]} prices1 
+ * @param {[{from: number; price: number}]} prices2 
+ * @returns {boolean}
+ * @description Agar bir xil bo'lsa true qaytadi
+ */
+function comparePrices(prices1, prices2) {
+    /**
+     * @type {Record<number, {from: number; price: number}>}
+     */
+    const prices1Obj = {}
+
+    for (const price of prices1) {
+        prices1Obj[price.from] = price
+    }
+
+    for (const price of prices2) {
+        if (!prices1Obj[price.from] || prices1Obj[price.from].price != price.price) {
+            return false
+        }
+    }
+
+    return true
+}
+
+/**
+ * 
  * @param {import("fastify").FastifyInstance} instance 
  * @param {{_id: string; name: string; organization: string}} user 
  * @param {{_id: string; name: string}} first_service 
@@ -90,7 +116,7 @@ async function updateItemPrices(
                 () => { }
             );
 
-            if (old_price != price || old_prices.length >= 1) {
+            if (old_price != price) {
                 priceChangeHistories.push({
                     organization: user.organization,
                     service: second_service._id,
@@ -100,11 +126,25 @@ async function updateItemPrices(
                     product_name: item.name,
                     old_price: old_price,
                     new_price: price,
+                    employee_id: user._id,
+                    employee_name: user.name,
+                    type: 'price',
+                })
+            }
+
+            if (!comparePrices(prices, old_prices)) {
+                priceChangeHistories.push({
+                    organization: user.organization,
+                    service: second_service._id,
+                    service_name: second_service.name,
+                    date: Date.now(),
+                    product_id: item._id,
+                    product_name: item.name,
                     old_prices: old_prices,
                     new_prices: prices,
                     employee_id: user._id,
                     employee_name: user.name,
-                    type: old_price != price ? 'price' : 'prices',
+                    type: 'prices',
                 })
             }
         }
@@ -214,7 +254,7 @@ async function updateItemPrice(
                 () => { }
             );
 
-            if (old_price != price || old_prices.length >= 1) {
+            if (old_price != price) {
                 priceChangeHistories.push({
                     organization: user.organization,
                     service: second_service._id,
@@ -224,11 +264,25 @@ async function updateItemPrice(
                     product_name: item.name,
                     old_price: old_price,
                     new_price: price,
+                    employee_id: user._id,
+                    employee_name: user.name,
+                    type: 'price',
+                })
+            }
+
+            if (!comparePrices(prices, old_prices)) {
+                priceChangeHistories.push({
+                    organization: user.organization,
+                    service: second_service._id,
+                    service_name: second_service.name,
+                    date: Date.now(),
+                    product_id: item._id,
+                    product_name: item.name,
                     old_prices: old_prices,
                     new_prices: prices,
                     employee_id: user._id,
                     employee_name: user.name,
-                    type: old_price != price ? 'price' : 'prices',
+                    type: 'prices',
                 })
             }
         }
