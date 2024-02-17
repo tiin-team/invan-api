@@ -1527,10 +1527,34 @@ module.exports = fp((instance, options, next) => {
         suppliersObj[supplier._id] = supplier
       }
 
+      const products = await instance.goodsSales.find(
+        {
+          _id: { $in: orders.flatMap(order => order.items.map(item => item.product_id)) }
+        },
+        {
+          category_name: 1
+        }
+      )
+        .lean()
+
+      /**
+       * @type {Record<string, {category_name: string}>}
+       */
+      const productsObj = {}
+      for (const product of products) {
+        productsObj[product._id] = product
+      }
+
       for (const order of orders) {
         order.supplier_inn = suppliersObj[order.supplier_id] && suppliersObj[order.supplier_id].inn ?
           suppliersObj[order.supplier_id].inn :
           ''
+
+        for (const item of order.items) {
+          item.category_name = productsObj[item.product_id] && productsObj[item.product_id].category_name
+            ? productsObj[item.product_id].category_name
+            : '-'
+        }
       }
 
       reply.ok({

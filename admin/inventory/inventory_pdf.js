@@ -4,6 +4,7 @@ const ExcelJs = require('exceljs');
 const fs = require('fs');
 const path = require('path')
 const moment = require('moment')
+const fp = require('fastify-plugin')
 
 const removeBorders = (worksheet, list) => {
     for (const cell of list) {
@@ -33,7 +34,7 @@ const multiMergeCells = (worksheet, list) => {
     }
 }
 
-module.exports = ((instance, _, next) => {
+module.exports = fp((instance, _, next) => {
 
     const getPurchasePdf = async (request, reply) => {
         try {
@@ -166,40 +167,41 @@ module.exports = ((instance, _, next) => {
             return reply.send(error.message)
         }
     }
+
     const getPurchasePdfNewUmar = async (request, reply) => {
         try {
             const { id } = request.params
             const { type } = request.query
 
-            const purchase = await instance.inventoryPurchase.findById(id)
+            const purchase = await instance.inventoryPurchase.findById(id).lean()
             if (!purchase) {
                 return reply.send('Purchase not found')
             }
 
             try {
-                const service = await instance.services.findById(purchase.service)
+                const service = await instance.services.findById(purchase.service).lean()
                 if (service) {
                     purchase.service_name = service.name
                 }
             } catch (error) { }
 
             try {
-                const supplier = await instance.adjustmentSupplier.findById(purchase.supplier_id)
+                const supplier = await instance.adjustmentSupplier.findById(purchase.supplier_id).lean()
                 if (supplier) {
                     purchase.supplier_name = supplier.supplier_name
                 }
             } catch (error) { }
 
             try {
-                const orderer = await instance.User.findById(purchase.ordered_by_id)
+                const orderer = await instance.User.findById(purchase.ordered_by_id).lean()
                 if (orderer) {
                     purchase.ordered_by_name = orderer.name
                 }
             } catch (error) { }
 
-            const items = await instance.purchaseItem.find({ purchase_id: purchase._id })
+            const items = await instance.purchaseItem.find({ purchase_id: purchase._id }).lean()
             const pdfItems = []
-            const exelItems = []
+            const excelItems = []
             index = 1
             totalAmount = 0
             if (type == 'exel') {
@@ -216,6 +218,7 @@ module.exports = ((instance, _, next) => {
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
                             }
+                            it.category_name = good.category_name
                         }
                     } catch (error) { }
                     barcode = ''
@@ -226,9 +229,10 @@ module.exports = ((instance, _, next) => {
                     totalAmount += amount
                     amount = (amount ? (Math.round(amount * 100) / 100).toLocaleString() : (amount + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : '')
                     // amount ? amount : 0
-                    exelItems.push([
+                    excelItems.push([
                         index,
                         it.product_name + '',
+                        it.category_name ? it.category_name : '-',
                         it.sku ? it.sku : '',
                         barcode,
                         it.sold_by,
@@ -251,11 +255,13 @@ module.exports = ((instance, _, next) => {
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
                             }
+                            it.category_name = good.cashier_name
                         }
                     } catch (error) { }
                     pdfItems.push({
                         sku: it.sku,
                         barcode: it.barcode,
+                        category_name: it.category_name ? it.category_name : '-',
                         product_name: it.product_name + '',
                         quality: it.quality + '',
                         purchase_cost: (it.purchase_cost ? (Math.round(it.purchase_cost * 100) / 100).toLocaleString() : (it.purchase_cost + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : ''),
@@ -269,7 +275,7 @@ module.exports = ((instance, _, next) => {
                     amount = (it.amount ? (Math.round(it.amount * 100) / 100).toLocaleString() : (it.amount + '')) + (it.amount_currency == 'usd' ? ' $' : '')
                     // it.amount ? it.amount : 0
                     totalAmount += it.amount ? it.amount : 0
-                    exelItems.push([
+                    excelItems.push([
                         index,
                         it.name + '',
                         '',
@@ -301,6 +307,7 @@ module.exports = ((instance, _, next) => {
                 const headers = [
                     { name: ' № п.п.', key: 'id', width: 10 },
                     { name: 'Наименование', key: 'id', width: 300 },
+                    { name: 'Category', key: 'id', width: 300 },
                     { name: 'Sku', key: 'sku', width: 4000 },
                     { name: 'Штрих код', key: 'barcode', width: 5000 },
                     { name: 'Ед. изм.', key: 'type', width: 1000 },
@@ -321,15 +328,15 @@ module.exports = ((instance, _, next) => {
                 worksheet.getCell('B4').value = `Покупатель:     ${purchase.service_name}`
                 worksheet.getCell('B5').value = `По заказу:        ${purchase.ordered_by_name}`
 
-                worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
-                worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
-                worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
-                worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
+                worksheet.getCell(`B${excelItems.length + 11}`).value = `Отпустил`
+                worksheet.getCell(`F${excelItems.length + 11}`).value = `Получил`
+                worksheet.getCell(`G${excelItems.length + 9}`).value = `Итого`
+                worksheet.getCell(`H${excelItems.length + 9}`).value = totalAmount.toLocaleString()
 
                 multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6',])
                 multiSetAlign(worksheet, [
-                    { col: 'B', rows: [10, 10 + exelItems.length], },
-                    { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                    { col: 'B', rows: [10, 10 + excelItems.length], },
+                    { col: 'J', rows: [10, 10 + excelItems.length], vertical: 'bottom', horizontal: 'right' },
                 ])
                 removeBorders(worksheet, [
                     { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
@@ -338,24 +345,24 @@ module.exports = ((instance, _, next) => {
                     { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
                     { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
                     { cell: `H7`, bottom: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 10}` },
-                    { cell: `C${exelItems.length + 10}` },
-                    { cell: `D${exelItems.length + 10}` },
-                    { cell: `F${exelItems.length + 10}` },
-                    { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
-                    { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 11}` },
-                    { cell: `F${exelItems.length + 11}` },
-                    { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `C${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `D${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `E${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `F${excelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${excelItems.length + 10}` },
+                    { cell: `C${excelItems.length + 10}` },
+                    { cell: `D${excelItems.length + 10}` },
+                    { cell: `F${excelItems.length + 10}` },
+                    { cell: `G${excelItems.length + 10}`, top: 'A9A9A9' },
+                    { cell: `H${excelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${excelItems.length + 11}` },
+                    { cell: `F${excelItems.length + 11}` },
+                    { cell: `C${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `D${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `E${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `G${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `H${excelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
 
                 try {
@@ -365,7 +372,7 @@ module.exports = ((instance, _, next) => {
                         headerRow: true,
                         // totalsRow: true,
                         columns: headers,
-                        rows: exelItems
+                        rows: excelItems
                     })
                 } catch (error) { }
 
@@ -411,6 +418,17 @@ module.exports = ((instance, _, next) => {
                                     doc.font('NotoSansRegular')
                                     doc.fontSize(10)
                                     return data.product_name;
+                                }
+                            },
+                            {
+                                header: 'Category',
+                                id: 'category_name',
+                                width: 300,
+                                align: 'left',
+                                renderer: function (tb, data) {
+                                    doc.font('NotoSansRegular')
+                                    doc.fontSize(10)
+                                    return data.category_name;
                                 }
                             },
                             {
@@ -525,7 +543,7 @@ module.exports = ((instance, _, next) => {
             } catch (error) { }
 
             const pdfItems = []
-            const exelItems = []
+            const excelItems = []
             index = 1
             totalAmount = 0
             if (type == 'exel') {
@@ -556,7 +574,7 @@ module.exports = ((instance, _, next) => {
                             : (amount + '')) + (it.price == 'usd' ? ' $' : ''
                         )
 
-                    exelItems.push([
+                    excelItems.push([
                         index,
                         it.product_name + '',
                         barcode,
@@ -613,15 +631,15 @@ module.exports = ((instance, _, next) => {
                 worksheet.getCell('B6').value = `Source store:        ${transfer.first_service_name}`
                 worksheet.getCell('B7').value = `Destination store:        ${transfer.second_service_name}`
 
-                // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
-                // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
-                // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
-                // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
+                // worksheet.getCell(`B${excelItems.length + 11}`).value = `Отпустил`
+                // worksheet.getCell(`F${excelItems.length + 11}`).value = `Получил`
+                // worksheet.getCell(`G${excelItems.length + 9}`).value = `Итого`
+                // worksheet.getCell(`H${excelItems.length + 9}`).value = totalAmount.toLocaleString()
 
                 multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6', 'B7:H7',])
                 multiSetAlign(worksheet, [
-                    { col: 'B', rows: [10, 10 + exelItems.length], },
-                    { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                    { col: 'B', rows: [10, 10 + excelItems.length], },
+                    { col: 'J', rows: [10, 10 + excelItems.length], vertical: 'bottom', horizontal: 'right' },
                 ])
                 removeBorders(worksheet, [
                     { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
@@ -630,24 +648,24 @@ module.exports = ((instance, _, next) => {
                     { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
                     { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
                     { cell: `H7`, bottom: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 10}` },
-                    { cell: `C${exelItems.length + 10}` },
-                    { cell: `D${exelItems.length + 10}` },
-                    { cell: `F${exelItems.length + 10}` },
-                    { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
-                    { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 11}` },
-                    { cell: `F${exelItems.length + 11}` },
-                    { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `C${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `D${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `E${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `F${excelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${excelItems.length + 10}` },
+                    { cell: `C${excelItems.length + 10}` },
+                    { cell: `D${excelItems.length + 10}` },
+                    { cell: `F${excelItems.length + 10}` },
+                    { cell: `G${excelItems.length + 10}`, top: 'A9A9A9' },
+                    { cell: `H${excelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${excelItems.length + 11}` },
+                    { cell: `F${excelItems.length + 11}` },
+                    { cell: `C${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `D${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `E${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `G${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    { cell: `H${excelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
 
                 try {
@@ -657,7 +675,7 @@ module.exports = ((instance, _, next) => {
                         headerRow: true,
                         // totalsRow: true,
                         columns: headers,
-                        rows: exelItems
+                        rows: excelItems
                     })
                 } catch (error) { }
 
@@ -785,7 +803,7 @@ module.exports = ((instance, _, next) => {
                 .lean()
 
             const pdfItems = []
-            const exelItems = []
+            const excelItems = []
             index = 1
             totalAmount = 0
             if (type == 'exel') {
@@ -813,7 +831,7 @@ module.exports = ((instance, _, next) => {
                     // totalAmount += amount
                     // amount = (amount ? (Math.round(amount * 100) / 100).toLocaleString() : (amount + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : '')
                     // amount ? amount : 0
-                    exelItems.push([
+                    excelItems.push([
                         index,
                         it.product_name + '',
                         stock.reason,
@@ -879,15 +897,15 @@ module.exports = ((instance, _, next) => {
                 worksheet.getCell('B5').value = `Adjusted by:     ${stock.adjusted_by}`
                 worksheet.getCell('B6').value = `Store::        ${stock.service_name}`
 
-                // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
-                // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
-                // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
-                // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
+                // worksheet.getCell(`B${excelItems.length + 11}`).value = `Отпустил`
+                // worksheet.getCell(`F${excelItems.length + 11}`).value = `Получил`
+                // worksheet.getCell(`G${excelItems.length + 9}`).value = `Итого`
+                // worksheet.getCell(`H${excelItems.length + 9}`).value = totalAmount.toLocaleString()
 
                 multiMergeCells(worksheet, ['B2:E2', 'B3:E3', 'B4:E4', 'B5:E5', 'B6:E6',])
                 multiSetAlign(worksheet, [
-                    { col: 'B', rows: [10, 10 + exelItems.length], },
-                    // { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                    { col: 'B', rows: [10, 10 + excelItems.length], },
+                    // { col: 'J', rows: [10, 10 + excelItems.length], vertical: 'bottom', horizontal: 'right' },
                 ])
                 removeBorders(worksheet, [
                     { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
@@ -896,24 +914,24 @@ module.exports = ((instance, _, next) => {
                     { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
                     // { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
                     // { cell: `H7`, bottom: 'A9A9A9' },
-                    // { cell: `B${exelItems.length + 9}`, top: 'A9A9A9' },
-                    // { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
-                    // { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
-                    // { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
-                    // { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    // { cell: `B${exelItems.length + 10}` },
-                    // { cell: `C${exelItems.length + 10}` },
-                    // { cell: `D${exelItems.length + 10}` },
-                    // { cell: `F${exelItems.length + 10}` },
-                    // { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
-                    // { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    // { cell: `B${exelItems.length + 11}` },
-                    // { cell: `F${exelItems.length + 11}` },
-                    // { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${excelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `C${excelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `D${excelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `E${excelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `F${excelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${excelItems.length + 10}` },
+                    // { cell: `C${excelItems.length + 10}` },
+                    // { cell: `D${excelItems.length + 10}` },
+                    // { cell: `F${excelItems.length + 10}` },
+                    // { cell: `G${excelItems.length + 10}`, top: 'A9A9A9' },
+                    // { cell: `H${excelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${excelItems.length + 11}` },
+                    // { cell: `F${excelItems.length + 11}` },
+                    // { cell: `C${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `D${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `E${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `G${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `H${excelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
 
                 try {
@@ -923,7 +941,7 @@ module.exports = ((instance, _, next) => {
                         headerRow: true,
                         // totalsRow: true,
                         columns: headers,
-                        rows: exelItems
+                        rows: excelItems
                     })
                 } catch (error) { }
 
@@ -1092,7 +1110,7 @@ module.exports = ((instance, _, next) => {
 
             const items = await instance.inventoryCountItem.find({ count_id: count._id }).lean()
             const pdfItems = []
-            const exelItems = []
+            const excelItems = []
             index = 1
             totalAmount = 0
 
@@ -1121,7 +1139,7 @@ module.exports = ((instance, _, next) => {
                     // totalAmount += amount
                     // amount = (amount ? (Math.round(amount * 100) / 100).toLocaleString() : (amount + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : '')
                     // amount ? amount : 0
-                    exelItems.push([
+                    excelItems.push([
                         index,
                         it.product_name + '',
                         it.exp_in_stock ? it.exp_in_stock : 0,
@@ -1186,15 +1204,15 @@ module.exports = ((instance, _, next) => {
                 worksheet.getCell('B5').value = `Created by:     ${count.created_by}`
                 worksheet.getCell('B6').value = `Store:        ${count.service_name}`
 
-                // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
-                // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
-                // worksheet.getCell(`G${exelItems.length + 9}`).value = `Итого`
-                // worksheet.getCell(`H${exelItems.length + 9}`).value = totalAmount.toLocaleString()
+                // worksheet.getCell(`B${excelItems.length + 11}`).value = `Отпустил`
+                // worksheet.getCell(`F${excelItems.length + 11}`).value = `Получил`
+                // worksheet.getCell(`G${excelItems.length + 9}`).value = `Итого`
+                // worksheet.getCell(`H${excelItems.length + 9}`).value = totalAmount.toLocaleString()
 
                 multiMergeCells(worksheet, ['B2:E2', 'B3:E3', 'B4:E4', 'B5:E5', 'B6:E6',])
                 multiSetAlign(worksheet, [
-                    { col: 'B', rows: [10, 10 + exelItems.length], },
-                    // { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                    { col: 'B', rows: [10, 10 + excelItems.length], },
+                    // { col: 'J', rows: [10, 10 + excelItems.length], vertical: 'bottom', horizontal: 'right' },
                 ])
                 removeBorders(worksheet, [
                     { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
@@ -1203,24 +1221,24 @@ module.exports = ((instance, _, next) => {
                     { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
                     // { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
                     // { cell: `H7`, bottom: 'A9A9A9' },
-                    // { cell: `B${exelItems.length + 9}`, top: 'A9A9A9' },
-                    // { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
-                    // { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
-                    // { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
-                    // { cell: `F${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    // { cell: `B${exelItems.length + 10}` },
-                    // { cell: `C${exelItems.length + 10}` },
-                    // { cell: `D${exelItems.length + 10}` },
-                    // { cell: `F${exelItems.length + 10}` },
-                    // { cell: `G${exelItems.length + 10}`, top: 'A9A9A9' },
-                    // { cell: `H${exelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    // { cell: `B${exelItems.length + 11}` },
-                    // { cell: `F${exelItems.length + 11}` },
-                    // { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${excelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `C${excelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `D${excelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `E${excelItems.length + 9}`, top: 'A9A9A9' },
+                    // { cell: `F${excelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${excelItems.length + 10}` },
+                    // { cell: `C${excelItems.length + 10}` },
+                    // { cell: `D${excelItems.length + 10}` },
+                    // { cell: `F${excelItems.length + 10}` },
+                    // { cell: `G${excelItems.length + 10}`, top: 'A9A9A9' },
+                    // { cell: `H${excelItems.length + 10}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${excelItems.length + 11}` },
+                    // { cell: `F${excelItems.length + 11}` },
+                    // { cell: `C${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `D${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `E${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `G${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `H${excelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
 
                 try {
@@ -1230,7 +1248,7 @@ module.exports = ((instance, _, next) => {
                         headerRow: true,
                         // totalsRow: true,
                         columns: headers,
-                        rows: exelItems
+                        rows: excelItems
                     })
                 } catch (error) { }
 
@@ -1550,12 +1568,12 @@ module.exports = ((instance, _, next) => {
             }
             const time = new Date().getTime()
 
-            const exelItems = []
+            const excelItems = []
             index = 1
             totalAmount = 0
             if (type == 'exel') {
                 for (const it of receipt.sold_item_list) {
-                    exelItems.push([
+                    excelItems.push([
                         index,
                         it.product_name + '',
                         it.barcode,
@@ -1605,20 +1623,20 @@ module.exports = ((instance, _, next) => {
                     worksheet.getCell(`B${a}`).value = `${instance.i18n.__('type')}:        ${instance.i18n.__('refund')}`
                     a++
                 }
-                // worksheet.getCell(`B${exelItems.length + 11}`).value = `Отпустил`
-                // worksheet.getCell(`F${exelItems.length + 11}`).value = `Получил`
+                // worksheet.getCell(`B${excelItems.length + 11}`).value = `Отпустил`
+                // worksheet.getCell(`F${excelItems.length + 11}`).value = `Получил`
                 const payment_len = receipt.payment && receipt.payment.length
                     ? receipt.payment.length
                     : 0;
                 for (let i = 0; i < payment_len; i++) {
-                    worksheet.getCell(`G${exelItems.length + 9 + i}`).value = `${instance.i18n.__(receipt.payment[i].name)}          ${receipt.payment[i].value}`
+                    worksheet.getCell(`G${excelItems.length + 9 + i}`).value = `${instance.i18n.__(receipt.payment[i].name)}          ${receipt.payment[i].value}`
                 }
-                worksheet.getCell(`G${exelItems.length + 9 + payment_len}`).value = `${instance.i18n.__('total')}          ${receipt.total_price}`
+                worksheet.getCell(`G${excelItems.length + 9 + payment_len}`).value = `${instance.i18n.__('total')}          ${receipt.total_price}`
 
                 multiMergeCells(worksheet, ['B2:H2', 'B3:H3', 'B4:H4', 'B5:H5', 'B6:H6',])
                 multiSetAlign(worksheet, [
-                    { col: 'B', rows: [10, 10 + exelItems.length], },
-                    // { col: 'J', rows: [10, 10 + exelItems.length], vertical: 'bottom', horizontal: 'right' },
+                    { col: 'B', rows: [10, 10 + excelItems.length], },
+                    // { col: 'J', rows: [10, 10 + excelItems.length], vertical: 'bottom', horizontal: 'right' },
                 ])
                 removeBorders(worksheet, [
                     { cell: `B2` }, { cell: `B3` }, { cell: `B4` }, { cell: `B5` }, { cell: `B6` },
@@ -1627,27 +1645,27 @@ module.exports = ((instance, _, next) => {
                     { cell: `D7`, bottom: 'A9A9A9' }, { cell: `E7`, bottom: 'A9A9A9' },
                     { cell: `F7`, bottom: 'A9A9A9' }, { cell: `G7`, bottom: 'A9A9A9' },
                     { cell: `H7`, bottom: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 9}`, top: 'A9A9A9', left: 'A9A9A9' },
-                    { cell: `C${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `D${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `E${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `F${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `G${exelItems.length + 9}`, top: 'A9A9A9' },
-                    { cell: `H${exelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
-                    { cell: `B${exelItems.length + 10}`, bottom: 'A9A9A9', left: 'A9A9A9' },
-                    { cell: `C${exelItems.length + 10}`, bottom: 'A9A9A9', },
-                    { cell: `D${exelItems.length + 10}`, bottom: 'A9A9A9', },
-                    { cell: `E${exelItems.length + 10}`, bottom: 'A9A9A9', },
-                    { cell: `F${exelItems.length + 10}`, bottom: 'A9A9A9', },
-                    { cell: `G${exelItems.length + 10}`, bottom: 'A9A9A9', },
-                    { cell: `H${exelItems.length + 10}`, bottom: 'A9A9A9', right: 'A9A9A9' },
-                    // { cell: `B${exelItems.length + 11}`, bottom: 'A9A9A9', left: 'A9A9A9' },
-                    // { cell: `F${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `C${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `D${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `E${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `G${exelItems.length + 11}`, bottom: 'A9A9A9' },
-                    // { cell: `H${exelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${excelItems.length + 9}`, top: 'A9A9A9', left: 'A9A9A9' },
+                    { cell: `C${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `D${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `E${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `F${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `G${excelItems.length + 9}`, top: 'A9A9A9' },
+                    { cell: `H${excelItems.length + 9}`, top: 'A9A9A9', right: 'A9A9A9' },
+                    { cell: `B${excelItems.length + 10}`, bottom: 'A9A9A9', left: 'A9A9A9' },
+                    { cell: `C${excelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `D${excelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `E${excelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `F${excelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `G${excelItems.length + 10}`, bottom: 'A9A9A9', },
+                    { cell: `H${excelItems.length + 10}`, bottom: 'A9A9A9', right: 'A9A9A9' },
+                    // { cell: `B${excelItems.length + 11}`, bottom: 'A9A9A9', left: 'A9A9A9' },
+                    // { cell: `F${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `C${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `D${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `E${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `G${excelItems.length + 11}`, bottom: 'A9A9A9' },
+                    // { cell: `H${excelItems.length + 11}`, bottom: 'A9A9A9', right: 'A9A9A9' },
                 ])
 
                 try {
@@ -1657,7 +1675,7 @@ module.exports = ((instance, _, next) => {
                         headerRow: true,
                         // totalsRow: true,
                         columns: headers,
-                        rows: exelItems
+                        rows: excelItems
                     })
                 } catch (error) { }
 
@@ -1887,7 +1905,7 @@ module.exports = ((instance, _, next) => {
 
             const items = iOrder.items
             const pdfItems = []
-            const exelItems = []
+            const excelItems = []
             index = 1
             totalAmount = 0
             if (type == 'exel') {
@@ -1903,7 +1921,7 @@ module.exports = ((instance, _, next) => {
                             }
                         }
                     } catch (error) { }
-                    exelItems.push([
+                    excelItems.push([
                         index,
                         it.product_name + '',
                         it.real_stock,
@@ -1991,7 +2009,7 @@ module.exports = ((instance, _, next) => {
                         headerRow: true,
                         // totalsRow: true,
                         columns: headers,
-                        rows: exelItems
+                        rows: excelItems
                     })
                 } catch (error) { }
 
