@@ -257,13 +257,11 @@ module.exports = fp((instance, _, next) => {
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
                             }
-                            it.category_name = good.category_name
                         }
                     } catch (error) { }
                     pdfItems.push({
                         sku: it.sku,
                         barcode: it.barcode,
-                        category_name: it.category_name ? it.category_name : '-',
                         product_name: it.product_name + '',
                         quality: it.quality + '',
                         purchase_cost: (it.purchase_cost ? (Math.round(it.purchase_cost * 100) / 100).toLocaleString() : (it.purchase_cost + '')) + (it.purchase_cost_currency == 'usd' ? ' $' : ''),
@@ -422,17 +420,6 @@ module.exports = fp((instance, _, next) => {
                                     doc.font('NotoSansRegular')
                                     doc.fontSize(10)
                                     return data.product_name;
-                                }
-                            },
-                            {
-                                header: 'Category',
-                                id: 'category_name',
-                                width: 300,
-                                align: 'left',
-                                renderer: function (tb, data) {
-                                    doc.font('NotoSansRegular')
-                                    doc.fontSize(10)
-                                    return data.category_name;
                                 }
                             },
                             {
