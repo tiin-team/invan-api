@@ -204,6 +204,8 @@ module.exports = fp((instance, _, next) => {
             const excelItems = []
             index = 1
             totalAmount = 0
+
+            // Items
             if (type == 'exel') {
                 for (const it of items) {
                     let amount = it.quality * it.purchase_cost
@@ -255,7 +257,7 @@ module.exports = fp((instance, _, next) => {
                             if (good.item_type == 'variant') {
                                 it.product_name = `${good.parent_name} (${good.name})`
                             }
-                            it.category_name = good.cashier_name
+                            it.category_name = good.category_name
                         }
                     } catch (error) { }
                     pdfItems.push({
@@ -269,6 +271,7 @@ module.exports = fp((instance, _, next) => {
                     })
                 }
             }
+            // additional_cost
             if (type == 'exel') {
                 for (const it of purchase.additional_cost) {
                     price = it.amount ? it.amount : 0
@@ -303,6 +306,7 @@ module.exports = fp((instance, _, next) => {
             const time = new Date().getTime()
             const title = `Purchase order ${purchase.p_order}`
 
+            // Headers
             if (type == 'exel') {
                 const headers = [
                     { name: ' № п.п.', key: 'id', width: 10 },
