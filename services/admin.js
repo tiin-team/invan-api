@@ -4400,6 +4400,11 @@ module.exports = (instance, _, next) => {
               for (var s of test_services) {
                 service_nameObj[s.name] = true
               }
+
+              console.log('===========================');
+              console.log(service_nameObj, service_names);
+              console.log('===========================');
+
               var valid_names = (service_names.length > 0)
               for (var name of service_names) {
                 valid_names = valid_names && (service_nameObj[name] ? true : false)
@@ -4973,6 +4978,7 @@ module.exports = (instance, _, next) => {
                 reply.error('Service names')
               }
             })
+              .lean()
           }
 
         });
