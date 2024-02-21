@@ -1,5 +1,6 @@
 const fs = require("fs");
 const fp = require("fastify-plugin");
+const ExcelJs = require('exceljs');
 
 module.exports = fp((instance, _, next) => {
   /**
