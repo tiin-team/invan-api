@@ -93,7 +93,7 @@ module.exports = fp((instance, _, next) => {
       const time = Date.now();
 
       const fileDir = path.join(
-        _Dirname,
+        __dirname,
         `../../static/${time}${fileNameInRequestParams}.xlsx`,
       );
 
