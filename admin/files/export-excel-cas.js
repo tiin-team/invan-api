@@ -65,7 +65,7 @@ module.exports = fp((instance, _, next) => {
       const excelItems = [];
       for (const index in items) {
         const item = items[index];
-        excelItems.push([1, item.sku, item.sku, item.name, item.price]);
+        excelItems.push([1, item.sku, item.name, item.price]);
       }
 
       const workbook = new ExcelJs.Workbook();
@@ -121,7 +121,6 @@ module.exports = fp((instance, _, next) => {
   instance.get(
     "/items/get/cas-turkish/excel/:organization/:service/:name",
     (request, reply) => {
-      console.log("Cas Turkish");
       return downloadTurkishCasExcel(request, reply, instance);
     },
   );
