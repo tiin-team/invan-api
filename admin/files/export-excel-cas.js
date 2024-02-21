@@ -53,6 +53,7 @@ module.exports = fp((instance, _, next) => {
         $project: {
           name: "$name",
           sku: "$sku",
+          prices: "$services.prices",
           price: "$services.price",
         },
       };
@@ -65,7 +66,9 @@ module.exports = fp((instance, _, next) => {
       const excelItems = [];
       for (const index in items) {
         const item = items[index];
-        excelItems.push([1, item.sku, item.name, item.price]);
+        const price = item.prices[0] ? item.prices[0].price : item.price;
+
+        excelItems.push([1, item.sku, item.name, price]);
       }
 
       const workbook = new ExcelJs.Workbook();
