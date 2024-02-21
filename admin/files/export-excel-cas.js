@@ -1,7 +1,7 @@
-const path = require('path')
+const path = require("path");
 const fs = require("fs");
 const fp = require("fastify-plugin");
-const ExcelJs = require('exceljs');
+const ExcelJs = require("exceljs");
 
 module.exports = fp((instance, _, next) => {
   /**
@@ -114,6 +114,8 @@ module.exports = fp((instance, _, next) => {
     } catch (error) {
       reply.error(error.message);
     }
+
+    return reply;
   }
 
   instance.get(
