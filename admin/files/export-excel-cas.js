@@ -99,7 +99,7 @@ module.exports = fp((instance, _, next) => {
 
       await workbook.xlsx.writeFile(fileDir);
 
-      reply.sendFile(`./${time}.xlsx`);
+      reply.sendFile(`./${time}${fileNameInRequestParams}.xlsx`);
 
       setTimeout(() => {
         fs.unlink(fileDir, (err) => {
@@ -121,6 +121,7 @@ module.exports = fp((instance, _, next) => {
   instance.get(
     "/items/get/cas-turkish/excel/:organization/:service/:name",
     (request, reply) => {
+      console.log("Cas Turkish");
       return downloadTurkishCasExcel(request, reply, instance);
     },
   );
