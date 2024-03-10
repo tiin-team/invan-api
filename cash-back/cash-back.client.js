@@ -167,17 +167,17 @@ module.exports = fp((instance, _, next) => {
       }
       let cash_back = default_cash_back;
 
-      if (clientsDatabase && organization && organization.webhook_url) {
+      if (clientsDatabase && organization && organization.cashback_webhook_url) {
         await axios
-          .post(`${organization.webhook_url}`, {
+          .post(`${organization.cashback_webhook_url}`, {
             clientId: clientsDatabase._id,
             usedCashback: minus_cash,
             givenCashback: cash_back,
           })
           .catch(async (err) => {
             return {
-              statusText: `organization.webhook_url: ${
-                organization.webhook_url
+              statusText: `organization.cashback_webhook_url: ${
+                organization.cashback_webhook_url
               }/receipts end pointga post qilib bolmadi!\n${JSON.stringify(
                 err,
                 null,
