@@ -166,6 +166,29 @@ module.exports = fp((instance, _, next) => {
         }).save();
       }
       let cash_back = default_cash_back;
+
+      if (clientsDatabase && organization && organization.webhook_url) {
+        await axios
+          .post(`${organization.webhook_url}`, {
+            clientId: clientsDatabase._id,
+            usedCashback: minus_cash,
+            givenCashback: cash_back,
+          })
+          .catch(async (err) => {
+            return {
+              statusText: `organization.webhook_url: ${
+                organization.webhook_url
+              }/receipts end pointga post qilib bolmadi!\n${JSON.stringify(
+                err,
+                null,
+                "\t",
+              )}`,
+              status: 404,
+              cash_back: cash_back,
+            };
+          });
+      }
+
       //Tiin uchun
       if (
         organization._id == "5f5641e8dce4e706c062837a" ||
