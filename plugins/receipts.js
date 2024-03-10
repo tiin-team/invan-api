@@ -75,6 +75,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
     const sold_item_ids = new Set()
     const invalidObjectIds = []
+    const partiation_ids = new Set()
     for (const rr of request.body) {
       if (
         !date_and_numbers.includes(
@@ -91,6 +92,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
               value: item.value,
             })
           sold_item_ids.add(item.product_id)
+          if (item.partiation_id) {
+            partiation_ids.add(item.partiation_id)
+          }
         })
       }
     }
@@ -148,6 +152,20 @@ const receiptCreateGroup = async (request, reply, instance) => {
     const other_category = await instance.goodsCategory
       .findOne({ organization: user.organization, is_other: true })
       .lean();
+
+    const queues = await instance.goodsSaleQueue
+      .find({
+        $or: [
+          { _id: { $in: [...partiation_ids].map(id => instance.ObjectId(id)) } },
+          {
+            good_id: { $in: [...sold_item_ids].map(id => instance.ObjectId(id)) },
+            service_id: instance.ObjectId(service_id),
+            quantity_left: { $gt: 0 },
+          },
+        ]
+      })
+      .sort({ queue: 1 })
+      .lean()
 
     for (const rr of request.body) {
       console.log('Order id')
@@ -291,6 +309,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
               if (serv && serv.cost) {
                 $receiptModel.sold_item_list[i].cost = serv.cost
+                $receiptModel.sold_item_list[i].total_cost = $receiptModel.sold_item_list[i].value * serv.cost
               }
 
               // const prices = serv && serv.prices ? serv.prices.filter(a => a.from !== 0) : []
@@ -327,42 +346,126 @@ const receiptCreateGroup = async (request, reply, instance) => {
               } catch (error) { }
 
               try {
+                if (item.primary_supplier_id) {
+                  $receiptModel.sold_item_list[i].supplier_id = suppliersObj[item.primary_supplier_id]._id;
+                  $receiptModel.sold_item_list[i].supplier_name = suppliersObj[item.primary_supplier_id].supplier_name;
+                }
+
                 // const queue_query = {}
                 // if (item.queue) queue_query.queue = item.queue
                 // else queue_query = { queue: -1 }
                 //xatolik bor
-                const partiation_query = $receiptModel.sold_item_list[i].partiation_id
-                  ? ({ _id: $receiptModel.sold_item_list[i].partiation_id })
-                  : ({
-                    good_id: instance.ObjectId(item._id),
-                    service_id: instance.ObjectId(service_id),
-                    // queue: item.queue,
-                    quantity_left: { $ne: 0 },
-                  })
-                const queue = await instance.goodsSaleQueue
-                  .findOne(partiation_query)
-                  .sort({ queue: 1 })
-                  .lean()
+                // const partiation_query = $receiptModel.sold_item_list[i].partiation_id
+                //   ? ({ _id: $receiptModel.sold_item_list[i].partiation_id })
+                //   : ({
+                //     good_id: instance.ObjectId(item._id),
+                //     service_id: instance.ObjectId(service_id),
+                //     // queue: item.queue,
+                //     quantity_left: { $ne: 0 },
+                //   })
+                // const queueById = $receiptModel.sold_item_list[i].partiation_id
+                //   ? queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
+                //   : undefined
+                // const queue = $receiptModel.sold_item_list[i].partiation_id && queueById && queueById.quantity_left > 0
+                //   ? queueById
+                //   : queues.find(q => q.good_id == item._id && q.quantity_left > 0)
+                // const queue = await instance.goodsSaleQueue
+                //   .findOne(partiation_query)
+                //   .sort({ queue: 1 })
+                //   .lean()
                 // bu keyinchalik olib tashlanadi
-                if (item.primary_supplier_id) {
-                  // const supplier = await instance.adjustmentSupplier
-                  //   .findById(item.primary_supplier_id)
-                  //   .lean();
-                  $receiptModel.sold_item_list[i].supplier_id = suppliersObj[item.primary_supplier_id]._id;
-                  $receiptModel.sold_item_list[i].supplier_name =
-                    suppliersObj[item.primary_supplier_id].supplier_name;
-                }
 
-                if (queue) {
-                  $receiptModel.sold_item_list[i].queue_id = queue._id
-                  $receiptModel.sold_item_list[i].partiation_id = queue._id
-                  $receiptModel.sold_item_list[i].p_order = queue.p_order
-                  $receiptModel.sold_item_list[i].queue = queue.queue
-                  // partiali tovar bo'yicha supplierni olish
-                  $receiptModel.sold_item_list[i].supplier_id = queue.supplier_id;
-                  $receiptModel.sold_item_list[i].supplier_name = queue.supplier_name;
-                }
+                let totalCost = 0;
+                if ($receiptModel.sold_item_list[i].partiation_id) {
+                  const queue = queues.find(q => q._id == $receiptModel.sold_item_list[i].partiation_id)
+                  if (queue) {
+                    totalCost = $receiptModel.sold_item_list[i].value * queue.cost
+                    $receiptModel.sold_item_list[i].queue_id = queue._id
+                    $receiptModel.sold_item_list[i].partiation_id = queue._id
+                    $receiptModel.sold_item_list[i].p_order = queue.p_order
+                    $receiptModel.sold_item_list[i].queue = queue.queue
+                    // partiali tovar bo'yicha supplierni olish
+                    $receiptModel.sold_item_list[i].supplier_id = queue.supplier_id;
+                    $receiptModel.sold_item_list[i].supplier_name = queue.supplier_name;
 
+                    queue.quantity_left -= $receiptModel.sold_item_list[i].value
+
+                    $receiptModel.sold_item_list[i].partitions = [{
+                      partition_id: queue._id,
+                      count: $receiptModel.sold_item_list[i].value,
+                      cost: queue.cost,
+                      p_order: queue.p_order,
+                      queue: queue.queue,
+                      supplier_id: queue.supplier_id,
+                      supplier_name: queue.supplier_name,
+                    }]
+                  }
+                } else {
+                  const filteredQueues = queues.filter(q => q.good_id + '' == $receiptModel.sold_item_list[i].product_id + '' + '' && q.quantity_left > 0)
+
+                  if (filteredQueues.length > 0) {
+                    $receiptModel.sold_item_list[i].queue_id = filteredQueues[0]._id
+                    $receiptModel.sold_item_list[i].partiation_id = filteredQueues[0]._id
+                    $receiptModel.sold_item_list[i].p_order = filteredQueues[0].p_order
+                    $receiptModel.sold_item_list[i].queue = filteredQueues[0].queue
+
+                    $receiptModel.sold_item_list[i].supplier_id = filteredQueues[0].supplier_id;
+                    $receiptModel.sold_item_list[i].supplier_name = filteredQueues[0].supplier_name;
+
+                    $receiptModel.sold_item_list[i].partitions = []
+
+                    let diff = 0;
+                    for (const queue of filteredQueues) {
+                      if ($receiptModel.sold_item_list[i].value - diff <= queue.quantity_left) {
+                        $receiptModel.sold_item_list[i].partitions.push({
+                          partition_id: queue._id,
+                          count: $receiptModel.sold_item_list[i].value - diff,
+                          cost: queue.cost,
+                          p_order: queue.p_order,
+                          queue: queue.queue,
+                          supplier_id: queue.supplier_id,
+                          supplier_name: queue.supplier_name,
+                        })
+                        totalCost += ($receiptModel.sold_item_list[i].value - diff) * queue.cost
+                        diff += $receiptModel.sold_item_list[i].value - diff
+                        queue.quantity_left -= ($receiptModel.sold_item_list[i].value - diff)
+                        break
+                      } else {
+                        $receiptModel.sold_item_list[i].partitions.push({
+                          partition_id: queue._id,
+                          count: queue.quantity_left,
+                          cost: queue.cost,
+                          p_order: queue.p_order,
+                          queue: queue.queue,
+                          supplier_id: queue.supplier_id,
+                          supplier_name: queue.supplier_name,
+                        })
+                        diff += queue.quantity_left
+                        totalCost += queue.quantity_left * queue.cost
+                        queue.quantity_left = 0
+                      }
+                    }
+
+                    if (diff < $receiptModel.sold_item_list[i].value) {
+                      const mod = $receiptModel.sold_item_list[i].value - diff
+                      diff += mod
+                      totalCost += mod * filteredQueues[filteredQueues.length - 1].cost
+                      $receiptModel.sold_item_list[i].partitions.push({
+                        partition_id: filteredQueues[filteredQueues.length - 1]._id,
+                        count: mod,
+                        cost: filteredQueues[filteredQueues.length - 1].cost,
+                        p_order: filteredQueues[filteredQueues.length - 1].p_order,
+                        queue: filteredQueues[filteredQueues.length - 1].queue,
+                        supplier_id: filteredQueues[filteredQueues.length - 1].supplier_id,
+                        supplier_name: filteredQueues[filteredQueues.length - 1].supplier_name,
+                      })
+                    }
+                  }
+                }
+                if (totalCost > 0) {
+                  $receiptModel.sold_item_list[i].cost = totalCost / $receiptModel.sold_item_list[i].value
+                  $receiptModel.sold_item_list[i].total_cost = totalCost
+                }
               } catch (error) {
                 instance.send_Error('Sold item partion not found', JSON.stringify(error))
               }
@@ -403,15 +506,17 @@ const receiptCreateGroup = async (request, reply, instance) => {
       .find(
         {
           phone_number: {
-            $in: need_to_save.filter(r => r.phone_number != '').map(r => r.phone_number),
+            $in: need_to_save.filter(r => r.cashback_phone != '').map(r => r.cashback_phone),
           },
           organization: user.organization,
         },
         {
+          _id: 1,
           first_name: 1,
           last_name: 1,
           phone_number: 1,
           organization: 1,
+          user_id: 1,
         },
       )
       .lean();
@@ -421,7 +526,12 @@ const receiptCreateGroup = async (request, reply, instance) => {
     }
 
     for (const r of need_to_save) {
+      const isDebtSaleLogic = r.organization === '64d2419da645877ca6a57dcf'
       try {
+        if (clientsObj[r.cashback_phone] && isDebtSaleLogic) {
+          r.client_id = clientsObj[r.cashback_phone]._id
+          r.user_id = clientsObj[r.cashback_phone].user_id
+        }
         const check = await new instance.Receipts(r).save();
 
         // donate for Turkey
@@ -463,7 +573,7 @@ const receiptCreateGroup = async (request, reply, instance) => {
           await instance.save_agent_transaction(instance, check);
         }
         // cashbackni hisoblash
-        if (r.cashback_phone && !check.is_donate) {
+        if (r.cashback_phone && !check.is_donate && !isDebtSaleLogic) {
           console.log('save cashback')
 
           cash_back = await instance.CashBackClientUpdate(
@@ -538,6 +648,95 @@ const receiptCreateGroup = async (request, reply, instance) => {
   }
   return reply;
 };
+
+// Shift ni update qilish
+// async function updateShift(receipts, Taxes) {
+//   let gross_sales = 0.0
+//   let refunds = 0.0
+//   let refunds_cash = 0.0
+//   let discounts = 0.0
+//   let net_sales = 0.0
+//   let cash = 0.0
+//   let taxes = 0.0
+
+//   for (const receipt of receipts) {
+//     for (const sold_item of receipt.sold_item_list) {
+//       if (Array.isArray(sold_item.taxes)) {
+//         for (const tax of sold_item.taxes) {
+//           if (Taxes[tax] != null || Taxes[tax] != undefined) {
+//             if (Taxes[tax].type == 'include') {
+//               taxes += (sold_item.value * sold_item.price) / (1 + Taxes[tax].tax / 100.0) * Taxes[tax].tax / 100.0
+//             }
+//             else {
+//               taxes += (sold_item.value * sold_item.price) * (Taxes[tax].tax / 100.0)
+//             }
+//           }
+//         }
+//       }
+//     }
+
+//     if (receipt.is_refund == false || receipt.is_refund == undefined) {
+//       gross_sales += receipt.total_price;
+//       if (receipt.discount)
+//         for (const __dis of receipt.discount) {
+//           if (__dis.type == 'percentage') {
+//             discounts += __dis.value * receipt.total_price / 100;
+//           }
+//           else {
+//             discounts += __dis.value;
+//           }
+//         }
+//     } else {
+//       refunds += receipt.total_price;
+//       if (receipt.discount)
+//         for (const __dis of receipt.discount) {
+//           if (__dis.type == 'percentage') {
+//             discounts -= __dis.value * receipt.total_price / 100;
+//           }
+//           else {
+//             discounts -= __dis.value;
+//           }
+//         }
+//     }
+//     for (const pay of receipt.payment) {
+//       if (pay.name == 'cash' && receipt.is_refund == false) {
+//         cash += pay.value
+//       } else if (pay.name == 'cash') {
+//         refunds_cash += pay.value
+//       }
+//     }
+//     if (receipt.is_refund) {
+//       refunds += receipt.total_price
+//     }
+//   }
+
+//   if (taxes > 0) {
+//     const n = Math.round(Math.log10(taxes))
+//     taxes = parseFloat(taxes.toPrecision(n + 2))
+//   }
+
+//   net_sales = gross_sales - (refunds + discounts)
+
+//   instance.Shifts.findOne({ organization: user.organization, service: user.service, closing_time: 0 }, (err, shift) => {
+//     if (shift) {
+//       shift.cash_drawer.cash_payment += cash
+//       shift.cash_drawer.cash_refund += refunds_cash
+//       shift.cash_drawer.exp_cash_amount = shift.cash_drawer.starting_cash + shift.cash_drawer.cash_payment - shift.cash_drawer.cash_refund + shift.cash_drawer.paid_in - shift.cash_drawer.paid_out
+//       shift.cash_drawer.act_cash_amount = shift.cash_drawer.exp_cash_amount
+//       shift.sales_summary.gross_sales += gross_sales
+//       shift.sales_summary.refunds += refunds
+//       shift.sales_summary.discounts += discounts
+//       shift.sales_summary.net_sales += net_sales
+//       shift.sales_summary.cash += cash
+//       shift.sales_summary.taxes += taxes
+//       instance.Shifts.updateOne({ _id: shift._id }, { $set: shift }, (err, doc) => {
+//         if (err) {
+//           instance.send_Error('update shift', JSON.stringify(err))
+//         }
+//       })
+//     }
+//   })
+// }
 
 const receiptsSaveAsDraft = async (request, reply, instance) => {
   try {
@@ -770,7 +969,7 @@ const useReceiptDraft = async (request, reply, instance) => {
     if (receipt.receipt_state != 'draft') {
       return reply.send({
         statusCode: 402,
-        message: 'Receipt Draft allready used'
+        message: 'Receipt Draft already used'
       })
     }
 
@@ -952,8 +1151,8 @@ const receiptSetClient = async (request, reply, instance) => {
     if (receipt.user_id || receipt.client_id) {
       return reply.code(400).send({
         code: 400,
-        message: "Client allready setted",
-        error: "Client allready setted",
+        message: "Client already setted",
+        error: "Client already setted",
       })
     }
 
@@ -1088,7 +1287,11 @@ module.exports = fp((instance, _, next) => {
           properties: {
             name: {
               type: "string",
-              enum: ["cash", "card", "gift", "debt", "qr_code", "nfc", "cashback"],
+              enum: [
+                "cash", "card", "gift",
+                "debt", "qr_code", "nfc",
+                "cashback", "online_payment", "transfer_pay",
+              ],
             },
             value: { type: "number" },
           },

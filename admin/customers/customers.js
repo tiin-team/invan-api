@@ -184,6 +184,12 @@ module.exports = (instance, options, next) => {
             },
           },
           {
+            cartame_id: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
             last_name: {
               $regex: search,
               $options: "i",
@@ -200,6 +206,9 @@ module.exports = (instance, options, next) => {
               $regex: search,
               $options: "i",
             },
+          },
+          {
+            inn: search,
           },
         ];
       }
@@ -485,6 +494,7 @@ module.exports = (instance, options, next) => {
       if (!clientData.user_id) {
         clientData.user_id = clientData.phone_number.replace(/\+/, "") + new Date().getTime();
       }
+      clientData.gender = ['male', 'female', 'not_set'].includes(clientData.gender) ? clientData.gender : 'not_set'
       const newClient = new instance.clientsDatabase(clientData);
       const result = await newClient.save();
       if (!result) {
@@ -731,7 +741,26 @@ module.exports = (instance, options, next) => {
             maxLength: 24
           },
           tariff_name: { type: "string" },
-          is_minimum_price: { type: "boolean" }
+          is_minimum_price: { type: "boolean" },
+          user_type: { type: "string", enum: ["legal", "natural"] },
+          inn: { type: "string" },
+          contract_numbers: {
+            type: "array",
+            items: {
+              type: "object",
+              required: [
+                "isDefault",
+                "contractNo",
+                "contractDate",
+              ],
+              additionalProperties: false,
+              properties: {
+                isDefault: { type: "boolean" },
+                contractNo: { type: "string" },
+                contractDate: { type: "string" },
+              },
+            },
+          }
         },
       },
     },
@@ -1068,6 +1097,9 @@ module.exports = (instance, options, next) => {
             user_id: 1,
             visit_counter: 1,
             createdAt: 1,
+            user_type: 1,
+            inn: 1,
+            contract_numbers: 1,
           },
         )
         .lean();

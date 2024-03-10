@@ -708,6 +708,7 @@ module.exports = (instance, _, next) => {
               "gross_sales",
               "refunds",
               "discounts",
+              "debt",
               "net_sales",
               "gross_profit"
             ]
@@ -922,6 +923,31 @@ module.exports = (instance, _, next) => {
                 ],
               },
             }
+          },
+          debt_payments: {
+            $reduce: {
+              input: "$payment",
+              initialValue: 0,
+              in: {
+                $add: [
+                  "$$value",
+                  {
+                    $cond: [
+                      { $eq: ["$$this.name", "debt"] },
+                      {
+                        $convert: {
+                          input: '$$this.value',
+                          to: 'double',
+                          onError: 0,
+                          onNull: 0
+                        }
+                      },
+                      0
+                    ],
+                  },
+                ],
+              },
+            }
           }
         }
       }
@@ -964,6 +990,9 @@ module.exports = (instance, _, next) => {
                 }
               ]
             }
+          },
+          debt: {
+            $sum: '$debt_payments'
           },
           gross_sales: {
             $sum: {
@@ -1022,6 +1051,9 @@ module.exports = (instance, _, next) => {
           discounts: {
             $sum: "$discounts"
           },
+          debt: {
+            $sum: "$debt"
+          },
           gross_sales: {
             $sum: "$gross_sales"
           },
@@ -1054,6 +1086,7 @@ module.exports = (instance, _, next) => {
               },
               gross_sales: "$gross_sales",
               discounts: "$discounts",
+              debt: "$debt",
               refunds: "$refunds",
               net_sales: {
                 $subtract: ["$gross_sales", { $add: ["$discounts", "$refunds"] }]
@@ -1102,6 +1135,7 @@ module.exports = (instance, _, next) => {
           return reply.ok({
             cost_of_goods: 0,
             discounts: 0,
+            debt: 0,
             gross_profit: 0,
             gross_sales: 0,
             net_sales: 0,
@@ -1176,6 +1210,9 @@ module.exports = (instance, _, next) => {
             cost_of_goods: 1,
             refunds: 1,
             discounts: 1,
+            debt: {
+              $sum: '$debt'
+            },
             date: 1,
             cash_back: '$used_cashback',
             net_sales: {

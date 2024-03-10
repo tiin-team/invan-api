@@ -305,7 +305,11 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
         const customer = await instance.clientsDatabase
             .findOne(
                 { _id: customer_id },
-                { user_id: 1, organization: 1, },
+                {
+                    user_id: 1,
+                    organization: 1,
+                    phone_number: 1,
+                },
             )
             .lean();
         if (!customer) {
@@ -341,6 +345,7 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
                 $or: [
                     { client_id: customer._id },
                     { user_id: customer.user_id },
+                    { cashback_phone: customer.phone_number },
                 ],
                 organization: customer.organization,
                 date: {

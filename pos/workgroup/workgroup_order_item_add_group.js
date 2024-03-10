@@ -45,7 +45,7 @@ const wOrderAddItemGroup = async function (request, reply, instance) {
             })
             
             if(exist_workgroup_order) {
-                return reply.response(403, `Item with id ${item.product_id} allready exist`);
+                return reply.response(403, `Item with id ${item.product_id} already exist`);
             }
             if(itemsMap[item.product_id]) {
                 return reply.response(405, `Items should be Set`);

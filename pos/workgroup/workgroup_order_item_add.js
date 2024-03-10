@@ -51,7 +51,7 @@ const wOrderAddItem = async function (request, reply, instance) {
         // }
         for (const itm of workgroup_order.items) {
             if (item._id + '' == itm.product_id + '') {
-                return reply.response(403, 'Item allready exist');
+                return reply.response(403, 'Item already exist');
             }
         }
         if (item.item_type == 'variant') {

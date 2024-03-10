@@ -5,12 +5,9 @@ module.exports = (instance, options, next) => {
 
   // get timecards
 
-  const get_timecards = async (request, relpy, admin) => {
+  const get_timecards = async (request, reply, admin) => {
     const min = parseInt(request.params.min)
     const max = parseInt(request.params.max)
-
-
-    console.log(request.params)
 
     let limit = parseInt(request.params.limit)
 
@@ -22,7 +19,6 @@ module.exports = (instance, options, next) => {
     if (!page || page < 1) {
       page = 1
     }
-
 
     const query = {
       organization: admin.organization,
@@ -66,9 +62,6 @@ module.exports = (instance, options, next) => {
       }
     }
 
-
-    console.log(limit, page)
-
     const tcards = await instance.timecard.aggregate([
       {
         $match: query
@@ -80,7 +73,7 @@ module.exports = (instance, options, next) => {
         $skip: (page - 1) * limit
       },
       {
-        $sort:{clock_in:1}
+        $sort: { clock_in: 1 }
       },
       {
         $lookup: {
@@ -110,11 +103,12 @@ module.exports = (instance, options, next) => {
       tcards[i].SERVICE = undefined
       if (tcards[i].EMPLOYEE.length > 0) {
         tcards[i].employee_name = tcards[i].EMPLOYEE[0].name
+        tcards[i].employee_tin = tcards[i].EMPLOYEE[0].tin ? tcards[i].EMPLOYEE[0].tin : ''
       }
       tcards[i].EMPLOYEE = undefined
     }
 
-    relpy.ok({
+    reply.ok({
       total: total,
       page: Math.ceil(total / limit),
       data: tcards
@@ -127,15 +121,15 @@ module.exports = (instance, options, next) => {
     // })
   }
 
-  instance.post('/employees/timecard/:min/:max/:limit/:page', options.version, (request, relpy) => {
-    instance.oauth_admin(request, relpy, (admin) => {
-      get_timecards(request, relpy, admin)
+  instance.post('/employees/timecard/:min/:max/:limit/:page', options.version, (request, reply) => {
+    instance.oauth_admin(request, reply, (admin) => {
+      get_timecards(request, reply, admin)
     })
   })
 
   // create timecard
 
-  const timecard_create = (request, relpy, user) => {
+  const timecard_create = (request, reply, user) => {
     var timecard = request.body
     timecard.organization = user.organization
     timecard.created_time = new Date().getTime()
@@ -182,7 +176,7 @@ module.exports = (instance, options, next) => {
               ]
             }, (_, tcard) => {
               if (tcard && request.body.check == true) {
-                relpy.ok({
+                reply.ok({
                   _id: tcard._id,
                   overflow: true
                 })
@@ -192,10 +186,10 @@ module.exports = (instance, options, next) => {
                 timecardM._id = new mongoose.Types.ObjectId()
                 timecardM.save((err) => {
                   if (err) {
-                    relpy.error('Error on saving timecard')
+                    reply.error('Error on saving timecard')
                   }
                   else {
-                    relpy.ok({
+                    reply.ok({
                       _id: timecardM._id,
                       overflow: false
                     })
@@ -217,25 +211,25 @@ module.exports = (instance, options, next) => {
             })
           }
           else {
-            relpy.fourorfour('employee')
+            reply.fourorfour('employee')
           }
         })
       }
       else {
-        relpy.fourorfour('service')
+        reply.fourorfour('service')
       }
     })
   }
 
-  instance.post('/employees/timecard/create', options.version, (request, relpy) => {
-    instance.oauth_admin(request, relpy, (admin) => {
-      timecard_create(request, relpy, admin)
+  instance.post('/employees/timecard/create', options.version, (request, reply) => {
+    instance.oauth_admin(request, reply, (admin) => {
+      timecard_create(request, reply, admin)
     })
   })
 
   // get by id
 
-  const get_timecard_by_id = (request, relpy, admin) => {
+  const get_timecard_by_id = (request, reply, admin) => {
     instance.timecard.findOne({
       _id: request.params.id
     }, (_, timecard) => {
@@ -253,24 +247,24 @@ module.exports = (instance, options, next) => {
             instance.send_Error('to Object', error.message)
           }
           timecard.histories = histories
-          relpy.ok(timecard)
+          reply.ok(timecard)
         })
       }
       else {
-        relpy.fourorfour('timecard')
+        reply.fourorfour('timecard')
       }
     })
   }
 
-  instance.get('/employees/timecard/get/:id', options.version, (request, relpy) => {
-    instance.oauth_admin(request, relpy, (admin) => {
-      get_timecard_by_id(request, relpy, admin)
+  instance.get('/employees/timecard/get/:id', options.version, (request, reply) => {
+    instance.oauth_admin(request, reply, (admin) => {
+      get_timecard_by_id(request, reply, admin)
     })
   })
 
   // update timecard
 
-  const update_timecard = (request, relpy, admin) => {
+  const update_timecard = (request, reply, admin) => {
     instance.timecard.findOne({
       _id: request.params.id
     }, (err, timecard) => {
@@ -286,7 +280,7 @@ module.exports = (instance, options, next) => {
             }
           }, (err) => {
             if (err) {
-              relpy.error('Error on updating timecard')
+              reply.error('Error on updating timecard')
               instance.send_Error('update timecard', JSON.stringify(err))
             }
             else {
@@ -302,34 +296,34 @@ module.exports = (instance, options, next) => {
                   instance.send_Error('timecard history create', JSON.stringify(err))
                 }
               })
-              relpy.ok()
+              reply.ok()
             }
           })
         }
         else {
-          relpy.ok()
+          reply.ok()
         }
       }
       else {
-        relpy.fourorfour('Timecard')
+        reply.fourorfour('Timecard')
       }
     })
   }
 
-  instance.post('/employees/timecard/update/:id', options.version, (request, relpy) => {
-    instance.oauth_admin(request, relpy, (admin) => {
-      update_timecard(request, relpy, admin)
+  instance.post('/employees/timecard/update/:id', options.version, (request, reply) => {
+    instance.oauth_admin(request, reply, (admin) => {
+      update_timecard(request, reply, admin)
     })
   })
 
   // delete timecard
-  const delete_timecard = (request, relpy, admin) => {
+  const delete_timecard = (request, reply, admin) => {
     instance.timecard.deleteMany({
       _id: {
         $in: request.body.indexes
       }
     }, (err) => {
-      relpy.ok()
+      reply.ok()
       if (err) {
         instance.send_Error('delete timecard', JSON.stringify(err))
       }
@@ -347,20 +341,20 @@ module.exports = (instance, options, next) => {
     })
   }
 
-  instance.post('/employees/timecard/delete_group', options.version, (request, relpy) => {
-    instance.oauth_admin(request, relpy, (admin) => {
-      delete_timecard(request, relpy, admin)
+  instance.post('/employees/timecard/delete_group', options.version, (request, reply) => {
+    instance.oauth_admin(request, reply, (admin) => {
+      delete_timecard(request, reply, admin)
     })
   })
 
   // clock in out
-  const clock_in_out = (request, relpy, employee) => {
+  const clock_in_out = (request, reply, employee) => {
     var service_id = request.headers['accept-service']
     instance.services.findOne({
       _id: service_id
     }, (err, service) => {
       if (err || service == null) {
-        relpy.error('Service not found')
+        reply.error('Service not found')
       }
       else {
         if (request.body) {
@@ -440,7 +434,7 @@ module.exports = (instance, options, next) => {
                   }
                 }
               }
-              relpy.ok()
+              reply.ok()
               if (tim) {
                 instance.timecard.updateOne({
                   _id: tim._id
@@ -493,11 +487,11 @@ module.exports = (instance, options, next) => {
             })
           }
           else {
-            relpy.error('Body is not iterator')
+            reply.error('Body is not iterator')
           }
         }
         else {
-          relpy.error('Error on creating')
+          reply.error('Error on creating')
         }
       }
     })
@@ -509,9 +503,9 @@ module.exports = (instance, options, next) => {
       ...options.version,
       preValidation: instance.authorize_employee
     },
-    (request, relpy) => {
+    (request, reply) => {
       const employee = request.user;
-      clock_in_out(request, relpy, employee)
+      clock_in_out(request, reply, employee)
     }
   )
 

@@ -1,5 +1,6 @@
+const fp = require('fastify-plugin')
 
-module.exports = (instance, options, next) => {
+module.exports = fp((instance, options, next) => {
 
   // get supplier by id
 
@@ -109,7 +110,8 @@ module.exports = (instance, options, next) => {
         // supp.transactions = data;
         const total = data.length;
 
-        supp.transactions = data.slice((page - 1) * limit, limit * page);;
+        supp.transactions = data.slice((page - 1) * limit, limit * page);
+        supp.contract_numbers = supp.contract_numbers && supp.contract_numbers.length ? supp.contract_numbers : []
         //       supp.transactions = transactions;
         // Calculate supplier balance
         // const $match = { $match: { supplier_id: supp._id } }
@@ -134,54 +136,80 @@ module.exports = (instance, options, next) => {
   })
 
   // get suppliers
-
-  const get_suppliers = (request, reply, admin) => {
-    var page = parseInt(request.params.page)
-    var limit = parseInt(request.params.limit)
+  /**
+   * 
+   * @param {import('fastify').FastifyRequest<IncomingMessage, DefaultQuery, DefaultParams, DefaultHeaders, any>} request 
+   * @param {import('fastify').FastifyReply<ServerResponse<IncomingMessage>>} reply 
+   * @param {*} admin 
+   * @returns 
+   */
+  const get_suppliers = async (request, reply, admin) => {
+    const page = parseInt(request.params.page)
+    const limit = parseInt(request.params.limit)
     if (request.body == undefined) {
       request.body = {}
     }
-    var supplier_name = request.body.supplier_name
-    if (typeof supplier_name != typeof 'invan') {
-      supplier_name = ''
+
+    const query = {
+      is_deleted: { $ne: true },
+      organization: admin.organization,
     }
 
-    instance.adjustmentSupplier.find({
-      is_deleted: {
-        $ne: true
-      },
-      organization: admin.organization,
-      $or: [
+    if (request.body.supplier_name && typeof request.body.supplier_name === 'string') {
+      query['$or'] = [
         {
           supplier_name: {
-            $regex: supplier_name,
+            $regex: request.body.supplier_name,
             $options: 'i'
           }
         },
         {
           supplier_name: {
-            $regex: instance.converter(supplier_name),
+            $regex: instance.converter(request.body.supplier_name),
             $options: 'i'
           }
         }
       ]
-    }, (err, suppliers) => {
-      if (err || suppliers == null) {
-        suppliers = []
-      }
-      if (page) {
-        var total = suppliers.length
-        suppliers = suppliers.splice(limit * (page - 1), limit)
-        reply.ok({
+    }
+
+    if (page) {
+      const suppliers = await instance.adjustmentSupplier.find(
+        query,
+        {
+          _id: 1,
+          is_deleted: 1,
+          balance: 1,
+          balance_currency: 1,
+          balance_usd: 1,
+          telegram_acces: 1,
+          supplier_name: 1,
+          organization: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        }
+      )
+        .skip(limit * (page - 1))
+        .limit(limit)
+        .lean()
+
+      const total = await instance.adjustmentSupplier.countDocuments(query)
+      const totalPagesCount = Math.ceil(total / limit)
+
+      return reply.ok(
+        suppliers,
+        {
           total: total,
-          page: Math.ceil(total / limit),
-          data: suppliers
-        })
-      }
-      else {
-        reply.ok(suppliers)
-      }
-    })
+          limit: limit,
+          currentPage: page,
+          pageCount: totalPagesCount,
+        }
+      )
+    }
+
+    const suppliers = await instance.adjustmentSupplier.find(query)
+      .lean()
+
+    reply.ok(suppliers)
   }
 
   instance.post('/inventory/get_suppliers/:limit/:page', options.version, (request, reply) => {
@@ -192,7 +220,11 @@ module.exports = (instance, options, next) => {
 
   instance.get('/inventory/get_suppliers', options.version, (request, reply) => {
     instance.oauth_admin(request, reply, (admin) => {
-      if (admin) { get_suppliers(request, reply, admin) }
+      if (admin) {
+        return get_suppliers(request, reply, admin)
+      }
+
+      return instance.unauthorized(reply)
     })
   })
 
@@ -671,4 +703,4 @@ module.exports = (instance, options, next) => {
   })
 
   next()
-}
+})

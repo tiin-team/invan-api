@@ -182,7 +182,49 @@ module.exports = (instance, options, next) => {
     for (const parent_item of parents) {
       parentsObj[parent_item._id] = parent_item
     }
+
+    const returnedOrders = await instance.inventoryPurchase.find(
+      {
+        organization: admin.organization,
+        p_order: {
+          $in: histories.filter((h) => h.reason === "returned_order").map(h => h.unique)
+        }
+      },
+      {
+        p_order: 1,
+        supplier_id: 1,
+      },
+    )
+      .lean()
+
+    const suppliers = await instance.adjustmentSupplier.find(
+      { _id: { $in: returnedOrders.map(o => instance.ObjectId(o.supplier_id)) } },
+      { supplier_name: 1 },
+    )
+      .lean()
+
+    const suppliersObj = {}
+    for (const supplier of suppliers) {
+      suppliersObj[supplier._id] = supplier
+    }
+
+    /** @type Record<string, string> */
+    const returnedOrdersObj = {}
+    for (const returnedOrder of returnedOrders) {
+      if (suppliersObj[returnedOrder.supplier_id]) {
+        returnedOrdersObj[returnedOrder.p_order] = {
+          _id: suppliersObj[returnedOrder.supplier_id]._id,
+          name: suppliersObj[returnedOrder.supplier_id].supplier_name,
+        }
+      }
+    }
+
     for (const index in histories) {
+      if (returnedOrdersObj[histories[index].unique]) {
+        histories[index].supplier_id = returnedOrdersObj[histories[index].unique]._id
+        histories[index].supplier_name = returnedOrdersObj[histories[index].unique].name
+      }
+
       if (histories[index].product.length > 0) {
         if (histories[index].product[0].item_type == 'variant') {
           let current_item = histories[index].product[0]

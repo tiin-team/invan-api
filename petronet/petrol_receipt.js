@@ -151,7 +151,7 @@ module.exports = fp((instance, _, next) => {
               properties: {
                 name: {
                   type: "string",
-                  enum: ["cash", "card", "gift", "debt", "qr_code", "nfc", "cashback"],
+                  enum: ["cash", "card", "gift", "debt", "qr_code", "nfc", "cashback", "online_payment", "transfer_pay",],
                 },
                 value: { type: "number" },
               },

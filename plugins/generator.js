@@ -1950,7 +1950,7 @@ module.exports = fp((instance, _, next) => {
                     if (name == undefined) {
                       name = "NAME"
                     }
-                    instance.send_Error('receipt allready exist', name)
+                    instance.send_Error('receipt already exist', name)
                   }
                   else {
                     forReceiptToWorkCreate(request, user, request.body, IS_R)
@@ -3137,9 +3137,20 @@ module.exports = fp((instance, _, next) => {
                     }
                   }
                   catch (error) { }
-                  if (model.collection.name == 'receipts' && item.user_id) {
+                  if (model.collection.name == 'receipts') {
                     try {
-                      const client = await instance.clientsDatabase.findOne({ user_id: item.user_id })
+                      const client = await instance.clientsDatabase.findOne(
+                        {
+                          organization: item.organization,
+                          $or: [
+                            { user_id: item.user_id },
+                            { client_id: instance.ObjectId(item.client_id) },
+                            { phone_number: item.cashback_phone },
+                          ],
+                        },
+                        { first_name: 1 },
+                      )
+                        .lean()
                       if (client) {
                         item.client_name = client.first_name
                       }

@@ -16,8 +16,8 @@ module.exports = fp((instance, _, next) => {
     this.send(response)
   })
 
-  instance.decorateReply('ok', function (data = undefined) {
-    var response = {
+  instance.decorateReply('ok', function (data = undefined, meta = undefined) {
+    const response = {
       statusCode: 200,
       error: 'Ok',
       message: 'Success'
@@ -25,7 +25,25 @@ module.exports = fp((instance, _, next) => {
     if (data) {
       response.data = data
     }
+
+    if (meta) {
+      response.meta = meta
+    }
+
     this.send(response)
+  })
+
+
+  instance.decorateReply('created', function (data = undefined) {
+    const response = {
+      statusCode: 201,
+      error: 'Ok',
+      message: 'Success'
+    }
+    if (data) {
+      response.data = data
+    }
+    this.status(201).send(response)
   })
 
   instance.decorateReply('error', function (name) {
@@ -100,12 +118,12 @@ module.exports = fp((instance, _, next) => {
     })
   })
 
-  instance.decorateReply('allready_exist', function (name, code = 411, data=null) {
+  instance.decorateReply('allready_exist', function (name, code = 411, data = null) {
     this.send({
       statusCode: code,
       message: name,
       data: data,
-      error: name + ' allready exist'
+      error: name + ' already exist'
     })
   })
 
@@ -113,6 +131,14 @@ module.exports = fp((instance, _, next) => {
     var response = {
       statusCode: 412,
       message: 'could not delete ' + name
+    }
+    this.send(response)
+  })
+
+  instance.decorateReply('server_error', function () {
+    const response = {
+      statusCode: 500,
+      message: 'Internal server error',
     }
     this.send(response)
   })
@@ -129,7 +155,7 @@ module.exports = fp((instance, _, next) => {
     function () {
       const response = {
         statusCode: 50000,
-        message: "TechMap allready exist"
+        message: "TechMap already exist"
       }
       this.send(response)
     }

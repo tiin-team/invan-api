@@ -1,0 +1,288 @@
+{
+  organization: String,
+  services: [
+    {
+      service: mongoose.Schema.Types.ObjectId,
+      service_name: String,
+      price: {
+        type: Number,
+        default: 0
+      },
+      is_price_change: {
+        type: Boolean,
+        default: false
+      },
+      price_currency: {
+        type: String,
+        enum: ['uzs', 'usd'],
+        default: 'uzs'
+      },
+      price_auto_fill: {
+        type: Boolean,
+        default: true
+      },
+      prices: {
+        type: Array,
+        default: []
+      }, // { from: Number, price: Number },
+      in_stock: {
+        type: Number,
+        default: 0
+      },
+      low_stock: Number,
+      optimal_stock: Number,
+      reminder: {
+        type: Number,
+        default: 0
+      },
+      variant_name: {
+        type: String,
+        default: ''
+      },
+      available: {
+        type: Boolean
+      },
+      stopped_item: {
+        type: Boolean,
+        default: false
+      },
+      sku: Number,
+      printed_time: {
+        type: Number,
+        default: 0
+      },
+      printed_price_change_time: {
+        type: Number,
+        default: 0
+      },
+      last_price_change: {
+        type: Number,
+        default: 0
+      },
+    }
+  ],
+  stopped_item: {
+    type: Boolean,
+    default: false
+  },
+  created_time: Number,
+  last_updated: {
+    type: Number,
+    default: 0
+  },
+  last_stock_updated: {
+    type: Number,
+    default: 0
+  },
+  last_price_change: {
+    type: Number,
+    default: 0
+  },
+  name: {
+    type: String,
+    default: ''
+  },
+  fabricator: String,
+  category: String,
+  category_id: {
+    type: mongoose.Schema.Types.ObjectId
+  },
+  category_name: String, // remove soon
+  sale_is_avialable: {
+    type: Boolean,
+    default: true
+  },
+  sold_by: {
+    type: String,
+    enum: [
+      'each',
+      'weight',
+      // 'list',
+      // 'karaoke',
+      'pcs',
+      'box',
+      'litre',
+      'metre'
+    ],
+    default: 'each'
+  },
+  count_by_type: {
+    type: Number,
+    default: 0
+  },
+  barcode_by_type: {
+    type: String
+  },
+  expire_date: Number,
+  reminder: Number,
+  has_discount: Boolean,
+  old_price: Number,
+  price: Number,
+  prices: {
+    type: Array,
+    default: []
+  },
+  price_auto_fill: {
+    type: Boolean,
+    default: true
+  },
+  price_currency: {
+    type: String,
+    // enum: ['uzs', 'usd'],
+    default: 'uzs'
+  },
+  cost: {
+    type: Number,
+    default: 0
+  },
+  cost_currency: {
+    type: String,
+    // enum: ['uzs', 'usd'],
+    default: 'uzs'
+  },
+  max_cost: {
+    type: Number,
+    default: 0
+  },
+  sku: {
+    type: Number,
+    unique: true
+  },
+  hot_key: String,
+  barcode: {
+    type: Array,
+    default: []
+  },
+  composite_item: {
+    type: Boolean,
+    default: false
+  },
+  is_composite_item: {
+    type: Boolean,
+    default: false
+  },
+  composite_items: {
+    type: Array,
+    default: []
+    /**
+     *product_id: String,
+      product_name: String,
+      own_cost: Number,
+      quality: Number,
+      cost: Number,
+      cost_currency: Number
+     */
+  },
+  use_production: {
+    type: Boolean,
+    default: false
+  },
+  use_sub_production: {
+    type: Boolean,
+    default: false
+  },
+  is_track_stock: {
+    type: Boolean,
+    default: true
+  },
+  in_stock: {
+    type: Number,
+    default: 0
+  },
+  low_stock: {
+    type: Number,
+    default: 0
+  },
+  optimal_stock: {
+    type: Number,
+    default: 0
+  },
+  primary_supplier_id: mongoose.Schema.Types.ObjectId,
+  primary_supplier_name: String,
+  default_purchase_cost: Number,
+  purchase_cost_currency: {
+    type: String,
+    // enum: ['uzs', 'usd'],
+    default: 'uzs'
+  },
+  representation_type: {
+    type: String,
+    enum: ['color', 'image'],
+    default: 'color'
+  },
+  shape: {
+    type: String,
+    default: 'circle'
+  },
+  representation: {
+    type: String,
+    default: '#4CAF50'
+  },
+  taxes: {
+    type: Array,
+    default: []
+  },
+  stock_status: {
+    low_stock: Number,
+    out_of_stock: Number
+  },
+  item_type: {
+    type: String,
+    enum: ['variant', 'item'],
+    default: 'item'
+  },
+  parent_item: {
+    type: String,
+  },
+  parent_name: {
+    type: String
+  },
+  has_variants: {
+    type: Boolean,
+    default: false
+  },
+  variant_options: {
+    type: Array,
+    default: []
+  },
+  variant_of: String,
+  variant_items: {
+    type: Array,
+    default: []
+  },
+  modifiers: {
+    type: Array,
+    default: []
+  },
+  workgroups: {
+    type: Array,
+    default: []
+  },
+  show_on_bot: {
+    type: Boolean,
+    default: false
+  },
+  name_on_bot: String,
+  dimentions: {
+    x: {
+      type: Number,
+      default: 0
+    },
+    y: {
+      type: Number,
+      default: 0
+    },
+    z: {
+      type: Number,
+      default: 0
+    }
+  },
+  weight: Number,
+  brand: String,
+  description: String,
+  mxik: String,
+  nds_value: Number,
+  marking: { type: Boolean, default: false },
+  created_by: String,
+  created_by_id: mongoose.Types.ObjectId,
+}

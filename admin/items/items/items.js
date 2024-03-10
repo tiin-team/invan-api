@@ -415,7 +415,7 @@ module.exports = (instance, options, next) => {
   const get_list_of_items = async (request, reply, admin) => {
 
     var category_id;
-    var query = {
+    const query = {
       organization: admin.organization,
       item_type: { $ne: 'variant' }
     }
@@ -529,6 +529,15 @@ module.exports = (instance, options, next) => {
       if (typeof request.body.composite_item === 'boolean') {
         query.composite_item = request.body.composite_item
       }
+
+      if (typeof request.body.is_active === 'string' && request.body.is_active !== 'all') {
+        if (request.body.is_active === 'active') {
+          query.is_active = true
+        } else if (request.body.is_active === 'inactive') {
+          query.is_active = false
+        }
+      }
+
     }
 
     var name = instance.make_regexable_text(request.body.name)
@@ -950,7 +959,10 @@ module.exports = (instance, options, next) => {
           available: s.available,
         }));
 
-        goods[i].nds_value = Number.isFinite(goods[i].nds_value) ? goods[i].nds_value : organization.nds_value
+        goods[i].nds_value = Number(goods[i].nds_value)
+        goods[i].nds_value = !Number.isNaN(goods[i].nds_value) && Number.isFinite(goods[i].nds_value)
+          ? goods[i].nds_value
+          : Number(organization.nds_value)
 
         if (!(goods[i].is_track_stock || (goods[i].use_production && goods[i].is_composite_item))) {
           delete goods[i].in_stock
@@ -2315,7 +2327,7 @@ module.exports = (instance, options, next) => {
           if (goods == null) {
             goods = []
           }
-          var my_array = [
+          const my_array = [
             titles
           ]
           var skuObj = {}
@@ -2490,7 +2502,15 @@ module.exports = (instance, options, next) => {
             good.push(g.primary_supplier_name)
             good.push(Number(g.default_purchase_cost))
             good.push(g.mxik ? g.mxik + ';' : '')
-            good.push(Number.isFinite(g.nds_value) ? g.nds_value : Number.isFinite(org.nds_value) ? org.nds_value : 0);
+            g.nds_value = Number(g.nds_value)
+            org.nds_value = Number(org.nds_value)
+            good.push(
+              !Number.isNaN(g.nds_value) && Number.isFinite(g.nds_value)
+                ? g.nds_value
+                : Number.isFinite(org.nds_value)
+                  ? org.nds_value
+                  : 0
+            );
 
             if (typeof g.services == typeof [] && !g.has_variants) {
               for (const s of g.services) {
@@ -2926,6 +2946,8 @@ module.exports = (instance, options, next) => {
               "category": 1,
               "price": 1,
               "category_name": 1,
+              "package_code": 1,
+              "package_name": 1,
               // "categObj": 1,
               // "has_variants": 1,
               // "variant_options": 1,
@@ -2967,7 +2989,9 @@ module.exports = (instance, options, next) => {
               ? good.mxik
               : randimMxik();
 
-            goods[index].nds_value = Number.isFinite(good.nds_value) ?
+            good.nds_value = Number(good.nds_value)
+            org.nds_value = Number(org.nds_value)
+            goods[index].nds_value = !Number.isNaN(good.nds_value) && Number.isFinite(good.nds_value) ?
               good.nds_value :
               Number.isFinite(org.nds_value) ?
                 org.nds_value :
@@ -3120,7 +3144,15 @@ module.exports = (instance, options, next) => {
               }
               good.push(g.representation)
               good.push(g.mxik && g.mxik.length ? g.mxik : randimMxik())
-              good.push(Number.isFinite(g.nds_value) ? g.nds_value : Number.isFinite(org.nds_value) ? org.nds_value : 15);
+              org.nds_value = Number(org.nds_value)
+              g.nds_value = Number(g.nds_value)
+              good.push(
+                !Number.isNaN() && Number.isFinite(g.nds_value)
+                  ? g.nds_value
+                  : Number.isFinite(org.nds_value)
+                    ? org.nds_value
+                    : 12
+              );
 
               my_array.push(good)
             }

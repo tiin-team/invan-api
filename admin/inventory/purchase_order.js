@@ -795,7 +795,7 @@ module.exports = fp((instance, options, next) => {
                   console.log("request.body.items - ", request.body.items[i]);
                   console.log(Date.now());
                   console.log("-------------------------------------–– 002 -------------------------------------––--––");
-              
+
                   delete request.body.items[i]._id
                   request.body.items[i].purchase_id = instance.ObjectId(purchaseModel._id)
                   request.body.items[i].ordered = request.body.items[i].quality
@@ -821,7 +821,7 @@ module.exports = fp((instance, options, next) => {
                   console.log("updated - ", request.body.items[i].product_id);
                   console.log(Date.now());
                   console.log("-------------------------------------–– 003 -------------------------------------––--––");
-              
+
                 }
                 if (request.body.additional_cost == undefined) {
                   request.body.additional_cost = []
@@ -869,10 +869,10 @@ module.exports = fp((instance, options, next) => {
                       }
 
                       console.log("-------------------------------------–– 004 ––-------------------------------------––––");
-                      console.log("message_to_supplier - ", );
+                      console.log("message_to_supplier - ",);
                       console.log(Date.now());
                       console.log("-------------------------------------–– 004 -------------------------------------––--––");
-                  
+
 
                       purchaseitems = purchaseitems.map(p => p._doc)
                       if (request.body.status == 'returned_order') {
@@ -923,13 +923,13 @@ module.exports = fp((instance, options, next) => {
       console.log("out ");
       console.log(Date.now());
       console.log("-------------------------------------–– 006 -------------------------------------––--––");
-  
+
       if (admin) {
         console.log("-------------------------------------–– 006 ––-------------------------------------––––");
         console.log("in ");
         console.log(Date.now());
         console.log("-------------------------------------–– 006 -------------------------------------––--––");
-    
+
         create_purchase_order(request, reply, admin)
       }
     })
@@ -1456,6 +1456,7 @@ module.exports = fp((instance, options, next) => {
           // service_name: { $first: "$serviceObj.service_name" },
           supplier_name: 1,
           service_name: 1,
+          supplier_contract: 1,
           p_order: 1,
           cost: 1,
           default_purchase_cost: 1,
@@ -1484,6 +1485,22 @@ module.exports = fp((instance, options, next) => {
       },
       {
         $limit: limit
+      },
+      {
+        $lookup: {
+          from: 'purchaseitems',
+          let: { purchaseId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ['$purchase_id', '$$purchaseId'],
+                },
+              },
+            },
+          ],
+          as: 'items',
+        }
       }
     ], async (err, orders) => {
       if (err || orders == null) {
@@ -1494,6 +1511,51 @@ module.exports = fp((instance, options, next) => {
       //   await instance.inventoryPurchase.findByIdAndUpdate(order._id, { supplier_name: order.supplier_name, service_name: order.service_name }).lean()
       // }
       const total = await instance.inventoryPurchase.countDocuments(query);
+
+      const suppliers = await instance.adjustmentSupplier.find(
+        {
+          _id: { $in: orders.map(order => order.supplier_id) }
+        },
+        {
+          inn: 1
+        }
+      )
+        .lean()
+
+      const suppliersObj = {}
+      for (const supplier of suppliers) {
+        suppliersObj[supplier._id] = supplier
+      }
+
+      const products = await instance.goodsSales.find(
+        {
+          _id: { $in: orders.flatMap(order => order.items.map(item => item.product_id)) }
+        },
+        {
+          category_name: 1
+        }
+      )
+        .lean()
+
+      /**
+       * @type {Record<string, {category_name: string}>}
+       */
+      const productsObj = {}
+      for (const product of products) {
+        productsObj[product._id] = product
+      }
+
+      for (const order of orders) {
+        order.supplier_inn = suppliersObj[order.supplier_id] && suppliersObj[order.supplier_id].inn ?
+          suppliersObj[order.supplier_id].inn :
+          ''
+
+        for (const item of order.items) {
+          item.category_name = productsObj[item.product_id] && productsObj[item.product_id].category_name
+            ? productsObj[item.product_id].category_name
+            : '-'
+        }
+      }
 
       reply.ok({
         total: total,
