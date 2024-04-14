@@ -261,6 +261,7 @@ module.exports = fp((instance, _, next) => {
     "/items/sync-with/mxik-finder",
     {
       preValidation: instance.authorize_admin,
+      version: '1.0.0',
       schema: {
         body: {
           type: "object",
@@ -289,6 +290,7 @@ module.exports = fp((instance, _, next) => {
     "/items/sync-with/mxik-finder/get-last",
     {
       preValidation: instance.authorize_admin,
+      version: '1.0.0',
       schema: {
         body: {
           type: "object",
@@ -305,6 +307,11 @@ module.exports = fp((instance, _, next) => {
       attachValidation: true,
     },
     async (request, reply) => {
+      request.user
+      if(request.user.organization != request.body.organization_id) {
+        return reply.error("Permission denied")
+      }
+
       const organization = await instance.organizations
         .findById(request.body.organization_id, { _id: 1 })
         .lean();
