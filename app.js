@@ -146,6 +146,11 @@ module.exports = fp(function (fastify, opts, next) {
   })
 
   fastify.register(AutoLoad, {
+    dir: path.join(__dirname, 'admin/sync-with-mxik-finder'),
+    options: Object.assign(options, opts)
+  })
+
+  fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'admin/general'),
     options: Object.assign(options, opts)
   })

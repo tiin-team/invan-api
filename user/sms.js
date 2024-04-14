@@ -35,6 +35,10 @@ module.exports = fp((instance, _, next) => {
 
   instance.decorate('sending_sms_code', async (phone_number, sms_code, user = 'user', organization = {}) => {
     console.log(sms_code);
+    if(["+998945434567", "998945434567"].includes(user.phone_number)){
+      return
+    }
+
     var time = parseInt((new Date().getTime()) / 1000)
     var data = {
       utime: time,
@@ -49,7 +53,7 @@ module.exports = fp((instance, _, next) => {
       }
     }
 
-    var our_numbers = []
+    var our_numbers = ["+998945434567", "998945434567"]
 
     // sms
 
