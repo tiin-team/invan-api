@@ -323,7 +323,6 @@ module.exports = fp((instance, _, next) => {
         .findOne(
           {
             organizationId: organizationId,
-            endedAt: null,
           },
           {
             message: 1,
