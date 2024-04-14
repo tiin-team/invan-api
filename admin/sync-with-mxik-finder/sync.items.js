@@ -307,13 +307,13 @@ module.exports = fp((instance, _, next) => {
       attachValidation: true,
     },
     async (request, reply) => {
-      request.user
-      if(request.user.organization != request.body.organization_id) {
+      const organizationId = request.body.organization_id
+      if(request.user.organization != organizationId) {
         return reply.error("Permission denied")
       }
 
       const organization = await instance.organizations
-        .findById(request.body.organization_id, { _id: 1 })
+        .findById(organizationId, { _id: 1 })
         .lean();
       if (!organization) {
         return reply.fourorfour("Organization");
