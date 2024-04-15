@@ -1,6 +1,5 @@
 const fp = require("fastify-plugin");
 const axios = require("axios");
-// const { appendFile } = require("fs/promises");
 const { existsSync, mkdirSync, appendFile } = require("fs");
 const { resolve } = require("path");
 
@@ -28,7 +27,7 @@ const myConsole = {
   },
 };
 myConsole.init();
-myConsole.log("test", "asdf");
+
 module.exports = fp((instance, _, next) => {
   /**
    *
@@ -53,7 +52,6 @@ module.exports = fp((instance, _, next) => {
         endDate: Date.now(),
         barcode: barcode,
       });
-      myConsole.log(axiosResponse.data, "afasdfasdf---------------");
       if (!axiosResponse.data.success) {
         await instance.mxikFinderSyncProcess.findByIdAndUpdate(
           processId,
@@ -150,7 +148,7 @@ module.exports = fp((instance, _, next) => {
         .skip((page - 1) * batchSize)
         .lean();
       myConsole.log(organizationId, "organizationId");
-      myConsole.log(goodsSales.length);
+      myConsole.log("goodsSales.length:", goodsSales.length);
 
       if (goodsSales.length === 0) {
         await instance.mxikFinderSyncProcess.findByIdAndUpdate(
