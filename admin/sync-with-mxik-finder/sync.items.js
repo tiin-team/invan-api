@@ -147,7 +147,7 @@ module.exports = fp((instance, _, next) => {
           },
         )
         .limit(batchSize)
-        .skip(page * batchSize)
+        .skip((page - 1) * batchSize)
         .lean();
       myConsole.log(organizationId, "organizationId");
       myConsole.log(goodsSales.length);
