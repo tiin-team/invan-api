@@ -30,6 +30,7 @@ module.exports = fp((instance, _, next) => {
         endDate: Date.now(),
         barcode: barcode,
       });
+      console.log(axiosResponse.data, 'afasdfasdf---------------');
       if (!axiosResponse.data.success) {
         await instance.mxikFinderSyncProcess.findByIdAndUpdate(
           processId,
@@ -37,8 +38,8 @@ module.exports = fp((instance, _, next) => {
             $set: {
               endedAt: new Date().toISOString(),
               message: axiosResponse.data.message,
-              backendErrors: axiosResponse.data.errors,
             },
+            $push: { backendErrors: axiosResponse.data.errors },
           },
           {
             lean: true,
@@ -171,7 +172,7 @@ module.exports = fp((instance, _, next) => {
               endedAt: new Date().toISOString(),
               message: `Failed in recursiveSyncProducts. ${error.message}`,
             },
-            $push: { errors: error },
+            $push: { backendErrors: error },
           },
           {
             lean: true,
@@ -261,7 +262,7 @@ module.exports = fp((instance, _, next) => {
     "/items/sync-with/mxik-finder",
     {
       preValidation: instance.authorize_admin,
-      version: '1.0.0',
+      version: "1.0.0",
       schema: {
         body: {
           type: "object",
@@ -290,7 +291,7 @@ module.exports = fp((instance, _, next) => {
     "/items/sync-with/mxik-finder/get-last",
     {
       preValidation: instance.authorize_admin,
-      version: '1.0.0',
+      version: "1.0.0",
       schema: {
         body: {
           type: "object",
@@ -307,9 +308,9 @@ module.exports = fp((instance, _, next) => {
       attachValidation: true,
     },
     async (request, reply) => {
-      const organizationId = request.body.organization_id
-      if(request.user.organization != organizationId) {
-        return reply.error("Permission denied")
+      const organizationId = request.body.organization_id;
+      if (request.user.organization != organizationId) {
+        return reply.error("Permission denied");
       }
 
       const organization = await instance.organizations

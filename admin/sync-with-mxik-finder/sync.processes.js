@@ -11,6 +11,7 @@ module.exports = fp((instance, _, next) => {
     },
     endedAt: { type: Date, default: null },
     syncProductsCount: { type: Number, default: 0 },
+    page: { type: Number, default: 0, required: true },
     message: { type: String, default: "" },
     backendErrors: { type: Array, default: [] },
   });
