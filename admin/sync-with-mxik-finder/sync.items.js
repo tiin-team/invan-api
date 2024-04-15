@@ -42,13 +42,14 @@ module.exports = fp((instance, _, next) => {
     organizationId,
     barcode,
     page = 1,
+    startDate = Date.now(),
   ) {
     try {
       myConsole.log("getting request. page:", page);
       const axiosResponse = await axiosInstance.post("/products/filter", {
         limit: 100,
         page: page,
-        startDate: Date.now(),
+        startDate: startDate,
         endDate: Date.now(),
         barcode: barcode,
       });
@@ -125,6 +126,7 @@ module.exports = fp((instance, _, next) => {
         organizationId,
         barcode,
         ++page,
+        startDate,
       );
     } catch (error) {
       return { success: false, message: error.message };
@@ -138,7 +140,12 @@ module.exports = fp((instance, _, next) => {
    * @param {number} page
    * @returns {Promise<{success: boolean, message: string}>}
    */
-  async function recursiveSyncProducts(process, organizationId, page = 1) {
+  async function recursiveSyncProducts(
+    process,
+    organizationId,
+    page = 1,
+    startDate = Date.now(),
+  ) {
     try {
       const batchSize = 1_000;
       const goodsSales = await instance.goodsSales
@@ -177,6 +184,8 @@ module.exports = fp((instance, _, next) => {
         process._id,
         organizationId,
         goodsSales.flatMap((v) => v.barcode),
+        1,
+        startDate,
       );
 
       await instance.mxikFinderSyncProcess.findByIdAndUpdate(
@@ -192,7 +201,12 @@ module.exports = fp((instance, _, next) => {
         },
       );
 
-      return await recursiveSyncProducts(process, organizationId, ++page);
+      return await recursiveSyncProducts(
+        process,
+        organizationId,
+        ++page,
+        startDate,
+      );
     } catch (error) {
       instance.mxikFinderSyncProcess
         .findByIdAndUpdate(
@@ -237,12 +251,28 @@ module.exports = fp((instance, _, next) => {
         return { success: true, message: "Process allready started" };
       }
 
+      const lastProcess = await instance.mxikFinderSyncProcess
+        .findOne(
+          {
+            organizationId: organizationId,
+          },
+          {
+            startedAt: 1,
+          },
+        )
+        .sort({ _id: -1 })
+        .lean();
+      let startDate = Date.now();
+      if (lastProcess) {
+        startDate = new Date(lastProcess.startedAt).getTime();
+      }
+
       const newProcess = await instance.mxikFinderSyncProcess.create({
         organizationId: organizationId,
         endedAt: null,
       });
 
-      recursiveSyncProducts(newProcess, organizationId);
+      recursiveSyncProducts(newProcess, organizationId, 1, startDate);
 
       return { success: true, message: "Process successfully started" };
     } catch (error) {
@@ -266,21 +296,8 @@ module.exports = fp((instance, _, next) => {
         process.organizationId,
       );
 
-      const res = await recursiveSyncProducts(process, process.organizationId);
-      if (res.success) {
-        continue;
-      }
-
-      await instance.mxikFinderSyncProcess.findByIdAndUpdate(
-        process._id,
-        {
-          $set: {
-            endedAt: new Date().toISOString(),
-            message: { $concat: res.message },
-          },
-        },
-        { lean: true },
-      );
+      //! startDate ni berish krk
+      await recursiveSyncProducts(process, process.organizationId);
     }
 
     myConsole.log("FailedProcesses Finished");
