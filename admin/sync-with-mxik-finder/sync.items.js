@@ -1,7 +1,7 @@
 const fp = require("fastify-plugin");
 const axios = require("axios");
-const { appendFile } = require("fs/promises");
-const { existsSync, mkdirSync } = require("fs");
+// const { appendFile } = require("fs/promises");
+const { existsSync, mkdirSync, appendFile } = require("fs");
 const { resolve } = require("path");
 
 const mxikFinderBaseUrl = "https://mxik-finder.in1.uz/api";
@@ -12,7 +12,11 @@ const axiosInstance = axios.default.create({
 const path = resolve("./..", "myLogs");
 const myConsole = {
   log: async (...args) => {
-    await appendFile(`${path}/in1.log`, `${JSON.stringify(args)}\n`);
+    await new Promise((res) => {
+      appendFile(`${path}/in1.log`, `${JSON.stringify(args)}\n`, (err) => {
+        res(err);
+      });
+    });
   },
   init: () => {
     const isExists = existsSync(path);
