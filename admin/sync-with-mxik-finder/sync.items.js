@@ -30,7 +30,7 @@ module.exports = fp((instance, _, next) => {
         endDate: Date.now(),
         barcode: barcode,
       });
-      console.log(axiosResponse.data, 'afasdfasdf---------------');
+      console.log(axiosResponse.data, "afasdfasdf---------------");
       if (!axiosResponse.data.success) {
         await instance.mxikFinderSyncProcess.findByIdAndUpdate(
           processId,
@@ -126,6 +126,8 @@ module.exports = fp((instance, _, next) => {
         .limit(batchSize)
         .skip(page * batchSize)
         .lean();
+      console.log(organizationId, "organizationId");
+      console.log(goodsSales.length);
 
       if (goodsSales.length === 0) {
         await instance.mxikFinderSyncProcess.findByIdAndUpdate(
@@ -258,6 +260,7 @@ module.exports = fp((instance, _, next) => {
   }
 
   runFailedProcesses();
+
   instance.post(
     "/items/sync-with/mxik-finder",
     {
