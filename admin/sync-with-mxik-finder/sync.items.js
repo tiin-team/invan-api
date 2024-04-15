@@ -1,11 +1,30 @@
 const fp = require("fastify-plugin");
 const axios = require("axios");
+const { appendFile } = require("fs/promises");
+const { existsSync, mkdirSync } = require("fs");
+const { resolve } = require("path");
 
 const mxikFinderBaseUrl = "https://mxik-finder.in1.uz/api";
 const axiosInstance = axios.default.create({
   baseURL: mxikFinderBaseUrl,
 });
 
+const path = resolve("./..", "myLogs");
+const myConsole = {
+  log: async (...args) => {
+    await appendFile(`${path}/in1.log`, `${JSON.stringify(args)}\n`);
+  },
+  init: () => {
+    const isExists = existsSync(path);
+    if (isExists) {
+      return;
+    }
+
+    mkdirSync(path);
+  },
+};
+myConsole.init();
+myConsole.log("test", "asdf");
 module.exports = fp((instance, _, next) => {
   /**
    *
@@ -22,7 +41,7 @@ module.exports = fp((instance, _, next) => {
     page = 1,
   ) {
     try {
-      console.log("getting request. page:", page);
+      myConsole.log("getting request. page:", page);
       const axiosResponse = await axiosInstance.post("/products/filter", {
         limit: 100,
         page: page,
@@ -30,7 +49,7 @@ module.exports = fp((instance, _, next) => {
         endDate: Date.now(),
         barcode: barcode,
       });
-      console.log(axiosResponse.data, "afasdfasdf---------------");
+      myConsole.log(axiosResponse.data, "afasdfasdf---------------");
       if (!axiosResponse.data.success) {
         await instance.mxikFinderSyncProcess.findByIdAndUpdate(
           processId,
@@ -126,8 +145,8 @@ module.exports = fp((instance, _, next) => {
         .limit(batchSize)
         .skip(page * batchSize)
         .lean();
-      console.log(organizationId, "organizationId");
-      console.log(goodsSales.length);
+      myConsole.log(organizationId, "organizationId");
+      myConsole.log(goodsSales.length);
 
       if (goodsSales.length === 0) {
         await instance.mxikFinderSyncProcess.findByIdAndUpdate(
@@ -232,7 +251,7 @@ module.exports = fp((instance, _, next) => {
       })
       .lean();
     for (const process of processes) {
-      console.log(
+      myConsole.log(
         `to'xtab qolgan process. id:`,
         process._id,
         "orgId:",
@@ -256,7 +275,7 @@ module.exports = fp((instance, _, next) => {
       );
     }
 
-    console.log("FailedProcesses Finished");
+    myConsole.log("FailedProcesses Finished");
   }
 
   runFailedProcesses();
