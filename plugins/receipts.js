@@ -637,6 +637,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
       }
     }
 
+    //! create didox document
+    instance.createDidoxOnSale(result.filter(r => r.create_didox_document == true && !r.is_refund), itemsObj, user.organization)
+
     instance.customer_points(result);
     result = result.concat(allready_exist);
     reply.ok(result);
@@ -1419,6 +1422,7 @@ module.exports = fp((instance, _, next) => {
       zdachi_to_cashback: { type: "number", default: 0 },
       comment: { type: "string" },
       is_donate: { type: "boolean", default: false },
+      create_didox_document: { type: "boolean", default: false },
     },
   });
 
