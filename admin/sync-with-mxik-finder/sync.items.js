@@ -95,11 +95,17 @@ module.exports = fp((instance, _, next) => {
       const bulkOperationResult = await instance.goodsSales.bulkWrite(
         bulkWrites,
       );
+
       await instance.mxikFinderSyncProcess.findByIdAndUpdate(
         processId,
         {
           $set: {
-            $inc: { syncProductsCount: products.length },
+            $inc: {
+              syncProductsCount:
+                bulkOperationResult.result.nModified > 0
+                  ? bulkOperationResult.result.nModified
+                  : 0,
+            },
           },
         },
         {
@@ -179,6 +185,7 @@ module.exports = fp((instance, _, next) => {
           $set: {
             page: page,
           },
+          $inc: { checkedProductsCount: goodsSales.length },
         },
         {
           lean: true,
@@ -232,7 +239,6 @@ module.exports = fp((instance, _, next) => {
 
       const newProcess = await instance.mxikFinderSyncProcess.create({
         organizationId: organizationId,
-        syncProductsCount: 0,
         endedAt: null,
       });
 
@@ -355,8 +361,10 @@ module.exports = fp((instance, _, next) => {
             startedAt: 1,
             endedAt: 1,
             syncProductsCount: 1,
+            checkedProductsCount: 1,
           },
         )
+        .sort({ _id: -1 })
         .lean();
       if (!process) {
         return reply.fourorfour("Process");
