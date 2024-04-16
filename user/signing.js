@@ -565,10 +565,12 @@ module.exports = fp((instance, options, next) => {
                             }
 
                             user.services = user.services.map((service) => {
-                              service.location =
-                                servicesObj[service._id].location;
-                              service.location_name =
-                                servicesObj[service._id].location_name;
+                              const serv = servicesObj[service.service];
+                              if (serv) {
+                                service.location = serv.location;
+                                service.location_name = serv.location_name;
+                              }
+                              return service;
                             });
 
                             instance.AccessRights.findOne(
