@@ -554,6 +554,12 @@ module.exports = fp((instance, _, next) => {
       default: 0
     },
     comment: String,
+    ofd: {
+      terminal_id: { type: String, default: null },
+      fiscal_sign: { type: String, default: null },
+      receipt_seq: { type: Number, default: null },
+      date_time: { type: Number, default: null },
+    }
   })
   instance.decorate('Receipts', Receipts)
 
