@@ -1270,6 +1270,55 @@ async function findReceipt(request, reply, instance) {
 
     const total = await instance.Receipts.countDocuments(filter_query);
 
+    const clientsObjByPhone = {};
+    const clientsObjById = {};
+    const clients = await instance.clientsDatabase
+      .find(
+        {
+          organization: user.organization,
+          $or: [
+            {
+              phone_number: {
+                $in: receipts
+                  .filter((r) => r.cashback_phone != "")
+                  .map((r) => r.cashback_phone),
+              },
+            },
+            {
+              _id: {
+                $in: receipts
+                  .filter((r) => !!r.client_id)
+                  .map((r) => r.client_id),
+              },
+            },
+          ],
+        },
+        {
+          _id: 1,
+          first_name: 1,
+          last_name: 1,
+          phone_number: 1,
+          organization: 1,
+          user_id: 1,
+        },
+      )
+      .lean();
+
+    for (const client of clients) {
+      clientsObjByPhone[client.phone_number] = client;
+      clientsObjById[client._id] = client;
+    }
+
+    for (const receipt of receipts) {
+      receipt.client = clientsObjById[receipt.client_id]
+        ? clientsObjById[receipt.client_id]
+        : clientsObjByPhone[receipt.cashback_phone]
+        ? clientsObjByPhone[client.cashback_phone]
+        : null;
+
+      receipt.ofd = receipt.ofd ? receipt.ofd : null;
+    }
+
     return reply.code(200).send({
       error: "Ok",
       message: "Success",
@@ -1278,10 +1327,7 @@ async function findReceipt(request, reply, instance) {
       current_page: page,
       page: Math.ceil(total / limit),
       total: total,
-      data: receipts.map((receipt) => ({
-        ...receipt,
-        ofd: receipt.ofd ? receipt.ofd : null,
-      })),
+      data: receipts,
     });
   } catch (error) {
     instance.send_Error(
