@@ -1278,7 +1278,10 @@ async function findReceipt(request, reply, instance) {
       current_page: page,
       page: Math.ceil(total / limit),
       total: total,
-      data: receipts,
+      data: receipts.map((receipt) => ({
+        ...receipt,
+        ofd: receipt.ofd ? receipt.ofd : null,
+      })),
     });
   } catch (error) {
     instance.send_Error(
@@ -1480,13 +1483,7 @@ module.exports = fp((instance, _, next) => {
       ofd: {
         type: "object",
         additionalProperties: false,
-        required: [
-          "terminal_id",
-          "fiscal_sign",
-          "receipt_seq",
-          "date_time",
-
-        ],
+        required: ["terminal_id", "fiscal_sign", "receipt_seq", "date_time"],
         properties: {
           terminal_id: { type: "string" },
           fiscal_sign: { type: "string" },
