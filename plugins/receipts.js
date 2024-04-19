@@ -1317,7 +1317,17 @@ async function findReceipt(request, reply, instance) {
         : clientsObjByPhone[receipt.cashback_phone]
         ? clientsObjByPhone[receipt.cashback_phone]
         : null;
-
+      console.log('=================================');
+      console.log();
+      console.log();
+      console.log();
+      console.log();
+      console.log(receipt.client);
+      console.log();
+      console.log();
+      console.log();
+      console.log();
+      console.log('=================================');
       receipt.ofd = receipt.ofd ? receipt.ofd : null;
     }
 
