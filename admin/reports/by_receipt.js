@@ -299,7 +299,7 @@ module.exports = (instance, _, next) => {
     }
 
     for (const customer of customers) {
-      customer.name = `${customer.first_name} ${customer.last_name}`
+      customer.name = `${customer.first_name} ${customer.last_name ? customer.last_name : ''}`
       customerMap[customer._id + ''] = customer
       customerUserIdMap[customer.user_id + ''] = customer
       customerPhoneNumberMap[customer.phone_number + ''] = customer

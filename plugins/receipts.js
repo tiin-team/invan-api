@@ -603,7 +603,8 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
           if (client && client.phone_number) {
             data.client_phone_number = client.phone_number;
-            data.client_name = `${client.first_name} ${client.last_name}`;
+            data.client_name = `${client.first_name} ${client.last_name ? client.last_name : ''}`;
+
             data.client_id = client._id;
           }
 
