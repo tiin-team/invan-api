@@ -1237,7 +1237,9 @@ async function findReceipt(request, reply, instance) {
   const pos_id = request.headers["accept-id"];
   const user = request.user;
   try {
-    const posdevice = await instance.posDevices.findOne({ _id: pos_id }).lean();
+    const posdevice = await instance.posDevices
+      .findOne({ _id: pos_id, organization: user.organization })
+      .lean();
     if (!posdevice) return reply.fourorfour("Posdevice");
 
     const { receipt_no } = request.query;
@@ -1313,7 +1315,7 @@ async function findReceipt(request, reply, instance) {
       receipt.client = clientsObjById[receipt.client_id]
         ? clientsObjById[receipt.client_id]
         : clientsObjByPhone[receipt.cashback_phone]
-        ? clientsObjByPhone[client.cashback_phone]
+        ? clientsObjByPhone[receipt.cashback_phone]
         : null;
 
       receipt.ofd = receipt.ofd ? receipt.ofd : null;
