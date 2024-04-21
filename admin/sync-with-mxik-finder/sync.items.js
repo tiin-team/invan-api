@@ -77,6 +77,17 @@ module.exports = fp((instance, _, next) => {
       const products = axiosResponse.data.data;
       const bulkWrites = new Array(products.length);
       for (let i = 0; i < products.length; i++) {
+        const setData = { mxik: products[i].mxik };
+        if (
+          products[i].packages[0] &&
+          products[i].packages[0].packageCode &&
+          products[i].packages[0].packageName
+        ) {
+          setData.package_code = products[i].packages[0].packageCode;
+          setData.package_name = products[i].packages[0].packageName;
+          // setData.marking= products[i].marking
+        }
+
         bulkWrites[i] = {
           updateMany: {
             filter: {
@@ -84,10 +95,7 @@ module.exports = fp((instance, _, next) => {
               barcode: { $elemMatch: { $eq: products[i].barcode } },
             },
             update: {
-              $set: {
-                mxik: products[i].mxik,
-                // marking: products[i].marking
-              },
+              $set: setData,
             },
           },
         };
