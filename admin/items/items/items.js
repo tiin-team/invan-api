@@ -2225,20 +2225,46 @@ module.exports = (instance, options, next) => {
   })
 
   // export items
-  const randimMxik = (is_nds = true) => {
-    const mxiks = [
-      '01904001001000000', '01901001009000000', '02201002001000000',
-      '01806001001000000', '02202002001000000', '01704001016000000',
-      '01905012001000000', '01905002004000000', '02001001001000000',
+  /**
+   * 
+   * @param {Boolean} is_nds 
+   * @returns {{ mxik: string;packageCode: string; packageName: string }}
+   */
+  const randomMxik = (is_nds = true) => {
+    const mxikObj = {
+      // '01904001001000000': { packageCode: '', packageName: '' },
+      // '01901001009000000': { packageCode: '', packageName: '' },
+      // '02001001001000000': { packageCode: '', packageName: '' },
+      '02202002001000000': { packageCode: '1437682', packageName: 'dona' },
+      '03402002003000000': { packageCode: '1306850', packageName: 'kilogramm' },
+      '01905002004000000': { packageCode: '1443867', packageName: 'pachka=40 gramm' },
+      '01905012001000000': { packageCode: '1437815', packageName: 'pachka=33.3 gramm' },
+      '02201002001000000': { packageCode: '1492283', packageName: 'butilka=0.25 litr' },
+      '01704001016000000': { packageCode: '1444076', packageName: 'pachka=0.996 kilogramm' },
+      '03402002001000000': { packageCode: '1444017', packageName: 'plastik butilka=200 gramm' },
+      '01806001001000000': { packageCode: '1431970', packageName: 'qadoq=1 ta pachka * 90 gramm' },
+      '02202002001010010': { packageCode: '1218850', packageName: 'dona (pэt butilka) 1,5 litr' },
+    }
+    const mxikList = [
+      // '01901001009000000',
+      '02201002001000000', '01806001001000000',
+      '02202002001000000', '01704001016000000',
+      '01905012001000000', '01905002004000000', 
+      // '02001001001000000',
       '03402002003000000', '03402002001000000'
     ];
-    const mxiks_with_nds = [
+    const mxik_with_nds = [
       '02202002001010010',
-      '01904001001000000',
+      // '01904001001000000',
     ];
-    const randomMxikCode = mxiks[Math.floor(Math.random() * mxiks.length)];
-    const randomMxikCodeWithNds = mxiks_with_nds[Math.floor(Math.random() * mxiks_with_nds.length)];
-    return is_nds ? randomMxikCodeWithNds : randomMxikCode ? randomMxikCode : '02202002001010010';
+    const randomMxikCode = mxikList[Math.floor(Math.random() * mxikList.length)];
+    const randomMxikCodeWithNds = mxik_with_nds[Math.floor(Math.random() * mxik_with_nds.length)];
+    const mxik =  is_nds ? randomMxikCodeWithNds : randomMxikCode ? randomMxikCode : '02202002001010010';
+
+    return {
+      mxik,
+      ...mxikObj[mxik]
+    }
   }
 
   const get_file = async (request, reply, admin) => {
@@ -2985,9 +3011,13 @@ module.exports = (instance, options, next) => {
             serv = good.services.find(serv => serv.service + '' == request.params.service)
             goods[index].prices = serv && serv.prices ? serv.prices : good.prices
             goods[index].price = serv && serv.price ? serv.price : good.price
+            const mxikInfo = randomMxik()
             goods[index].mxik = good.mxik && good.mxik.length === 17
               ? good.mxik
-              : randimMxik();
+              : mxikInfo.mxik;
+
+            goods[index].package_code = mxikInfo.packageCode
+            goods[index].package_name = mxikInfo.packageName
 
             good.nds_value = Number(good.nds_value)
             org.nds_value = Number(org.nds_value)
@@ -3143,7 +3173,7 @@ module.exports = (instance, options, next) => {
                 g.representation.replace(',', '.')
               }
               good.push(g.representation)
-              good.push(g.mxik && g.mxik.length ? g.mxik : randimMxik())
+              good.push(g.mxik && g.mxik.length ? g.mxik : randomMxik().mxik)
               org.nds_value = Number(org.nds_value)
               g.nds_value = Number(g.nds_value)
               good.push(
@@ -3255,9 +3285,15 @@ module.exports = (instance, options, next) => {
       const serv = good.services.find(serv => serv.service + '' == service_id)
       goods[index].prices = serv && serv.prices ? serv.prices : good.prices
       goods[index].price = serv && serv.price ? serv.price : good.price
+
+      const mxikInfo = randomMxik();
       goods[index].mxik = good.mxik && good.mxik.length === 17
         ? good.mxik
-        : randimMxik();
+        : mxikInfo.mxik;
+
+      goods[index].package_code = mxikInfo.packageCode
+      goods[index].package_name = mxikInfo.packageName
+
       goods[index].nds_value = good.nds_value ? good.nds_value : 15;
       delete goods[index].services
 
