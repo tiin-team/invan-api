@@ -505,6 +505,7 @@ module.exports = fp((instance, _, next) => {
         type: String,
         default: 'each',
       },
+      ofd_vat_percentage: { type: Number, default: 0 },
     }],
     debtData: Object,
     comment: { type: String, default: '' },

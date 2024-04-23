@@ -1371,6 +1371,11 @@ async function findReceipt(request, reply, instance) {
           ? receipt.sold_item_list[i].sold_by
           : goodsSalesObj[receipt.sold_item_list[i].product_id].sold_by;
 
+        receipt.sold_item_list[i].ofd_vat_percentage = receipt.sold_item_list[i]
+          .ofd_vat_percentage
+          ? receipt.sold_item_list[i].ofd_vat_percentage
+          : null;
+
         // if (goodsSalesObj[receipt.sold_item_list[i].product_id]) {
         //   receipt.sold_item_list[i] = {
         //     ...goodsSalesObj[receipt.sold_item_list[i].product_id],
@@ -1482,6 +1487,7 @@ module.exports = fp((instance, _, next) => {
             "discount",
           ],
           properties: {
+            ofd_vat_percentage: { type: "number", default: 0 },
             qty_box: { type: "number", default: 0 },
             partiation_id: { type: "string", maxLength: 24, minLength: 24 },
             product_id: { type: "string" },
