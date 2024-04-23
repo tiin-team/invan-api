@@ -2263,7 +2263,8 @@ module.exports = (instance, options, next) => {
 
     return {
       mxik,
-      ...mxikObj[mxik]
+      packageCode: mxikObj[mxik].packageCode,
+      packageName: mxikObj[mxik].packageName,
     }
   }
 
@@ -3011,13 +3012,21 @@ module.exports = (instance, options, next) => {
             serv = good.services.find(serv => serv.service + '' == request.params.service)
             goods[index].prices = serv && serv.prices ? serv.prices : good.prices
             goods[index].price = serv && serv.price ? serv.price : good.price
-            const mxikInfo = randomMxik()
-            goods[index].mxik = good.mxik && good.mxik.length === 17
-              ? good.mxik
-              : mxikInfo.mxik;
 
-            goods[index].package_code = mxikInfo.packageCode
-            goods[index].package_name = mxikInfo.packageName
+            if (
+              !(
+                good.mxik
+                && good.mxik.length === 17
+                && goods[index].package_code
+                && goods[index].package_name
+              )
+            ) {
+              const mxikInfo = randomMxik()
+              goods[index].mxik = mxikInfo.mxik;
+  
+              goods[index].package_code = mxikInfo.packageCode
+              goods[index].package_name = mxikInfo.packageName
+            }
 
             good.nds_value = Number(good.nds_value)
             org.nds_value = Number(org.nds_value)
