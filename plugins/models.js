@@ -493,7 +493,18 @@ module.exports = fp((instance, _, next) => {
       edit_history: {
         type: Array,
         default: []
-      }
+      },
+      vat_percentage: { type: Number, default: 0 },
+      mxik: {
+        type: String,
+        default: null,
+      },
+      package_code: { type: String, default: null },
+      package_name: { type: String, default: null },
+      sold_by: {
+        type: String,
+        default: 'each',
+      },
     }],
     debtData: Object,
     comment: String,

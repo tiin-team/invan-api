@@ -604,7 +604,9 @@ const receiptCreateGroup = async (request, reply, instance) => {
 
           if (client && client.phone_number) {
             data.client_phone_number = client.phone_number;
-            data.client_name = `${client.first_name} ${client.last_name ? client.last_name : ''}`;
+            data.client_name = `${client.first_name} ${
+              client.last_name ? client.last_name : ""
+            }`;
 
             data.client_id = client._id;
           }
@@ -1314,6 +1316,30 @@ async function findReceipt(request, reply, instance) {
       clientsObjById[client._id] = client;
     }
 
+    const goodsSalesObj = {};
+    const goodsSales = instance.clientsDatabase
+      .find(
+        {
+          _id: {
+            $in: receipts.flatMap((g) =>
+              g.sold_item_list.map((p) => p.product_id),
+            ),
+          },
+        },
+        {
+          _id: 1,
+          mxik: 1,
+          package_code: 1,
+          package_name: 1,
+          sold_by: 1,
+        },
+      )
+      .lean();
+
+    for (const product of goodsSales) {
+      goodsSalesObj[product._id] = product;
+    }
+
     for (const receipt of receipts) {
       receipt.client = clientsObjById[receipt.client_id]
         ? clientsObjById[receipt.client_id]
@@ -1322,6 +1348,28 @@ async function findReceipt(request, reply, instance) {
         : null;
 
       receipt.ofd = receipt.ofd ? receipt.ofd : null;
+
+      for (let i = 0; i < receipts.sold_item_list.length; i++) {
+        // receipts.sold_item_list[i].mxik = receipts.sold_item_list[i].mxik
+        //   ? receipts.sold_item_list[i].mxik
+        //   : goodsSalesObj[receipts.sold_item_list[i].product_id].mxik
+        // receipts.sold_item_list[i].package_code = receipts.sold_item_list[i].package_code
+        //   ? receipts.sold_item_list[i].package_code
+        //   : goodsSalesObj[receipts.sold_item_list[i].product_id].package_code
+        // receipts.sold_item_list[i].package_name = receipts.sold_item_list[i].package_name
+        //   ? receipts.sold_item_list[i].package_name
+        //   : goodsSalesObj[receipts.sold_item_list[i].product_id].package_name
+        // receipts.sold_item_list[i].sold_by = receipts.sold_item_list[i].sold_by
+        //   ? receipts.sold_item_list[i].sold_by
+        //   : goodsSalesObj[receipts.sold_item_list[i].product_id].sold_by
+
+        if (goodsSalesObj[receipts.sold_item_list[i].product_id]) {
+          receipts.sold_item_list[i] = {
+            ...goodsSalesObj[receipts.sold_item_list[i].product_id],
+            ...receipts.sold_item_list[i],
+          };
+        }
+      }
     }
 
     return reply.code(200).send({
