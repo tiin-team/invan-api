@@ -507,7 +507,7 @@ module.exports = fp((instance, _, next) => {
       },
     }],
     debtData: Object,
-    comment: String,
+    comment: { type: String, default: '' },
     discount: {
       type: Array,
       default: []

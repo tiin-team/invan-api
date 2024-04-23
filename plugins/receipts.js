@@ -1241,10 +1241,10 @@ async function findReceipt(request, reply, instance) {
   const pos_id = request.headers["accept-id"];
   const user = request.user;
   try {
-    const posdevice = await instance.posDevices
+    const posDevice = await instance.posDevices
       .findOne({ _id: pos_id, organization: user.organization })
       .lean();
-    if (!posdevice) return reply.fourorfour("Posdevice");
+    if (!posDevice) return reply.fourorfour("Pos device");
 
     const { receipt_no } = request.query;
     const limit = !isNaN(parseInt(request.query.limit))
@@ -1260,8 +1260,8 @@ async function findReceipt(request, reply, instance) {
 
     const min_date_time = date.getTime();
     const filter_query = {
-      organization: posdevice.organization,
-      service: posdevice.service,
+      organization: posDevice.organization,
+      service: posDevice.service,
       created_time: {
         $gte: min_date_time,
         $lte: date_time,
@@ -1317,7 +1317,7 @@ async function findReceipt(request, reply, instance) {
     }
 
     const goodsSalesObj = {};
-    const goodsSales = instance.clientsDatabase
+    const goodsSales = await instance.goodsSales
       .find(
         {
           _id: {
@@ -1348,27 +1348,35 @@ async function findReceipt(request, reply, instance) {
         : null;
 
       receipt.ofd = receipt.ofd ? receipt.ofd : null;
+      receipt.comment = receipt.comment ? receipt.comment : "";
 
-      for (let i = 0; i < receipts.sold_item_list.length; i++) {
-        // receipts.sold_item_list[i].mxik = receipts.sold_item_list[i].mxik
-        //   ? receipts.sold_item_list[i].mxik
-        //   : goodsSalesObj[receipts.sold_item_list[i].product_id].mxik
-        // receipts.sold_item_list[i].package_code = receipts.sold_item_list[i].package_code
-        //   ? receipts.sold_item_list[i].package_code
-        //   : goodsSalesObj[receipts.sold_item_list[i].product_id].package_code
-        // receipts.sold_item_list[i].package_name = receipts.sold_item_list[i].package_name
-        //   ? receipts.sold_item_list[i].package_name
-        //   : goodsSalesObj[receipts.sold_item_list[i].product_id].package_name
-        // receipts.sold_item_list[i].sold_by = receipts.sold_item_list[i].sold_by
-        //   ? receipts.sold_item_list[i].sold_by
-        //   : goodsSalesObj[receipts.sold_item_list[i].product_id].sold_by
+      for (let i = 0; i < receipt.sold_item_list.length; i++) {
+        if (!receipt.sold_item_list[i].mxik) {
+          receipt.sold_item_list[i].mxik = receipt.sold_item_list[i].mxik
+            ? receipt.sold_item_list[i].mxik
+            : goodsSalesObj[receipt.sold_item_list[i].product_id].mxik;
 
-        if (goodsSalesObj[receipts.sold_item_list[i].product_id]) {
-          receipts.sold_item_list[i] = {
-            ...goodsSalesObj[receipts.sold_item_list[i].product_id],
-            ...receipts.sold_item_list[i],
-          };
+          receipt.sold_item_list[i].package_code = receipt.sold_item_list[i]
+            .package_code
+            ? receipt.sold_item_list[i].package_code
+            : goodsSalesObj[receipt.sold_item_list[i].product_id].package_code;
+
+          receipt.sold_item_list[i].package_name = receipt.sold_item_list[i]
+            .package_name
+            ? receipt.sold_item_list[i].package_name
+            : goodsSalesObj[receipt.sold_item_list[i].product_id].package_name;
         }
+
+        receipt.sold_item_list[i].sold_by = receipt.sold_item_list[i].sold_by
+          ? receipt.sold_item_list[i].sold_by
+          : goodsSalesObj[receipt.sold_item_list[i].product_id].sold_by;
+
+        // if (goodsSalesObj[receipt.sold_item_list[i].product_id]) {
+        //   receipt.sold_item_list[i] = {
+        //     ...goodsSalesObj[receipt.sold_item_list[i].product_id],
+        //     ...receipt.sold_item_list[i],
+        //   };
+        // }
       }
     }
 
