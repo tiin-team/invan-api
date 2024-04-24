@@ -3015,8 +3015,8 @@ module.exports = (instance, options, next) => {
 
             if (
               !(
-                good.mxik
-                && good.mxik.length === 17
+                goods[index].mxik
+                && goods[index].mxik.length === 17
                 && goods[index].package_code
                 && goods[index].package_name
               )
@@ -3295,13 +3295,20 @@ module.exports = (instance, options, next) => {
       goods[index].prices = serv && serv.prices ? serv.prices : good.prices
       goods[index].price = serv && serv.price ? serv.price : good.price
 
-      const mxikInfo = randomMxik();
-      goods[index].mxik = good.mxik && good.mxik.length === 17
-        ? good.mxik
-        : mxikInfo.mxik;
+      if (
+        !(
+          goods[index].mxik
+          && goods[index].mxik.length === 17
+          && goods[index].package_code
+          && goods[index].package_name
+        )
+      ) {
+        const mxikInfo = randomMxik()
+        goods[index].mxik = mxikInfo.mxik;
 
-      goods[index].package_code = mxikInfo.packageCode
-      goods[index].package_name = mxikInfo.packageName
+        goods[index].package_code = mxikInfo.packageCode
+        goods[index].package_name = mxikInfo.packageName
+      }
 
       goods[index].nds_value = good.nds_value ? good.nds_value : 15;
       delete goods[index].services
