@@ -80,11 +80,11 @@ module.exports = fp((instance, _, next) => {
         const setData = { mxik: products[i].mxik };
         if (
           products[i].packages[0] &&
-          products[i].packages[0].packageCode &&
-          products[i].packages[0].packageName
+          products[i].packages[0].code &&
+          products[i].packages[0].name
         ) {
-          setData.package_code = products[i].packages[0].packageCode;
-          setData.package_name = products[i].packages[0].packageName;
+          setData.package_code = products[i].packages[0].code;
+          setData.package_name = products[i].packages[0].name;
           // setData.marking= products[i].marking
         }
 
