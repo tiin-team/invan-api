@@ -2923,5 +2923,74 @@ module.exports = fp((instance, _, next) => {
   })
   instance.decorate('clientsDebtPayHistory', invanClientsDebtPayHistorySchema);
 
+
+  const logModel = instance.model('logModel', {
+    acceptVersion: { 
+      type: String,
+      default: null,
+    },
+    acceptUser: { 
+      type: String,
+      default: null,
+    },
+    id: { 
+      type: String,
+      default: null,
+    },
+    ip: { 
+      type: String,
+      default: null,
+    },
+    requestOn: { 
+      type: Date,
+      default: new Date(),
+      required: true
+    },
+    responseOn: { 
+      type: Date,
+      default: new Date(),
+      required: true
+    },
+    requestPath: { 
+      type: String,
+      default: null,
+      required: true
+    },
+    requestMethod: { 
+      type: String,
+      default: null,
+    },
+    requestHeader: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    requestQuery: { 
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+      required: true
+    },
+    requestBody: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    responseBody: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    requestUser: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    cookies: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    signedCookies: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+  })
+  instance.decorate('logModel', logModel);
+
   next()
 })
