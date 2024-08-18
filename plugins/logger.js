@@ -6,7 +6,7 @@ module.exports = fp((instance, _, next) => {
     return await instance.logModel.insertMany([data]);
   }
 
-  instance.addHook("onRequest", (req, rep, done) => {
+  instance.addHook("preHandler", (req, rep, done) => {
     let error_occurred = false;
 
     const logData = {
