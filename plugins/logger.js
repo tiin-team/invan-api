@@ -1,5 +1,6 @@
 const os = require("os");
 const fp = require("fastify-plugin");
+const stream = require("stream");
 
 module.exports = fp((instance, _, next) => {
   async function insertLog(data) {
@@ -29,7 +30,19 @@ module.exports = fp((instance, _, next) => {
 
     rep.send = (data) => {
       logData.requestUser = req.user;
-      logData.responseBody = data;
+      if (
+        data instanceof stream.Duplex ||
+        data instanceof stream.PassThrough ||
+        data instanceof stream.Readable ||
+        data instanceof stream.Stream ||
+        data instanceof stream.Transform ||
+        data instanceof stream.Writable
+      ) {
+        logData.responseBody = "file";
+      } else {
+        logData.responseBody = data;
+      }
+
       logData.responseOn = new Date();
 
       insertLog(logData).catch();
