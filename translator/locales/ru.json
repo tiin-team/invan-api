@@ -60,5 +60,8 @@
 	"receive": "Получил",
 	"otpustil": "Отпустил",
 	"box": "box",
-	"pcs": "pcs"
+	"pcs": "pcs",
+	"cashback": "cashback",
+	"metre": "metre",
+	"litre": "litre"
 }

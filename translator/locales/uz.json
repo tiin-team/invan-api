@@ -58,5 +58,6 @@
 	"receipt_no": "receipt_no",
 	"barcode": "barcode",
 	"p_order": "p_order",
-	"box": "box"
+	"box": "box",
+	"metre": "metre"
 }
