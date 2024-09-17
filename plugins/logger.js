@@ -10,47 +10,47 @@ module.exports = fp((instance, _, next) => {
   instance.addHook("preHandler", (req, rep, done) => {
     let error_occurred = false;
 
-    const logData = {
-      id: req.id,
-      ip: req.ip,
-      requestOn: new Date(),
-      requestPath: req.raw.url,
-      requestMethod: req.raw.method,
-      requestHeader: req.headers,
-      requestQuery: req.query,
-      requestBody: req.body,
-      requestUser: req.user,
-      cookies: req.cookies,
-      signedCookies: req.signedCookies,
-      acceptVersion: req.headers["accept-version"],
-      acceptUser: req.headers["accept-user"],
-    };
+    // const logData = {
+    //   id: req.id,
+    //   ip: req.ip,
+    //   requestOn: new Date(),
+    //   requestPath: req.raw.url,
+    //   requestMethod: req.raw.method,
+    //   requestHeader: req.headers,
+    //   requestQuery: req.query,
+    //   requestBody: req.body,
+    //   requestUser: req.user,
+    //   cookies: req.cookies,
+    //   signedCookies: req.signedCookies,
+    //   acceptVersion: req.headers["accept-version"],
+    //   acceptUser: req.headers["accept-user"],
+    // };
 
-    const send = rep.send;
+    // const send = rep.send;
 
-    rep.send = (data) => {
-      logData.requestUser = req.user;
-      if (
-        data instanceof stream.Duplex ||
-        data instanceof stream.PassThrough ||
-        data instanceof stream.Readable ||
-        data instanceof stream.Stream ||
-        data instanceof stream.Transform ||
-        data instanceof stream.Writable
-      ) {
-        logData.responseBody = "file";
-      } else {
-        logData.responseBody = data;
-      }
+    // rep.send = (data) => {
+    //   logData.requestUser = req.user;
+    //   if (
+    //     data instanceof stream.Duplex ||
+    //     data instanceof stream.PassThrough ||
+    //     data instanceof stream.Readable ||
+    //     data instanceof stream.Stream ||
+    //     data instanceof stream.Transform ||
+    //     data instanceof stream.Writable
+    //   ) {
+    //     logData.responseBody = "file";
+    //   } else {
+    //     logData.responseBody = data;
+    //   }
 
-      logData.responseOn = new Date();
-      const { byteLength } = Buffer.from(logData);
-      if (byteLength <= 16777200) {
-        insertLog(logData).catch();
-      }
+    //   logData.responseOn = new Date();
+    //   // const { byteLength } = Buffer.from(logData);
+    //   // if (byteLength <= 16777200) {
+    //   //   insertLog(logData).catch();
+    //   // }
 
-      return send.call(rep, data);
-    };
+    //   return send.call(rep, data);
+    // };
 
     try {
       console.log(req.raw.url);
