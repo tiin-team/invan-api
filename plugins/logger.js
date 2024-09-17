@@ -4,7 +4,7 @@ const stream = require("stream");
 
 module.exports = fp((instance, _, next) => {
   async function insertLog(data) {
-    return await instance.logModel.insertMany([data]);
+    // return await instance.logModel.insertMany([data]).catch((err) => {});
   }
 
   instance.addHook("preHandler", (req, rep, done) => {
@@ -44,8 +44,10 @@ module.exports = fp((instance, _, next) => {
       }
 
       logData.responseOn = new Date();
-
-      insertLog(logData).catch();
+      const { byteLength } = Buffer.from(logData);
+      if (byteLength <= 16777200) {
+        insertLog(logData).catch();
+      }
 
       return send.call(rep, data);
     };

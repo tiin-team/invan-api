@@ -1615,6 +1615,8 @@ module.exports = fp((instance, _, next) => {
         body: {
           type: "array",
           items: "receiptBody#",
+          minItems: 1,
+          maxItems: 10,
         },
       },
       attachValidation: true,
