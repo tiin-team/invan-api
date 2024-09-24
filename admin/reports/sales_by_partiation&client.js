@@ -724,6 +724,9 @@ module.exports = (instance, _, next) => {
       result[i].alt_group = ""
       result[i].size = ""
 
+      if(result[i].is_refund) {
+        result[i].value = -1 * Math.abs(result[i].value)
+      }
     }
 
     reply.ok({

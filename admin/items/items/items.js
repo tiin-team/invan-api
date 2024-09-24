@@ -540,7 +540,7 @@ module.exports = (instance, options, next) => {
 
     }
 
-    var name = instance.make_regexable_text(request.body.name)
+    let name = instance.make_regexable_text(request.body.name)
 
     if (name == undefined) {
       name = ''
@@ -548,7 +548,7 @@ module.exports = (instance, options, next) => {
     if (request.body.search) {
       name = request.body.search
     }
-    var find_categ = {
+    let find_categ = {
       organization: admin.organization,
       position: {
         $ne: null
@@ -583,6 +583,9 @@ module.exports = (instance, options, next) => {
       query['$or'] = [
         {
           name: { $regex: name, $options: 'i' }
+        },
+        {
+          mxik: name
         },
         {
           name: { $regex: (instance.converter(name) != "" ? instance.converter(name) : "salom_dunyo_ishla_qale"), $options: 'i' }
