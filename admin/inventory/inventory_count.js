@@ -772,7 +772,7 @@ module.exports = fp((instance, options, next) => {
         .findOne({
           _id: request.params.id,
         })
-        .len();
+        .lean();
       if (!count) {
         return reply.fourorfour("count");
       }
