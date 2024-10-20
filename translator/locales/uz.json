@@ -59,5 +59,6 @@
 	"barcode": "barcode",
 	"p_order": "p_order",
 	"box": "box",
-	"metre": "metre"
+	"metre": "metre",
+	"litre": "litre"
 }

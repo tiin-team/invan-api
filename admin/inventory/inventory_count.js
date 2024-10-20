@@ -544,6 +544,7 @@ module.exports = fp((instance, options, next) => {
 
   let complete_count = async (request, reply, admin) => {
     try {
+      console.log(547);
       const id = request.params.id;
       const invcount = await instance.inventoryCount
         .findOne({
@@ -556,6 +557,7 @@ module.exports = fp((instance, options, next) => {
       if (invcount.status == "completed") {
         return reply.error("Allready done");
       }
+      console.log(560);
       const items = await instance.inventoryCountItem
         .find({
           count_id: invcount._id,
@@ -566,6 +568,7 @@ module.exports = fp((instance, options, next) => {
       for (const it of items) {
         ids.push(it.product_id);
       }
+      console.log(571);
       const goods = await instance.goodsSales
         .find(
           {
@@ -629,9 +632,11 @@ module.exports = fp((instance, options, next) => {
       if (item_ids.length == counts.length) {
         return reply.error("Error on completing");
       }
+      console.log(635);
       for (const it of items) {
         await create_history(request, it, invcount, admin);
       }
+      console.log(639);
 
       await instance.inventoryCountItem.deleteMany({
         _id: {
