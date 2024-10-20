@@ -798,6 +798,8 @@ module.exports = fp((instance, options, next) => {
             name: 1,
             item_type: 1,
             sku: 1,
+            services: 1,
+            in_stock: 1,
           },
         )
         .lean();
@@ -805,7 +807,7 @@ module.exports = fp((instance, options, next) => {
       const gObj = {};
       for (const g of goods) {
         var in_stock = 0;
-        for (var s of g.services) {
+        for (const s of g.services) {
           if (s.service + "" == count.service + "") {
             in_stock += s.in_stock;
           }
