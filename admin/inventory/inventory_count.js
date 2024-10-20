@@ -78,11 +78,15 @@ const getCountItems = async (request, reply, instance) => {
           : count_goods
         : request.params.limit;
     const page = request.params.page;
+    const now = Date.now();
+    console.log(now, "==============================");
+
     const goods = await instance.goodsSales
       .find(query, { _id: 1, in_stock: 1, services: 1, price: 1, item_type: 1 })
       .skip(limit * (page - 1))
       .limit(limit)
       .sort({ _id: 1 });
+    console.log((Date.now() - now) / 1000, "======ketgan vaqt================");
 
     const Answer = [];
     for (const index in goods) {
@@ -99,6 +103,7 @@ const getCountItems = async (request, reply, instance) => {
           const parent = await instance.goodsSales
             .findOne(
               {
+                organization: admin.organization,
                 variant_items: {
                   $elemMatch: {
                     $eq: goods[index]._id,
