@@ -78,15 +78,12 @@ const getCountItems = async (request, reply, instance) => {
           : count_goods
         : request.params.limit;
     const page = request.params.page;
-    const now = Date.now();
-    console.log(now, "==============================");
 
     const goods = await instance.goodsSales
       .find(query, { _id: 1, in_stock: 1, services: 1, price: 1, item_type: 1 })
       .skip(limit * (page - 1))
       .limit(limit)
       .sort({ _id: 1 });
-    console.log((Date.now() - now) / 1000, "======ketgan vaqt================");
 
     const Answer = [];
     for (const index in goods) {
@@ -591,6 +588,7 @@ module.exports = fp((instance, options, next) => {
             in_stock: 1,
             product_id: 1,
             cost: 1,
+            services: 1,
           },
         )
         .lean();
@@ -598,7 +596,7 @@ module.exports = fp((instance, options, next) => {
       const gObj = {};
       for (const g of goods) {
         let in_stock = 0;
-        for (var s of g.services) {
+        for (const s of g.services) {
           if (s.service + "" == invcount.service + "") {
             in_stock += s.in_stock;
           }
