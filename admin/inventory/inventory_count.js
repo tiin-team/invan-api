@@ -8,11 +8,12 @@ const getCountItems = async (request, reply, instance) => {
     const service = request.body.service;
     for (const cat of request.body.categories) {
       categories.push(cat);
-      const childs = await instance.get_child_category(cat);
-      for (const ch of childs) {
+      const children = await instance.get_child_category(cat);
+      for (const ch of children) {
         categories.push(ch);
       }
     }
+
     let query = {
       organization: admin.organization,
       has_variants: {
@@ -62,11 +63,13 @@ const getCountItems = async (request, reply, instance) => {
         $in: suppliers,
       };
     }
+
     if (categories.length > 0) {
       query.category = {
         $in: categories,
       };
     }
+
     const count_goods = await instance.goodsSales.countDocuments(query);
     const limit =
       request.params.limit == "all"
@@ -76,10 +79,11 @@ const getCountItems = async (request, reply, instance) => {
         : request.params.limit;
     const page = request.params.page;
     const goods = await instance.goodsSales
-      .find(query)
+      .find(query, { _id: 1, in_stock: 1, services: 1, price: 1, item_type: 1 })
       .skip(limit * (page - 1))
       .limit(limit)
       .sort({ _id: 1 });
+
     const Answer = [];
     for (const index in goods) {
       goods[index].in_stock = null;
@@ -92,13 +96,18 @@ const getCountItems = async (request, reply, instance) => {
 
       if (goods[index].item_type == "variant") {
         try {
-          const parent = await instance.goodsSales.findOne({
-            variant_items: {
-              $elemMatch: {
-                $eq: goods[index]._id,
+          const parent = await instance.goodsSales
+            .findOne(
+              {
+                variant_items: {
+                  $elemMatch: {
+                    $eq: goods[index]._id,
+                  },
+                },
               },
-            },
-          });
+              { name: 1, is_track_stock: 1, use_production: 1 },
+            )
+            .lean();
           if (parent) {
             goods[index].name = `${parent.name} ( ${goods[index].name} )`;
             if (parent.is_track_stock || parent.use_production) {
