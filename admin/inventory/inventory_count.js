@@ -544,7 +544,6 @@ module.exports = fp((instance, options, next) => {
 
   let complete_count = async (request, reply, admin) => {
     try {
-      console.log(547);
       const id = request.params.id;
       const invcount = await instance.inventoryCount
         .findOne({
@@ -557,7 +556,6 @@ module.exports = fp((instance, options, next) => {
       if (invcount.status == "completed") {
         return reply.error("Allready done");
       }
-      console.log(560);
       const items = await instance.inventoryCountItem
         .find({
           count_id: invcount._id,
@@ -568,7 +566,6 @@ module.exports = fp((instance, options, next) => {
       for (const it of items) {
         ids.push(it.product_id);
       }
-      console.log(571);
       const goods = await instance.goodsSales
         .find(
           {
@@ -632,11 +629,9 @@ module.exports = fp((instance, options, next) => {
       if (item_ids.length == counts.length) {
         return reply.error("Error on completing");
       }
-      console.log(635);
       for (const it of items) {
         await create_history(request, it, invcount, admin);
       }
-      console.log(639);
 
       await instance.inventoryCountItem.deleteMany({
         _id: {
@@ -771,34 +766,44 @@ module.exports = fp((instance, options, next) => {
 
   // get by id
 
-  const getcount = async (request, reply, admin) => {
+  const getCount = async (request, reply, admin) => {
     try {
-      let count = await instance.inventoryCount.findOne({
-        _id: request.params.id,
-      });
+      const count = await instance.inventoryCount
+        .findOne({
+          _id: request.params.id,
+        })
+        .len();
       if (!count) {
         return reply.fourorfour("count");
       }
 
-      try {
-        count = count.toObject();
-      } catch (error) {}
-
-      let countitems = await instance.inventoryCountItem.find({
-        count_id: count._id,
-      });
+      const countItems = await instance.inventoryCountItem
+        .find({
+          count_id: count._id,
+        })
+        .lean();
       const ids = [];
-      for (var c of countitems) {
+      for (const c of countItems) {
         ids.push(c.product_id);
       }
-      let goods = await instance.goodsSales.find({
-        _id: {
-          $in: ids,
-        },
-      });
+      const goods = await instance.goodsSales
+        .find(
+          {
+            _id: {
+              $in: ids,
+            },
+          },
+          {
+            _id: 1,
+            name: 1,
+            item_type: 1,
+            sku: 1,
+          },
+        )
+        .lean();
 
-      var gObj = {};
-      for (var g of goods) {
+      const gObj = {};
+      for (const g of goods) {
         var in_stock = 0;
         for (var s of g.services) {
           if (s.service + "" == count.service + "") {
@@ -811,38 +816,38 @@ module.exports = fp((instance, options, next) => {
 
       count.total_difference = 0;
       count.total_cost_difference = 0;
-      for (let i = 0; i < countitems.length; i++) {
-        countitems[i]._id = countitems[i].product_id;
-        if (gObj[countitems[i].product_id]) {
-          countitems[i].product_name = gObj[countitems[i].product_id].name;
-          if (gObj[countitems[i].product_id].item_type == "variant") {
+      for (let i = 0; i < countItems.length; i++) {
+        countItems[i]._id = countItems[i].product_id;
+        if (gObj[countItems[i].product_id]) {
+          countItems[i].product_name = gObj[countItems[i].product_id].name;
+          if (gObj[countItems[i].product_id].item_type == "variant") {
             const parent = await instance.goodsSales.findOne({
               variant_items: {
                 $elemMatch: {
-                  $eq: countitems[i].product_id,
+                  $eq: countItems[i].product_id,
                 },
               },
             });
             if (parent) {
-              countitems[
+              countItems[
                 i
-              ].product_name = `${parent.name} ( ${countitems[i].product_name} )`;
+              ].product_name = `${parent.name} ( ${countItems[i].product_name} )`;
             }
           }
 
-          countitems[i].sku = gObj[countitems[i].product_id].sku;
-          if (countitems[i].counted) {
-            countitems[i].difference =
-              countitems[i].counted - countitems[i].exp_in_stock;
-            count.total_difference += countitems[i].difference;
-            countitems[i].cost_difference =
-              countitems[i].difference * countitems[i].cost;
-            count.total_cost_difference += countitems[i].cost_difference;
+          countItems[i].sku = gObj[countItems[i].product_id].sku;
+          if (countItems[i].counted) {
+            countItems[i].difference =
+              countItems[i].counted - countItems[i].exp_in_stock;
+            count.total_difference += countItems[i].difference;
+            countItems[i].cost_difference =
+              countItems[i].difference * countItems[i].cost;
+            count.total_cost_difference += countItems[i].cost_difference;
           }
         }
       }
 
-      count.items = countitems;
+      count.items = countItems;
       reply.ok(count);
     } catch (error) {
       reply.error(error.message);
@@ -858,7 +863,7 @@ module.exports = fp((instance, options, next) => {
         if (!admin) {
           return reply.error("Access");
         }
-        getcount(request, reply, admin);
+        getCount(request, reply, admin);
       });
     },
   );
