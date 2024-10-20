@@ -553,6 +553,53 @@ module.exports = fp((instance, options, next) => {
     }
   }
 
+  /**
+   *
+   * @param {{
+   *  _id: any
+   *  product_id: any
+   *  product_name: any
+   *  exp_in_stock: any
+   *  cost: any
+   *  count_id: any
+   *  cost_difference: any
+   *  counted: any
+   *  difference: any
+   * }[]} items
+   */
+  async function update_count_items(items) {
+    try {
+      const bulkWrites = [];
+      for (const item of items) {
+        bulkWrites.push({
+          updateOne: {
+            filter: {
+              _id: item._id,
+            },
+            update: {
+              $set: {
+                product_id: item.product_id,
+                product_name: item.product_name,
+                exp_in_stock: item.exp_in_stock,
+                cost: item.cost,
+                count_id: item.count_id,
+                cost_difference: item.cost_difference,
+                counted: item.counted,
+                difference: item.difference,
+              },
+            },
+          },
+        });
+      }
+
+      await instance.inventoryCountItem
+        .bulkWrite(bulkWrites)
+        .catch((err) => {});
+    } catch (error) {
+      console.log(error.message);
+    }
+  }
+
   let complete_count = async (request, reply, admin) => {
     try {
       const id = request.params.id;
@@ -612,9 +659,10 @@ module.exports = fp((instance, options, next) => {
 
           items[i].cost_difference =
             items[i].difference * gObj[items[i].product_id].cost;
-          await update_count_item(items[i]);
+          // await update_count_item(items[i]); // ! pastda bulk update qilindi
         }
       }
+      await update_count_items(items);
       let counts = items;
       // let counts = await instance.inventoryCountItem
       //   .find({
