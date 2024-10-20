@@ -228,8 +228,15 @@ module.exports = (instance, _, next) => {
           total_price: 1,
           is_refund: 1,
           service: 1,
+          pos_name: 1,
+          pos_id: 1,
           cashier_id: 1,
-          user_id: 1
+          payment: 1,
+          user_id: 1,
+          client_id: 1,
+          cashback_phone: 1,
+          cash_back: 1,
+          comment: 1,
         }
       },
       {
@@ -239,62 +246,86 @@ module.exports = (instance, _, next) => {
       { $limit: limit }
     ])
 
+    const receiptServices = await instance.services.find(
+      {
+        _id: { $in: receipts.map(receipt => instance.ObjectId(receipt.service)) },
+      },
+      { name: 1 },
+    )
+      .lean()
+    const cashiers = await instance.User.find(
+      {
+        _id: { $in: receipts.map(receipt => instance.ObjectId(receipt.cashier_id)) },
+      },
+      { name: 1 },
+    )
+      .lean()
+    const customers = await instance.clientsDatabase.find(
+      {
+        $or: [
+          {
+            _id: { $in: receipts.map(receipt => receipt.client_id) },
+          },
+          {
+            user_id: { $in: receipts.map(receipt => receipt.user_id) },
+          },
+          {
+            phone_number: { $in: receipts.map(receipt => receipt.cashback_phone) },
+          },
+        ]
+      },
+      {
+        first_name: 1,
+        last_name: 1,
+        user_id: 1,
+        phone_number: 1,
+        inn: 1,
+      },
+    )
+      .lean()
+
     const serviceMap = {}
     const employeeMap = {}
     const customerMap = {}
+    const customerUserIdMap = {}
+    const customerPhoneNumberMap = {}
+
+    for (const receiptService of receiptServices) {
+      serviceMap[receiptService._id + ''] = receiptService
+    }
+
+    for (const cashier of cashiers) {
+      employeeMap[cashier._id + ''] = cashier
+    }
+
+    for (const customer of customers) {
+      customer.name = `${customer.first_name} ${customer.last_name ? customer.last_name : ''}`
+      customerMap[customer._id + ''] = customer
+      customerUserIdMap[customer.user_id + ''] = customer
+      customerPhoneNumberMap[customer.phone_number + ''] = customer
+    }
 
     for (const index in receipts) {
-      try {
-        receipts[index] = receipts[index].toObject()
-      } catch (error) { }
-
-      // service
-      if (!serviceMap[receipts[index].service]) {
-        try {
-          const service = await instance.services.findById(receipts[index].service)
-          if (service) {
-            serviceMap[service._id] = service
-          }
-        }
-        catch (error) { }
-      }
+      // try {
+      //   receipts[index] = receipts[index].toObject()
+      // } catch (error) { }
 
       if (serviceMap[receipts[index].service]) {
         receipts[index].service_name = serviceMap[receipts[index].service].name
-      }
-
-      // employee
-      if (!employeeMap[receipts[index].cashier_id]) {
-        try {
-          const cashier = await instance.User.findById(receipts[index].cashier_id)
-          if (cashier) {
-            employeeMap[cashier._id] = cashier
-          }
-        }
-        catch (error) { }
       }
 
       if (employeeMap[receipts[index].cashier_id]) {
         receipts[index].cashier_name = employeeMap[receipts[index].cashier_id].name
       }
 
-      // customer
-      if (receipts[index].user_id && !customerMap[receipts[index].user_id]) {
-        try {
-          const customer = await instance.clientsDatabase.findOne({ user_id: receipts[index].user_id })
-          if (customer) {
-            customerMap[customer._id] = customer
-          }
-        }
-        catch (error) { }
-      }
+      const client = receipts[index].client_id && customerMap[receipts[index].client_id] ?
+        customerMap[receipts[index].client_id] :
+        receipts[index].cashback_phone && customerPhoneNumberMap[receipts[index].cashback_phone] ?
+          customerPhoneNumberMap[receipts[index].cashback_phone] :
+          {}
 
-      if (receipts[index].user_id && customerMap[receipts[index].user_id]) {
-        receipts[index].customer_name = customerMap[receipts[index].user_id].name
-      }
-      else {
-        receipts[index].customer_name = '-'
-      }
+      receipts[index].customer_name = client.name;
+      receipts[index].inn = client.inn;
     }
 
     reply.ok({

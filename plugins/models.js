@@ -50,6 +50,10 @@ module.exports = fp((instance, _, next) => {
       type: Boolean,
       default: false
     },
+    is_active: {
+      type: Boolean,
+      default: true
+    },
     phone_number: {
       type: String,
       default: ""
@@ -85,6 +89,23 @@ module.exports = fp((instance, _, next) => {
       default: ''
     },
     low_stock_date: { type: Number, default: 7 },
+    work_time: [{
+      day: {
+        type: String,
+        required: true,
+        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+      },
+      from: {
+        type: String,
+        required: true,
+        validate: /^([01][1-9]|20|21|22|23|24)\:([0-5][0-9])$/
+      },
+      to: {
+        type: String,
+        required: true,
+        validate: /^([01][1-9]|20|21|22|23|24)\:([0-5][0-9])$/
+      },
+    }],
   })
   instance.decorate('services', services)
   instance.generate('/services', services, { public_search: true })
@@ -168,6 +189,18 @@ module.exports = fp((instance, _, next) => {
           title: 'NFC',
           enable: true,
           status: true
+        },
+        {
+          name: 'online_payment',
+          title: 'Online payment',
+          enable: true,
+          status: true
+        },
+        {
+          name: 'transfer_pay',
+          title: 'TRANSFER',
+          enable: true,
+          status: true
         }
       ]
     },
@@ -206,6 +239,10 @@ module.exports = fp((instance, _, next) => {
       type: String,
       default: "",
     },
+    didox: {
+      inn: { type: String, trim: true },
+      password: { type: String, trim: true },
+    }
   })
 
   instance.decorate('organizations', organizations)
@@ -353,6 +390,15 @@ module.exports = fp((instance, _, next) => {
       queue_id: mongoose.Types.ObjectId,
       queue: Number,
       partiation_id: mongoose.Types.ObjectId,
+      partitions: [{
+        partition_id: mongoose.Types.ObjectId,
+        count: Number,
+        cost: Number,
+        p_order: String,
+        queue: Number,
+        supplier_id: mongoose.Types.ObjectId,
+        supplier_name: String,
+      }],
       p_order: String,
       qty_box: Number,
       receipt_id: String,
@@ -372,6 +418,7 @@ module.exports = fp((instance, _, next) => {
         default: false
       },
       cost: Number,
+      total_cost: Number,
       price: Number,
       price_currency: String,
       currency: String,
@@ -446,10 +493,22 @@ module.exports = fp((instance, _, next) => {
       edit_history: {
         type: Array,
         default: []
-      }
+      },
+      vat_percentage: { type: Number, default: 0 },
+      mxik: {
+        type: String,
+        default: null,
+      },
+      package_code: { type: String, default: null },
+      package_name: { type: String, default: null },
+      sold_by: {
+        type: String,
+        default: 'each',
+      },
+      ofd_vat_percentage: { type: Number, default: 0 },
     }],
     debtData: Object,
-    comment: String,
+    comment: { type: String, default: '' },
     discount: {
       type: Array,
       default: []
@@ -507,6 +566,12 @@ module.exports = fp((instance, _, next) => {
       default: 0
     },
     comment: String,
+    ofd: {
+      terminal_id: { type: String, default: null },
+      fiscal_sign: { type: String, default: null },
+      receipt_seq: { type: Number, default: null },
+      date_time: { type: Number, default: null },
+    }
   })
   instance.decorate('Receipts', Receipts)
 
@@ -652,6 +717,26 @@ module.exports = fp((instance, _, next) => {
       taxes: {
         type: Number,
         default: 0
+      },
+      gift: {
+        type: Number,
+        default: 0
+      },
+      qr_code: {
+        type: Number,
+        default: 0
+      },
+      nfc: {
+        type: Number,
+        default: 0
+      },
+      online_payment: {
+        type: Number,
+        default: 0
+      },
+      transfer_pay: {
+        type: Number,
+        default: 0
       }
     },
     Pays: {
@@ -713,6 +798,7 @@ module.exports = fp((instance, _, next) => {
       type: Array,
       default: []
     },
+    sku: String,
     quantity: Number,
     quantity_left: Number,
     queue: Number,
@@ -990,6 +1076,11 @@ module.exports = fp((instance, _, next) => {
       type: Array,
       default: []
     },
+    is_active: {
+      type: Boolean,
+      default: true,
+
+    },
     show_on_bot: {
       type: Boolean,
       default: false
@@ -1012,7 +1103,9 @@ module.exports = fp((instance, _, next) => {
     weight: Number,
     brand: String,
     description: String,
-    mxik: String,
+    mxik: { type: String, default: '' },
+    package_code: { type: String, default: '' },
+    package_name: { type: String, default: '' },
     nds_value: Number,
     marking: { type: Boolean, default: false },
     created_by: String,
@@ -1359,6 +1452,7 @@ module.exports = fp((instance, _, next) => {
 
   const clients = instance.model('clientsDatabase', {
     id: { type: String, default: '' },
+    cartame_id: { type: String, unique: true },
     user_id: {
       type: String,
       default: ''
@@ -1407,7 +1501,11 @@ module.exports = fp((instance, _, next) => {
       type: String,
       enum: ['male', 'female', 'not_set']
     },
-    birthday: String,
+    birthday: {
+      type: String,
+      validate: /^$|^([012][1-9]|10|20|30|31)\-(0[1-9]|10|11|12)\-([1-9][0-9][0-9][0-9])$/,
+    },
+    city: { type: String, default: '' },
     debt: Number,
     debt_pay_history: {
       type: Array,
@@ -1423,8 +1521,29 @@ module.exports = fp((instance, _, next) => {
       type: Boolean,
       default: false,
     },
+    user_type: { type: String, enum: ['natural', 'legal'] },
+    inn: String,
+    contract_numbers: [{
+      isDefault: { type: Boolean, required: true, trim: true },
+      contractNo: { type: String, required: true, trim: true },
+      contractDate: { type: String, required: true, trim: true },
+    }]
   })
   instance.decorate('clientsDatabase', clients)
+
+  instance.clientsDatabase.schema.index(
+    {
+      cartame_id: 1
+    },
+    {
+      name: 'CartaMe unique id',
+      unique: true,
+      background: true,
+      partialFilterExpression: {
+        cartame_id: { $exists: true },
+      }
+    },
+  )
 
   instance.decorate('clientstariffes',
     instance.model('clientstariffes', {
@@ -1535,6 +1654,7 @@ module.exports = fp((instance, _, next) => {
     purchase_order_date: Number,
     supplier_id: mongoose.Schema.Types.ObjectId,
     supplier_name: String,
+    supplier_contract: { type: String, trim: true, default: null },
     service_name: String,
     type: {
       type: String,
@@ -1652,6 +1772,8 @@ module.exports = fp((instance, _, next) => {
     supplier_name: String,
     contact: String,
     email: String,
+    inn: String,
+    contract_numbers: [String],
     phone_number: String,
     website: String,
     address_first: String,
@@ -1948,6 +2070,7 @@ module.exports = fp((instance, _, next) => {
     category_id: String,
     category_name: String,
     product_id: mongoose.Schema.Types.ObjectId,
+    sku: String,
     product_name: String,
     cost: {
       type: Number,
@@ -2091,6 +2214,7 @@ module.exports = fp((instance, _, next) => {
       default: true
     },
     phone_number: String,
+    tin: { type: String, trim: true },
     token: {
       type: String,
       default: ""
@@ -2718,9 +2842,9 @@ module.exports = fp((instance, _, next) => {
       order_quantity: Number,
       note: String,
       is_accept: { type: Boolean, default: false },
-      category:{
-        id:{type:mongoose.Types.ObjectId},
-        name:{type:String}
+      category: {
+        id: { type: mongoose.Types.ObjectId },
+        name: { type: String }
       }
     }]
   });
@@ -2798,6 +2922,75 @@ module.exports = fp((instance, _, next) => {
     created_by_name: String,
   })
   instance.decorate('clientsDebtPayHistory', invanClientsDebtPayHistorySchema);
+
+
+  const logModel = instance.model('logModel', {
+    acceptVersion: { 
+      type: String,
+      default: null,
+    },
+    acceptUser: { 
+      type: String,
+      default: null,
+    },
+    id: { 
+      type: String,
+      default: null,
+    },
+    ip: { 
+      type: String,
+      default: null,
+    },
+    requestOn: { 
+      type: Date,
+      default: new Date(),
+      required: true
+    },
+    responseOn: { 
+      type: Date,
+      default: new Date(),
+      required: true
+    },
+    requestPath: { 
+      type: String,
+      default: null,
+      required: true
+    },
+    requestMethod: { 
+      type: String,
+      default: null,
+    },
+    requestHeader: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    requestQuery: { 
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+      required: true
+    },
+    requestBody: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    responseBody: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    requestUser: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    cookies: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    signedCookies: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+  })
+  instance.decorate('logModel', logModel);
 
   next()
 })

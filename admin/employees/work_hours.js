@@ -3,11 +3,11 @@ module.exports = (instance, options, next) => {
   const get_worked_hours = (request, reply, admin) => {
     const min = parseInt(request.params.min)
     const max = parseInt(request.params.max)
-    const limit = Number.isFinite(request.params.limit)
+    const limit = Number.isFinite(Number(request.params.limit))
       ? parseInt(request.params.limit)
       : 10
 
-    const page = Number.isFinite(request.params.page) && request.params.page > 1
+    const page = Number.isFinite(Number(request.params.page)) && request.params.page > 1
       ? parseInt(request.params.page)
       : 1
 
@@ -47,7 +47,7 @@ module.exports = (instance, options, next) => {
       if (timecards == null) {
         timecards = []
       }
-      var total = timecards.length
+      const total = timecards.length
       if (request.params.name == undefined) {
         timecards = timecards.slice(limit * (page - 1), limit * page)
       }
@@ -57,22 +57,23 @@ module.exports = (instance, options, next) => {
         if (users == null) {
           users = []
         }
-        var emplonameObj = {}
-        var emplotimeObj = {}
-        var emplohourObj = {}
-        var total_hours = 0
-        var ids = []
-        for (var u of users) {
-          ids.push(u._id)
-          emplonameObj[u._id] = u.name
-          emplotimeObj[u._id] = true
-          emplohourObj[u._id] = {
+
+        const employeeObj = {}
+        const emplotimeObj = {}
+        const emplohourObj = {}
+        let total_hours = 0
+        const ids = []
+        for (const user of users) {
+          ids.push(user._id)
+          employeeObj[user._id] = user
+          emplotimeObj[user._id] = true
+          emplohourObj[user._id] = {
             services: new Set(),
             value: 0
           }
         }
-        for (var t of timecards) {
-          if (emplonameObj[t.employee_id]) {
+        for (const t of timecards) {
+          if (employeeObj[t.employee_id]) {
             if ((t.clock_out == null || t.clock_out == 0) && emplotimeObj[t.employee_id]) {
               emplotimeObj[t.employee_id] = false
               emplohourObj[t.employee_id].services.add(t.service_name)
@@ -88,30 +89,33 @@ module.exports = (instance, options, next) => {
             }
           }
         }
-        var answer = []
+        const answer = []
         if (request.params.name != undefined) {
           answer = [
             [
               'name',
               'store',
-              'hours'
+              'minutes',
+              'tin',
             ]
           ]
         }
-        for (var id of ids) {
+        for (const id of ids) {
           if ([...emplohourObj[id].services].length > 0) {
             if (request.params.name == undefined) {
               answer.push({
-                employee_name: emplonameObj[id],
+                employee_name: employeeObj[id].name,
                 stores: [...emplohourObj[id].services],
-                hours: emplohourObj[id].value
+                minutes: emplohourObj[id].value,
+                tin: employeeObj[id].tin,
               })
             }
             else {
               answer.push([
-                emplonameObj[id],
+                employeeObj[id].name,
                 [...emplohourObj[id].services].join(' | '),
-                emplohourObj[id].value
+                emplohourObj[id].value,
+                employeeObj[id].tin
               ])
             }
           }
@@ -129,9 +133,8 @@ module.exports = (instance, options, next) => {
         }
       })
         .lean()
-    }).sort({
-      _id: -1
     })
+      .sort({ _id: -1 })
       .lean()
   }
 

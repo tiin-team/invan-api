@@ -176,8 +176,13 @@ const customerDebtHistoryHandler = async function (request, reply, instance) {
             $match: {
                 organization: user.organization,
                 // receipt_type: 'debt',
-                user_id: customer.user_id,
-                client_id: customer._id,
+                // user_id: customer.user_id,
+                // client_id: customer._id,
+                $or: [
+                    { client_id: customer._id },
+                    { user_id: customer.user_id },
+                    { cashback_phone: customer.phone_number },
+                ],
             }
         }
         const unwindItems = {

@@ -54,6 +54,7 @@ module.exports = fp((instance, _, next) => {
         category_name: category.name,
         product_id: product_id,
         product_name: item.name,
+        sku: item.sku,
         cost: cost,
         service: instance.ObjectId(service._id),
         service_name: service.name,

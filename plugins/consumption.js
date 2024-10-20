@@ -8,9 +8,11 @@ module.exports = fp(function (instance, _, next) {
       organization: String,
       type: {
         type: String,
-        enum: ['fees', 'one_time_fees', 'salary', 'company_to_fees'],
-        default: 'fees'
+        // enum: ['fees', 'one_time_fees', 'salary', 'company_to_fees'],
+        // default: 'fees'
       },
+      finance_category_name: String,
+      finance_category_id: mongoose.Types.ObjectId,
       service: String,
       service_name: String,
       employee: String,
@@ -38,6 +40,8 @@ module.exports = fp(function (instance, _, next) {
         type: String,
         enum: ['cash', 'card']
       },
+      account_name: String,
+      account_id: mongoose.Types.ObjectId,
       currency: {
         type: String,
         default: 'uzs'
@@ -55,7 +59,7 @@ module.exports = fp(function (instance, _, next) {
         type: 'object',
         additionalProperties: false,
         required: [
-          'type', 'currency_amount', 'amount_type', 'service'
+          'currency_amount', 'amount_type', 'service'
         ],
         properties: {
           type: {
@@ -84,7 +88,17 @@ module.exports = fp(function (instance, _, next) {
           },
           option_id: {
             type: 'string'
-          }
+          },
+          account_id: {
+            type: 'string',
+            maxLength: 24,
+            minLength: 24,
+          },
+          category_id: {
+            type: 'string',
+            maxLength: 24,
+            minLength: 24,
+          },
         }
       }
     },
@@ -162,8 +176,9 @@ module.exports = fp(function (instance, _, next) {
           }
         }
         default: {
-          reply.error('Failed')
-          return { body: null }
+          // reply.error('Failed')
+          // return { body: null }
+          return { body: body }
         }
       }
     } catch (error) {
@@ -171,15 +186,58 @@ module.exports = fp(function (instance, _, next) {
       return { body: null }
     }
   }
-
+  
   const createConsumption = async (request, reply) => {
     try {
+      const user = request.user
+
+      const financeCategory = await instance.financeCategory
+        .findOne(
+          {
+            _id: request.body.category_id,
+            organization: user.organization,
+            deleted_at: null,
+          },
+          {
+            organization: 1,
+            name: 1,
+            disbursement: 1,
+            income: 1,
+            is_active: 1,
+          },
+        )
+        .lean()
+      if (!financeCategory)
+        return reply.fourorfour('Finance category')
+
+      const account = await instance.financeAccount
+        .findOne(
+          {
+            _id: request.body.account_id,
+            organization: user.organization,
+            deleted_at: null,
+          },
+          {
+            organization: 1,
+            name: 1,
+          },
+        )
+        .lean()
+      if (!account)
+        return reply.fourorfour('Finance account')
+
+      request.body.finance_category_id = financeCategory._id
+      request.body.finance_category_name = financeCategory.name
+      request.body.type = financeCategory.name
+      request.body.account_id = account._id
+      request.body.account_name = account.name
+
       const { body: body } = await checkBody(request, reply)
 
       if (!body) {
-        return
+        return reply.error('invalid body')
       }
-      const user = request.user
+
       body.organization = user.organization
       body.by = user._id
       body.by_name = user.name
@@ -201,6 +259,7 @@ module.exports = fp(function (instance, _, next) {
       if (body.type === 'company_to_fees') {
         const supplierTransaction = {
           service: body.service,
+          service_name: body.service_name,
           supplier_id: body.supplier,
           document_id: body.comment,
           currency: body.currency,
@@ -214,6 +273,44 @@ module.exports = fp(function (instance, _, next) {
         }
         const { _id: transaction_id } = await new instance.supplierTransaction(supplierTransaction).save()
         body.transaction_id = transaction_id;
+
+        const supplier = await instance.adjustmentSupplier
+          .findOne({ _id: body.supplier })
+          .lean()
+
+        const services = Array.isArray(supplier.services)
+          && supplier.services
+            .find(elem => elem.service + '' == service._id + '')
+          ? supplier.services
+          : [{
+            service: service._id,
+            service_name: service.name,
+            balance: 0,
+            balance_usd: 0,
+          }]
+        let supp_serv_index = services
+          .findIndex(elem => elem.service + '' == service._id + '')
+
+        if (supp_serv_index === -1) {
+          supp_serv_index = services.length
+          services.push({
+            service: service._id,
+            service_name: service.name,
+            balance: 0,
+            balance_usd: 0,
+          })
+        }
+        services[supp_serv_index].balance += balance_uzs
+        services[supp_serv_index].balance_usd += balance_usd
+        await instance.adjustmentSupplier.updateOne(
+          { _id: supplier._id },
+          {
+            $set: {
+              // balance: supplier.balance,
+              // balance_usd: supplier.balance_usd,
+              services: services,
+            }
+          })
       }
       const { _id: id } = await new instance.consumptionModel(body).save();
 
@@ -233,8 +330,21 @@ module.exports = fp(function (instance, _, next) {
       await instance.Safe.updateValue(safe_data, safe_history);
       /** */
 
+      await instance.financeAccount
+        .findOneAndUpdate(
+          { _id: body.account_id },
+          {
+
+            $inc: {
+              balance: financeCategory.income ? body.amount : (-1 * body.amount),
+            },
+          },
+          { lean: true },
+        )
+
       return reply.ok({ id: id })
     } catch (error) {
+
       return reply.error(error.message)
     }
   }
@@ -273,7 +383,20 @@ module.exports = fp(function (instance, _, next) {
         type: 'object',
         required: ['startDate', 'endDate'],
         properties: {
+          type: { type: 'string', default: '' },
           amount_type: { type: 'string', enum: ['cash', 'card', ''] },
+          account_id: {
+            oneOf: [
+              { type: 'string', minLength: 24, maxLength: 24 },
+              { type: 'string', minLength: 0, maxLength: 0 },
+            ],
+          },
+          category_id: {
+            oneOf: [
+              { type: 'string', minLength: 24, maxLength: 24 },
+              { type: 'string', minLength: 0, maxLength: 0 },
+            ],
+          },
           service: {
             oneOf: [
               { type: 'string', minLength: 24, maxLength: 24 },
@@ -286,12 +409,11 @@ module.exports = fp(function (instance, _, next) {
               { type: 'string', minLength: 0, maxLength: 0 },
             ],
           },
-          type: { type: 'string', default: '' },
           startDate: { type: 'integer', minimum: 1 },
           endDate: { type: 'integer', minimum: 1 },
-        }
-      }
-    }
+        },
+      },
+    },
   }
 
   instance.post(
@@ -307,8 +429,10 @@ module.exports = fp(function (instance, _, next) {
           const {
             startDate,
             endDate,
-            type,
-            amount_type,
+            category_id,
+            account_id,
+            // type,
+            // amount_type,
             service,
             supplier,
             fee_type,
@@ -321,11 +445,13 @@ module.exports = fp(function (instance, _, next) {
               $lte: endDate
             }
           }
-          if (amount_type) query.amount_type = amount_type
+          // if (amount_type) query.amount_type = amount_type
+          if (category_id) query.finance_category_id = category_id
+          if (account_id) query.account_id = account_id
           if (service) query.service = service;
           if (supplier) query.supplier = supplier;
 
-          if (type != '') query.type = type
+          // if (type != '') query.type = type
 
           if (filter) {
             switch (fee_type) {
@@ -348,7 +474,7 @@ module.exports = fp(function (instance, _, next) {
             query.type = fee_type
           }
 
-          const total = await instance.consumptionModel.countDocuments(query)
+          const total = await instance.consumptionModel.countDocuments(query);
 
           const limit = request.params.limit == 'all' ? (total == 0 ? 1 : total) : request.params.limit
           const fees = await instance.consumptionModel

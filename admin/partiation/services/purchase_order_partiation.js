@@ -43,6 +43,7 @@ module.exports = fp((instance, options, next) => {
           service_id: current_service._id,
           cost: purch_item.purchase_cost,
           barcode: goods_obj[purch_item.product_id].barcode,
+          sku: goods_obj[purch_item.product_id].sku,
           service_name: current_service.name,
           good_id: purch_item.product_id,
           good_name: goods_obj[purch_item.product_id].name,

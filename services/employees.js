@@ -954,7 +954,7 @@ module.exports = (instance, _, next) => {
               }).sort({ opening_time: -1 }).limit(1)
             }
             else {
-              reply.error('Device allready in use')
+              reply.error('Device already in use')
             }
           }
           else {

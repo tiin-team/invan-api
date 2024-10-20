@@ -408,8 +408,8 @@ module.exports = (instance, _, next) => {
       date: {
         // $gte: min - (process.env.TIME_DIFF | 0),
         // $lte: max - (process.env.TIME_DIFF | 0),
-        $gte: min,
-        $lte: max,
+        $gte: min - 5 * 60 * 60 * 1000,
+        $lte: max - 5 * 60 * 60 * 1000,
       }
     }
 
@@ -452,11 +452,16 @@ module.exports = (instance, _, next) => {
         //   ],
         // },
         receipt_no: 1,
+        is_refund: 1,
         sold_item_list: 1,
         user_id: 1,
+        client_id: 1,
+        cashback_phone: 1,
         cashier_id: 1,
         cashier_name: 1,
         organization: 1,
+        service: 1,
+        payment: 1,
       }
     }
     const unwindSoldItemList = {
@@ -489,7 +494,7 @@ module.exports = (instance, _, next) => {
       .exec();
 
     const total_result = totalCount && totalCount.length > 0 && totalCount[0].count ? totalCount[0].count : 0;
-    console.log(total_result, 'total_result');
+
     limit = limit == 'all'
       ? !isNaN(total_result) && total_result > 0
         ? total_result
@@ -508,14 +513,19 @@ module.exports = (instance, _, next) => {
         partiation_id: '$sold_item_list.partiation_id',
         receipt_no: 1,
         user_id: 1,
+        client_id: 1,
+        phone_number: '$cashback_phone',
         date: 1,
         supplier_name: 1,
+        is_refund: 1,
         product_id: '$sold_item_list.product_id',
         product_name: '$sold_item_list.product_name',
         category_name: '$sold_item_list.category_name',
         p_order: '$sold_item_list.p_order',
         value: '$sold_item_list.value',
         price: '$sold_item_list.price',
+        discount: '$sold_item_list.discount',
+        payment: 1,
         qty_box: '$sold_item_list.qty_box',
         avg_qty_box: {
           $divide: [
@@ -555,6 +565,7 @@ module.exports = (instance, _, next) => {
         cashier_name: 1,
         // poss_count: 1,
         organization: 1,
+        service: 1,
       }
     }
 
@@ -583,31 +594,72 @@ module.exports = (instance, _, next) => {
     const clients = await instance.clientsDatabase
       .find(
         {
-          user_id: { $in: result.map(r => r.user_id) },
+          // user_id: { $in: result.map(r => r.user_id) },
           organization: result[0].organization,
+          $or: [
+            {
+              _id: { $in: result.map(r => r.client_id) },
+            },
+            {
+              user_id: { $in: result.map(r => r.user_id) },
+            },
+            {
+              phone_number: { $in: result.map(r => r.phone_number) },
+            },
+          ]
         },
         {
           user_id: 1,
           first_name: 1,
           last_name: 1,
+          phone_number: 1,
+          inn: 1,
         },
       )
       .lean()
 
     const users_obj = {}
+    const users_user_id_obj = {}
+    const users_phone_number_obj = {}
     for (const user of clients) {
-      users_obj[user.user_id] = user
+      users_obj[user._id] = user
+      if (user.user_id) {
+        users_user_id_obj[user.user_id + ''] = user
+      }
+      if (user.phone_number) {
+        users_phone_number_obj[user.phone_number + ''] = user
+      }
     }
 
-    const partiation_ids = []
+    const partiation_ids = new Set();
+    const product_ids = new Set();
+    const service_ids = new Set();
     for (let i = 0; i < result.length; i++) {
-      if (result[i].partiation_id)
-        partiation_ids.push(instance.ObjectId(result[i].partiation_id))
+      if (result[i].partiation_id) {
+        partiation_ids.add(instance.ObjectId(result[i].partiation_id))
+      }
+      if (result[i].product_id) {
+        product_ids.add(result[i].product_id)
+      }
+      if (result[i].service) {
+        service_ids.add(result[i].service)
+      }
     }
+
+    const stores = await instance.services
+      .find({
+        _id: { $in: [...service_ids] },
+      })
+      .lean()
+    const stores_obj = {}
+    for (const store of stores) {
+      stores_obj[store._id] = store
+    }
+
 
     const partiations = await instance.goodsSaleQueue
       .find({
-        _id: { $in: partiation_ids },
+        _id: { $in: [...partiation_ids] },
       })
       .lean()
 
@@ -618,9 +670,10 @@ module.exports = (instance, _, next) => {
 
     const goods = await instance.goodsSales
       .find(
-        { _id: { $in: [] } },
+        { _id: { $in: [...product_ids] } },
         {
           sold_by: 1,
+          sku: 1,
         },
       )
       .lean()
@@ -630,27 +683,50 @@ module.exports = (instance, _, next) => {
     }
 
     for (let i = 0; i < result.length; i++) {
-
-      if (users_obj[result[i].user_id])
-        result[i].client_name = users_obj[result[i].user_id].first_name + users_obj[result[i].user_id].last_name
-      else
+      if (result[i].client_id && users_obj[result[i].client_id]) {
+        result[i].client_name = `${users_obj[result[i].client_id + ''].first_name.trim()} ${users_obj[result[i].client_id + ''].last_name}`
+        result[i].inn = users_obj[result[i].client_id + ''].inn
+      } else if (result[i].phone_number && users_phone_number_obj[result[i].phone_number]) {
+        result[i].client_name = `${users_phone_number_obj[result[i].phone_number].first_name.trim()} ${users_phone_number_obj[result[i].phone_number].last_name}`
+        result[i].inn = users_phone_number_obj[result[i].phone_number].inn
+      }
+      // else if (users_user_id_obj[result[i].user_id]) {
+      //   result[i].client_name = `${users_user_id_obj[result[i].user_id].first_name.trim()} ${users_user_id_obj[result[i].user_id].last_name}`
+      //   result[i].inn = users_user_id_obj[result[i].user_id].inn
+      // } 
+      else {
         result[i].client_name = ""
+        result[i].inn = ""
+      }
 
       result[i].partiation_no = ""
 
       if (partiations_obj[result[i].partiation_id]) {
         result[i].p_order = partiations_obj[result[i].partiation_id].p_order
-        result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no ?
-          partiations_obj[result[i].partiation_id].partiation_no : result[i].p_order
+        result[i].partiation_no = partiations_obj[result[i].partiation_id].partiation_no
+          ? partiations_obj[result[i].partiation_id].partiation_no
+          : result[i].p_order
         result[i].supplier_name = partiations_obj[result[i].partiation_id].supplier_name
       }
+
+      result[i].service_id = stores_obj[result[i].service]._id
+      result[i].service_name = stores_obj[result[i].service].name
+
       result[i].qty_box = result[i].qty_box ? result[i].qty_box : 0
-      result[i].sold_by = goods_obj[result[i].product_id] && goods_obj[result[i].product_id].sold_by
-        ? goods_obj[result[i].product_id].sold_by
-        : "each"
+      if (goods_obj[result[i].product_id]) {
+        result[i].sold_by = goods_obj[result[i].product_id].sold_by
+          ? goods_obj[result[i].product_id].sold_by
+          : "each"
+
+        result[i].sku = goods_obj[result[i].product_id].sku;
+      }
 
       result[i].alt_group = ""
       result[i].size = ""
+
+      if(result[i].is_refund) {
+        result[i].value = -1 * Math.abs(result[i].value)
+      }
     }
 
     reply.ok({

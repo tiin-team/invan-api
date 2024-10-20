@@ -20,7 +20,7 @@ const useWorkgroupOrder = async (request, reply, instance) => {
     //   return reply.response(411, 'workgroup is not activated');
     // }
 
-    const item = await instance.goodsSales.findById(body.product_id)
+    const item = await instance.goodsSales.findById(body.product_id).lean()
     if (!item) {
       return reply.fourorfour('Item')
     }
@@ -92,7 +92,8 @@ const useWorkgroupOrder = async (request, reply, instance) => {
         unique: workgroup_order.order_number,
         reason: 'workgroup_order',
         adjustment: body.quantity * (-1),
-        stock_after: (+body.quantity) * (-1) + +item_in_stock
+        stock_after: (+body.quantity) * (-1) + +item_in_stock,
+        sku: item.sku,
       }
 
       // await insertInvHistory(instance, [new_history])

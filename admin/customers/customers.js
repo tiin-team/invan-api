@@ -10,7 +10,7 @@ module.exports = (instance, options, next) => {
       },
       (err) => {
         instance.send_Error("update customer", JSON.stringify(err));
-      }
+      },
     );
   }
 
@@ -39,7 +39,7 @@ module.exports = (instance, options, next) => {
         if (err) {
           instance.send_Error(
             "parse uploaded customers file",
-            JSON.stringify(err)
+            JSON.stringify(err),
           );
           return reply.error("Error on parsing uploaded customers file");
         }
@@ -73,7 +73,7 @@ module.exports = (instance, options, next) => {
             update_customer(
               user,
               query,
-              mapCustomerByPhone[foundCustomers[i].phone_number]
+              mapCustomerByPhone[foundCustomers[i].phone_number],
             );
             mapIsCustomerByPhone[foundCustomers[i].phone_number] = false;
           }
@@ -83,7 +83,7 @@ module.exports = (instance, options, next) => {
 
         try {
           const customersToSave = customers.filter(
-            (c) => mapIsCustomerByPhone[c.phone_number]
+            (c) => mapIsCustomerByPhone[c.phone_number],
           );
           if (!customersToSave) {
             return reply.ok();
@@ -155,30 +155,38 @@ module.exports = (instance, options, next) => {
                 if (err) {
                   instance.send_Error(
                     "exported items file",
-                    JSON.stringify(err)
+                    JSON.stringify(err),
                   );
                 }
               });
             }, 1000);
           });
-        }
+        },
       );
     });
   });
 
   const get_customers = async (request, reply, user) => {
-
     try {
       // organization: user.organization,
       const query = {
-        organization: user.organization == '61ae2917a914c3ba42fc626f' ? '5f5641e8dce4e706c062837a' : user.organization,
+        organization:
+          user.organization == "61ae2917a914c3ba42fc626f"
+            ? "5f5641e8dce4e706c062837a"
+            : user.organization,
       };
 
       if (request.body && typeof request.body.search == typeof "invan") {
-        const search = request.body.search.replace('+', '');
+        const search = request.body.search.replace("+", "");
         query["$or"] = [
           {
             first_name: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            cartame_id: {
               $regex: search,
               $options: "i",
             },
@@ -201,6 +209,9 @@ module.exports = (instance, options, next) => {
               $options: "i",
             },
           },
+          {
+            inn: search,
+          },
         ];
       }
       const $project = {
@@ -222,9 +233,10 @@ module.exports = (instance, options, next) => {
         phone_number: 1,
         createdAt: 1,
         updatedAt: 1,
-      }
+      };
       if (request.params.page == undefined) {
-        const clients = await instance.clientsDatabase.find(query, $project)
+        const clients = await instance.clientsDatabase
+          .find(query, $project)
           .sort({ point_balance: -1 })
           .limit(1000);
 
@@ -234,7 +246,9 @@ module.exports = (instance, options, next) => {
       const total = await instance.clientsDatabase.countDocuments(query);
       const limit = parseInt(request.params.limit);
       const page = parseInt(request.params.page);
-      const clients = await instance.clientsDatabase.find(query, $project).sort({ _id: 1 })
+      const clients = await instance.clientsDatabase
+        .find(query, $project)
+        .sort({ _id: 1 })
         // .sort({ _id: 1 })
         .sort({ point_balance: -1 })
         .skip((page - 1) * limit)
@@ -242,8 +256,8 @@ module.exports = (instance, options, next) => {
 
       reply.ok({
         total,
-        data: clients
-      })
+        data: clients,
+      });
 
       // instance.clientsDatabase.find(query, (err, clients) => {
       //   if (request.params.page == undefined) {
@@ -257,18 +271,18 @@ module.exports = (instance, options, next) => {
       //     data: clients.splice(limit * (page - 1), limit),
       //   });
       // }).sort({ _id: -1 });
-    }
-    catch (error) {
-      reply.error(error.message)
+    } catch (error) {
+      reply.error(error.message);
     }
     return reply;
-
   };
   const get_customers_point_balance = async (request, reply, user) => {
-
     try {
       const query = {
-        organization: user.organization == '61ae2917a914c3ba42fc626f' ? '5f5641e8dce4e706c062837a' : user.organization,
+        organization:
+          user.organization == "61ae2917a914c3ba42fc626f"
+            ? "5f5641e8dce4e706c062837a"
+            : user.organization,
       };
 
       if (request.query && typeof request.query.search == typeof "invan") {
@@ -307,11 +321,11 @@ module.exports = (instance, options, next) => {
         sales: 1,
         refunds: 1,
         point_balance: 1,
-      }
+      };
       const $group = {
         _id: "$organization",
-        total: { $sum: "$point_balance" }
-      }
+        total: { $sum: "$point_balance" },
+      };
 
       const clients = await instance.clientsDatabase.aggregate([
         {
@@ -328,13 +342,11 @@ module.exports = (instance, options, next) => {
         // }
       ]);
 
-      reply.ok(clients[0])
-    }
-    catch (error) {
-      reply.error(error.message)
+      reply.ok(clients[0]);
+    } catch (error) {
+      reply.error(error.message);
     }
     return reply;
-
   };
   const handler = (request, reply) => {
     instance.authorization(request, reply, (user) => {
@@ -342,18 +354,23 @@ module.exports = (instance, options, next) => {
     });
   };
   async function create_customer_cashback(request, reply, is_reply = true) {
-
     try {
       const customer = await get_client(
         request.body.phone_number,
-        request.body.organization
+        request.body.organization,
       );
+      if (customer) {
+        return reply.allready_exist("Client");
+      }
       if (customer && request.body.phone_number) {
         await change_client(customer._id, request.body);
         return reply.ok(customer);
       }
 
-      request.body.user_id = await get_default_user_id(request.body.organization, request.body.phone_number)
+      request.body.user_id = await get_default_user_id(
+        request.body.organization,
+        request.body.phone_number,
+      );
       // request.body.organization = request.body.organization;
       const created_customer = await insert_new_client(request.body);
       return reply.ok(created_customer);
@@ -369,13 +386,23 @@ module.exports = (instance, options, next) => {
       throw error;
     }
   }
-  instance.get("/clients/point_balance", { version: "2.0.0" }, (request, reply) => {
-    // instance.authorization(request, reply, (user) => {
-    // get_customers_point_balance(request, reply, user);
-    get_customers_point_balance(request, reply, { organization: '61ae2917a914c3ba42fc626f' });
-    // });
-  });
-  instance.post("/customer/create", { version: "2.0.0" }, create_customer_cashback);
+  instance.get(
+    "/clients/point_balance",
+    { version: "2.0.0" },
+    (request, reply) => {
+      // instance.authorization(request, reply, (user) => {
+      // get_customers_point_balance(request, reply, user);
+      get_customers_point_balance(request, reply, {
+        organization: "61ae2917a914c3ba42fc626f",
+      });
+      // });
+    },
+  );
+  instance.post(
+    "/customer/create",
+    { version: "2.0.0" },
+    create_customer_cashback,
+  );
   instance.post("/clients/search", { version: "1.0.0" }, handler);
 
   instance.get("/clients/search", { version: "1.1.0" }, handler);
@@ -387,7 +414,7 @@ module.exports = (instance, options, next) => {
       instance.authorization(request, reply, (user) => {
         get_customers(request, reply, user);
       });
-    }
+    },
   );
 
   /**
@@ -436,7 +463,7 @@ module.exports = (instance, options, next) => {
     try {
       return await instance.clientsDatabase.updateOne(
         { _id: id },
-        { $set: client }
+        { $set: client },
       );
     } catch (error) {
       throw UserError("error on updating", error);
@@ -451,7 +478,7 @@ module.exports = (instance, options, next) => {
    */
   async function get_default_user_id(organizationId, phone_number) {
     try {
-      const date = new Date()
+      const date = new Date();
       // let default_user_id = 10000;
 
       // const client = await instance.clientsDatabase
@@ -465,10 +492,9 @@ module.exports = (instance, options, next) => {
       // }
 
       // return +client.user_id + 1;
-      return phone_number ?
-        phone_number.replace(/\+/, "") + date.getTime()
-        : date.getTime()
-
+      return phone_number
+        ? phone_number.replace(/\+/, "") + date.getTime()
+        : date.getTime();
     } catch (error) {
       throw UserError("error on getting a default user id", error);
     }
@@ -483,8 +509,14 @@ module.exports = (instance, options, next) => {
   async function insert_new_client(clientData) {
     try {
       if (!clientData.user_id) {
-        clientData.user_id = clientData.phone_number.replace(/\+/, "") + new Date().getTime();
+        clientData.user_id =
+          clientData.phone_number.replace(/\+/, "") + new Date().getTime();
       }
+      clientData.gender = ["male", "female", "not_set"].includes(
+        clientData.gender,
+      )
+        ? clientData.gender
+        : "not_set";
       const newClient = new instance.clientsDatabase(clientData);
       const result = await newClient.save();
       if (!result) {
@@ -498,11 +530,14 @@ module.exports = (instance, options, next) => {
 
   async function create_customer(request, reply, user, is_reply = true) {
     try {
-      delete request.body._id
+      delete request.body._id;
       const customer = await get_client(
         request.body.phone_number,
-        user.organization
+        user.organization,
       );
+      if (customer) {
+        return reply.allready_exist("Client");
+      }
 
       if (customer && request.body.phone_number) {
         await change_client(customer._id, request.body);
@@ -513,7 +548,10 @@ module.exports = (instance, options, next) => {
         }
       }
 
-      request.body.user_id = await get_default_user_id(user.organization, request.body.phone_number)
+      request.body.user_id = await get_default_user_id(
+        user.organization,
+        request.body.phone_number,
+      );
       request.body.organization = user.organization;
       const created_customer = await insert_new_client(request.body);
       if (is_reply) {
@@ -551,7 +589,7 @@ module.exports = (instance, options, next) => {
         { body: body },
         reply,
         user,
-        false
+        false,
       );
       if (saved_customer) {
         customers.push(saved_customer);
@@ -585,7 +623,7 @@ module.exports = (instance, options, next) => {
               email: { type: "string" },
               note: { type: "string" },
               user_id: { type: "string" },
-              is_minimum_price: { type: "boolean" }
+              is_minimum_price: { type: "boolean" },
             },
           },
         },
@@ -600,7 +638,7 @@ module.exports = (instance, options, next) => {
         request.user = admin;
         return clientCreateGroup(request, reply, instance);
       });
-    }
+    },
   );
 
   async function update_client(request, reply, user) {
@@ -613,6 +651,22 @@ module.exports = (instance, options, next) => {
       if (!customer) {
         return reply.fourorfour("Customer");
       }
+
+      if (c.phone_number != body.phone_number) {
+        const c = await instance.clientsDatabase
+          .findOne(
+            {
+              organization: user.organization,
+              phone_number: body.phone_number,
+            },
+            { _id: 1 },
+          )
+          .lean();
+        if (c) {
+          return reply.allready_exist("Phone number");
+        }
+      }
+
       if (body.paid) {
         if (!(customer.debt_pay_history instanceof Array)) {
           customer.debt_pay_history = [];
@@ -621,11 +675,9 @@ module.exports = (instance, options, next) => {
           customer.debt = 0;
         }
 
-        let current_currency = await instance.Currency
-          .findOne({
-            organization: user.organization,
-          })
-          .lean();
+        let current_currency = await instance.Currency.findOne({
+          organization: user.organization,
+        }).lean();
         if (!current_currency) {
           current_currency = {
             value: 1,
@@ -634,7 +686,8 @@ module.exports = (instance, options, next) => {
         }
 
         let paid_debt =
-          body.currency != current_currency.currency && current_currency.currency == 'usd'
+          body.currency != current_currency.currency &&
+          current_currency.currency == "usd"
             ? body.currency == "usd"
               ? body.paid * current_currency.value
               : body.paid / current_currency.value
@@ -660,16 +713,16 @@ module.exports = (instance, options, next) => {
         const safe_data = {
           organization: user.organization,
           type: body.currency,
-          value: body.paid
-        }
+          value: body.paid,
+        };
         const safe_history = {
           by_user: user._id,
           by_user_name: user.name,
-          history_type: 'customer_debt',
+          history_type: "customer_debt",
           value: body.paid,
-          date: current_date
-        }
-        await instance.Safe.updateValue(safe_data, safe_history)
+          date: current_date,
+        };
+        await instance.Safe.updateValue(safe_data, safe_history);
 
         await instance.clientsDebtPayHistory.create({
           organization: customer.organization,
@@ -680,10 +733,14 @@ module.exports = (instance, options, next) => {
           comment: body.comment,
           created_by_name: user.by_name,
           created_by_id: user._id,
-        })
+        });
         /** */
       }
-      await instance.clientsDatabase.updateOne({ _id: id }, { $set: body }, { lean: true });
+      await instance.clientsDatabase.updateOne(
+        { _id: id },
+        { $set: body },
+        { lean: true },
+      );
       return reply.ok({ id });
     } catch (error) {
       return reply.error(error.message);
@@ -722,16 +779,31 @@ module.exports = (instance, options, next) => {
             default: "uzs",
           },
           note: {
-            type: "string"
+            type: "string",
           },
           user_id: { type: "string" },
           tariff_id: {
             type: "string",
             minLength: 24,
-            maxLength: 24
+            maxLength: 24,
           },
           tariff_name: { type: "string" },
-          is_minimum_price: { type: "boolean" }
+          is_minimum_price: { type: "boolean" },
+          user_type: { type: "string", enum: ["legal", "natural"] },
+          inn: { type: "string" },
+          contract_numbers: {
+            type: "array",
+            items: {
+              type: "object",
+              required: ["isDefault", "contractNo", "contractDate"],
+              additionalProperties: false,
+              properties: {
+                isDefault: { type: "boolean" },
+                contractNo: { type: "string" },
+                contractDate: { type: "string" },
+              },
+            },
+          },
         },
       },
     },
@@ -741,13 +813,13 @@ module.exports = (instance, options, next) => {
   instance.post(
     "/customer/update/:id",
     { version: "1.0.0", ...customerSchema },
-    updateHandler
+    updateHandler,
   );
 
   instance.post(
     "/customer/update/:id",
     { version: "1.1.0", ...customerSchema },
-    updateHandler
+    updateHandler,
   );
 
   async function delete_clients(request, reply) {
@@ -768,52 +840,51 @@ module.exports = (instance, options, next) => {
     });
   });
   const calculateDebt = async (instance, customer, user) => {
-
     const matchReceipts = {
       $match: {
         organization: user.organization,
-        receipt_type: 'debt',
-        user_id: customer.user_id
-      }
-    }
+        receipt_type: "debt",
+        user_id: customer.user_id,
+      },
+    };
     const unwindItems = {
       $unwind: {
-        path: '$sold_item_list'
-      }
-    }
+        path: "$sold_item_list",
+      },
+    };
     const projectItems = {
       $project: {
         // product_name: '$sold_item_list.product_name',
-        price: '$sold_item_list.price',
+        price: "$sold_item_list.price",
         // value: '$sold_item_list.value',
         // reminder: '$sold_item_list.reminder',
-        currency: '$currency',
-        currency_value: '$currency_value',
-        total_debt: '$sold_item_list.total_debt',
-        is_refund: '$is_refund',
+        currency: "$currency",
+        currency_value: "$currency_value",
+        total_debt: "$sold_item_list.total_debt",
+        is_refund: "$is_refund",
         // receipt_id: "$_id",
         // product_id: "$sold_item_list.product_id",
         // sold_id: "$sold_item_list._id",
-      }
-    }
+      },
+    };
 
     const receiptsResult = await instance.Receipts.aggregate([
       matchReceipts,
       unwindItems,
-      projectItems
+      projectItems,
     ])
       .allowDiskUse(true)
       .exec();
-    let total = 0
+    let total = 0;
     for (const index in receiptsResult) {
       if (receiptsResult[index].is_refund) {
-        total -= receiptsResult[index].total_debt
+        total -= receiptsResult[index].total_debt;
       } else {
-        total += receiptsResult[index].total_debt
+        total += receiptsResult[index].total_debt;
       }
     }
-    return total
-  }
+    return total;
+  };
   // const get_customer_by_id = async (request, reply, user) => {
   //   try {
   //     const id = request.params.id;
@@ -1068,6 +1139,9 @@ module.exports = (instance, options, next) => {
             user_id: 1,
             visit_counter: 1,
             createdAt: 1,
+            user_type: 1,
+            inn: 1,
+            contract_numbers: 1,
           },
         )
         .lean();
@@ -1088,5 +1162,5 @@ module.exports = (instance, options, next) => {
     });
   });
 
-  next()
-}
+  next();
+};

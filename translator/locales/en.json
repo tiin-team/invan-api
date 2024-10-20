@@ -61,5 +61,8 @@
 	"receive": "receive",
 	"otpustil": "otpustil",
 	"box": "box",
-	"pcs": "pcs"
+	"pcs": "pcs",
+	"metre": "metre",
+	"litre": "litre",
+	"online_payment": "online_payment"
 }

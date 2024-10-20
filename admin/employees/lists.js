@@ -4,7 +4,7 @@ module.exports = (instance, options, next) => {
 
   // get employee page and limit
 
-  const search_employees = (request, reply, admin) => {
+  const search_employees = async (request, reply, admin) => {
     // const user_available_services = request.user.services.map(serv => serv.service);
     const query = { organization: admin.organization }
 
@@ -39,29 +39,36 @@ module.exports = (instance, options, next) => {
           }
         ]
     }
-    const page = parseInt(request.params.page)
-    const limit = parseInt(request.params.limit)
+    const total = await instance.User.countDocuments(query)
 
-    instance.User.find(query, {
-      name: 1,
-      email: 1,
-      phone_number: 1,
-      role: 1
-    }, async (err, users) => {
-      if (users == undefined) {
-        users = []
+    let page = parseInt(request.params.page)
+    let limit = parseInt(request.params.limit)
+
+    if (request.params.limit === 'all') {
+      page = 1
+      limit = total
+    }
+
+    const users = await instance.User.find(
+      query,
+      {
+        name: 1,
+        email: 1,
+        phone_number: 1,
+        role: 1,
+        is_active: 1,
+        tin: 1,
       }
-      const total = await instance.User.countDocuments(query)
-
-      reply.ok({
-        total: total,
-        page: Math.ceil(total / limit),
-        data: users,
-      })
-    })
+    )
       .limit(limit)
       .skip(limit * (page - 1))
       .lean()
+
+    reply.ok({
+      total: total,
+      page: Math.ceil(total / limit),
+      data: users,
+    })
   }
 
   instance.post('/user/searching/:limit/:page', options.version, (request, reply) => {
